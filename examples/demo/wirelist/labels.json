@@ -1,0 +1,4 @@
+{"PWR-BAT-1": "L01", "PWR-BUS-1": "L02", "GND-BAT-1": "L03", "PWR-ECU-A": "L04", "PWR-ECU-C1": "L05", "PWR-ECU-C2": "L06",
+ "PWR-ECU-N1": "L07", "PWR-ECU-N2": "L08", "PWR-ECU-B": "L09", "PWR-CB-ECU": "L10", "GND-ECU-C": "L11", "GND-ECU-N": "L12",
+ "CAN-H-C": "N01", "CAN-H-N": "N02", "CAN-L-C": "N03", "CAN-L-N": "N04", "PWR-OTS-C": "M01", "PWR-OTS-N": "M02",
+ "SIG-OTS-N": "M03", "SIG-OTS-C": "M04", "PWR-GEN-C": "T01", "PWR-GEN-N": "T02", "PWR-CB-GEN": "T03"}

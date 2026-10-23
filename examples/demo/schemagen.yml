@@ -1,0 +1,17 @@
+# Demo project (fictional small aircraft). Paths are relative to this file.
+wirelist: wirelist
+cards: cards
+out: out
+default_harnesses: [X-FW]
+
+buses: [GNDB, BB1]
+breaker_prefixes: [CB-]
+splice_prefix: SP-
+near_words: [cabin]
+
+# no display.py in this project, so harness connectors are declared here: prefix -> [name, code, far side]
+harnesses:
+  X-FW: [Firewall connector X-FW, X-FW, engine]
+
+cardmap:
+  - {device: '^ECU$', connector: 'J1', card: ECU_card.md, table: 'J1'}
