@@ -1,7 +1,7 @@
 """schemagen command line.
 
     schemagen draw path/to/schemagen.yml                 # the project's default harnesses
-    schemagen draw path/to/schemagen.yml X-FW X-WL     # chosen harness connectors
+    schemagen draw path/to/schemagen.yml X-BH X-J2      # chosen harness connectors
     schemagen draw path/to/schemagen.yml --all           # every harness connector the project knows
     schemagen draw path/to/schemagen.yml --no-render     # YAML/CSV/checks only, no WireViz/Graphviz needed
 """
@@ -53,7 +53,7 @@ def main(argv=None):
     sub = ap.add_subparsers(dest="cmd", required=True)
     d = sub.add_parser("draw", help="render harness drawings and their extras")
     d.add_argument("config", help="schemagen.yml (or the folder that holds it)")
-    d.add_argument("harness", nargs="*", help="harness connector ids, e.g. X-FW X-WL")
+    d.add_argument("harness", nargs="*", help="harness connector ids, e.g. X-BH X-J2")
     d.add_argument("--all", action="store_true", help="all harness connectors")
     d.add_argument("--no-render", action="store_true", help="skip WireViz (YAML, CSV and checks only)")
     a = ap.parse_args(argv)

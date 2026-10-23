@@ -1,8 +1,9 @@
-"""Load a wire-list project: ss??_*.py row modules, labels.json, optional display.py / names.py.
+"""Load a wire-list project: ss??_*.py row modules, labels.json, optional display.py (readable names) and names.py (NAMES: id -> wire name).
 
 One row = one physical conductor: id, p1/p1c/p1p (from device / connector / pin), p2/p2c/p2p (to), func, bus, awg, st, ...
 """
 import importlib.util, json, re, sys
+from collections import defaultdict
 
 from .display_default import DefaultDisplay
 from .styles import classify, gauge
@@ -23,7 +24,6 @@ class Project:
         self.dsp = _module(wl / "display.py", "display") if (wl / "display.py").exists() else DefaultDisplay(cfg)
         names = _module(wl / "names.py", "names") if (wl / "names.py").exists() else None
         self.names = getattr(names, "NAMES", {})
-        t_ids = getattr(names, "T_IDS", set())
         mods = [_module(p, p.stem) for p in sorted(wl.glob("ss[0-9][0-9]_*.py"))]
         if not mods: raise SystemExit(f"no ss??_*.py row modules in {wl}")
         self.disp = {}
@@ -39,12 +39,16 @@ class Project:
                 w["p1"], w["p2"] = str(w["p1"]), str(w["p2"])
                 for k in ("p1c", "p1p", "p2c", "p2p"): w[k] = "" if w.get(k) is None else str(w.get(k))
                 w["label"] = labels.get(w["id"], w["id"])
-                w["dom"] = w.get("dom") or ("T" if w["id"] in t_ids else "L")
                 w["name"] = w.get("name") or self.names.get(w["id"]) or self.dsp.strip(w.get("func", ""))
                 w["kind"], w["color"] = classify(w, cfg)
                 w["gauge"] = gauge(w.get("awg", ""))
                 w["subsystem"] = getattr(m, "SUBSYSTEM", (m.__name__,))[0]
                 self.wires.append(w)
+        # connectors with numbered pins per device: pins are named "<connector> <pin>" when a device has several
+        self.dev_conns = defaultdict(set)
+        for w in self.wires:
+            for e in (1, 2):
+                if w[f"p{e}p"]: self.dev_conns[w[f"p{e}"]].add(w[f"p{e}c"])
 
     # ---------------------------------------------------------------- naming
     @staticmethod
@@ -74,7 +78,7 @@ class Project:
         return "device"
 
     def near(self, half):
-        """True for the near (cockpit / fuselage) half of a harness connector, drawn on the left."""
+        """True for the near half of a harness connector (drawn on the left); set by near_words in schemagen.yml."""
         return any(t in str(half).lower() for t in self.cfg.near_words)
 
     def short(self, raw):

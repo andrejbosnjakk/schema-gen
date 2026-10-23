@@ -1,6 +1,6 @@
 """WireViz harness drawing for one harness connector.
 
-Scope: every conductor with one end on the connector. Near half (cockpit/fuselage) on the left, far half on the
+Scope: every conductor with one end on the connector. Near half (near_words in schemagen.yml) on the left, far half on the
 right, the connector with all its pins (spares shown) in the middle. Far ends are devices (pin tables, card pin
 names), or splices/buses drawn as simple boxes carrying the "continues at" note. Wires are bundled per
 (side, far item, gauge, length); a CAN H/L pair becomes one shielded twisted-pair bundle.
@@ -14,8 +14,8 @@ from .checks import harness_checks
 
 @dataclass
 class Drawing:
-    harness: str          # requested harness id, e.g. X-FW
-    code: str             # short code from display.HARNESS, e.g. FW
+    harness: str          # requested harness id, e.g. X-BH
+    code: str             # short code of the harness connector, e.g. X-BH
     designator: str       # connector designator in the drawing
     name: str             # readable connector name
     doc: dict             # WireViz YAML document
@@ -91,7 +91,7 @@ def build(pr, net, cards, H, lengths=None):
         dev, c, p = w[f"p{f}"], w[f"p{f}c"], w[f"p{f}p"]
         if pr.role(dev) in ("splice", "bus"): continue
         if not p: pid = pr.strip(c) or c or "terminal"
-        elif len(conns[dev]) > 1 or c.startswith("X1."): pid = f"{pr.strip(c)} {p}"
+        elif len(pr.dev_conns[dev]) > 1: pid = f"{pr.strip(c)} {p}"
         else: pid = p
         lab = cards.pin(pr.code(dev), c, p) or clean_func(w["func"], 30) or clean_func(w["name"], 30)
         devpins[dev].setdefault(pid, lab)

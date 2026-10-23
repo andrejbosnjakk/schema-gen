@@ -6,10 +6,11 @@
 - Cut list, continuity/insulation test sheet, consistency checks, searchable index page
 - Project config (`schemagen.yml`), default display for projects without their own naming module
 - Fictional demo project, tests, CI
+- General-purpose: project-specific naming, colours and roles come from `schemagen.yml`
 
 ## Next: drawing and data
 
-1. **Lengths**: route segments per zone (nose → firewall → cockpit → cabin → tail/wings) and a length per wire as
+1. **Lengths**: route segments per zone (e.g. engine bay → bulkhead → cabin → rear) and a length per wire as
    segment sum + service loop. Feeds `lengths.csv`, which already flows into cut list, bundles and BOM.
 2. **Connector catalogue**: YAML per part (D-SUB 25 M/F, 8STA, AMPSEAL, M12) with contact part numbers, AWG range and
    max current per contact. Checks gauge and current per contact; real part numbers in the BOM.

@@ -22,7 +22,7 @@ def pr():
 @pytest.fixture(scope="module")
 def drawing(pr):
     cfg = pr.cfg
-    return build(pr, Net(pr), Cards(cfg.cards, cfg.cardmap), "X-FW")
+    return build(pr, Net(pr), Cards(cfg.cards, cfg.cardmap), "X-BH")
 
 
 def by_label(pr, label):
@@ -31,14 +31,14 @@ def by_label(pr, label):
 
 def test_roles(pr):
     assert pr.role("SP-ECU-C ECU supply splice (cabin)") == "splice"
-    assert pr.role("X-FW firewall D-SUB 9") == "harness"
+    assert pr.role("X-BH bulkhead D-SUB 9") == "harness"
     assert pr.role("GNDB ground bus") == "bus"
     assert pr.role("CB-ECU 5 A") == "breaker"
     assert pr.role("ECU engine control unit") == "device"
 
 
 def test_colours_never_orange(pr):
-    # orange is the HV colour in the aircraft; 24 V must be yellow
+    # orange is the usual HV colour; 24 V must be yellow
     assert all(w["color"] != "OG" for w in pr.wires)
     assert by_label(pr, "T01")["color"] == "YE"
     assert by_label(pr, "L05")["color"] == "RD"
@@ -58,7 +58,7 @@ def test_net_crosses_splices_and_harness_but_not_breakers(pr):
 
 def test_drawing_layout(drawing):
     doc = drawing.doc
-    x = doc["connectors"]["X-FW"]
+    x = doc["connectors"]["X-BH"]
     assert x["pins"] == list(range(1, 10)) and x["pinlabels"][8] == "spare"
     assert doc["connectors"]["SP-ECU-C"]["style"] == "simple"
     assert "continues" in doc["connectors"]["SP-ECU-C"]["notes"]
@@ -80,7 +80,7 @@ def test_continuity_sheet_excludes_spliced_pins(tmp_path):
     cfg_dir = tmp_path / "demo"
     shutil.copytree(DEMO, cfg_dir, ignore=shutil.ignore_patterns("out"))
     draw(cfg_dir, no_render=True)
-    rows = list(csv.DictReader(open(cfg_dir / "out" / "X-FW_continuity.csv", encoding="utf-8")))
+    rows = list(csv.DictReader(open(cfg_dir / "out" / "X-BH_continuity.csv", encoding="utf-8")))
     iso = {r["from pin"]: r["to pin"] for r in rows if r["test"].startswith("isolation")}
     assert "except pin 2" in iso["pin 1"] and "except" not in iso["pin 3"]
     e2e = [r for r in rows if r["test"].startswith("end to end")]
@@ -93,6 +93,6 @@ def test_render(tmp_path):
     shutil.copytree(DEMO, cfg_dir, ignore=shutil.ignore_patterns("out"))
     draw(cfg_dir)
     out = cfg_dir / "out"
-    for f in ("X-FW.svg", "X-FW.png", "X-FW.html", "X-FW.bom.tsv", "index.html"):
+    for f in ("X-BH.svg", "X-BH.png", "X-BH.html", "X-BH.bom.tsv", "index.html"):
         assert (out / f).stat().st_size > 0
     assert "T02" in (out / "index.html").read_text(encoding="utf-8")

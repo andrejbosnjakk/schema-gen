@@ -1,7 +1,8 @@
 # schema-gen
 
-Turns an aircraft wire list (one row = one physical conductor) into harness documentation, and later into a
-simulation of the electrical system:
+Turns a wire list (one row = one physical conductor) into wiring-harness documentation, and later into a
+simulation of the electrical system. Built for vehicles, aircraft and machines: anything with harness
+connectors, splices, breakers and buses.
 
 - **Harness drawings** per harness connector, rendered with [WireViz](https://github.com/wireviz/WireViz) (SVG, PNG, HTML + BOM).
 - **"Continues at" notes**: every wire that ends on a splice, bus, breaker or another harness shows where it goes next
@@ -15,7 +16,7 @@ simulation of the electrical system:
 Roadmap: a DC current-flow simulation on top of the same net model, so one tool can answer "does this load get power
 with these switches, how much current flows in each wire, does any breaker trip?". See [docs/ROADMAP.md](docs/ROADMAP.md).
 
-![demo harness](docs/demo_X-FW.png)
+![demo harness](docs/demo_X-BH.png)
 
 ## Quick start
 
@@ -26,7 +27,7 @@ schemagen draw examples/demo         # writes examples/demo/out/
 pytest
 ```
 
-`schemagen draw <project> [X-FW X-WL ...] [--all] [--no-render]`, where `<project>` is a `schemagen.yml` or the folder that holds it.
+`schemagen draw <project> [X-BH X-J2 ...] [--all] [--no-render]`, where `<project>` is a `schemagen.yml` or the folder that holds it.
 `--no-render` writes the YAML, CSVs and checks without WireViz/Graphviz.
 
 ## A project
@@ -35,19 +36,19 @@ A project is a folder with a `schemagen.yml` and a wire list. The wire list stay
 this repository only holds the tool and a fictional demo.
 
 ```
-my-aircraft/
+my-project/
   schemagen.yml
   wirelist/
     ss01_power.py      # row modules: R = [dict(id=..., p1=..., p1c=..., p1p=..., p2=..., ..., func=..., bus=..., awg=...)]
     ss02_....py        # optional: SUBSYSTEM, DISPLAY (raw device -> readable name), P (protection list)
     labels.json        # optional: wire id -> printed label (L05)
     display.py         # optional: readable names; without it schemagen uses its default (see display_default.py)
-    names.py           # optional: NAMES (id -> wire name), T_IDS (24 V label series)
+    names.py           # optional: NAMES (id -> wire name)
   cards/               # optional: datasheet interface cards (markdown pin tables) for real pin names
 ```
 
 Row fields: `id`, `p1`/`p1c`/`p1p` = from device / connector / pin, `p2`/`p2c`/`p2p` = to, `func`, `bus`, `awg`,
-`st` (status; `Open…` is flagged), optional `name`, `dom`. Device strings start with a code (`SP-…` splice,
+`st` (status; `Open…` is flagged), optional `name`. Device strings start with a code (`SP-…` splice,
 `CB-…` breaker, `GNDB` ground bus, `X-…` harness connector); the prefixes are set in `schemagen.yml`.
 
 `schemagen.yml` (all keys optional except what your data needs; see [examples/demo/schemagen.yml](examples/demo/schemagen.yml)):
@@ -57,9 +58,10 @@ Row fields: `id`, `p1`/`p1c`/`p1p` = from device / connector / pin, `p2`/`p2c`/`
 | `wirelist`, `cards`, `out` | folders, relative to the yml |
 | `default_harnesses` | harness connectors drawn when none are named |
 | `buses`, `bus_prefixes`, `breaker_prefixes`, `splice_prefix` | how device codes map to roles |
-| `near_words` | words in a connector-half name that put it on the left (e.g. `cockpit`, `half a`) |
-| `colours` | function class → WireViz colour. Default: 14 V `RD`, 24 V `YE`, 5 V `VT`, GND `BK`, signal `BU`, CAN_H `GN`, CAN_L `GNWH`. Orange is not used: it is the HV colour. |
-| `bus_class`, `domain_class` | extra rules for the function class (e.g. `Switched out: 14 V`) |
+| `near_words` | words in a connector-half name that put it on the left (e.g. `cabin`, `half a`) |
+| `colours` | function class → WireViz colour. Default: 14 V `RD`, 24 V `YE`, 5 V `VT`, GND `BK`, signal `BU`, CAN_H `GN`, CAN_L `GNWH`. Orange is not used: it is the usual HV colour. |
+| `bus_class` | bus name → function class (e.g. `Switched out: 14 V`) |
+| `label_class` | wire-label regex → function class, for powered wires whose bus name has no voltage (e.g. `'^T\d': 24 V`) |
 | `harnesses` | for projects without `display.py`: `prefix: [name, code, far side]` |
 | `cardmap` | `{device, connector, card, table}` regexes that point a device connector at a card pin table |
 

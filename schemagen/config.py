@@ -1,10 +1,10 @@
-"""Project configuration: one `schemagen.yml` per aircraft/project, paths relative to that file."""
+"""Project configuration: one `schemagen.yml` per project, paths relative to that file."""
 from dataclasses import dataclass, field
 from pathlib import Path
 
 import yaml
 
-# Wire colour per function class (WireViz colour codes). Orange is avoided on purpose: it is the HV colour.
+# Wire colour per function class (WireViz colour codes). Orange is avoided on purpose: it is the usual HV colour.
 DEFAULT_COLOURS = {"14 V": "RD", "24 V": "YE", "5 V": "VT", "GND": "BK", "signal": "BU", "CAN_H": "GN", "CAN_L": "GNWH"}
 
 
@@ -22,7 +22,7 @@ class Config:
     near_words: list = field(default_factory=list)         # words that mark the near (left) half of a harness connector
     colours: dict = field(default_factory=dict)
     bus_class: dict = field(default_factory=dict)          # bus name -> function class override, e.g. {"Switched out": "14 V"}
-    domain_class: dict = field(default_factory=dict)       # row 'dom' -> function class, e.g. {"T": "24 V"}
+    label_class: dict = field(default_factory=dict)        # wire-label regex -> function class, e.g. {"^T\\d": "24 V"}
     harnesses: dict = field(default_factory=dict)          # only used by the default display: prefix -> [name, code, far side]
     cardmap: list = field(default_factory=list)            # [{device, connector, card, table}] regexes, see README
 
@@ -38,14 +38,14 @@ def load_config(path):
         cards=root / d.get("cards", "cards"),
         out=root / d.get("out", "out"),
         default_harnesses=d.get("default_harnesses", []),
-        buses=d.get("buses", ["GNDB"]),
-        bus_prefixes=d.get("bus_prefixes", ["BB", "PNL-", "TB-"]),
+        buses=d.get("buses", ["GND", "GNDB"]),
+        bus_prefixes=d.get("bus_prefixes", ["BB"]),
         breaker_prefixes=d.get("breaker_prefixes", ["CB-", "FU-"]),
         splice_prefix=d.get("splice_prefix", "SP-"),
-        near_words=d.get("near_words", ["cockpit", "half a", "fuselage"]),
+        near_words=d.get("near_words", ["near", "half a", "side a"]),
         colours={**DEFAULT_COLOURS, **d.get("colours", {})},
         bus_class=d.get("bus_class", {}),
-        domain_class=d.get("domain_class", {}),
+        label_class=d.get("label_class", {}),
         harnesses=d.get("harnesses", {}),
         cardmap=d.get("cardmap", []),
     )

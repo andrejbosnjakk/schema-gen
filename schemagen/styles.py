@@ -11,7 +11,9 @@ def kind(w, cfg):
     if bus.startswith("GND") or bus == "Chassis": return "GND"
     if bus.startswith("5 V"): return "5 V"
     if bus.startswith("24"): return "24 V"
-    if bus not in ("—", "") and w.get("dom") in cfg.domain_class: return cfg.domain_class[w["dom"]]
+    if bus not in ("—", ""):  # powered wire whose bus name says nothing about the voltage: try the label series
+        for pat, cls in cfg.label_class.items():
+            if re.search(pat, w["label"]): return cls
     if bus.startswith(("14", "12")): return "14 V"
     return "signal"
 
