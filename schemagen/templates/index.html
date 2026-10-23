@@ -16,12 +16,15 @@ Click a row to open its drawing with the label highlighted.</p>
 <div class="cards">__CARDS__</div>
 <input id="q" placeholder="Search wire label, id, device, function…" autofocus>
 <div class="wrap"><table><thead><tr><th>Label</th><th>Harness</th><th>Bundle</th><th>From</th><th>To</th><th>Gauge</th><th>Colour</th><th>Continues at</th></tr></thead><tbody id="res"></tbody></table></div>
-<p id="cnt" class="mut"></p><div id="view"></div>
+<p id="cnt" class="mut"></p><div id="view"></div><div id="notes" class="wrap"></div>
 <script>
-const W=__DATA__, SVG=__SVGS__;
-const q=document.getElementById('q'),res=document.getElementById('res'),cnt=document.getElementById('cnt'),view=document.getElementById('view');
+const W=__DATA__, SVG=__SVGS__, NOTES=__NOTES__;
+const q=document.getElementById('q'),res=document.getElementById('res'),cnt=document.getElementById('cnt'),view=document.getElementById('view'),notes=document.getElementById('notes');
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
-function show(h,label){view.innerHTML=SVG[h]||'';if(!label)return;const t=[...view.querySelectorAll('text')].filter(x=>{const s=x.textContent.trim();return s===label||s.endsWith(':'+label)});
+function show(h,label){view.innerHTML=SVG[h]||'';const fn=NOTES[h]||[];
+ notes.innerHTML=fn.length?'<h3>'+esc(h)+': continues at</h3><table><tr><th>#</th><th>Wire</th><th>Next wires (place) | net ends</th></tr>'+fn.map(f=>`<tr${f[1]===label?' style="background:var(--hit)"':''}><td>[${f[0]}]</td><td><b>${esc(f[1])}</b></td><td>${esc(f[2])}</td></tr>`).join('')+'</table>':'';
+ if(!label)return;const re=new RegExp('(^|:)'+label.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'( |$)');
+ const t=[...view.querySelectorAll('text')].filter(x=>re.test(x.textContent.trim()));
  t.forEach(x=>{x.classList.add('hl');try{const b=x.getBBox(),r=document.createElementNS('http://www.w3.org/2000/svg','rect');r.setAttribute('x',b.x-3);r.setAttribute('y',b.y-2);r.setAttribute('width',b.width+6);r.setAttribute('height',b.height+4);r.setAttribute('class','hlbox');x.parentNode.insertBefore(r,x)}catch(e){}});
  if(t[0])t[0].scrollIntoView({block:'center',inline:'center'})}
 function run(){const s=q.value.trim().toLowerCase();let rows=W;if(s){const ex=W.filter(w=>w.label.toLowerCase()===s);rows=ex.length?ex:W.filter(w=>Object.values(w).join(' ').toLowerCase().includes(s))}

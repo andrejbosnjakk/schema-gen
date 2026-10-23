@@ -1,10 +1,12 @@
-"""Load a wire-list project: ss??_*.py row modules, labels.json, optional display.py (readable names) and names.py (NAMES: id -> wire name).
+"""Load a wire-list project: rows from ss??_*.py modules or from a table (see table.py), labels.json, and the optional
+display.py (readable names) and names.py (NAMES: id -> wire name) next to them.
 
 One row = one physical conductor: id, p1/p1c/p1p (from device / connector / pin), p2/p2c/p2p (to), func, bus, awg, st, ...
 """
 import importlib.util, json, re, sys
 from collections import defaultdict
 
+from . import table
 from .display_default import DefaultDisplay
 from .styles import classify, gauge
 
@@ -15,35 +17,42 @@ def _module(path, name):
     return m
 
 
+def _module_rows(wl):
+    """(rows with 'subsystem' filled in, DISPLAY names, protection list P) from the ss??_*.py modules."""
+    mods = [_module(p, p.stem) for p in sorted(wl.glob("ss[0-9][0-9]_*.py"))]
+    if not mods: raise SystemExit(f"no ss??_*.py row modules in {wl} (or set 'source' in schemagen.yml)")
+    disp, prot, rows = {}, [], []
+    for m in mods:
+        disp.update(getattr(m, "DISPLAY", {})); prot += getattr(m, "P", [])
+        sub = getattr(m, "SUBSYSTEM", (m.__name__,))[0]
+        rows += [dict(r, subsystem=r.get("subsystem") or sub) for r in m.R if "_hdr" not in r]
+    return rows, disp, prot
+
+
 class Project:
     def __init__(self, cfg):
         self.cfg = cfg
         wl = cfg.wirelist
         sys.dont_write_bytecode = True  # the wire list folder is input only
-        if str(wl) not in sys.path: sys.path.insert(0, str(wl))  # row modules import their own helpers (_lib.py)
+        if wl.exists() and str(wl) not in sys.path: sys.path.insert(0, str(wl))  # row modules import their helpers (_lib.py)
         self.dsp = _module(wl / "display.py", "display") if (wl / "display.py").exists() else DefaultDisplay(cfg)
         names = _module(wl / "names.py", "names") if (wl / "names.py").exists() else None
         self.names = getattr(names, "NAMES", {})
-        mods = [_module(p, p.stem) for p in sorted(wl.glob("ss[0-9][0-9]_*.py"))]
-        if not mods: raise SystemExit(f"no ss??_*.py row modules in {wl}")
-        self.disp = {}
-        for m in mods: self.disp.update(getattr(m, "DISPLAY", {}))
-        self.dsp.set_protection([p for m in mods for p in getattr(m, "P", [])])
+        if cfg.source: rows, self.disp, prot = table.read(cfg), {}, []
+        else: rows, self.disp, prot = _module_rows(wl)
+        self.dsp.set_protection(prot)
         lf = wl / "labels.json"
         labels = json.loads(lf.read_text(encoding="utf-8")) if lf.exists() else {}
         self.wires = []
-        for m in mods:
-            for r in m.R:
-                if "_hdr" in r: continue
-                w = dict(r)
-                w["p1"], w["p2"] = str(w["p1"]), str(w["p2"])
-                for k in ("p1c", "p1p", "p2c", "p2p"): w[k] = "" if w.get(k) is None else str(w.get(k))
-                w["label"] = labels.get(w["id"], w["id"])
-                w["name"] = w.get("name") or self.names.get(w["id"]) or self.dsp.strip(w.get("func", ""))
-                w["kind"], w["color"] = classify(w, cfg)
-                w["gauge"] = gauge(w.get("awg", ""))
-                w["subsystem"] = getattr(m, "SUBSYSTEM", (m.__name__,))[0]
-                self.wires.append(w)
+        for r in rows:
+            w = dict(r)
+            w["p1"], w["p2"] = str(w["p1"]), str(w["p2"])
+            for k in ("p1c", "p1p", "p2c", "p2p"): w[k] = "" if w.get(k) is None else str(w.get(k))
+            w["label"] = w.get("label") or labels.get(w["id"], w["id"])
+            w["name"] = w.get("name") or self.names.get(w["id"]) or self.dsp.strip(w.get("func", ""))
+            w["kind"], w["color"] = classify(w, cfg)
+            w["gauge"] = gauge(w.get("awg", ""))
+            self.wires.append(w)
         # connectors with numbered pins per device: pins are named "<connector> <pin>" when a device has several
         self.dev_conns = defaultdict(set)
         for w in self.wires:

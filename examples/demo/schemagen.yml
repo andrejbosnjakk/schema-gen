@@ -13,5 +13,7 @@ near_words: [cabin]
 harnesses:
   X-BH: [Bulkhead connector X-BH, X-BH, engine]
 
+# pin names: cards with a ```yaml schemagen block are found automatically (ECU_card.md);
+# cards with only a markdown pin table are mapped here
 cardmap:
-  - {device: '^ECU$', connector: 'J1', card: ECU_card.md, table: 'J1'}
+  - {device: '^OTS$', connector: 'Lead', card: OTS_card.md, table: 'Leads'}

@@ -1,20 +1,43 @@
-"""Pin names from datasheet interface cards (markdown files with pin tables).
+"""Pin data from datasheet interface cards: the start of a part library.
 
-A pin table is any markdown table whose first header cell starts with 'Pin' or 'Contact'; column 2 is the signal name.
-Each table is identified by its context: the last heading plus the last caption line before it.
-schemagen.yml maps device/connector to a card table:
-    cardmap:
-      - {device: '^ECU$', connector: 'J1', card: ECU_card.md, table: 'J1'}
+Preferred: a structured block anywhere in a card (markdown file), fenced as ```yaml schemagen:
+
+    device: '^ECU$'                 # regex on the device code in the wire list
+    connectors:
+      - id: J1
+        match: 'J1'                 # regex on the wire list's connector field
+        part: TE 776286-1           # optional
+        pins:
+          - {n: 1, name: VBAT, type: power_in, v_max: 16, i_max: 5}
+
+Fallback for cards without a block: markdown pin tables (first header 'Pin' or 'Contact', column 2 = signal),
+picked by a `cardmap` entry in schemagen.yml: {device, connector, card, table} regexes.
 """
 import re
 
+import yaml
+
+BLOCK = re.compile(r"^```ya?ml schemagen\s*\n(.*?)^```", re.M | re.S)
+
 
 class Cards:
-    def __init__(self, folder, cardmap):
-        self.folder, self.cardmap, self._tables = folder, cardmap, {}
+    def __init__(self, folder, cardmap=()):
+        self.folder, self.cardmap, self._tables = folder, list(cardmap), {}
+        self.blocks = []  # [(card file, block dict)]
+        for path in sorted(folder.glob("*.md")) if folder.exists() else []:
+            for m in BLOCK.finditer(path.read_text(encoding="utf-8")):
+                self.blocks.append((path.name, yaml.safe_load(m.group(1)) or {}))
+
+    def connector(self, code, conn):
+        """Structured connector entry for (device code, connector field), or None."""
+        for fn, b in self.blocks:
+            if re.search(str(b.get("device", "$^")), code or ""):
+                for c in b.get("connectors", []):
+                    if re.search(str(c.get("match", c.get("id", ""))), conn): return c
+        return None
 
     def tables(self, fn):
-        """[(context text, {pin: signal})] for one card file."""
+        """[(context text, {pin: signal})] for one card file (markdown pin tables)."""
         if fn in self._tables: return self._tables[fn]
         tabs, head, cap, cur = [], "", "", None
         path = self.folder / fn
@@ -38,7 +61,11 @@ class Cards:
         return tabs
 
     def pin(self, code, conn, pin):
-        """Signal name for (device code, connector, pin), or None."""
+        """Signal name for (device code, connector, pin), or None. Structured blocks win over markdown tables."""
+        c = self.connector(code, conn)
+        if c:
+            for p in c.get("pins", []):
+                if str(p.get("n")) == str(pin): return str(p.get("name", ""))[:30] or None
         for m in self.cardmap:
             if re.search(m["device"], code or "") and re.search(m.get("connector", "."), conn):
                 for text, pins in self.tables(m["card"]):

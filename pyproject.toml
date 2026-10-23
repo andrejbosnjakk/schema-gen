@@ -4,15 +4,17 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "schemagen"
-version = "0.1.0"
+version = "0.2.0"
 description = "Wire list to harness drawings, cut lists, test sheets and (later) current-flow simulation."
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.10"
+# wireviz (GPL-3.0) is only ever run as a separate command, never imported
 dependencies = ["wireviz==0.4.1", "pyyaml>=6"]
 
 [project.optional-dependencies]
-dev = ["pytest>=8"]
+xlsx = ["openpyxl>=3.1"]
+dev = ["pytest>=8", "openpyxl>=3.1"]
 
 [project.scripts]
 schemagen = "schemagen.cli:main"

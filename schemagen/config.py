@@ -25,6 +25,10 @@ class Config:
     label_class: dict = field(default_factory=dict)        # wire-label regex -> function class, e.g. {"^T\\d": "24 V"}
     harnesses: dict = field(default_factory=dict)          # only used by the default display: prefix -> [name, code, far side]
     cardmap: list = field(default_factory=list)            # [{device, connector, card, table}] regexes, see README
+    split: dict = field(default_factory=dict)              # harness id -> none | side | function | auto
+    split_default: str = "auto"                          # auto = split by side above split_threshold far items
+    split_threshold: int = 20
+    source: dict = field(default_factory=dict)             # tabular wire list instead of ss??_*.py modules, see table.py
 
 
 def load_config(path):
@@ -48,4 +52,8 @@ def load_config(path):
         label_class=d.get("label_class", {}),
         harnesses=d.get("harnesses", {}),
         cardmap=d.get("cardmap", []),
+        split=d.get("split", {}),
+        split_default=d.get("split_default", "auto"),
+        split_threshold=d.get("split_threshold", 20),
+        source=d.get("source", {}),
     )

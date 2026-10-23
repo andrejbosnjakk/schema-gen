@@ -1,70 +1,86 @@
 # Roadmap
 
-## Now (0.1)
+Goal: an open-source tool for wiring design with one source of truth and many views (drawings, tables, test sheets,
+simulation), with checks built in and every value traceable to its source.
 
+## Done
+
+**0.1**
 - Harness drawings per harness connector (WireViz), "continues at" notes from the net model
-- Cut list, continuity/insulation test sheet, consistency checks, searchable index page
+- Cut list, continuity/insulation test sheet, consistency checks, searchable offline index page
 - Project config (`schemagen.yml`), default display for projects without their own naming module
-- Fictional demo project, tests, CI
-- General-purpose: project-specific naming, colours and roles come from `schemagen.yml`
+- Fictional demo project, tests, CI; general-purpose (project rules live in the project's config)
 
-## Next: drawing and data
+**0.2 (P0 quick wins)**
+- Table input (CSV / XLSX / JSON with column mapping) and `schemagen export` to the neutral format
+- Split wide harnesses by side or function (`auto` above a threshold)
+- Short next-hop notes, full continuation in a numbered footnote table (drawing HTML, index, cut list)
+- One bundle per far item, gauge in each wire label
+- One palette, readable by other tools (`schemagen palette`)
+- Structured card blocks (`yaml schemagen`) as the start of a part library; markdown tables as fallback
+- Continuity tests between reachable terminals only; parallel contacts flagged
+- WireViz run as a separate command (GPL-3.0), never imported
 
-1. **Lengths**: route segments per zone (e.g. engine bay → bulkhead → cabin → rear) and a length per wire as
-   segment sum + service loop. Feeds `lengths.csv`, which already flows into cut list, bundles and BOM.
-2. **Connector catalogue**: YAML per part (D-SUB 25 M/F, 8STA, AMPSEAL, M12) with contact part numbers, AWG range and
-   max current per contact. Checks gauge and current per contact; real part numbers in the BOM.
-3. **Layout**: split very wide harnesses by side or function with cross-references; zone ranks in Graphviz.
-4. **Printable test sheet** (xlsx/PDF) with signature boxes, and a pin-pair export for an automatic harness tester.
-5. **Cards → pin map** stored in the cards themselves instead of `cardmap` regexes.
+## P1: a real tool
 
-## Simulation layer (the one-shot system test)
+1. **Neutral data model** (Pydantic + JSON Schema): `Part` (type, pins, contact data), `Component` (instance, location),
+   `Terminal`, `Conductor` (label, gauge, colour, length, from/to terminal), `Splice`, `Bundle`/`Harness`, `Net`
+   (computed), `Zone`/`Route`, `Issue`, `Source` (document + page, so every value traces to a datasheet page).
+   Importers become adapters onto this model: table, row modules, WireViz YAML, KiCad netlist.
+2. **Exporters**: label-printer CSV, continuity sheet as XLSX/PDF with signature boxes, harness-tester pin pairs,
+   routing-tool wire list (e.g. CATIA iXF), schematic SVG.
+3. **Rules engine**: pluggable rules with severity and fix hints, using the part library: contact AWG range, current
+   per contact, pin type compatibility (output↔input, power↔ground).
+4. **Lengths**: zones with coordinates plus route segments; wire length = route + service loops; import measured
+   lengths later.
+5. **Stable IDs and history**: labels never reused once printed; `schemagen diff rev-A rev-B`; tagged releases.
 
-Goal: from the same wire list, answer *"with these switches and breakers, does each load get power, how much current
-flows in each wire, what is the voltage at each load, and does anything trip or overheat?"*, and run fault cases.
+## P2: electrical simulation (the one-shot system test)
 
-### Model
+1. **DC operating point** per scenario by modified nodal analysis (numpy/scipy).
+   - Sources: battery = open-circuit voltage + internal resistance; DC/DC = voltage source with current limit.
+   - Wires: R = Ω/m(AWG) × length × temperature factor, plus contact resistance per pin.
+   - Breakers/fuses: small resistance while closed. Switches/relays: set per scenario (relay coil drives the contact).
+   - Loads from the part library: constant power, constant current or resistive, each with a minimum operating voltage.
+   - Outputs: voltage at every load pin, current in every wire and breaker, drop per circuit, % loading of every
+     breaker, wire and contact.
+2. **Scenarios**, one file each (power-up, battery only, normal operation, charging, converter failure, cold battery):
+   switch positions and load states; loads below their minimum voltage are flagged.
 
-The `Net` graph already gives the topology. The simulation adds electrical values:
+   ```yaml
+   scenario: master on, ECU on, engine start
+   set: {SW-MSTR: ON, CB-ECU: closed, CB-GEN: closed}
+   faults: [{short: L05, to: GND}]          # optional: short, open wire, failed source
+   expect:
+     powered: [ECU, DSP, OTS]
+     max_drop_V: {ECU: 0.5}
+     no_trip: true
+   ```
+3. **Fault analysis**: short each node to ground, compute the prospective fault current, and check that the nearest
+   upstream breaker trips (trip curve) before the wire's smoke point, that the fault current is within its interrupt
+   rating, and that an upstream breaker does not trip first (selectivity).
+4. **Transients** (later): inrush of contactors, motors and capacitive loads against trip curves (time-stepped solver
+   or ngspice).
 
-| element | model | data needed |
-|---|---|---|
-| wire | resistance R = ρ(AWG) × length (+ temperature) | AWG (have), length (roadmap item 1) |
-| splice, harness pin, crimp | small contact resistance | default per contact type (catalogue) |
-| bus bar, ground bus | ideal node | — |
-| breaker / fuse | closed switch with trip curve I²t; open when tripped | rating (have in `P`), curve per part |
-| switch / relay / contactor | two-state element; relay coil is a load that sets the contact state | pole/terminal map, coil data (cards) |
-| battery | voltage source + internal resistance (+ state of charge) | cards |
-| DC/DC converter | voltage source with current limit, enabled by a signal | cards |
-| load | constant power, constant current or resistor; optional enable input | cards / load analysis |
-| signal input | high-impedance node (voltage only) | cards |
+Every input is marked measured / datasheet / assumed, and results show which assumptions they rest on. Use it for
+design checks, not as certification evidence. Tests: known-answer circuits with hand-calculated results.
 
-### Solver
+## P3: the app
 
-1. Build the circuit from `Net`: nodes = net roots, branches = wires + elements.
-2. DC operating point by **modified nodal analysis** (numpy/scipy sparse); constant-power loads and relays by fixed-point
-   iteration (relay coil voltage → contact state → re-solve).
-3. Breakers: compare branch current with the trip curve over a scenario timeline (inrush, steady state).
+Everything is an object with links; every view is a lens on the same objects. Local-first (project files in git,
+SQLite/DuckDB index), because wiring data is often under NDA.
 
-### Scenarios (YAML)
+- Table editor with dropdowns from the data model and inline check errors
+- Object page per wire / pin / connector / harness: properties, links, source document, issues, history
+- Net explorer: click a pin, highlight the net in every drawing and table
+- Clickable drawings and system schematics; a 2D vehicle map with zones and routes
+- Simulation dashboard: scenario picker, bus voltage tree, breaker loading, failing loads
+- Issues board, change sets with review/approve, tagged releases
+- Assistant panel that proposes edits as change sets, never directly
 
-```yaml
-scenario: master on, ECU on, engine start
-set: {SW-MSTR: ON, CB-ECU: closed, CB-GEN: closed}
-faults: [{short: L05, to: GND}]          # optional: short, open wire, failed source
-expect:
-  powered: [ECU, DSP, OTS]
-  max_drop_V: {ECU: 0.5}
-  no_trip: true
-```
+## Packaging
 
-Output: currents per wire vs ampacity, voltage at each load, trips, and pass/fail per `expect`, as CSV + an overlay on
-the harness drawing (wire thickness/colour by current).
-
-### Steps
-
-1. `sim/circuit.py`: circuit from `Net` + element library (resistors, sources, switches) — unit tests on tiny nets.
-2. MNA DC solver + continuity-style "is it connected to the source" pass (useful before any values exist).
-3. Breakers and relays (iteration), scenario YAML runner, report CSV.
-4. Fault injection (short/open per wire), I²t trip check, wire ampacity check.
-5. Drawing overlay and an interactive page (toggle switches, see currents).
+- Layout once the model lands: `core/` (model, net, rules, simulation), `importers/`, `exporters/`, `renderers/`,
+  `cli/`, `app/`; a JSON Schema for every input format.
+- Tests: golden files per exporter, property tests for the net builder, known-answer tests for the simulation.
+- Check the name on PyPI before the first release.

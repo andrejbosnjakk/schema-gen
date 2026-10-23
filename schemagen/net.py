@@ -44,6 +44,24 @@ class Net:
                 if pr.role(d) in ("device", "breaker"): out.append(f"{pr.short(d)} {pr.term(d, x[f'p{e}c'], x[f'p{e}p'])}".strip())
         return sorted(set(out))
 
+    def reach(self, w, e, path=()):
+        """Terminals reachable from end e of wire w through splices only (splices are sleeved, so not testable).
+        Returns [((device, connector, pin), (labels on the way))]; stops at devices, breakers, buses and harness pins."""
+        path = path + (w["label"],)
+        dev = w[f"p{e}"]
+        if self.pr.role(dev) != "splice": return [((dev, w[f"p{e}c"], w[f"p{e}p"]), path)]
+        out = []
+        for x, k in self.at[(dev,)]:
+            if x is not w and x["label"] not in path: out += self.reach(x, 3 - k, path)
+        return out
+
+    def where(self, w, e):
+        """Short text for the place end e of wire w lands on: 'PSW 11', 'CB-MOTOR LOAD', 'SP-H40-VDD'."""
+        d, pr, c, p = w[f"p{e}"], self.pr, w[f"p{e}c"], w[f"p{e}p"]
+        if pr.role(d) == "harness": return f"{pr.harness(d)[1]} {p}"
+        if p and len(pr.dev_conns[d]) <= 1: return f"{pr.short(d)} {p}"  # one connector: the pin says enough
+        return f"{pr.short(d)} {pr.term(d, c, p)}".strip()
+
     def next_hop(self, w, e):
         """Wires that continue from end e of wire w (same splice / bus / harness pin, or the other side of a breaker).
         Returns [(wire, far end of that wire)]."""

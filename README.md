@@ -4,17 +4,23 @@ Turns a wire list (one row = one physical conductor) into wiring-harness documen
 simulation of the electrical system. Built for vehicles, aircraft and machines: anything with harness
 connectors, splices, breakers and buses.
 
-- **Harness drawings** per harness connector, rendered with [WireViz](https://github.com/wireviz/WireViz) (SVG, PNG, HTML + BOM).
-- **"Continues at" notes**: every wire that ends on a splice, bus, breaker or another harness shows where it goes next
-  and where its net finally ends, worked out over the whole wire list.
-- **Cut list** (CSV): label, from, to, gauge, colour, length, continues-at.
-- **Continuity / insulation test sheet** (CSV): per wire, end to end through the mated connector, and pin-to-pin
-  insulation that knows which pins are tied on purpose by a splice.
+- **Harness drawings** per harness connector, rendered with [WireViz](https://github.com/wireviz/WireViz) (SVG, PNG,
+  HTML + BOM). One bundle per far item, each wire labelled with its gauge (`RD:L05 · 22`), CAN pairs twisted and shielded.
+  Wide harnesses are split by side or by function.
+- **"Continues at"**: every wire that ends on a splice, bus, breaker or another harness gets a short next-hop note
+  (`L05 → L04 (CB-ECU LOAD), L06 (X-BH 2) [1]`); the full continuation and net end points go into a numbered footnote
+  table under the drawing and into the cut list.
+- **Cut list** (CSV): label, from, to, bundle, gauge, colour, length, continues-at.
+- **Continuity / insulation test sheet** (CSV) between reachable terminals only (splices are sleeved, so tests walk
+  through them): each connector half to its equipment, end to end through the mated connector (parallel contacts
+  flagged), and pin-to-pin insulation that knows which pins are tied on purpose.
 - **Consistency checks**: pin clashes, one-sided pins, gauge or function changes across a connector, TBD pins and gauges.
-- **index.html**: all drawings in one offline page, with a wire-label search that highlights the wire in the drawing.
+- **index.html**: all drawings in one offline page; a wire-label search highlights the wire and its footnote.
+- **Part data from datasheet cards**: pin names from a structured block in each card (the start of a part library).
+- **One palette** for every output; other tools read it with `schemagen palette`.
 
-Roadmap: a DC current-flow simulation on top of the same net model, so one tool can answer "does this load get power
-with these switches, how much current flows in each wire, does any breaker trip?". See [docs/ROADMAP.md](docs/ROADMAP.md).
+Next: a neutral data model, then a DC current-flow simulation on the same net model ("does this load get power with
+these switches, how much current flows in each wire, does this breaker protect this wire?"). See [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ![demo harness](docs/demo_X-BH.png)
 
@@ -27,58 +33,89 @@ schemagen draw examples/demo         # writes examples/demo/out/
 pytest
 ```
 
-`schemagen draw <project> [X-BH X-J2 ...] [--all] [--no-render]`, where `<project>` is a `schemagen.yml` or the folder that holds it.
-`--no-render` writes the YAML, CSVs and checks without WireViz/Graphviz.
+| command | does |
+|---|---|
+| `schemagen draw <project> [X-BH ...] [--all] [--split none\|side\|function\|auto] [--no-render]` | drawings and their extras |
+| `schemagen export <project> -o wires.csv` | the wire list in the neutral table format (`.csv` or `.json`) |
+| `schemagen palette <project> [--json]` | function class → colour code and hex, for spreadsheets and schematic tools |
+
+`<project>` is a `schemagen.yml` or the folder that holds it. `--no-render` writes YAML, CSVs and checks without WireViz.
 
 ## A project
 
 A project is a folder with a `schemagen.yml` and a wire list. The wire list stays in your own (private) repository;
-this repository only holds the tool and a fictional demo.
+this repository only holds the tool and a fictional demo. The wire list is either a **table** or **Python row modules**:
 
 ```
 my-project/
   schemagen.yml
-  wirelist/
-    ss01_power.py      # row modules: R = [dict(id=..., p1=..., p1c=..., p1p=..., p2=..., ..., func=..., bus=..., awg=...)]
-    ss02_....py        # optional: SUBSYSTEM, DISPLAY (raw device -> readable name), P (protection list)
-    labels.json        # optional: wire id -> printed label (L05)
-    display.py         # optional: readable names; without it schemagen uses its default (see display_default.py)
+  wires.csv            # a table: CSV, XLSX or JSON, one row per conductor (set `source` in schemagen.yml)
+  wirelist/            # ...or Python row modules:
+    ss01_power.py      #   R = [dict(id=..., p1=..., p1c=..., p1p=..., p2=..., ..., func=..., bus=..., awg=...)]
+    labels.json        #   optional: wire id -> printed label (L05)
+    display.py         # optional (both forms): readable names; default in display_default.py
     names.py           # optional: NAMES (id -> wire name)
-  cards/               # optional: datasheet interface cards (markdown pin tables) for real pin names
+  cards/               # optional: datasheet interface cards (markdown) for real pin names
 ```
 
-Row fields: `id`, `p1`/`p1c`/`p1p` = from device / connector / pin, `p2`/`p2c`/`p2p` = to, `func`, `bus`, `awg`,
-`st` (status; `Open…` is flagged), optional `name`. Device strings start with a code (`SP-…` splice,
-`CB-…` breaker, `GNDB` ground bus, `X-…` harness connector); the prefixes are set in `schemagen.yml`.
+Row fields (the neutral format, `schemagen export` writes it): `id`, `label`, `name`, `p1`/`p1c`/`p1p` = from device /
+connector / pin, `p2`/`p2c`/`p2p` = to, `func`, `bus`, `awg`, `amps`, `st` (status; `Open…` is flagged),
+`subsystem`, `notes`. Device strings start with a code (`SP-…` splice, `CB-…` breaker, `GNDB` ground bus, `X-…`
+harness connector); the prefixes are set in `schemagen.yml`.
+
+A *readable* wire list (display names, connector and pin merged into one text cell) is a view, not a source: it has
+lost the device codes and pin structure the net model needs. Export the structured rows instead.
 
 `schemagen.yml` (all keys optional except what your data needs; see [examples/demo/schemagen.yml](examples/demo/schemagen.yml)):
 
 | key | meaning |
 |---|---|
 | `wirelist`, `cards`, `out` | folders, relative to the yml |
+| `source` | table input: `{path, sheet, header_row, columns: {field: column name}}` (see `table.py`) |
 | `default_harnesses` | harness connectors drawn when none are named |
+| `split`, `split_default`, `split_threshold` | per-harness split mode; `auto` splits by side above the threshold of far items (default 20) |
 | `buses`, `bus_prefixes`, `breaker_prefixes`, `splice_prefix` | how device codes map to roles |
 | `near_words` | words in a connector-half name that put it on the left (e.g. `cabin`, `half a`) |
 | `colours` | function class → WireViz colour. Default: 14 V `RD`, 24 V `YE`, 5 V `VT`, GND `BK`, signal `BU`, CAN_H `GN`, CAN_L `GNWH`. Orange is not used: it is the usual HV colour. |
 | `bus_class` | bus name → function class (e.g. `Switched out: 14 V`) |
 | `label_class` | wire-label regex → function class, for powered wires whose bus name has no voltage (e.g. `'^T\d': 24 V`) |
 | `harnesses` | for projects without `display.py`: `prefix: [name, code, far side]` |
-| `cardmap` | `{device, connector, card, table}` regexes that point a device connector at a card pin table |
+| `cardmap` | fallback for cards without a structured block: `{device, connector, card, table}` regexes |
 
 Optional `<out>/lengths.csv` (`label,length_m`) fills in lengths in the cut list, the bundles and the BOM.
+
+### Datasheet cards
+
+A card is a markdown file in `cards/`. schemagen reads a fenced block marked `yaml schemagen` anywhere in it:
+
+````markdown
+```yaml schemagen
+device: '^ECU$'                 # regex on the device code in the wire list
+connectors:
+  - id: J1
+    match: '^J1$'               # regex on the wire list's connector field
+    part: TE 776286-1
+    pins:
+      - {n: 1, name: VBAT, type: power_in, v_max: 16, i_max: 5}
+```
+````
+
+Cards without a block can still be used through `cardmap` (markdown pin tables), but that is fragile; ask whoever
+writes the cards for the block.
 
 ## Code map
 
 | module | role |
 |---|---|
 | `config.py` | `schemagen.yml` → `Config` |
-| `project.py` | loads the row modules; device roles and readable names |
-| `styles.py` | function class and wire colour, gauge |
-| `net.py` | connectivity over the whole wire list (union-find); the base for notes, tests and the simulation |
-| `cards.py` | pin names from card pin tables |
-| `drawing.py` | WireViz document for one harness connector |
+| `project.py` | loads rows (modules or table); device roles and readable names |
+| `table.py` | CSV / XLSX / JSON input with column mapping; neutral export |
+| `styles.py`, `palette.py` | function class, wire colour, gauge; the palette for other tools |
+| `net.py` | connectivity over the whole wire list (union-find), reachable terminals, next hops; the base for notes, tests and the simulation |
+| `cards.py` | pin data from card blocks (or markdown tables) |
+| `drawing.py` | WireViz document for one harness connector or one part of it |
 | `checks.py` | consistency checks |
-| `outputs.py` | YAML, render, cut list, test sheet, checks, index page |
+| `outputs.py` | YAML, render (WireViz command), footnotes, cut list, test sheet, checks, index page |
 | `cli.py` | `schemagen` command |
 
 ## Why WireViz 0.4.1 (and not Filare)
@@ -89,4 +126,5 @@ The generator emits plain WireViz YAML, so the renderer stays replaceable.
 
 ## Licence
 
-MIT (see `LICENSE`). Note that WireViz itself is GPL-3.0; schemagen calls it as a separate, unmodified dependency.
+MIT (see `LICENSE`). WireViz is GPL-3.0, so schemagen never imports it: it writes WireViz YAML and runs the separate
+`wireviz` command (a test checks this).
