@@ -6,6 +6,8 @@ Terminated CAN node (120 Ω inside), supplies and reads the oil temperature sens
 device: '^DSP$'
 part: demo display
 kind: device
+load: {model: constant_power, p_w: 8, v_min: 9}
+supply_out: {v: 5.0, i_limit: 0.1, r_out: 0.1}
 connectors:
   - id: CAN
     match: '^CAN$'

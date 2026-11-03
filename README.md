@@ -44,6 +44,7 @@ pytest
 | `schemagen labels <project> --update` | label ledger: records labels in use, retires removed ones with a reason |
 | `schemagen diff <A> <B> [--project DIR] [--format text\|json\|html]` | added, removed and changed wires, pins, labels, protection, open items; A and B are folders or git revisions |
 | `schemagen changes <project> [--undo]` | list or undo the stored change sets |
+| `schemagen sim <project> [scenario.yml ...] [--faults all]` | DC operating point per scenario and the fault sweep; HTML + JSON report in `<out>/sim/`; exits 1 when an expectation fails |
 | `schemagen export <project> -o wires.xlsx` | the project in the neutral table format: `.xlsx` workbook, a folder of CSVs, `.csv` (wires only) or `.json` (the whole model) |
 | `schemagen schema [-o schemas]` | JSON Schemas of the model, the part library and issues |
 | `schemagen synth --wires N --seed S -o DIR` | a synthetic (fictional) project for tests and benchmarks |
@@ -151,6 +152,30 @@ COM / NO). `schemagen fix direction` swaps ends in a change set and never touche
 **Change sets** (`changes/*.json`) are applied on every load, in order. They are how the app and the fixes edit a
 project whatever its source format; commit them like any other file.
 
+## Simulation
+
+`schemagen sim` builds a DC circuit from the model (modified nodal analysis, scipy sparse): every conductor is copper
+resistance (Ω/m by AWG × length × temperature factor) plus contact resistance at each pin; breakers and fuses are
+small resistances with a trip curve; switch and relay contacts are present when closed and relay coils close their
+contacts at pick-up (iterated to a fixed point, oscillation reported). Sources and loads come from the part cards:
+
+```yaml schemagen
+kind: battery
+source: {v_oc: 13.2, r_int: 0.02}            # DC/DC: {v_out, i_limit, r_out, efficiency}
+load: {model: constant_power, p_w: 12, v_min: 9}   # or constant_current (i_a) or resistive (r_ohm)
+trip_curve: [[1.15, 3600], [2, 12], [10, 0.02]]    # breakers / fuses: multiple of rating -> seconds
+```
+
+Lengths come from `lengths.csv` (measured), then the conductor's `length_m` (design), then zone-to-zone estimates
+(`zones: {CB: {xy: [1.5, 0]}}`), then a default; every parameter is marked measured / datasheet / design / estimated /
+assumed and every result lists the assumptions it rests on. Defaults and their sources: `schemagen/core/data/sim.yml`,
+`wire.yml`; override them under `sim:` and `tables:` in schemagen.yml.
+
+Scenarios are YAML files in `<project>/scenarios/` (`set` switch / relay / breaker / load states, `faults` short /
+open / fail, `expect` `powered`, `max_drop_V`, `min_voltage`, `no_trip`); see `schemagen/sim/report.py`.
+`--faults all` shorts every powered node to ground and reports the prospective current, the device that trips first
+and when, wire survival (I²t, IEC 60364-4-43 k), the interrupt rating and selectivity. A design check, not certification evidence.
+
 ## Code map
 
 | module | role |
@@ -165,6 +190,7 @@ project whatever its source format; commit them like any other file.
 | `core/changes.py`, `core/diff.py`, `core/ledger.py` | change sets, project diff (folders or git revisions), label ledger |
 | `core/tables.py`, `core/data/` | cited reference tables (protection, copper, CAN, simulation defaults) |
 | `renderers/` | interface drawings, the WireViz command runner (parallel batches) |
+| `sim/engine.py`, `sim/build.py`, `sim/api.py`, `sim/report.py` | MNA solver (Newton, relays, current limits), model → circuit with provenance, operating point / expectations / fault sweep, report and CLI |
 | `project.py`, `table.py`, `config.py` | 0.2 interfaces on top of the model (wire dicts for the drawing code) |
 | `styles.py`, `palette.py` | function class, wire colour, gauge; the palette for other tools |
 | `net.py` | 0.2 interface to `core/net.py` for the drawing code: reachable terminals, next hops |

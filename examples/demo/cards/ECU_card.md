@@ -6,6 +6,8 @@ Structured block read by schemagen (the table below is for people):
 
 ```yaml schemagen
 device: '^ECU$'
+kind: controller
+load: {model: constant_power, p_w: 12, v_min: 9}
 connectors:
   - id: J1
     match: '^J1$'

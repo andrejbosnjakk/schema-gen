@@ -50,8 +50,12 @@ class Synth:
     cur_mod: str = "ss01_power"
     total: int = 0
     ctl: str = ""
+    bat: str = ""
     ctl_splice: str = ""
     ctl_count: int = 0
+    bus14: list[list[Any]] = field(default_factory=list)   # [raw, breakers on it]
+    bus24: list[list[Any]] = field(default_factory=list)
+    gnd_amps: float = 0.0
     devices: dict[str, str] = field(default_factory=dict)  # code -> zone
 
     # ------------------------------------------------------------ helpers
@@ -60,7 +64,7 @@ class Synth:
         return self.counters[k]
 
     def wire(self, a: tuple[str, str, str], b: tuple[str, str, str], func: str, bus: str, awg: int, amps: float = 0,
-             zone: str = "CB", harn: str = "", prot: str = "", length: float | None = None, cls: str = "P") -> str:
+             zone: str = "CB", harn: str = "", prot: str = "", length: float | None = None, cls: str = "P", **extra: Any) -> str:
         i = self.nid("wire")
         wid = f"W{i:05d}"
         lab = f"{cls}{self.nid('lab' + cls):04d}"
@@ -71,6 +75,7 @@ class Synth:
         if prot: r["prot"] = prot
         if cls == "S" and self.rng.random() < 0.3: r["col"] = "WH"
         if self.rng.random() < 0.05: r["legacy"] = f"OLD-{i:04d}"
+        r.update(extra)
         self.rows.setdefault(self.cur_mod, []).append(r)
         self.labels[wid] = lab
         ln = length if length is not None else round(0.4 + self.rng.random() * 1.6, 2)
@@ -113,16 +118,16 @@ class Synth:
         return out[::-1]
 
     def run(self, a: tuple[str, str, str], za: str, b: tuple[str, str, str], zb: str, func: str, bus: str, awg: int,
-            amps: float = 0, prot: str = "", cls: str = "P", length: float | None = None) -> list[str]:
+            amps: float = 0, prot: str = "", cls: str = "P", length: float | None = None, **extra: Any) -> list[str]:
         """Conductors from terminal a (zone za) to terminal b (zone zb), crossing harness connectors on the way."""
         zs = self.path(za, zb)
         kind = "S" if awg >= 20 and cls in "SVNG" else "P"
         out, cur, cz = [], a, za
         for nz in zs[1:]:
             raw, ha, hb, p = self.hconn(cz, nz, kind)
-            out.append(self.wire(cur, (raw, ha, str(p)), func, bus, awg, amps, cz, f"H-{cz}", prot, length, cls))
+            out.append(self.wire(cur, (raw, ha, str(p)), func, bus, awg, amps, cz, f"H-{cz}", prot, length, cls, **extra))
             cur, cz = (raw, hb, str(p)), nz
-        out.append(self.wire(cur, b, func, bus, awg, amps, cz, f"H-{cz}" if len(zs) > 1 else "", prot, length, cls))
+        out.append(self.wire(cur, b, func, bus, awg, amps, cz, f"H-{cz}" if len(zs) > 1 else "", prot, length, cls, **extra))
         return out
 
     def ground(self, term: tuple[str, str, str], zone: str, awg: int, amps: float, func: str) -> None:
@@ -144,7 +149,7 @@ class Synth:
         k = self.nid("cb")
         code = f"{'FU' if fuse else 'CB'}-{k:03d}"
         raw = self.dev(code, f"{rating:g} A", "CB")
-        bb = BB1 if bus == "14 V" else BB24
+        bb = self.bus_for(bus)
         self.wire((bb, "Stud", ""), (raw, "LINE", ""), f"{desc} breaker feed", bus, self.gauge_for(rating), 0, "CB", "", code,
                   0.3, "P" if bus == "14 V" else "T")
         self.P.append(dict(id=code, rating=rating, panel=desc.upper()[:24], loads=loads, kind="fuse" if fuse else "breaker",
@@ -152,19 +157,36 @@ class Synth:
         return raw
 
     # ------------------------------------------------------------ circuits
+    def bus_for(self, bus: str) -> str:
+        """The bus bar a new breaker goes on: a 14 V bus per 16 breakers (each with its own main breaker from the
+        battery), a 24 V bus per 6 breakers (each with its own DC/DC converter)."""
+        lst = self.bus14 if bus == "14 V" else self.bus24
+        if not lst or lst[-1][1] >= (16 if bus == "14 V" else 6):
+            k = len(lst) + 1
+            mod = self.cur_mod; self.cur_mod = "ss01_power"
+            if bus == "14 V":
+                raw = self.dev(f"BB{k}", "14 V bus bar", "CB")
+                lst.append([raw, 0])
+                main = self.dev(f"CB-M{k:02d}", "100 A", "CB")
+                self.P.append(dict(id=f"CB-M{k:02d}", rating=100, panel=f"MAIN {k}", loads=[f"BB{k}"], kind="breaker", i_interrupt=5000))
+                self.run((self.bat, "+", ""), "RR", (main, "LINE", ""), "CB", f"Battery feed {k}", "14 V", 4, 0, "", "P", 1.5)
+                self.wire((main, "LOAD", ""), (raw, "Stud", ""), f"Main bus feed {k}", "14 V", 4, 0, "CB", "", f"CB-M{k:02d}", 0.3)
+            else:
+                raw = self.dev(f"BBT{k}", "24 V bus bar", "CB")
+                cb = self.breaker("14 V", 30, f"DC/DC {k} input", [f"DCDC{k}"])
+                lst.append([raw, 0])
+                dc = self.dev(f"DCDC{k}", "14/24 V converter", "CB")
+                self.wire((cb, "LOAD", ""), (dc, "IN", ""), f"DC/DC {k} input", "14 V", 12, 0, "CB", "", cb.split()[0], 0.5)
+                self.wire((dc, "OUT", ""), (raw, "Stud", ""), f"24 V bus {k} feed", "24 V", 12, 0, "CB", "", "", 0.5, "T")
+                self.wire((dc, "GND", ""), (GNDB, "Stud", ""), f"DC/DC {k} return", "GND", 12, 0, "CB", "", "", 0.5, "G")
+                self.gnd_amps += 30
+            self.cur_mod = mod
+        lst[-1][1] += 1
+        return str(lst[-1][0])
+
     def backbone(self) -> None:
         self.cur_mod = "ss01_power"
-        bat = self.dev("BAT", "battery 14 V", "RR")
-        main = self.dev("CB-MAIN", "100 A", "CB")
-        self.P.append(dict(id="CB-MAIN", rating=100, panel="MAIN", loads=["BB1"], kind="breaker", i_interrupt=5000))
-        self.run((bat, "+", ""), "RR", (main, "LINE", ""), "CB", "Battery feed", "14 V", 4, 0, "", "P", 1.5)
-        self.wire((main, "LOAD", ""), (BB1, "Stud", ""), "Main bus feed", "14 V", 4, 0, "CB", "", "CB-MAIN", 0.3)
-        self.run((bat, "-", ""), "RR", (GNDB, "Stud", ""), "CB", "Battery return", "GND", 4, 0, "", "G", 1.5)
-        cb = self.breaker("14 V", 30, "DC/DC input", ["DCDC1"])
-        dc = self.dev("DCDC1", "14/24 V converter", "CB")
-        self.wire((cb, "LOAD", ""), (dc, "IN", ""), "DC/DC input", "14 V", 12, 0, "CB", "", cb.split()[0], 0.5)
-        self.wire((dc, "OUT", ""), (BB24, "Stud", ""), "24 V bus feed", "24 V", 12, 0, "CB", "", "", 0.5, "T")
-        self.wire((dc, "GND", ""), (GNDB, "Stud", ""), "DC/DC return", "GND", 12, 0, "CB", "", "", 0.5, "G")
+        self.bat = self.dev("BAT", "battery 14 V", "RR")
         self.ctl = self.breaker("14 V", 5, "relay control", [])
 
     def load(self) -> None:
@@ -192,6 +214,7 @@ class Synth:
             self.wire(src, (rl, "C", "COM"), desc, bus, awg, amps, "CB", "", code, None, cls)
             src = (rl, "C", "NO")
             if not self.ctl_splice or self.ctl_count >= 6:
+                if self.nid("ctlsp") % 3 == 0: self.ctl = self.breaker("14 V", 5, "relay control", [])  # 18 coils per breaker at most
                 self.ctl_splice = self.dev(f"SP-CTL-{self.nid('spc')}", "relay control splice", "CB")
                 self.wire((self.ctl, "LOAD", ""), (self.ctl_splice, "Splice", ""), "Relay control", "14 V", 22, 0, "CB", "",
                           self.ctl.split()[0], 0.3)
@@ -263,13 +286,16 @@ class Synth:
         for z, raw, amps in self.gtrunks:
             awg = min(self.gauge_for(min(r for r in [*RATINGS, 30, 40, 50] if r >= max(1.25 * amps, 3))), 16)
             self.run((raw, "Splice", ""), z, (GNDB, "Stud", ""), "CB", "Ground trunk", "GND", awg, amps, "", "G")
+            self.gnd_amps += amps
+        for _ in range(max(1, -(-int(self.gnd_amps) // 60))):  # parallel battery returns, 60 A each
+            self.run((self.bat, "-", ""), "RR", (GNDB, "Stud", ""), "CB", "Battery return", "GND", 4, 0, "", "G", 1.5, parallel=True)
         while self.total < self.n:  # exact count: structure ground straps
             k = self.nid("str")
             st = self.dev(f"STR-{k:03d}", "structure ground stud", "CB")
             self.wire((st, "Stud", ""), (GNDB, "Stud", ""), "Structure bond", "GND", 12, 0, "CB", "", "", 0.3, "G")
 
 
-BB1, BB24, GNDB = "BB1 14 V bus bar", "BB24 24 V bus bar", "GNDB ground bus"
+GNDB = "GNDB ground bus"
 
 
 def generate(n: int, seed: int) -> Synth:
@@ -290,8 +316,10 @@ def generate(n: int, seed: int) -> Synth:
     for b in range(nb):
         mine = [(e["raw"], e["zone"]) for e in ecus[b::nb]]
         s.can([dsps[b]] + mine, b + 1)
-    def pending() -> int:  # ground trunk conductors still to come
-        return sum(len(s.path(z, "CB")) for z in s.gsplice) + sum(len(s.path(z, "CB")) for z, _, _ in s.gtrunks)
+    def pending() -> int:  # ground trunk and battery return conductors still to come
+        amps = s.gnd_amps + sum(g[2] for g in s.gsplice.values()) + sum(a for _, _, a in s.gtrunks)
+        return sum(len(s.path(z, "CB")) for z in s.gsplice) + sum(len(s.path(z, "CB")) for z, _, _ in s.gtrunks) \
+            + (1 + int(amps) // 60) * len(s.path("RR", "CB"))
     while s.total + pending() + 16 < n:
         r = s.rng.random()
         free_ai = [e for e in ecus if e["ai"] <= 8]
@@ -309,7 +337,7 @@ CARDS: dict[str, dict[str, Any]] = {
     "battery": dict(device="^BAT$", part="SV-BAT-40AH", kind="battery", source=dict(v_oc=13.2, r_int=0.01),
                     connectors=[dict(id="+", match=r"^\+$", type="power_out", i_max=200),
                                 dict(id="-", match="^-$", type="ground", i_max=200)]),
-    "dcdc": dict(device="^DCDC1$", part="SV-DCDC-24V-15A", kind="dcdc", source=dict(v_out=24.0, i_limit=15.0, r_out=0.01, efficiency=0.9),
+    "dcdc": dict(device=r"^DCDC\d+$", part="SV-DCDC-24V-15A", kind="dcdc", source=dict(v_out=24.0, i_limit=15.0, r_out=0.01, efficiency=0.9),
                  connectors=[dict(id="IN", match="^IN$", type="power_in", i_max=40), dict(id="OUT", match="^OUT$", type="power_out", i_max=40),
                              dict(id="GND", match="^GND$", type="ground", i_max=40)]),
     "breaker": dict(device="^CB-", part="SV-CB", kind="breaker", trip_curve=[[1.15, 3600], [1.5, 60], [2, 12], [5, 1.5], [10, 0.02]],
@@ -353,8 +381,9 @@ CARDS: dict[str, dict[str, Any]] = {
 }
 
 
-def load_cards() -> dict[str, dict[str, Any]]:
+def load_cards(n_bus: int = 1) -> dict[str, dict[str, Any]]:
     out = dict(CARDS)
+    out["battery"] = dict(CARDS["battery"], source=dict(v_oc=13.2, r_int=round(0.01 / max(n_bus, 1), 6)))
     for fam, (part, desc, model, val, vnom, vmin, bus) in LOADS.items():
         ld: dict[str, Any] = dict(model=model, v_min=vmin, v_nom=vnom)
         ld["i_a" if model == "constant_current" else "p_w"] = val
@@ -364,9 +393,9 @@ def load_cards() -> dict[str, dict[str, Any]]:
     return out
 
 
-SCENARIOS = {
+SCENARIOS: dict[str, dict[str, Any]] = {
     "normal": dict(scenario="normal operation, all switches on", set={"*SW-P-*": "closed", "*SW-C-*": "closed"},
-                   expect=dict(no_trip=True, min_voltage={"BB1": 12.0, "BB24": 23.0})),
+                   expect=dict(no_trip=True, min_voltage={"BB1": 12.0, "BBT1": 23.0})),
     "switches_off": dict(scenario="all switches off", set={"*SW-P-*": "open", "*SW-C-*": "open"}, expect=dict(no_trip=True)),
 }
 
@@ -391,15 +420,18 @@ def write(s: Synth, out: Path, seed: int) -> None:
             body.append(f"D = {D!r}\nO = {O!r}\n")
         (wl / f"{name}.py").write_text("".join(body), encoding="utf-8")
     (wl / "labels.json").write_text(json.dumps(s.labels, indent=0), encoding="utf-8")
-    for k, c in sorted(load_cards().items()):
+    for k, c in sorted(load_cards(len(s.bus14)).items()):
         blk = yaml.safe_dump(c, sort_keys=False, default_flow_style=None, width=150)
         (cards / f"{k}.md").write_text(f"# Interface card: synthetic {k} (fictional)\n\n```yaml schemagen\n{blk}```\n", encoding="utf-8")
     with open(out / "lengths.csv", "w", encoding="utf-8") as fh:
         fh.write("label,length_m\n" + "".join(f"{k},{v}\n" for k, v in sorted(s.lengths.items())))
-    for k, v in SCENARIOS.items():
+    import copy
+    scen: dict[str, Any] = copy.deepcopy(SCENARIOS)
+    if not s.bus24: scen["normal"]["expect"]["min_voltage"].pop("BBT1", None)
+    for k, v in scen.items():
         (sc / f"{k}.yml").write_text(yaml.safe_dump(v, sort_keys=False), encoding="utf-8")
     cfg = dict(wirelist="wirelist", cards="cards", out="out", lengths="lengths.csv", default_harnesses=[],
-               buses=["GNDB", "BB1", "BB24"], breaker_prefixes=["CB-", "FU-"], splice_prefix="SP-",
+               buses=["GNDB"], bus_prefixes=["BB"], breaker_prefixes=["CB-", "FU-"], splice_prefix="SP-",
                switch_prefixes=["SW-"], relay_prefixes=["K-"],
                harnesses=dict(sorted(s.hdecl.items())), sides=dict(sorted(s.sides.items())),
                zones={k: dict(name=v[0], xy=[v[1], v[2]]) for k, v in ZONES.items()})

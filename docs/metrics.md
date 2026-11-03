@@ -64,3 +64,27 @@ Benchmark after M2 (`python benchmarks/bench.py --no-sim`):
 | synthetic 5k | 5000 | 0.516 | 0.018 | 0.224 | 8.042 |
 
 Draw now also builds the interface drawings (5k: about 450 of them), so it is slower than after M1.
+
+## M3 (0.4): DC simulation
+
+| metric | target | measured |
+|---|---|---|
+| known-answer tests vs hand calculations | ≥ 15, error ≤ 0.1 % or ≤ 1 mV / 1 mA | 19 (`tests/test_sim.py`): divider, battery + R_int + load, parallel wires, AWG resistance (20 °C and 60 °C), constant-power Newton (2), constant current, current-limited source (in and out of limit), DC/DC input power, relay pick-up / open / below pick-up / oscillation, trip-curve interpolation, project operating point, fault current and trip, selectivity, wire I²t |
+| Kirchhoff current residual | ≤ 1e-9 A at every node | ≤ 9e-11 A on every synthetic scenario (1k, 5k); ≤ 2e-12 A on the demo |
+| Newton iterations | ≤ 50 on every synthetic scenario | 8–10 (synthetic 1k and 5k, both scenarios) |
+| operating point, synthetic 1k | ≤ 200 ms | 102 ms |
+| operating point, synthetic 5k | ≤ 2 s | 0.55 s |
+| full fault sweep, synthetic 1k | ≤ 30 s | 0.55 s (766 nodes); 5k: 13.5 s (3,619 nodes) |
+| ngspice cross-check | ≥ 3 circuits within 0.5 % | 3 circuits (constant-power, constant-current and resistive loads), all node voltages within 0.5 % (they agree to 1e-6) |
+
+The fault sweep on synthetic 1k reports, as design findings: battery feeds before the main breakers are not cleared
+(unprotected section), and short 22 AWG feeders from a bus bar to small breakers are protected only by the 100 A main
+breaker and would not survive a short at the breaker's line side (I²t). Both are true for the generated design.
+
+Benchmark after M3 (`python benchmarks/bench.py`):
+
+| project | wires | load (s) | net (s) | rules (s) | draw, no render (s) | sim op (s) | fault sweep (s) |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| demo | 23 | 0.006 | 0.000 | 0.001 | 0.027 | 0.002 | 0.004 |
+| synthetic 1k | 1000 | 0.138 | 0.003 | 0.036 | 1.259 | 0.102 | 0.554 |
+| synthetic 5k | 5000 | 0.504 | 0.017 | 0.210 | 9.419 | 0.550 | 13.509 |

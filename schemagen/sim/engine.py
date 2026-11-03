@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass, field
+from typing import Any
 import numpy as np
 import numpy.typing as npt
 from scipy.sparse import csc_matrix
@@ -97,24 +98,43 @@ class Relay:
 
 
 class Circuit:
-    def __init__(self, gmin: float = 1e-12):
+    def __init__(self, gmin: float = 1e-12, max_step: float = 2.0):
         self.res: list[Resistor] = []
         self.src: list[Source] = []
         self.loads: list[Load] = []
         self.relays: list[Relay] = []
-        self.gmin = gmin
+        self.gmin, self.max_step = gmin, max_step
         self.off: set[str] = set()            # elements switched out (open contacts, failed sources, loads off)
+        self.alias: dict[str, str] = {}       # merged node -> the node it is part of (pins tied inside a part)
+
+    def _n(self, x: str) -> str:
+        while x in self.alias: x = self.alias[x]
+        return x
+
+    def merge(self, a: str, b: str) -> None:
+        """Make node a part of node b (an ideal internal tie, without a tiny resistor and its round-off)."""
+        a, b = self._n(a), self._n(b)
+        if a == b: return
+        if a == REF: a, b = b, a
+        self.alias[a] = b
+
+    def resolve(self) -> None:
+        """Rename merged nodes in every element (done once before solving)."""
+        if not self.alias: return
+        for r in self.res: r.a, r.b = self._n(r.a), self._n(r.b)
+        for s in self.src: s.p, s.m = self._n(s.p), self._n(s.m)
+        for ld in self.loads: ld.a, ld.b = self._n(ld.a), self._n(ld.b)
 
     # ---------------------------------------------------------------- building
     def r(self, name: str, a: str, b: str, r: float, kind: str = "wire", ref: str = "") -> Resistor:
-        x = Resistor(name, a, b, max(r, 1e-9), kind, ref); self.res.append(x); return x
+        x = Resistor(name, self._n(a), self._n(b), max(r, 1e-9), kind, ref); self.res.append(x); return x
 
     def vsrc(self, name: str, p: str, m: str, v: float, rs: float = 0.0, i_limit: float | None = None, ref: str = "") -> Source:
-        x = Source(name, p, m, v, rs, i_limit, ref); self.src.append(x); return x
+        x = Source(name, self._n(p), self._n(m), v, rs, i_limit, ref); self.src.append(x); return x
 
     def load(self, name: str, a: str, b: str, model: str, value: float, v_min: float = 0.0, v_knee: float | None = None, ref: str = "") -> Load:
         k = v_knee if v_knee is not None else (v_min if v_min > 0 else 1.0)
-        x = Load(name, a, b, model, value, v_min, k, ref); self.loads.append(x); return x
+        x = Load(name, self._n(a), self._n(b), model, value, v_min, k, ref); self.loads.append(x); return x
 
     def nodes(self) -> list[str]:
         out: dict[str, None] = {}
@@ -127,6 +147,7 @@ class Circuit:
     # ---------------------------------------------------------------- solving
     def solve(self, max_iter: int = 50, tol_v: float = 1e-10, tol_i: float = 1e-11, x0: dict[str, float] | None = None) -> Result:
         """Operating point. Relay coils are iterated to a fixed point (oscillation is reported, not hidden)."""
+        self.resolve()
         states = {rl.name: False for rl in self.relays}
         seen: list[dict[str, bool]] = []
         res: Result | None = None
@@ -141,7 +162,8 @@ class Circuit:
             res.relay_rounds, res.relay_states = rounds, dict(new)
             if new == states: return res
             if new in seen:
-                res.oscillating = sorted(k for k in new if any(s[k] != new[k] for s in seen))
+                cyc = seen[seen.index(new):] + [states]
+                res.oscillating = sorted(k for k in new if len({s[k] for s in cyc}) > 1)
                 res.message = f"relay coils oscillate: {', '.join(res.oscillating)} (no stable contact state)"
                 res.converged = False
                 return res
@@ -194,6 +216,8 @@ class Circuit:
             pass
         it, msg, conv = 0, "", False
         for s in thev: s.limited = False
+        flips: dict[str, int] = {s.name: 0 for s in thev}
+        lim, prev = self.max_step, None
         for it in range(1, max_iter + 1):
             rr, cc, vv = list(rows), list(cols), list(vals)
             rhs = rhs0.copy()
@@ -217,28 +241,37 @@ class Circuit:
             try: xn = splu(A).solve(rhs)
             except RuntimeError as e: raise SimError(f"singular circuit matrix: {e}") from e
             if not np.all(np.isfinite(xn)): raise SimError("the solution is not finite (a source shorted by an ideal element?)")
-            dv = float(np.max(np.abs(xn - x))) if m else 0.0
-            x = xn
+            step = xn - x
+            big = float(np.max(np.abs(step[:n]))) if n else 0.0
+            if prev is not None and float(np.dot(step[:n], prev[:n])) < 0: lim = max(lim / 2, 1e-3)  # reversing: smaller steps
+            if it > 1 and big > lim: step = step * (lim / big)  # damped Newton: no wild iterates
+            prev = step
+            dv = float(np.max(np.abs(step))) if m else 0.0
+            x = x + step
             vx = self._volts(x, idx)
-            changed = False
-            for s in thev:
-                if s.i_limit is None: continue
-                vt = vx.get(s.p, 0.0) - vx.get(s.m, 0.0)
-                if not s.limited and (s.v - vt) / s.rs > s.i_limit * (1 + 1e-12): s.limited = changed = True
-                elif s.limited and vt > s.v - s.i_limit * s.rs: s.limited = False; changed = True
-            if it > 1 and dv < tol_v * (1 + float(np.max(np.abs(x)))) and not changed:
+            if it > 1 and dv < tol_v * (1 + float(np.max(np.abs(x)))):
+                # converged for this set of source modes: a source over its limit switches to constant current
+                # (only then, so that constant-power loads do not lock it into a spurious low-voltage equilibrium)
+                changed = False
+                for s in thev:
+                    if s.i_limit is None: continue
+                    vt = vx.get(s.p, 0.0) - vx.get(s.m, 0.0)
+                    if not s.limited and (s.v - vt) / s.rs > s.i_limit * (1 + 1e-9): s.limited = changed = True
+                    elif s.limited and vt > s.v - s.i_limit * s.rs * (1 - 1e-9) and flips[s.name] < 5:
+                        s.limited = False; changed = True; flips[s.name] += 1
+                if changed: lim, prev = self.max_step, None; continue
                 cur = self._currents(vx, x, ideal, n)
                 resid = self.kcl(vx, cur)
-                if resid < tol_i or dv == 0.0: conv = True; break
+                if resid < tol_i or dv == 0.0 or (resid < 1e-9 and dv < 1e-11): conv = True; break
         else:
             msg = f"Newton did not converge in {max_iter} iterations"
         vx = self._volts(x, idx)
         cur = self._currents(vx, x, ideal, n)
         return Result(vx, cur, it, self.kcl(vx, cur), conv, msg, [s.name for s in thev if s.limited])
 
-    @staticmethod
-    def _volts(x: Vec, idx: dict[str, int]) -> dict[str, float]:
+    def _volts(self, x: Vec, idx: dict[str, int]) -> dict[str, float]:
         v = {nm: float(x[k]) for nm, k in idx.items()}; v[REF] = 0.0
+        for a in self.alias: v[a] = v.get(self._n(a), 0.0)
         return v
 
     def _pout(self, v: dict[str, float], thev: list[Source]) -> dict[str, float]:
@@ -280,6 +313,75 @@ class Circuit:
         return max((abs(x) for x in s.values()), default=0.0)
 
 
+class Linear:
+    """The circuit linearised for short-circuit studies: loads fixed as their operating-point resistance (IEC 60909
+    practice neglects load contribution), sources in the given modes. One LU factorisation; a short to the
+    reference at any node is then a rank-1 update (Sherman-Morrison)."""
+
+    def __init__(self, c: Circuit, base: Result):
+        c.resolve()
+        self.c = c
+        self.names = c.nodes()
+        self.idx = {n: k for k, n in enumerate(self.names)}
+        self.loads_r: dict[str, float] = {}
+        for ld in c.loads:
+            if ld.name in c.off: continue
+            v = base.v.get(ld.a, 0.0) - base.v.get(ld.b, 0.0)
+            i = base.i.get(ld.name, 0.0)
+            if abs(i) > 1e-9 and abs(v) > 1e-6: self.loads_r[ld.name] = v / i
+        self.base_limited = set(base.limited)
+        self._lu: dict[frozenset[str], tuple[Any, Vec]] = {}
+
+    def _system(self, limited: frozenset[str]) -> tuple[Any, Vec]:
+        if limited in self._lu: return self._lu[limited]
+        c, idx, n = self.c, self.idx, len(self.names)
+        rr: list[int] = []; cc: list[int] = []; vv: list[float] = []
+        rhs = np.zeros(n)
+
+        def g2(a: str, b: str, g: float) -> None:
+            ia, ib = idx.get(a), idx.get(b)
+            if ia is not None: rr.append(ia); cc.append(ia); vv.append(g)
+            if ib is not None: rr.append(ib); cc.append(ib); vv.append(g)
+            if ia is not None and ib is not None: rr.extend([ia, ib]); cc.extend([ib, ia]); vv.extend([-g, -g])
+
+        def inj(node: str, i: float) -> None:
+            k = idx.get(node)
+            if k is not None: rhs[k] += i
+        for r in c.res:
+            if r.name not in c.off: g2(r.a, r.b, 1 / r.r)
+        for k in range(n): rr.append(k); cc.append(k); vv.append(c.gmin)
+        for s in c.src:
+            if s.name in c.off: continue
+            if s.rs <= 0: raise SimError("the fault sweep needs sources with internal resistance")
+            if s.name in limited and s.i_limit is not None: inj(s.p, s.i_limit); inj(s.m, -s.i_limit)
+            else: g2(s.p, s.m, 1 / s.rs); inj(s.p, s.v / s.rs); inj(s.m, -s.v / s.rs)
+        for ld in c.loads:
+            if ld.name in self.loads_r: g2(ld.a, ld.b, 1 / self.loads_r[ld.name])
+        lu = splu(csc_matrix((vv, (rr, cc)), shape=(n, n)))
+        out = (lu, lu.solve(rhs))
+        self._lu[limited] = out
+        return out
+
+    def short(self, node: str, rf: float) -> tuple[Vec, frozenset[str]]:
+        """Node voltages (vector in self.names order) with node shorted to the reference through rf."""
+        k = self.idx[node]
+        limited = frozenset(self.base_limited)
+        for _ in range(len(self.c.src) + 1):
+            lu, x = self._system(limited)
+            e = np.zeros(len(self.names)); e[k] = 1.0
+            u = lu.solve(e)
+            g = 1 / rf
+            xf = x - (g * x[k] / (1 + g * u[k])) * u
+            over = set()
+            for s in self.c.src:
+                if s.i_limit is None or s.name in limited or s.name in self.c.off: continue
+                vt = (xf[self.idx[s.p]] if s.p in self.idx else 0.0) - (xf[self.idx[s.m]] if s.m in self.idx else 0.0)
+                if (s.v - vt) / s.rs > s.i_limit: over.add(s.name)
+            if not over: return xf, limited
+            limited = limited | over
+        return xf, limited
+
+
 def trip_time(multiple: float, curve: list[tuple[float, float]]) -> float:
     """Seconds to trip at `multiple` x rating, log-log interpolated on the curve; inf below its first point."""
     pts = sorted(curve)
@@ -315,7 +417,7 @@ def spice(c: Circuit) -> str:
             lines.append(f"B{len(lines)} {a} {b} I = (V({a},{b}) >= {k}) ? {ld.value}/V({a},{b}) : {ld.value / k ** 2}*V({a},{b})")
         else:
             lines.append(f"B{len(lines)} {a} {b} I = (V({a},{b}) >= {ld.v_knee}) ? {ld.value} : {ld.value / ld.v_knee}*V({a},{b})")
-    lines += [".op", ".end"]
+    lines += [".control", "op", "print all", ".endc", ".end"]
     return "\n".join(lines) + "\n"
 
 

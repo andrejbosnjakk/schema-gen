@@ -88,3 +88,43 @@ One entry per open choice taken during the 0.2 → 0.5 work: context, choice, wh
 - Context: AC 43.13-1B Table 11-3 stops at 22 AWG.
 - Choice: a lighter wire is held to the 22 AWG limit (5 A), and the message says so.
 - Why: conservative; a 24 AWG wire on a 10 A breaker must not pass silently.
+
+## D14. Fault sweep: loads as their operating-point resistance
+- Context: shorting every node with constant-power loads in a full Newton solve took 57 s on synthetic 1k and did
+  not converge for 159 faults (constant-power loads have no physical meaning near 0 V).
+- Choice: the sweep linearises the circuit at the scenario's operating point (each load becomes the resistance it
+  has there; relays hold their settled state), factorises once, and solves every short as a rank-1 update
+  (Sherman–Morrison). Current-limited sources switch to their limit when the short pushes them over it.
+- Why: short-circuit practice (IEC 60909) neglects load current; the fault current is set by sources and wiring.
+  The sweep now takes 0.6 s on 1k and 13.5 s on 5k. The assumption is listed in every sweep result.
+
+## D15. Current-limit modes change only between converged solves
+- Context: with constant-power loads a current-limited DC/DC has two consistent solutions (in limit at low voltage,
+  out of limit at nominal voltage); switching modes during Newton locked it into the low one.
+- Choice: Newton converges for a fixed set of source modes; only then a source over its limit switches to constant
+  current (and back, at most five times). Steps are damped to 2 V per iteration and halved when they reverse.
+- Why: it finds the nominal operating point, which is the one a real converter starts into.
+
+## D16. Assumed contact resistance by gauge
+- Context: one assumed 5 mΩ per contact made 100 A battery feeds through two harness connectors drop 3 V.
+- Choice: without part data, contact resistance is assumed by the gauge it carries (0.3 mΩ for 4 AWG up to 5 mΩ for
+  20 AWG and lighter; `sim.contact_resistance_by_awg`), and listed as assumed.
+- Why: power contacts are larger; the values are typical orders of magnitude and overridable.
+
+## D17. Synthetic power topology scales with size
+- Context: one battery feed and one bus could not supply 1k or 5k projects' loads at all (no DC solution exists).
+- Choice: `schemagen synth` creates a 14 V bus (with its own 100 A main breaker from the battery) per 16 breakers,
+  a 24 V bus with its own DC/DC per 6 breakers, a relay-control breaker per 18 coils, and parallel battery returns
+  (marked `parallel: true`). Battery internal resistance scales with the number of buses.
+- Why: a synthetic vehicle should be electrically feasible so the simulation metrics mean something.
+
+## D18. numpy and scipy are core dependencies
+- Choice: both (BSD) are installed with schemagen; `schemagen[sim]` remains as an empty extra.
+- Why: the app's simulation dashboard needs them, and a second install step is a trap for student teams.
+
+## D19. Voltage drop to a load
+- Context: `max_drop_V` needs a reference voltage.
+- Choice: drop = voltage of the nearest bus or source terminal upstream of the load's supply pin (breadth-first
+  over conductors, breakers and closed contacts) minus the voltage across the load (supply pin minus return pin), so
+  the return path counts.
+- Why: it is the wiring drop a designer budgets, without needing a source per load.

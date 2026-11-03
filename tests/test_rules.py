@@ -125,7 +125,7 @@ def fault_cases(F):
         cases.append((f"direction {name}", "direction", f"conductor:{d['id']}",
                       set_(d["id"], p1=d["p2"], p1c=d["p2c"], p1p=d["p2p"], p2=d["p1"], p2c=d["p1c"], p2p=d["p1p"]), None))
     # protection and contacts
-    heavy = [r for r in load_sup if int(r.data["awg"]) <= 18]
+    heavy = [r for r in F.recs if r.data.get("prot") and int(r.data["awg"]) <= 18 and not r.data["p1"].startswith("BB")]
     cases.append(("gauge prot 1", "gauge-protection", f"conductor:{heavy[0].data['id']}", set_(heavy[0].data["id"], awg="22"), None))
     cases.append(("gauge prot 2", "gauge-protection", f"conductor:{heavy[1].data['id']}", set_(heavy[1].data["id"], awg="24"), None))
     pid = load_sup[2].data["prot"]
@@ -140,8 +140,9 @@ def fault_cases(F):
     for k in (0, 1):
         cases.append((f"dsub gauge {k}", "dsub-gauge", f"conductor:{dsub[k].data['id']}", set_(dsub[k].data["id"], awg="16"), None))
     # pin types
-    s2 = sens_sig[2].data
-    other = sens_sig[5].data["p1"]
+    direct = [r for r in sens_sig if r.data["p1"].startswith("S-")]
+    s2 = direct[0].data
+    other = direct[1].data["p1"]
     cases.append(("signal out-out", "output-conflict", f"pin:{s2['p1'].split()[0]}/P1/2", set_(s2["id"], p2=other, p2c="P1", p2p="2"), None))
     ls = load_sup[5].data
     other_cb = next(r.data["p1"] for r in load_sup if r.data["p1"].startswith("CB-") and r.data["p1"] != ls["p1"])

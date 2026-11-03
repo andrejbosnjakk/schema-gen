@@ -1,6 +1,9 @@
 # Defaults for the DC simulation when part data is missing. Every value here is marked "assumed" in the results.
 # Override in schemagen.yml: sim: {...}
-contact_resistance_ohm: 0.005    # assumed: typical crimped contact, a few milliohm
+contact_resistance_ohm: 0.005    # assumed: small crimped signal contact (20-24 AWG), a few milliohm
+# assumed contact resistance by the wire gauge it carries (larger contacts for heavier wire); lighter than the
+# lightest key uses contact_resistance_ohm
+contact_resistance_by_awg: {0: 0.0002, 4: 0.0003, 8: 0.0005, 12: 0.001, 16: 0.002, 18: 0.003}
 breaker_resistance_ohm: 0.005    # assumed: closed breaker / fuse
 switch_resistance_ohm: 0.005     # assumed: closed switch or relay contact
 fault_resistance_ohm: 0.001      # assumed: bolted short to ground

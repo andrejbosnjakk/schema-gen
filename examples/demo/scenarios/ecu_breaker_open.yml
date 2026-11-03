@@ -1,0 +1,5 @@
+scenario: ECU breaker pulled
+set: {CB-GEN: open, CB-ECU: open}
+expect:
+  min_voltage: {BB1: 12.5}
+  no_trip: true
