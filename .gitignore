@@ -11,3 +11,4 @@ frontend/test-results/
 frontend/e2e-results/
 frontend/playwright-report/
 tests/.sim-out/
+.coverage
