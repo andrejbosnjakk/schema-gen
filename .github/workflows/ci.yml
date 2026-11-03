@@ -56,3 +56,28 @@ jobs:
           path: |
             frontend/e2e-results/
             frontend/test-results/
+
+  wheel:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: pip install build && python -m build --wheel
+      - name: install the wheel with pipx in a clean environment
+        run: pipx install dist/*.whl
+      - name: start the installed app on the demo
+        run: |
+          cp -r examples/demo "$RUNNER_TEMP/demo"
+          (cd "$RUNNER_TEMP" && schemagen app "$RUNNER_TEMP/demo" --no-browser --port 8765 > app.log 2>&1 &)
+          for i in $(seq 60); do curl -fs http://127.0.0.1:8765/api/health && break; sleep 1; done
+      - run: npm ci && npx playwright install --with-deps chromium
+        working-directory: frontend
+      - run: npx playwright test
+        working-directory: frontend
+        env:
+          SMOKE_URL: http://127.0.0.1:8765/

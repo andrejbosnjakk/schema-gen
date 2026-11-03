@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from ..display_default import DefaultDisplay
+from ..importers.display import DefaultDisplay
 from ..importers import parts as parts_in
 from ..importers import rows as rows_in
 from ..importers import table as table_in

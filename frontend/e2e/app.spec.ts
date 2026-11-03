@@ -18,6 +18,26 @@ async function search(page: Page, q: string) {
 
 async function row(page: Page, label: string) { return page.locator(`tr:has(th a:text-is("${label}"))`); }
 
+// ---------------------------------------------------------------- cold start first, while the machine is idle
+test("cold start to interactive on synthetic 5k", async ({ page }) => {
+  const ix = await (await page.request.get(BIG + "api/index")).json();
+  const t0 = Date.now();
+  const p = spawn(process.env.PYTHON || "python3", ["-m", "schemagen", "app", ix.project.root, "--no-browser", "--port", "8803"], { stdio: "ignore", cwd: ".." });
+  try {
+    for (;;) {
+      try { if ((await page.request.get("http://127.0.0.1:8803/api/health", { timeout: 1000 })).ok()) break; } catch { /* starting */ }
+      await new Promise((r) => setTimeout(r, 50));
+    }
+    await page.goto("http://127.0.0.1:8803/");
+    await expect(page.locator('tr[data-id] th a').first()).toBeVisible();
+    await page.getByLabel("Filter wires").fill("P0001");
+    await expect(page.locator("tr[data-id]").first()).toBeVisible();
+    const ms = Date.now() - t0;
+    record("cold_start_ms_5k", ms);
+    expect(ms).toBeLessThanOrEqual(3000);
+  } finally { p.kill(); }
+});
+
 // ---------------------------------------------------------------- the ten flows
 test("search finds a component and opens it", async ({ page }) => {
   await page.goto(DEMO);
@@ -151,25 +171,6 @@ test("every object type is reachable in two clicks from search", async ({ page }
     clicks[type] = 2;
   }
   record("clicks_from_search", clicks);
-});
-
-test("cold start to interactive on synthetic 5k", async ({ page }) => {
-  const ix = await (await page.request.get(BIG + "api/index")).json();
-  const t0 = Date.now();
-  const p = spawn(process.env.PYTHON || "python3", ["-m", "schemagen", "app", ix.project.root, "--no-browser", "--port", "8803"], { stdio: "ignore", cwd: ".." });
-  try {
-    for (;;) {
-      try { if ((await page.request.get("http://127.0.0.1:8803/api/health", { timeout: 1000 })).ok()) break; } catch { /* starting */ }
-      await new Promise((r) => setTimeout(r, 50));
-    }
-    await page.goto("http://127.0.0.1:8803/");
-    await expect(page.locator('tr[data-id] th a').first()).toBeVisible();
-    await page.getByLabel("Filter wires").fill("P0001");
-    await expect(page.locator("tr[data-id]").first()).toBeVisible();
-    const ms = Date.now() - t0;
-    record("cold_start_ms_5k", ms);
-    expect(ms).toBeLessThanOrEqual(3000);
-  } finally { p.kill(); }
 });
 
 test("net highlight within 100 ms on synthetic 5k", async ({ page }) => {

@@ -21,6 +21,16 @@ simulation), with checks built in and every value traceable to its source.
 - Continuity tests between reachable terminals only; parallel contacts flagged
 - WireViz run as a separate command (GPL-3.0), never imported
 
+**0.3 – 0.5** (see CHANGELOG.md)
+- P1.1 neutral data model (Pydantic + JSON Schema), importers (rows, tables, WireViz YAML) and lossless exporters
+- P1.3 rules engine with part-library rules; P1.5 label ledger and `schemagen diff`
+- P2.1–P2.3 DC operating point, scenarios, fault sweep (transients remain open)
+- P3 the app: table editor, object pages, net explorer, clickable drawings, system graph, simulation dashboard,
+  issues board, change sets with undo
+
+Still open: KiCad netlist import, label-printer / harness-tester / CATIA exporters, zones with route segments and
+service loops for lengths, transients, a 2D vehicle map, change-set review/approve, an assistant panel.
+
 ## P1: a real tool
 
 1. **Neutral data model** (Pydantic + JSON Schema): `Part` (type, pins, contact data), `Component` (instance, location),
@@ -83,4 +93,5 @@ SQLite/DuckDB index), because wiring data is often under NDA.
 - Layout once the model lands: `core/` (model, net, rules, simulation), `importers/`, `exporters/`, `renderers/`,
   `cli/`, `app/`; a JSON Schema for every input format.
 - Tests: golden files per exporter, property tests for the net builder, known-answer tests for the simulation.
-- Check the name on PyPI before the first release.
+- PyPI: the name `schemagen` is taken; the distribution is `schema-gen` (checked November 2026), the import package
+  and command stay `schemagen`.

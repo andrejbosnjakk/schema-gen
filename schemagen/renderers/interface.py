@@ -7,7 +7,7 @@ import re
 from collections import defaultdict
 from typing import Any
 
-from ..drawing import Drawing, clean_func, pv, safe
+from .harness import Drawing, clean_func, pv, safe
 
 PRIORITY = {"device": 0, "breaker": 1, "bus": 2, "splice": 3}
 

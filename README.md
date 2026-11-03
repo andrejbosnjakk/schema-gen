@@ -19,8 +19,10 @@ connectors, splices, breakers and buses.
 - **Part data from datasheet cards**: pin names from a structured block in each card (the start of a part library).
 - **One palette** for every output; other tools read it with `schemagen palette`.
 
-Next: a neutral data model, then a DC current-flow simulation on the same net model ("does this load get power with
-these switches, how much current flows in each wire, does this breaker protect this wire?"). See [docs/ROADMAP.md](docs/ROADMAP.md).
+Since 0.3 the wire list loads into a typed, lossless model; on top of it sit a rules engine, pinouts, a sheet template
+for teams, a label ledger, diffs, a DC simulation with a fault sweep (0.4) and a local app (0.5). Start with the
+[tutorial](docs/tutorial.md); see [CHANGELOG.md](CHANGELOG.md), [docs/ROADMAP.md](docs/ROADMAP.md),
+[docs/decisions.md](docs/decisions.md) and [docs/metrics.md](docs/metrics.md).
 
 ![demo harness](docs/demo_X-BH.png)
 
@@ -28,8 +30,11 @@ these switches, how much current flows in each wire, does this breaker protect t
 
 ```bash
 sudo apt-get install graphviz        # WireViz needs Graphviz's `dot`
-pip install -e ".[dev]"
+pip install -e ".[dev]"              # PyPI: pip install schema-gen (the command is `schemagen`)
 schemagen draw examples/demo         # writes examples/demo/out/
+schemagen check examples/demo        # rules
+schemagen sim examples/demo          # DC simulation of the demo's scenarios
+schemagen app examples/demo          # the app in your browser
 pytest
 ```
 
@@ -211,14 +216,13 @@ Frontend development: `cd frontend && npm ci && npm run dev` (proxies `/api` to 
 | `renderers/` | interface drawings, the WireViz command runner (parallel batches) |
 | `app/server.py`, `frontend/` | the local app: FastAPI server and the React + TypeScript frontend (built into `app/static/`) |
 | `sim/engine.py`, `sim/build.py`, `sim/api.py`, `sim/report.py` | MNA solver (Newton, relays, current limits), model → circuit with provenance, operating point / expectations / fault sweep, report and CLI |
-| `project.py`, `table.py`, `config.py` | 0.2 interfaces on top of the model (wire dicts for the drawing code) |
-| `styles.py`, `palette.py` | function class, wire colour, gauge; the palette for other tools |
-| `net.py` | 0.2 interface to `core/net.py` for the drawing code: reachable terminals, next hops |
-| `cards.py` | pin data from card blocks (or markdown tables) |
-| `drawing.py` | WireViz document for one harness connector or one part of it |
-| `checks.py` | consistency checks |
-| `outputs.py` | YAML, render (WireViz command), footnotes, cut list, test sheet, checks, index page |
-| `cli.py` | `schemagen` command |
+| `renderers/project.py`, `renderers/wirenet.py` | the loaded project as 0.2-style wire dicts and net queries, for the drawing code |
+| `drawing.py`, `outputs.py`, `cards.py`, `project.py`, `net.py`, `palette.py`, `config.py`, `table.py`, `styles.py` | 0.2 import paths, kept as re-exports |
+| `core/classes.py` | function class, wire colour, gauge |
+| `importers/cards.py`, `importers/display.py` | pin names from card blocks (or markdown tables); default readable names |
+| `renderers/harness.py`, `renderers/checks.py` | WireViz document for one harness connector or one part of it; its 0.2 checks |
+| `exporters/documents.py`, `exporters/palette.py` | YAML, footnotes, cut list, test sheet, checks, index page; the palette |
+| `cli/` | `schemagen` command (`cli/draw.py`, `cli/commands.py`) |
 
 ## Why WireViz 0.4.1 (and not Filare)
 

@@ -1,4 +1,4 @@
-"""Licence check for runtime dependencies (CI). Python: the install closure of schemagen; npm: the production
+"""Licence check for runtime dependencies (CI). Python: the install closure of schema-gen (package schemagen); npm: the production
 dependencies of frontend/ (when node_modules exists). Fails on anything that is not permissive.
 
 WireViz (GPL-3.0) is the one exception: schemagen runs it as a separate command and never imports it, so it and the
@@ -40,7 +40,7 @@ def requires(name: str) -> list[str]:
 def python_closure() -> tuple[dict[str, str], dict[str, str]]:
     seen: dict[str, str] = {}
     external: dict[str, str] = {}
-    todo = requires("schemagen")
+    todo = requires("schema-gen")
     while todo:
         n = todo.pop()
         key = n.replace("_", "-")

@@ -34,7 +34,7 @@ def _csv(path: Path, header_row: int = 1) -> list[tuple[int, dict[str, Any]]]:
 
 
 def _xlsx(path: Path) -> Any:
-    from openpyxl import load_workbook  # optional dependency: pip install schemagen[xlsx]
+    from openpyxl import load_workbook  # a core dependency since 0.3
     return load_workbook(path, read_only=True, data_only=True)
 
 

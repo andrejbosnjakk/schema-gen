@@ -17,9 +17,10 @@
 import argparse, sys
 from pathlib import Path
 
-from .. import __version__, palette, table
+from .. import __version__, table
+from ..exporters import palette
 from ..core.config import load_config
-from ..project import Project
+from ..renderers.project import Project
 from .draw import draw, read_lengths  # noqa: F401  (0.2 names)
 
 

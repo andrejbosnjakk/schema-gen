@@ -112,7 +112,7 @@ def pinout(a):
 
 def wirelist(a):
     from ..exporters.views import wirelist_xlsx
-    from ..project import Project
+    from ..renderers.project import Project
     pr = Project(load_config(a.config))
     wirelist_xlsx(pr, Path(a.output)); print(f"{len(pr.wires)} wires -> {a.output}")
 
@@ -167,7 +167,7 @@ def sim(a):
     try:
         from ..sim import report
     except ImportError:
-        raise SystemExit("the simulation needs scipy: pip install schemagen[sim]") from None
+        raise SystemExit("the simulation needs scipy: pip install schema-gen") from None
     return report.run_cli(a)
 
 

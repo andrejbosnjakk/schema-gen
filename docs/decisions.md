@@ -163,3 +163,13 @@ One entry per open choice taken during the 0.2 → 0.5 work: context, choice, wh
 - Choice: the app passes `telemetry={tracing, metrics, logs, operation_spans: False, auto_configure: False}` and
   excludes every request; the server binds to 127.0.0.1; the frontend loads nothing from the network.
 - Why: wiring data is often under NDA; nothing may leave the machine.
+
+## D25. Distribution name `schema-gen`
+- Context: release prep asks to check the PyPI name; `schemagen` is taken (another project, version 1.0.5).
+- Choice: the distribution is `schema-gen` (free when checked); the import package and the command stay `schemagen`.
+- Why: no code or user command changes; only `pip install schema-gen`.
+
+## D26. Package layout and 0.2 import paths
+- Choice: code lives in `core/`, `importers/`, `exporters/`, `renderers/`, `sim/`, `app/`, `cli/`; the 0.2 module
+  paths remain as one-line re-exports.
+- Why: backward compatible for anyone importing schemagen modules directly (the 0.2 tests still do).

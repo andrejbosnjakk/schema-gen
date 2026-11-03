@@ -101,3 +101,34 @@ Benchmark after M3 (`python benchmarks/bench.py`):
 | axe-core: serious or critical violations | 0 on the main pages | 0 on 8 pages (table, wire page, pin page, issues, graph, simulation, diff, drawings) in light and dark |
 
 API tests without a browser: `tests/test_app.py` (11). Runtime dependencies (licence check): 19 Python and 8 npm, all permissive.
+
+## M5 (0.5): packaging and release prep
+
+| item | state |
+|---|---|
+| layout `core/`, `importers/`, `exporters/`, `renderers/`, `sim/`, `app/`, `cli/` | done; 0.2 module paths kept as re-exports (all 0.2 tests unchanged and green) |
+| CI wheel job: build, `pipx install` in a clean environment, `schemagen app examples/demo`, Playwright smoke test | in `.github/workflows/ci.yml` (job `wheel`); run locally: wheel built, installed with pipx into an empty venv, smoke test green |
+| `docs/tutorial.md` | from an empty folder to a checked, drawn, simulated project and the app; every file and command in it is run by `tests/test_tutorial.py` |
+| release prep | version 0.5.0, CHANGELOG.md, roadmap updated; PyPI name `schemagen` is taken, distribution renamed `schema-gen` (D25) |
+| licence check | 19 Python and 8 npm runtime dependencies, all permissive; WireViz reported as an external command |
+
+## Summary after 0.5 (same container)
+
+| | 0.2 | 0.5 |
+|---|---|---|
+| package code | 905 lines, 618 statements | 4,358 statements (Python) + 1,100 lines TypeScript |
+| tests | 16, one file, 95 % coverage | 88 Python tests (incl. 200-example property test, 43-fault corpus, 19 known-answer circuits, tutorial) at 95 % statement coverage; 14 Playwright end-to-end tests + 1 wheel smoke test |
+| conductors in a rendered view, synthetic 1k | 57 % | 100 % (1000/1000) |
+| findings on clean synthetic 1k | 651 (nearly all false) | 1 (its open item) |
+| keys lost on export | all extras and the P/D/O tables | none (round trip exact) |
+
+Final benchmark (`python benchmarks/bench.py`, seconds):
+
+| project | wires | load | net | rules | draw (no render) | sim op | fault sweep |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| demo | 23 | 0.007 | 0.000 | 0.001 | 0.029 | 0.003 | 0.009 |
+| synthetic 1k | 1000 | 0.135 | 0.003 | 0.039 | 1.058 | 0.111 | 0.464 |
+| synthetic 5k | 5000 | 0.507 | 0.016 | 0.228 | 9.629 | 0.604 | 11.830 |
+
+Rendering every drawing of synthetic 1k with WireViz (115 drawings, 4 parallel processes): 8.0 s (0.2: 15.0 s for
+24 harness drawings covering 57 % of the conductors).

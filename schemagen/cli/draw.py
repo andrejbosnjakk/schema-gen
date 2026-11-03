@@ -3,13 +3,13 @@ conductor no harness drawing reaches, cut lists, test sheets, checks, the covera
 import json
 import sys
 
-from ..cards import Cards
+from ..importers.cards import Cards
 from ..core.config import load_config
 from ..core.load import measured_lengths
-from ..drawing import build_set
-from ..net import Net
-from ..outputs import add_footnotes, write_checks, write_continuity, write_cutlist, write_index, write_yaml
-from ..project import Project
+from ..renderers.harness import build_set
+from ..renderers.wirenet import Net
+from ..exporters.documents import add_footnotes, write_checks, write_continuity, write_cutlist, write_index, write_yaml
+from ..renderers.project import Project
 from ..renderers import interface
 from ..renderers.wireviz import render_many
 

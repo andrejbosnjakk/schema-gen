@@ -27,7 +27,7 @@ from ..core.context import Ctx
 from ..core.load import Loaded, load, measured_lengths
 from ..core.model import Terminal
 from ..core.rules import run_rules
-from ..palette import HEX
+from ..exporters.palette import HEX
 from ..importers.records import text as text_of
 
 EDITABLE = {"label", "name", "awg", "colour", "cls", "st", "length", "amps", "notes", "func", "bus", "zone", "harn", "prot",
