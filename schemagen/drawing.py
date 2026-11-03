@@ -59,7 +59,7 @@ def harness_ends(pr, H):
     for w in pr.wires:
         for e in (1, 2):
             if w[f"p{e}"].startswith(H) and pr.harness(w[f"p{e}"]):
-                out.append((w, e, 3 - e, "near" if pr.near(w[f"p{e}c"]) else "far")); break
+                out.append((w, e, 3 - e, w.get(f"p{e}side") or ("near" if pr.near(w[f"p{e}c"]) else "far"))); break
     if not out: raise SystemExit(f"no wires on {H}")
     return out
 

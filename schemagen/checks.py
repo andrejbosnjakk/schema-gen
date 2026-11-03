@@ -14,7 +14,8 @@ def harness_checks(pr, hcode, raw, pins, halves, ends):
             out.append(f"OPEN END {hcode} pin {p}: only the {'near' if sides['near'] else 'far'} side is wired ({ws[0]['label']})")
         if sides["near"] and sides["far"]:
             if len({w["gauge"] for w in ws}) > 1: out.append(f"GAUGE CHANGE {hcode} pin {p}: " + ", ".join(f"{w['label']} {w['awg']}" for w in ws))
-            if len({w["kind"] for w in ws}) > 1: out.append(f"FUNCTION CLASS DIFFERS {hcode} pin {p}: " + ", ".join(f"{w['label']} {w['kind']}" for w in ws))
+            if len({w["kind"] for w in ws}) > 1:
+                out.append(f"FUNCTION CLASS DIFFERS {hcode} pin {p}: " + ", ".join(f"{w['label']} {w['kind']}" for w in ws))
     for w, e, f, sd in ends:
         g = w["gauge"]
         if g == "TBD": out.append(f"GAUGE TBD {w['label']} ({w['awg']})")

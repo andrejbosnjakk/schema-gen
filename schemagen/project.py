@@ -1,69 +1,42 @@
-"""Load a wire-list project: rows from ss??_*.py modules or from a table (see table.py), labels.json, and the optional
-display.py (readable names) and names.py (NAMES: id -> wire name) next to them.
+"""A loaded project for the drawing and sheet code: the typed model (core.load) plus 0.2-style wire dicts.
 
-One row = one physical conductor: id, p1/p1c/p1p (from device / connector / pin), p2/p2c/p2p (to), func, bus, awg, st, ...
+`Project.model` is the source of truth; `Project.wires` are dict views of its conductors (one per conductor, same
+order, `_i` = index) with the 0.2 keys (id, label, name, p1/p1c/p1p, p2/p2c/p2p, func, bus, awg, st, kind, color,
+gauge) plus every extra key of the input row and the resolved sides (p1side, p2side).
 """
-import importlib.util, json, re, sys
 from collections import defaultdict
 
-from . import table
-from .display_default import DefaultDisplay
-from .styles import classify, gauge
-
-
-def _module(path, name):
-    spec = importlib.util.spec_from_file_location(name, path)
-    m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
-    return m
-
-
-def _module_rows(wl):
-    """(rows with 'subsystem' filled in, DISPLAY names, protection list P) from the ss??_*.py modules."""
-    mods = [_module(p, p.stem) for p in sorted(wl.glob("ss[0-9][0-9]_*.py"))]
-    if not mods: raise SystemExit(f"no ss??_*.py row modules in {wl} (or set 'source' in schemagen.yml)")
-    disp, prot, rows = {}, [], []
-    for m in mods:
-        disp.update(getattr(m, "DISPLAY", {})); prot += getattr(m, "P", [])
-        sub = getattr(m, "SUBSYSTEM", (m.__name__,))[0]
-        rows += [dict(r, subsystem=r.get("subsystem") or sub) for r in m.R if "_hdr" not in r]
-    return rows, disp, prot
+from .core.build import code as _code
+from .core.classes import gauge
+from .core.load import load
 
 
 class Project:
     def __init__(self, cfg):
-        self.cfg = cfg
-        wl = cfg.wirelist
-        sys.dont_write_bytecode = True  # the wire list folder is input only
-        if wl.exists() and str(wl) not in sys.path: sys.path.insert(0, str(wl))  # row modules import their helpers (_lib.py)
-        self.dsp = _module(wl / "display.py", "display") if (wl / "display.py").exists() else DefaultDisplay(cfg)
-        names = _module(wl / "names.py", "names") if (wl / "names.py").exists() else None
-        self.names = getattr(names, "NAMES", {})
-        if cfg.source: rows, self.disp, prot = table.read(cfg), {}, []
-        else: rows, self.disp, prot = _module_rows(wl)
-        self.dsp.set_protection(prot)
-        lf = wl / "labels.json"
-        labels = json.loads(lf.read_text(encoding="utf-8")) if lf.exists() else {}
+        L = load(cfg)
+        self.cfg, self.loaded, self.model = L.cfg, L, L.model
+        self.dsp, self.disp, self.warnings = L.naming, L.display, L.warnings
+        self.names = {}
         self.wires = []
-        for r in rows:
-            w = dict(r)
-            w["p1"], w["p2"] = str(w["p1"]), str(w["p2"])
-            for k in ("p1c", "p1p", "p2c", "p2p"): w[k] = "" if w.get(k) is None else str(w.get(k))
-            w["label"] = w.get("label") or labels.get(w["id"], w["id"])
-            w["name"] = w.get("name") or self.names.get(w["id"]) or self.dsp.strip(w.get("func", ""))
-            w["kind"], w["color"] = classify(w, cfg)
-            w["gauge"] = gauge(w.get("awg", ""))
+        recs = L.records if len(L.records) == len(self.model.conductors) else [None] * len(self.model.conductors)
+        for i, (c, r) in enumerate(zip(self.model.conductors, recs)):
+            w = dict(r.data) if r is not None else dict(c.extra, amps=c.current_a if c.current_a is not None else "")
+            for e, t in ((1, c.from_), (2, c.to)):
+                w[f"p{e}"], w[f"p{e}c"], w[f"p{e}p"], w[f"p{e}side"] = t.device, t.connector, t.pin, t.side
+            w.update(id=c.id, label=c.label, name=c.name, func=c.func, bus=c.bus, awg=c.gauge, st=c.status, subsystem=c.subsystem,
+                     notes=c.notes, kind=c.kind, color=c.colour_code, gauge=gauge(c.gauge), _i=i)
             self.wires.append(w)
         # connectors with numbered pins per device: pins are named "<connector> <pin>" when a device has several
         self.dev_conns = defaultdict(set)
         for w in self.wires:
             for e in (1, 2):
                 if w[f"p{e}p"]: self.dev_conns[w[f"p{e}"]].add(w[f"p{e}c"])
+        self._role = {x.raw: x.kind for x in self.model.components}
 
     # ---------------------------------------------------------------- naming
     @staticmethod
     def code(raw):
-        tok = raw.split()[0] if raw.split() else raw
-        return tok if re.fullmatch(r"[A-Z0-9][A-Za-z0-9_.-]*", tok) and any(c.isupper() for c in tok) else None
+        return _code(raw)
 
     def harness(self, raw):
         return self.dsp.harness(raw)
@@ -79,6 +52,8 @@ class Project:
 
     def role(self, raw):
         """splice / harness / bus / breaker / device."""
+        k = self._role.get(raw)
+        if k is not None: return {"fuse": "breaker"}.get(k, k if k in ("splice", "harness", "bus", "breaker") else "device")
         c, cfg = self.code(raw) or "", self.cfg
         if c.startswith(cfg.splice_prefix): return "splice"
         if self.harness(raw): return "harness"
@@ -87,7 +62,7 @@ class Project:
         return "device"
 
     def near(self, half):
-        """True for the near half of a harness connector (drawn on the left); set by near_words in schemagen.yml."""
+        """0.2 heuristic (near_words); the model's resolved sides are in w['p1side'] / w['p2side']."""
         return any(t in str(half).lower() for t in self.cfg.near_words)
 
     def short(self, raw):

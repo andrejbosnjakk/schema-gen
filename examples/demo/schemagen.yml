@@ -7,6 +7,9 @@ default_harnesses: [X-BH]
 buses: [GNDB, BB1]
 breaker_prefixes: [CB-]
 splice_prefix: SP-
+# connector-half sides (near = drawn on the left); near_words is only the fallback for halves not listed here
+sides:
+  X-BH: {Cabin half: near, Engine half: far}
 near_words: [cabin]
 
 # no display.py in this project, so harness connectors are declared here: prefix -> [name, code, far side]

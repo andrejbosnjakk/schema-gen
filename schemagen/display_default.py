@@ -7,10 +7,10 @@ import re
 
 
 class DefaultDisplay:
-    def __init__(self, cfg):
+    def __init__(self, cfg) -> None:
         # prefix -> (display name, short code, far side name)
         self.HARNESS = {k: tuple(v) for k, v in cfg.harnesses.items()}
-        self.SHORT = {}
+        self.SHORT: dict = {}
         self.near_words = cfg.near_words
 
     def set_protection(self, P):

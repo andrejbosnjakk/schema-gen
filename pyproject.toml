@@ -4,26 +4,56 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "schemagen"
-version = "0.2.0"
-description = "Wire list to harness drawings, cut lists, test sheets and (later) current-flow simulation."
+version = "0.3.0"
+description = "Wiring design from one source of truth: harness drawings, tables, pinouts, checks, test sheets and a DC simulation."
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.10"
 # wireviz (GPL-3.0) is only ever run as a separate command, never imported
-dependencies = ["wireviz==0.4.1", "pyyaml>=6"]
+dependencies = ["wireviz==0.4.1", "pyyaml>=6", "pydantic>=2.5", "openpyxl>=3.1"]
 
 [project.optional-dependencies]
-xlsx = ["openpyxl>=3.1"]
-dev = ["pytest>=8", "openpyxl>=3.1"]
+xlsx = []  # openpyxl is a core dependency since 0.3; kept so `schemagen[xlsx]` still installs
+dev = ["pytest>=8", "pytest-cov>=5", "hypothesis>=6.100", "ruff>=0.5", "mypy>=1.10", "types-PyYAML", "httpx>=0.27", "pip-licenses>=5"]
 
 [project.scripts]
 schemagen = "schemagen.cli:main"
 
-[tool.setuptools]
-packages = ["schemagen"]
+[tool.setuptools.packages.find]
+include = ["schemagen*"]
 
 [tool.setuptools.package-data]
-schemagen = ["templates/*.html"]
+schemagen = ["templates/*.html", "core/data/*.yml"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 165
+target-version = "py310"
+extend-exclude = ["examples", "frontend"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B"]
+# compact style of the existing modules: one-line if/for bodies and short lambdas are fine
+ignore = ["E701", "E702", "E731", "E741", "B905", "B007", "I001", "E401", "B023", "UP006", "UP007", "UP035"]
+
+[tool.mypy]
+python_version = "3.10"
+ignore_missing_imports = true
+warn_unused_ignores = false
+
+[[tool.mypy.overrides]]  # the equivalent of --strict for the typed core and the simulation
+module = ["schemagen.core.*", "schemagen.sim.*"]
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+disallow_untyped_calls = true
+disallow_any_generics = true
+disallow_subclassing_any = true
+disallow_untyped_decorators = true
+check_untyped_defs = true
+warn_return_any = true
+warn_unused_ignores = true
+no_implicit_reexport = true
+strict_equality = true
+extra_checks = true

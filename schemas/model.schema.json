@@ -1,0 +1,1402 @@
+{
+ "$defs": {
+  "Bus": {
+   "additionalProperties": false,
+   "properties": {
+    "function_class": {
+     "default": "",
+     "title": "Function Class",
+     "type": "string"
+    },
+    "id": {
+     "title": "Id",
+     "type": "string"
+    },
+    "raw": {
+     "title": "Raw",
+     "type": "string"
+    }
+   },
+   "required": [
+    "id",
+    "raw"
+   ],
+   "title": "Bus",
+   "type": "object"
+  },
+  "Coil": {
+   "additionalProperties": false,
+   "properties": {
+    "a1": {
+     "title": "A1",
+     "type": "string"
+    },
+    "a2": {
+     "title": "A2",
+     "type": "string"
+    },
+    "r": {
+     "title": "R",
+     "type": "number"
+    },
+    "v_dropout": {
+     "default": 0.0,
+     "title": "V Dropout",
+     "type": "number"
+    },
+    "v_pickup": {
+     "title": "V Pickup",
+     "type": "number"
+    }
+   },
+   "required": [
+    "a1",
+    "a2",
+    "r",
+    "v_pickup"
+   ],
+   "title": "Coil",
+   "type": "object"
+  },
+  "Component": {
+   "additionalProperties": false,
+   "description": "An instance: a device, splice, bus, breaker, switch... Keyed by its code (first token of the device string).",
+   "properties": {
+    "extra": {
+     "additionalProperties": true,
+     "title": "Extra",
+     "type": "object"
+    },
+    "id": {
+     "title": "Id",
+     "type": "string"
+    },
+    "kind": {
+     "default": "device",
+     "enum": [
+      "device",
+      "load",
+      "sensor",
+      "controller",
+      "switch",
+      "relay",
+      "battery",
+      "dcdc",
+      "breaker",
+      "fuse",
+      "terminator",
+      "splice",
+      "bus",
+      "harness"
+     ],
+     "title": "Kind",
+     "type": "string"
+    },
+    "name": {
+     "default": "",
+     "title": "Name",
+     "type": "string"
+    },
+    "part": {
+     "default": "",
+     "title": "Part",
+     "type": "string"
+    },
+    "raw": {
+     "title": "Raw",
+     "type": "string"
+    },
+    "zone": {
+     "default": "",
+     "title": "Zone",
+     "type": "string"
+    }
+   },
+   "required": [
+    "id",
+    "raw"
+   ],
+   "title": "Component",
+   "type": "object"
+  },
+  "Conductor": {
+   "additionalProperties": false,
+   "description": "One physical conductor.",
+   "properties": {
+    "bus": {
+     "default": "",
+     "title": "Bus",
+     "type": "string"
+    },
+    "can": {
+     "default": "",
+     "title": "Can",
+     "type": "string"
+    },
+    "cls": {
+     "default": "",
+     "title": "Cls",
+     "type": "string"
+    },
+    "colour": {
+     "default": "",
+     "title": "Colour",
+     "type": "string"
+    },
+    "colour_code": {
+     "default": "",
+     "title": "Colour Code",
+     "type": "string"
+    },
+    "current_a": {
+     "anyOf": [
+      {
+       "type": "number"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Current A"
+    },
+    "extra": {
+     "additionalProperties": true,
+     "title": "Extra",
+     "type": "object"
+    },
+    "from": {
+     "$ref": "#/$defs/Terminal"
+    },
+    "func": {
+     "default": "",
+     "title": "Func",
+     "type": "string"
+    },
+    "gauge": {
+     "default": "",
+     "title": "Gauge",
+     "type": "string"
+    },
+    "harness": {
+     "default": "",
+     "title": "Harness",
+     "type": "string"
+    },
+    "id": {
+     "title": "Id",
+     "type": "string"
+    },
+    "kind": {
+     "default": "",
+     "title": "Kind",
+     "type": "string"
+    },
+    "label": {
+     "default": "",
+     "title": "Label",
+     "type": "string"
+    },
+    "length_m": {
+     "anyOf": [
+      {
+       "type": "number"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Length M"
+    },
+    "name": {
+     "default": "",
+     "title": "Name",
+     "type": "string"
+    },
+    "notes": {
+     "default": "",
+     "title": "Notes",
+     "type": "string"
+    },
+    "protection": {
+     "default": "",
+     "title": "Protection",
+     "type": "string"
+    },
+    "sources": {
+     "items": {
+      "$ref": "#/$defs/Source"
+     },
+     "title": "Sources",
+     "type": "array"
+    },
+    "status": {
+     "default": "",
+     "title": "Status",
+     "type": "string"
+    },
+    "subsystem": {
+     "default": "",
+     "title": "Subsystem",
+     "type": "string"
+    },
+    "to": {
+     "$ref": "#/$defs/Terminal"
+    },
+    "zone": {
+     "default": "",
+     "title": "Zone",
+     "type": "string"
+    }
+   },
+   "required": [
+    "id",
+    "from",
+    "to"
+   ],
+   "title": "Conductor",
+   "type": "object"
+  },
+  "Connector": {
+   "additionalProperties": false,
+   "description": "A harness connector (both mated halves).",
+   "properties": {
+    "extra": {
+     "additionalProperties": true,
+     "title": "Extra",
+     "type": "object"
+    },
+    "far_side": {
+     "default": "",
+     "title": "Far Side",
+     "type": "string"
+    },
+    "halves": {
+     "items": {
+      "$ref": "#/$defs/ConnectorHalf"
+     },
+     "title": "Halves",
+     "type": "array"
+    },
+    "id": {
+     "title": "Id",
+     "type": "string"
+    },
+    "name": {
+     "default": "",
+     "title": "Name",
+     "type": "string"
+    },
+    "pin_count": {
+     "anyOf": [
+      {
+       "type": "integer"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Pin Count"
+    },
+    "raw": {
+     "title": "Raw",
+     "type": "string"
+    }
+   },
+   "required": [
+    "id",
+    "raw"
+   ],
+   "title": "Connector",
+   "type": "object"
+  },
+  "ConnectorDef": {
+   "additionalProperties": false,
+   "properties": {
+    "extra": {
+     "additionalProperties": true,
+     "title": "Extra",
+     "type": "object"
+    },
+    "id": {
+     "title": "Id",
+     "type": "string"
+    },
+    "match": {
+     "default": "",
+     "title": "Match",
+     "type": "string"
+    },
+    "part": {
+     "default": "",
+     "title": "Part",
+     "type": "string"
+    },
+    "pins": {
+     "items": {
+      "$ref": "#/$defs/PinDef"
+     },
+     "title": "Pins",
+     "type": "array"
+    }
+   },
+   "required": [
+    "id"
+   ],
+   "title": "ConnectorDef",
+   "type": "object"
+  },
+  "ConnectorHalf": {
+   "additionalProperties": false,
+   "properties": {
+    "guessed": {
+     "default": false,
+     "title": "Guessed",
+     "type": "boolean"
+    },
+    "name": {
+     "title": "Name",
+     "type": "string"
+    },
+    "side": {
+     "enum": [
+      "near",
+      "far"
+     ],
+     "title": "Side",
+     "type": "string"
+    }
+   },
+   "required": [
+    "name",
+    "side"
+   ],
+   "title": "ConnectorHalf",
+   "type": "object"
+  },
+  "Contact": {
+   "additionalProperties": false,
+   "description": "A switch contact a-b, or a relay changeover com/no/nc.",
+   "properties": {
+    "a": {
+     "default": "",
+     "title": "A",
+     "type": "string"
+    },
+    "b": {
+     "default": "",
+     "title": "B",
+     "type": "string"
+    },
+    "com": {
+     "default": "",
+     "title": "Com",
+     "type": "string"
+    },
+    "nc": {
+     "default": "",
+     "title": "Nc",
+     "type": "string"
+    },
+    "no": {
+     "default": "",
+     "title": "No",
+     "type": "string"
+    }
+   },
+   "title": "Contact",
+   "type": "object"
+  },
+  "Decision": {
+   "additionalProperties": false,
+   "properties": {
+    "by": {
+     "default": "",
+     "title": "By",
+     "type": "string"
+    },
+    "date": {
+     "default": "",
+     "title": "Date",
+     "type": "string"
+    },
+    "extra": {
+     "additionalProperties": true,
+     "title": "Extra",
+     "type": "object"
+    },
+    "id": {
+     "title": "Id",
+     "type": "string"
+    },
+    "text": {
+     "default": "",
+     "title": "Text",
+     "type": "string"
+    }
+   },
+   "required": [
+    "id"
+   ],
+   "title": "Decision",
+   "type": "object"
+  },
+  "Harness": {
+   "additionalProperties": false,
+   "properties": {
+    "conductors": {
+     "items": {
+      "type": "string"
+     },
+     "title": "Conductors",
+     "type": "array"
+    },
+    "id": {
+     "title": "Id",
+     "type": "string"
+    },
+    "name": {
+     "default": "",
+     "title": "Name",
+     "type": "string"
+    }
+   },
+   "required": [
+    "id"
+   ],
+   "title": "Harness",
+   "type": "object"
+  },
+  "LabelEntry": {
+   "additionalProperties": false,
+   "properties": {
+    "conductor": {
+     "default": "",
+     "title": "Conductor",
+     "type": "string"
+    },
+    "date": {
+     "default": "",
+     "title": "Date",
+     "type": "string"
+    },
+    "label": {
+     "title": "Label",
+     "type": "string"
+    },
+    "reason": {
+     "default": "",
+     "title": "Reason",
+     "type": "string"
+    },
+    "status": {
+     "default": "active",
+     "enum": [
+      "active",
+      "retired"
+     ],
+     "title": "Status",
+     "type": "string"
+    }
+   },
+   "required": [
+    "label"
+   ],
+   "title": "LabelEntry",
+   "type": "object"
+  },
+  "LabelLedger": {
+   "additionalProperties": false,
+   "description": "Printed labels are never reused: retired labels stay here with a reason.",
+   "properties": {
+    "entries": {
+     "items": {
+      "$ref": "#/$defs/LabelEntry"
+     },
+     "title": "Entries",
+     "type": "array"
+    }
+   },
+   "title": "LabelLedger",
+   "type": "object"
+  },
+  "LoadModel": {
+   "additionalProperties": false,
+   "properties": {
+    "i_a": {
+     "anyOf": [
+      {
+       "type": "number"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "I A"
+    },
+    "model": {
+     "enum": [
+      "constant_power",
+      "constant_current",
+      "resistive"
+     ],
+     "title": "Model",
+     "type": "string"
+    },
+    "p_w": {
+     "anyOf": [
+      {
+       "type": "number"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "P W"
+    },
+    "provenance": {
+     "default": "datasheet",
+     "enum": [
+      "measured",
+      "datasheet",
+      "assumed",
+      "estimated",
+      "design",
+      "default"
+     ],
+     "title": "Provenance",
+     "type": "string"
+    },
+    "r_ohm": {
+     "anyOf": [
+      {
+       "type": "number"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "R Ohm"
+    },
+    "v_min": {
+     "default": 0.0,
+     "title": "V Min",
+     "type": "number"
+    },
+    "v_nom": {
+     "anyOf": [
+      {
+       "type": "number"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "V Nom"
+    }
+   },
+   "required": [
+    "model"
+   ],
+   "title": "LoadModel",
+   "type": "object"
+  },
+  "OpenItem": {
+   "additionalProperties": false,
+   "properties": {
+    "extra": {
+     "additionalProperties": true,
+     "title": "Extra",
+     "type": "object"
+    },
+    "id": {
+     "title": "Id",
+     "type": "string"
+    },
+    "objects": {
+     "items": {
+      "type": "string"
+     },
+     "title": "Objects",
+     "type": "array"
+    },
+    "owner": {
+     "default": "",
+     "title": "Owner",
+     "type": "string"
+    },
+    "status": {
+     "default": "open",
+     "title": "Status",
+     "type": "string"
+    },
+    "text": {
+     "default": "",
+     "title": "Text",
+     "type": "string"
+    }
+   },
+   "required": [
+    "id"
+   ],
+   "title": "OpenItem",
+   "type": "object"
+  },
+  "Part": {
+   "additionalProperties": false,
+   "description": "A part from the library (datasheet cards or the Parts sheet).",
+   "properties": {
+    "card": {
+     "default": "",
+     "title": "Card",
+     "type": "string"
+    },
+    "coil": {
+     "anyOf": [
+      {
+       "$ref": "#/$defs/Coil"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null
+    },
+    "connectors": {
+     "items": {
+      "$ref": "#/$defs/ConnectorDef"
+     },
+     "title": "Connectors",
+     "type": "array"
+    },
+    "contacts": {
+     "items": {
+      "$ref": "#/$defs/Contact"
+     },
+     "title": "Contacts",
+     "type": "array"
+    },
+    "controller": {
+     "default": false,
+     "title": "Controller",
+     "type": "boolean"
+    },
+    "device": {
+     "default": "",
+     "title": "Device",
+     "type": "string"
+    },
+    "extra": {
+     "additionalProperties": true,
+     "title": "Extra",
+     "type": "object"
+    },
+    "i_interrupt": {
+     "anyOf": [
+      {
+       "type": "number"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "I Interrupt"
+    },
+    "id": {
+     "title": "Id",
+     "type": "string"
+    },
+    "kind": {
+     "default": "device",
+     "enum": [
+      "device",
+      "load",
+      "sensor",
+      "controller",
+      "switch",
+      "relay",
+      "battery",
+      "dcdc",
+      "breaker",
+      "fuse",
+      "terminator",
+      "splice",
+      "bus",
+      "harness"
+     ],
+     "title": "Kind",
+     "type": "string"
+    },
+    "load": {
+     "anyOf": [
+      {
+       "$ref": "#/$defs/LoadModel"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null
+    },
+    "r_closed": {
+     "anyOf": [
+      {
+       "type": "number"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "R Closed"
+    },
+    "source": {
+     "anyOf": [
+      {
+       "$ref": "#/$defs/SourceModel"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null
+    },
+    "supply_out": {
+     "anyOf": [
+      {
+       "$ref": "#/$defs/SourceModel"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null
+    },
+    "term": {
+     "default": false,
+     "title": "Term",
+     "type": "boolean"
+    },
+    "trip_curve": {
+     "items": {
+      "maxItems": 2,
+      "minItems": 2,
+      "prefixItems": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "number"
+       }
+      ],
+      "type": "array"
+     },
+     "title": "Trip Curve",
+     "type": "array"
+    }
+   },
+   "required": [
+    "id"
+   ],
+   "title": "Part",
+   "type": "object"
+  },
+  "PinDef": {
+   "additionalProperties": false,
+   "properties": {
+    "awg_max": {
+     "anyOf": [
+      {
+       "type": "integer"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Awg Max"
+    },
+    "awg_min": {
+     "anyOf": [
+      {
+       "type": "integer"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Awg Min"
+    },
+    "extra": {
+     "additionalProperties": true,
+     "title": "Extra",
+     "type": "object"
+    },
+    "i_max": {
+     "anyOf": [
+      {
+       "type": "number"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "I Max"
+    },
+    "n": {
+     "title": "N",
+     "type": "string"
+    },
+    "name": {
+     "default": "",
+     "title": "Name",
+     "type": "string"
+    },
+    "r_contact": {
+     "anyOf": [
+      {
+       "type": "number"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "R Contact"
+    },
+    "required": {
+     "default": false,
+     "title": "Required",
+     "type": "boolean"
+    },
+    "term": {
+     "default": false,
+     "title": "Term",
+     "type": "boolean"
+    },
+    "type": {
+     "anyOf": [
+      {
+       "enum": [
+        "power_in",
+        "power_out",
+        "ground",
+        "signal_in",
+        "signal_out",
+        "bidir",
+        "can_h",
+        "can_l",
+        "shield",
+        "passive"
+       ],
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Type"
+    },
+    "v_max": {
+     "anyOf": [
+      {
+       "type": "number"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "V Max"
+    }
+   },
+   "required": [
+    "n"
+   ],
+   "title": "PinDef",
+   "type": "object"
+  },
+  "ProtectiveDevice": {
+   "additionalProperties": false,
+   "properties": {
+    "extra": {
+     "additionalProperties": true,
+     "title": "Extra",
+     "type": "object"
+    },
+    "i_interrupt": {
+     "anyOf": [
+      {
+       "type": "number"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "I Interrupt"
+    },
+    "id": {
+     "title": "Id",
+     "type": "string"
+    },
+    "kind": {
+     "default": "breaker",
+     "enum": [
+      "breaker",
+      "fuse"
+     ],
+     "title": "Kind",
+     "type": "string"
+    },
+    "loads": {
+     "items": {
+      "type": "string"
+     },
+     "title": "Loads",
+     "type": "array"
+    },
+    "panel": {
+     "default": "",
+     "title": "Panel",
+     "type": "string"
+    },
+    "rating_a": {
+     "anyOf": [
+      {
+       "type": "number"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Rating A"
+    },
+    "rating_provenance": {
+     "default": "design",
+     "enum": [
+      "measured",
+      "datasheet",
+      "assumed",
+      "estimated",
+      "design",
+      "default"
+     ],
+     "title": "Rating Provenance",
+     "type": "string"
+    },
+    "sources": {
+     "items": {
+      "$ref": "#/$defs/Source"
+     },
+     "title": "Sources",
+     "type": "array"
+    },
+    "trip_curve": {
+     "default": "",
+     "title": "Trip Curve",
+     "type": "string"
+    }
+   },
+   "required": [
+    "id"
+   ],
+   "title": "ProtectiveDevice",
+   "type": "object"
+  },
+  "Relay": {
+   "additionalProperties": false,
+   "properties": {
+    "coil": {
+     "anyOf": [
+      {
+       "$ref": "#/$defs/Coil"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null
+    },
+    "contacts": {
+     "items": {
+      "$ref": "#/$defs/Contact"
+     },
+     "title": "Contacts",
+     "type": "array"
+    },
+    "id": {
+     "title": "Id",
+     "type": "string"
+    },
+    "part": {
+     "default": "",
+     "title": "Part",
+     "type": "string"
+    }
+   },
+   "required": [
+    "id"
+   ],
+   "title": "Relay",
+   "type": "object"
+  },
+  "Source": {
+   "additionalProperties": false,
+   "description": "Where a value comes from: a document and a page.",
+   "properties": {
+    "doc": {
+     "title": "Doc",
+     "type": "string"
+    },
+    "page": {
+     "default": "",
+     "title": "Page",
+     "type": "string"
+    }
+   },
+   "required": [
+    "doc"
+   ],
+   "title": "Source",
+   "type": "object"
+  },
+  "SourceModel": {
+   "additionalProperties": false,
+   "description": "Battery (v_oc, r_int), DC/DC or regulated output (v_out, i_limit, r_out).",
+   "properties": {
+    "efficiency": {
+     "anyOf": [
+      {
+       "type": "number"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Efficiency"
+    },
+    "i_limit": {
+     "anyOf": [
+      {
+       "type": "number"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "I Limit"
+    },
+    "provenance": {
+     "default": "datasheet",
+     "enum": [
+      "measured",
+      "datasheet",
+      "assumed",
+      "estimated",
+      "design",
+      "default"
+     ],
+     "title": "Provenance",
+     "type": "string"
+    },
+    "r_int": {
+     "anyOf": [
+      {
+       "type": "number"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "R Int"
+    },
+    "r_out": {
+     "anyOf": [
+      {
+       "type": "number"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "R Out"
+    },
+    "v_oc": {
+     "anyOf": [
+      {
+       "type": "number"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "V Oc"
+    },
+    "v_out": {
+     "anyOf": [
+      {
+       "type": "number"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "V Out"
+    }
+   },
+   "title": "SourceModel",
+   "type": "object"
+  },
+  "Splice": {
+   "additionalProperties": false,
+   "properties": {
+    "id": {
+     "title": "Id",
+     "type": "string"
+    },
+    "raw": {
+     "title": "Raw",
+     "type": "string"
+    },
+    "zone": {
+     "default": "",
+     "title": "Zone",
+     "type": "string"
+    }
+   },
+   "required": [
+    "id",
+    "raw"
+   ],
+   "title": "Splice",
+   "type": "object"
+  },
+  "Switch": {
+   "additionalProperties": false,
+   "properties": {
+    "contacts": {
+     "items": {
+      "$ref": "#/$defs/Contact"
+     },
+     "title": "Contacts",
+     "type": "array"
+    },
+    "id": {
+     "title": "Id",
+     "type": "string"
+    },
+    "part": {
+     "default": "",
+     "title": "Part",
+     "type": "string"
+    }
+   },
+   "required": [
+    "id"
+   ],
+   "title": "Switch",
+   "type": "object"
+  },
+  "Terminal": {
+   "additionalProperties": false,
+   "description": "One end of a conductor: device string, connector (or half name on a harness connector), pin.",
+   "properties": {
+    "connector": {
+     "default": "",
+     "title": "Connector",
+     "type": "string"
+    },
+    "device": {
+     "title": "Device",
+     "type": "string"
+    },
+    "pin": {
+     "default": "",
+     "title": "Pin",
+     "type": "string"
+    },
+    "side": {
+     "default": "",
+     "enum": [
+      "near",
+      "far",
+      ""
+     ],
+     "title": "Side",
+     "type": "string"
+    }
+   },
+   "required": [
+    "device"
+   ],
+   "title": "Terminal",
+   "type": "object"
+  },
+  "Zone": {
+   "additionalProperties": false,
+   "properties": {
+    "id": {
+     "title": "Id",
+     "type": "string"
+    },
+    "name": {
+     "default": "",
+     "title": "Name",
+     "type": "string"
+    },
+    "xy": {
+     "anyOf": [
+      {
+       "maxItems": 2,
+       "minItems": 2,
+       "prefixItems": [
+        {
+         "type": "number"
+        },
+        {
+         "type": "number"
+        }
+       ],
+       "type": "array"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Xy"
+    }
+   },
+   "required": [
+    "id"
+   ],
+   "title": "Zone",
+   "type": "object"
+  }
+ },
+ "$id": "https://schemagen.invalid/schemas/model.schema.json",
+ "additionalProperties": false,
+ "description": "The whole project.",
+ "properties": {
+  "buses": {
+   "items": {
+    "$ref": "#/$defs/Bus"
+   },
+   "title": "Buses",
+   "type": "array"
+  },
+  "components": {
+   "items": {
+    "$ref": "#/$defs/Component"
+   },
+   "title": "Components",
+   "type": "array"
+  },
+  "conductors": {
+   "items": {
+    "$ref": "#/$defs/Conductor"
+   },
+   "title": "Conductors",
+   "type": "array"
+  },
+  "connectors": {
+   "items": {
+    "$ref": "#/$defs/Connector"
+   },
+   "title": "Connectors",
+   "type": "array"
+  },
+  "decisions": {
+   "items": {
+    "$ref": "#/$defs/Decision"
+   },
+   "title": "Decisions",
+   "type": "array"
+  },
+  "harnesses": {
+   "items": {
+    "$ref": "#/$defs/Harness"
+   },
+   "title": "Harnesses",
+   "type": "array"
+  },
+  "ledger": {
+   "$ref": "#/$defs/LabelLedger"
+  },
+  "open_items": {
+   "items": {
+    "$ref": "#/$defs/OpenItem"
+   },
+   "title": "Open Items",
+   "type": "array"
+  },
+  "parts": {
+   "items": {
+    "$ref": "#/$defs/Part"
+   },
+   "title": "Parts",
+   "type": "array"
+  },
+  "protective_devices": {
+   "items": {
+    "$ref": "#/$defs/ProtectiveDevice"
+   },
+   "title": "Protective Devices",
+   "type": "array"
+  },
+  "relays": {
+   "items": {
+    "$ref": "#/$defs/Relay"
+   },
+   "title": "Relays",
+   "type": "array"
+  },
+  "schema_version": {
+   "default": "0.5",
+   "title": "Schema Version",
+   "type": "string"
+  },
+  "splices": {
+   "items": {
+    "$ref": "#/$defs/Splice"
+   },
+   "title": "Splices",
+   "type": "array"
+  },
+  "switches": {
+   "items": {
+    "$ref": "#/$defs/Switch"
+   },
+   "title": "Switches",
+   "type": "array"
+  },
+  "zones": {
+   "items": {
+    "$ref": "#/$defs/Zone"
+   },
+   "title": "Zones",
+   "type": "array"
+  }
+ },
+ "title": "Model",
+ "type": "object",
+ "x-schema-version": "0.5"
+}

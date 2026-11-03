@@ -1,29 +1,14 @@
-"""Function class and wire colour of a conductor, and gauge normalisation."""
-import re
+"""Function class and wire colour of a conductor (0.2 interface; the logic lives in schemagen.core.classes)."""
+from .core.classes import function_class, gauge
 
 
 def kind(w, cfg):
-    """Function class: CAN_H, CAN_L, GND, 5 V, 24 V, 14 V or signal."""
-    bus, func, i = str(w.get("bus", "")), str(w.get("func", "")), w["id"]
-    if i.startswith("CAN") or re.search(r"CAN_[HL]\b", func):
-        return "CAN_L" if re.search(r"(^CAN\d-L-|CAN_L)", i + " " + func) else "CAN_H"
-    if bus in cfg.bus_class: return cfg.bus_class[bus]
-    if bus.startswith("GND") or bus == "Chassis": return "GND"
-    if bus.startswith("5 V"): return "5 V"
-    if bus.startswith("24"): return "24 V"
-    if bus not in ("—", ""):  # powered wire whose bus name says nothing about the voltage: try the label series
-        for pat, cls in cfg.label_class.items():
-            if re.search(pat, w["label"]): return cls
-    if bus.startswith(("14", "12")): return "14 V"
-    return "signal"
+    return function_class(w["id"], str(w.get("bus", "")), str(w.get("func", "")), w["label"], cfg)
 
 
 def classify(w, cfg):
-    """(function class, WireViz colour code). CAN_H and CAN_L both report class 'CAN'."""
     k = kind(w, cfg)
     return ("CAN" if k.startswith("CAN") else k), cfg.colours[k]
 
 
-def gauge(a):
-    m = re.match(r"\s*(\d+)", str(a))
-    return f"{m.group(1)} AWG" if m else "TBD"
+__all__ = ["kind", "classify", "gauge"]

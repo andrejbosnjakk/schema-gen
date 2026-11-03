@@ -36,7 +36,9 @@ pytest
 | command | does |
 |---|---|
 | `schemagen draw <project> [X-BH ...] [--all] [--split none\|side\|function\|auto] [--no-render]` | drawings and their extras |
-| `schemagen export <project> -o wires.csv` | the wire list in the neutral table format (`.csv` or `.json`) |
+| `schemagen export <project> -o wires.xlsx` | the project in the neutral table format: `.xlsx` workbook, a folder of CSVs, `.csv` (wires only) or `.json` (the whole model) |
+| `schemagen schema [-o schemas]` | JSON Schemas of the model, the part library and issues |
+| `schemagen synth --wires N --seed S -o DIR` | a synthetic (fictional) project for tests and benchmarks |
 | `schemagen palette <project> [--json]` | function class → colour code and hex, for spreadsheets and schematic tools |
 
 `<project>` is a `schemagen.yml` or the folder that holds it. `--no-render` writes YAML, CSVs and checks without WireViz.
@@ -62,6 +64,15 @@ Row fields (the neutral format, `schemagen export` writes it): `id`, `label`, `n
 connector / pin, `p2`/`p2c`/`p2p` = to, `func`, `bus`, `awg`, `amps`, `st` (status; `Open…` is flagged),
 `subsystem`, `notes`. Device strings start with a code (`SP-…` splice, `CB-…` breaker, `GNDB` ground bus, `X-…`
 harness connector); the prefixes are set in `schemagen.yml`.
+
+The neutral table is lossless: every input key that has no column of its own is kept in the model's `extra` and gets
+its own column on export (`key:json` when it holds lists or numbers). Row-module keys `src` (sources: `DOC p. 4; DOC2 p. 7`),
+`zone`, `harn` (harness), `prot` (protective device) and `col` (explicit colour) map to model fields; module-level
+`P` (protection), `D` (decisions) and `O` (open items) tables become objects. Plain column names (`from`, `from connector`,
+`from pin`, `from side`, `gauge`, `current_A`, ...) and the 0.2 names (`p1`, `p1c`, ...) are both accepted.
+
+Connector-half sides: give them in `schemagen.yml` (`sides: {X-BH: {Cabin half: near, Engine half: far}}`) or in the
+table's `from side` / `to side` columns. `near_words` is only a fallback, and every guess is reported as a warning.
 
 A *readable* wire list (display names, connector and pin merged into one text cell) is a view, not a source: it has
 lost the device codes and pin structure the net model needs. Export the structured rows instead.
@@ -107,11 +118,15 @@ writes the cards for the block.
 
 | module | role |
 |---|---|
-| `config.py` | `schemagen.yml` → `Config` |
-| `project.py` | loads rows (modules or table); device roles and readable names |
-| `table.py` | CSV / XLSX / JSON input with column mapping; neutral export |
+| `core/model.py` | the typed model (Pydantic v2): conductors, components, connectors, parts, protection, decisions, open items, ledger; JSON Schemas in `schemas/` |
+| `core/config.py` | `schemagen.yml` → `Config` |
+| `core/load.py`, `core/build.py` | pick the importer, resolve labels / classes / sides, derive components and protection |
+| `core/net.py` | typed connectivity (union-find); breakers and switches are elements, not connections |
+| `importers/` | row modules, tables (XLSX / CSV / CSV folder / JSON), WireViz YAML, part cards |
+| `exporters/` | neutral table (workbook / CSV folder / CSV), JSON model |
+| `project.py`, `table.py`, `config.py` | 0.2 interfaces on top of the model (wire dicts for the drawing code) |
 | `styles.py`, `palette.py` | function class, wire colour, gauge; the palette for other tools |
-| `net.py` | connectivity over the whole wire list (union-find), reachable terminals, next hops; the base for notes, tests and the simulation |
+| `net.py` | 0.2 interface to `core/net.py` for the drawing code: reachable terminals, next hops |
 | `cards.py` | pin data from card blocks (or markdown tables) |
 | `drawing.py` | WireViz document for one harness connector or one part of it |
 | `checks.py` | consistency checks |
