@@ -225,6 +225,7 @@ def test_json_schema_matches_models():
         assert on_disk == json.loads(json.dumps(schema)), f"schemas/{name} is stale: run `schemagen schema`"
 
 
+@pytest.mark.perf
 def test_load_and_net_5k_within_2s(synth_dirs):
     t = time.perf_counter()
     m = load(synth_dirs / "s5000").model

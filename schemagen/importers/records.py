@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import json
 import re
+from functools import lru_cache
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -26,6 +27,7 @@ _ALIASES = {"col": "colour", "color": "colour", "length_m": "length", "current":
 ALIAS: dict[str, str] = {**{f: f for f in COLUMNS}, **{v.lower(): f for f, v in COLUMNS.items()}, **_ALIASES}
 
 
+@lru_cache(maxsize=4096)
 def field_of(column: str) -> str | None:
     """Neutral field for a column name or row key, or None (then the value goes to `extra`)."""
     return ALIAS.get(str(column).strip().lower())
@@ -76,7 +78,7 @@ def normalise_keys(raw: dict[str, Any], mapping: dict[str, str] | None = None) -
             data[name] = json.loads(v) if isinstance(v, str) else v
             cols[name] = key
             continue
-        f = back.get(key.lower()) or field_of(key)
+        f = (back.get(key.lower()) if back else None) or field_of(key)
         f = f or key
         if f in data and (data[f] not in (None, "") or v in (None, "")): continue  # first non-empty spelling wins
         data[f] = v

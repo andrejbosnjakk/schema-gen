@@ -392,6 +392,7 @@ def test_diff_git_revisions(tmp_path):
     assert d["conductors"]["changed"]["PWR-ECU-A"]["gauge"] == ["20", "18"]
 
 
+@pytest.mark.perf
 def test_rules_fast_on_5k(tmp_path):
     import time
     synth.main(5000, 1, str(tmp_path / "s5k"))

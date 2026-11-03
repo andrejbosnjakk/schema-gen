@@ -15,7 +15,8 @@ jobs:
       - run: ruff check schemagen tests benchmarks tools
       - run: python -m mypy schemagen
       - run: python tools/check_licences.py
-      - run: python -m pytest -q --cov=schemagen --cov-report=term
+      - run: python -m pytest -q -m "not perf" --cov=schemagen --cov-report=term
+      - run: python -m pytest -q -m perf
       - run: schemagen draw examples/demo
       - uses: actions/upload-artifact@v4
         with:

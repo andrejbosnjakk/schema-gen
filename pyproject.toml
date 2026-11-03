@@ -27,6 +27,7 @@ schemagen = ["templates/*.html", "core/data/*.yml"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = ["perf: timing limits (CI runs them without coverage tracing)"]
 
 [tool.ruff]
 line-length = 165
