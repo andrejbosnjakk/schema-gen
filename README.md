@@ -44,6 +44,7 @@ pytest
 | `schemagen labels <project> --update` | label ledger: records labels in use, retires removed ones with a reason |
 | `schemagen diff <A> <B> [--project DIR] [--format text\|json\|html]` | added, removed and changed wires, pins, labels, protection, open items; A and B are folders or git revisions |
 | `schemagen changes <project> [--undo]` | list or undo the stored change sets |
+| `schemagen app <project> [--port 8765]` | the local app in the browser: wire table editor, object pages, net explorer, drawings, system graph, simulation, issues, diff |
 | `schemagen sim <project> [scenario.yml ...] [--faults all]` | DC operating point per scenario and the fault sweep; HTML + JSON report in `<out>/sim/`; exits 1 when an expectation fails |
 | `schemagen export <project> -o wires.xlsx` | the project in the neutral table format: `.xlsx` workbook, a folder of CSVs, `.csv` (wires only) or `.json` (the whole model) |
 | `schemagen schema [-o schemas]` | JSON Schemas of the model, the part library and issues |
@@ -176,6 +177,24 @@ open / fail, `expect` `powered`, `max_drop_V`, `min_voltage`, `no_trip`); see `s
 `--faults all` shorts every powered node to ground and reports the prospective current, the device that trips first
 and when, wire survival (I²t, IEC 60364-4-43 k), the interrupt rating and selectivity. A design check, not certification evidence.
 
+## The app
+
+`schemagen app <project>` starts a local server (127.0.0.1 only, no telemetry, assets bundled in the package) and
+opens the browser:
+
+- **Wires**: a virtualised table with dropdowns for gauge, function class and status, inline findings; edits are
+  saved as a change set in `changes/` (Undo removes the last one).
+- **Object pages** for every wire, pin, component, harness connector, harness, net and part: properties, links,
+  sources, findings and git history. **Ctrl K** searches every object.
+- **Net explorer**: click a pin and its net lights up in the table, the drawings (wire labels are clickable) and the
+  system graph.
+- **System graph**, **Drawings**, **Simulation** (scenario, bus voltage tree, breaker and wire loading, failing loads,
+  fault sweep), **Issues** (findings and open items, filters), **Changes & diff** (diff against a git revision,
+  direction-fix preview and apply).
+
+Frontend development: `cd frontend && npm ci && npm run dev` (proxies `/api` to a running `schemagen app`);
+`npm run build` writes `schemagen/app/static/`; `npx playwright test` runs the end-to-end tests.
+
 ## Code map
 
 | module | role |
@@ -190,6 +209,7 @@ and when, wire survival (I²t, IEC 60364-4-43 k), the interrupt rating and selec
 | `core/changes.py`, `core/diff.py`, `core/ledger.py` | change sets, project diff (folders or git revisions), label ledger |
 | `core/tables.py`, `core/data/` | cited reference tables (protection, copper, CAN, simulation defaults) |
 | `renderers/` | interface drawings, the WireViz command runner (parallel batches) |
+| `app/server.py`, `frontend/` | the local app: FastAPI server and the React + TypeScript frontend (built into `app/static/`) |
 | `sim/engine.py`, `sim/build.py`, `sim/api.py`, `sim/report.py` | MNA solver (Newton, relays, current limits), model → circuit with provenance, operating point / expectations / fault sweep, report and CLI |
 | `project.py`, `table.py`, `config.py` | 0.2 interfaces on top of the model (wire dicts for the drawing code) |
 | `styles.py`, `palette.py` | function class, wire colour, gauge; the palette for other tools |

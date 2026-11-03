@@ -128,3 +128,38 @@ One entry per open choice taken during the 0.2 → 0.5 work: context, choice, wh
   over conductors, breakers and closed contacts) minus the voltage across the load (supply pin minus return pin), so
   the return path counts.
 - Why: it is the wiring drop a designer budgets, without needing a source per load.
+
+## D20. System graph with Cytoscape.js and its built-in layouts
+- Context: the task suggests "Cytoscape.js or React Flow with ELK layout"; ELK (elkjs) is EPL-2.0, which the licence
+  rule does not allow.
+- Choice: Cytoscape.js (MIT) with its built-in `cose` layout (`concentric` above 300 nodes). The graph shows buses,
+  breakers, sources, controllers and harness connectors by default, every component on request.
+- Why: permissive, no extra layout dependency, fast enough for synthetic 5k.
+
+## D21. Licence check scope; MPL-2.0 test tools
+- Context: hypothesis (property tests) and axe-core (accessibility tests) are MPL-2.0, and the task requires both.
+- Choice: `tools/check_licences.py` checks what ships: the Python install closure of schemagen and the npm
+  production dependencies bundled into the frontend. Test-only tools (pytest, hypothesis, ruff, mypy, Playwright,
+  axe-core, Vite, TypeScript) are not shipped and are not counted. WireViz (GPL-3.0) is reported as an external command.
+- Why: MPL-2.0 is file-level copyleft and nothing of those tools is distributed with schemagen.
+
+## D22. The app loads the whole index once
+- Context: cold start ≤ 3 s and net highlight ≤ 100 ms on 5,000 wires.
+- Choice: `/api/index` returns every conductor, component, connector, harness, net and finding in one cached,
+  gzipped JSON document (2.4 MB raw for 5k); search, pins and net membership are derived in the browser; object pages
+  are fetched on demand. The server listens at once and loads the project in a background thread while the browser
+  fetches the bundle.
+- Why: one round trip, then every interaction is local: net highlight takes 20–30 ms on 5k.
+
+## D23. Built frontend assets are committed
+- Context: "the built assets ship inside the wheel, so Node is not needed at runtime"; `pip install -e .` from a
+  clone should work too.
+- Choice: `frontend/` builds into `schemagen/app/static/` and that output is committed (180 kB gzipped); CI rebuilds
+  and fails when the committed output is stale.
+- Why: no Node for anyone who only installs or runs schemagen.
+
+## D24. No telemetry, even from the web framework
+- Context: FastAPI 0.16x ships OpenTelemetry instrumentation (it exports only when OTLP variables are set).
+- Choice: the app passes `telemetry={tracing, metrics, logs, operation_spans: False, auto_configure: False}` and
+  excludes every request; the server binds to 127.0.0.1; the frontend loads nothing from the network.
+- Why: wiring data is often under NDA; nothing may leave the machine.

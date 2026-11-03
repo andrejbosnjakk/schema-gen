@@ -62,11 +62,11 @@ def npm_licences() -> dict[str, str]:
 
     def walk(deps: dict) -> None:
         for name, d in (deps or {}).items():
-            if name in out: continue
-            pj = fe / "node_modules" / name / "package.json"
-            lic = json.loads(pj.read_text()).get("license", "UNKNOWN") if pj.exists() else "UNKNOWN"
-            out[name] = lic if isinstance(lic, str) else str(lic)
-            walk(d.get("dependencies", {}))
+            if name not in out:
+                pj = fe / "node_modules" / name / "package.json"
+                lic = json.loads(pj.read_text()).get("license", "UNKNOWN") if pj.exists() else "UNKNOWN"
+                out[name] = lic if isinstance(lic, str) else str(lic)
+            walk(d.get("dependencies", {}))  # a "deduped" entry has no children; the full one does
     walk(tree.get("dependencies", {}))
     return out
 

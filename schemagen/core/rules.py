@@ -367,9 +367,10 @@ def r_gauge_tbd(ctx: Ctx) -> Iterator[tuple[str, list[str], str]]:
 
 
 # ---------------------------------------------------------------- engine
-def run_rules(model: Model, cfg: Any = None, only: list[str] | None = None, measured: dict[str, float] | None = None) -> list[Issue]:
+def run_rules(model: Model, cfg: Any = None, only: list[str] | None = None, measured: dict[str, float] | None = None,
+              ctx: Ctx | None = None) -> list[Issue]:
     """All enabled rules; severity overrides and `off` come from schemagen.yml `rules:`."""
-    ctx = Ctx(model, cfg)
+    ctx = ctx or Ctx(model, cfg)
     ctx.measured = measured or {}  # type: ignore[attr-defined]
     conf: dict[str, Any] = (getattr(cfg, "rules", None) or {}) if cfg else {}
     out: list[Issue] = []

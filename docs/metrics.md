@@ -88,3 +88,16 @@ Benchmark after M3 (`python benchmarks/bench.py`):
 | demo | 23 | 0.006 | 0.000 | 0.001 | 0.027 | 0.002 | 0.004 |
 | synthetic 1k | 1000 | 0.138 | 0.003 | 0.036 | 1.259 | 0.102 | 0.554 |
 | synthetic 5k | 5000 | 0.504 | 0.017 | 0.210 | 9.419 | 0.550 | 13.509 |
+
+## M4 (0.5 alpha): the app
+
+| metric | target | measured |
+|---|---|---|
+| Playwright end-to-end flows (Chromium) | ≥ 10, green | 14 tests green: search, open object, edit and save, undo (two ways), net highlight, run scenario (and fault sweep), open drawing (click a wire label), fix direction preview + apply, diff view, issues filter; plus the metric tests below |
+| cold start to interactive, synthetic 5k | ≤ 3 s | 2.0 s (process start to the first table row and a working filter) |
+| net highlight, synthetic 5k | ≤ 100 ms | 28 ms worst of 5 (to the second animation frame after the click) |
+| every object type within 2 clicks of search | yes | conductor, pin, component, harness connector, harness, net, part: 2 (open search, click the result) |
+| frontend bundle | ≤ 2 MB gzipped | 183 kB gzipped (181 kB JS + 2 kB CSS) |
+| axe-core: serious or critical violations | 0 on the main pages | 0 on 8 pages (table, wire page, pin page, issues, graph, simulation, diff, drawings) in light and dark |
+
+API tests without a browser: `tests/test_app.py` (11). Runtime dependencies (licence check): 19 Python and 8 npm, all permissive.
