@@ -12,6 +12,7 @@ from ..importers import rows as rows_in
 from ..importers import table as table_in
 from ..importers import wireviz as wireviz_in
 from ..importers.records import ModelError, Problem
+from . import changes
 from .build import Inputs, build
 from .config import Config, load_config
 from .model import Model
@@ -26,6 +27,14 @@ class Loaded:
     protection_raw: list[dict[str, Any]] = field(default_factory=list)  # P rows as given, for display.set_protection
     warnings: list[str] = field(default_factory=list)
     records: list[Any] = field(default_factory=list)  # wire Records (input order, same as model.conductors)
+    inputs: Any = None                                 # the build Inputs, to rebuild with edited records
+
+    def rebuild(self, records: list[Any]) -> Model:
+        """The model for edited wire records (same parts, labels, names and tables)."""
+        import dataclasses
+        m, _, problems = build(self.cfg, self.naming, dataclasses.replace(self.inputs, rows=records))
+        if problems: raise ModelError(problems)
+        return m
 
 
 def naming_for(cfg: Config) -> Any:
@@ -41,7 +50,7 @@ def ledger_path(cfg: Config) -> Path:
     return cfg.root / str(cfg.raw.get("ledger", "label_ledger.json"))
 
 
-def load(cfg: Config | str | Path) -> Loaded:
+def load(cfg: Config | str | Path, apply_changes: bool = True) -> Loaded:
     """Read and validate a project. Raises ModelError (file, row, column for every problem)."""
     if not isinstance(cfg, Config): cfg = load_config(cfg)
     naming = naming_for(cfg)
@@ -58,7 +67,7 @@ def load(cfg: Config | str | Path) -> Loaded:
     if src and str(src.get("path", "")).lower().endswith((".yml", ".yaml")): t = wireviz_in.read(cfg.root / src["path"])
     elif src: t = table_in.read(cfg.root, src)
     else: t = rows_in.read(wl)
-    warnings: list[str] = []
+    warnings: list[str] = changes.apply(t.rows, changes.load_all(cfg.root)) if apply_changes else []
     problems: list[Problem] = []
     parts = parts_in.from_cards(cfg.cards, warnings, problems)
     sheet = parts_in.from_sheet(t.parts, problems) if t.parts else []
@@ -79,4 +88,13 @@ def load(cfg: Config | str | Path) -> Loaded:
     m, w, p = build(cfg, naming, inp)
     problems += p
     if problems: raise ModelError(problems)
-    return Loaded(cfg, m, naming, display, prot_raw, warnings + w, t.rows)
+    return Loaded(cfg, m, naming, display, prot_raw, warnings + w, t.rows, inp)
+
+
+def measured_lengths(cfg: Config) -> dict[str, float]:
+    """lengths.csv (label,length_m): measured lengths."""
+    import csv
+    p = cfg.lengths_path
+    if not p.exists(): return {}
+    with open(p, encoding="utf-8") as fh:
+        return {r["label"].strip(): float(r["length_m"]) for r in csv.DictReader(fh) if r.get("length_m")}

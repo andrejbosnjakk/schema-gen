@@ -15,7 +15,7 @@ def render(yml, out, name):
     exe = shutil.which("wireviz")
     if not exe: raise SystemExit("wireviz command not found: pip install wireviz==0.4.1 (and Graphviz), or use --no-render")
     r = subprocess.run([exe, "-f", "hpst", "-o", str(out), "-O", name, str(yml)], capture_output=True, text=True)
-    if r.returncode: raise SystemExit(f"wireviz failed on {yml}:\n{r.stderr or r.stdout}")
+    if r.returncode: raise SystemExit(f"wireviz failed on {yml}:\n{r.stderr or r.stdout}")  # see renderers.wireviz for batches
 
 
 def add_footnotes(page, dr):
@@ -118,7 +118,7 @@ def write_index(pr, out, sets):
                                  for d in parts)
         cards.append(f'<div class="card"><b>{html.escape(H)}</b> <small>{html.escape(full.name)}</small><br>{len(full.ends)} wires · '
                      f'{len(full.checks)} check finding(s)<br>{draw_links}<br>'
-                     + " · ".join(link(H, e) for e in ("_cutlist.csv", "_continuity.csv", "_checks.txt")) + "</div>")
+                     + " · ".join(link(H, e) for e in ("_cutlist.csv", "_continuity.csv", "_checks.txt") if (out / f"{H}{e}").exists()) + "</div>")
         for d in parts:
             svg = out / f"{d.harness}.svg"
             svgs[d.harness] = re.sub(r"^.*?(<svg)", r"\1", svg.read_text(encoding="utf-8"), flags=re.S) if svg.exists() else ""

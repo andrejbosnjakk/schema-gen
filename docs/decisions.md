@@ -55,3 +55,36 @@ One entry per open choice taken during the 0.2 → 0.5 work: context, choice, wh
 - Choice: a row with no id and not both ends is a section header and is skipped; any other incomplete row is a
   validation error naming file, row and column.
 - Why: section headers keep working, a half-filled wire row is no longer dropped silently.
+
+## D9. Protection regions end at buses
+- Context: the gauge rule needs the conductors each breaker or fuse protects.
+- Choice: a region starts at the device's load-side terminal and follows splices, harness pins, shared device pins
+  and switch / relay contacts (from part data); it ends at loads, other protective devices and buses. Feeders from a
+  bus bar to a breaker's line side are therefore not checked against the upstream main breaker.
+- Why: checking panel feeders against the main breaker would flag every bus-fed breaker; real panels size or
+  short-link them separately. A project that wants them checked can model the bus as a splice.
+
+## D10. Edits are change sets applied on load
+- Context: the app, `fix direction` and future assistants must edit projects whose source may be Python row modules,
+  a CSV, a workbook or a JSON model; edits must be reviewable and git-friendly, with undo.
+- Choice: an edit is a JSON change set in `<project>/changes/NNNN-*.json` (set / add / delete by conductor id, with
+  the old value). Loading applies them in order; a value that is neither old nor new is a conflict and is reported.
+  Undo removes the last file. `fix direction` writes its change set and a diff to `out/changes/` and stores it only
+  with `--apply`.
+- Why: one mechanism for every source format, nothing is edited silently, and history lives in git.
+
+## D11. CAN direction start
+- Context: "CAN in bus order from one terminator end" does not say which end.
+- Choice: `direction.can_start` can name the end; otherwise the terminator end that most conductors already agree
+  with is used (ties: the first by component id).
+- Why: a consistent bus order is what matters for review; the choice that changes fewest rows is the least noisy.
+
+## D12. Rule ids are names
+- Context: rules need stable ids for config switches, SARIF and the app.
+- Choice: kebab-case names (`gauge-protection`, `can-terminators`) instead of numbers.
+- Why: readable in schemagen.yml and in findings, and stable.
+
+## D13. Wires lighter than the protection table
+- Context: AC 43.13-1B Table 11-3 stops at 22 AWG.
+- Choice: a lighter wire is held to the 22 AWG limit (5 A), and the message says so.
+- Why: conservative; a 24 AWG wire on a 10 A breaker must not pass silently.

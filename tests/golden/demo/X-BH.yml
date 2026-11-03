@@ -63,8 +63,8 @@ connectors:
     pinlabels:
     - CAN_H
     - CAN_L
-    - Sensor supply
-    - Oil temperature signal
+    - SENS 5V
+    - AI1 oil temp
   OTS:
     type: OTS oil temperature sensor
     subtype: Lead
@@ -75,7 +75,7 @@ connectors:
     - Supply 5 V
     - Temperature out
   CB-GEN:
-    type: CB-GEN 10 A
+    type: CB-GEN 7.5 A
     subtype: LOAD
     pins:
     - LOAD

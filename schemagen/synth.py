@@ -21,6 +21,7 @@ ZONES = {"FR": ("Front", 0.0, 0.0), "CB": ("Cabin", 1.5, 0.0), "EN": ("Engine", 
 LINKS = [("FR", "CB"), ("CB", "EN"), ("EN", "RR"), ("CB", "RF")]
 # max breaker rating per gauge, FAA AC 43.13-1B Table 11-3 (same table as core/data/protection.yml)
 CB_MAX = {22: 5, 20: 7.5, 18: 10, 16: 15, 14: 20, 12: 30, 10: 40, 8: 50, 6: 80, 4: 100}
+FU_MAX = {22: 5, 20: 5, 18: 10, 16: 10, 14: 15, 12: 20, 10: 30, 8: 50, 6: 70, 4: 70}
 RATINGS = [3, 5, 7.5, 10, 15, 20]
 LOADS = {  # family -> (part, description, model, watts or amps, v_nom, v_min, bus)
     "L10": ("SV-LAMP-10W", "lamp 10 W", "constant_power", 10, 14, 9, "14 V"),
@@ -135,8 +136,8 @@ class Synth:
         self.wire(term, (g[0], "Splice", ""), func + " return", "GND", awg, amps, zone, "", "", None, "G")
 
     @staticmethod
-    def gauge_for(rating: float) -> int:
-        return max(g for g, r in CB_MAX.items() if r >= rating)
+    def gauge_for(rating: float, fuse: bool = False) -> int:
+        return max(g for g, r in (FU_MAX if fuse else CB_MAX).items() if r >= rating)
 
     def breaker(self, bus: str, rating: float, desc: str, loads: list[str], fuse: bool = False) -> str:
         """A breaker (or fuse) on BB1 / BB24 with its feed wire; returns the raw device string."""
@@ -175,8 +176,9 @@ class Synth:
         k = self.nid("ld")
         ld = self.dev(f"LD-{fam}-{k:03d}", desc, zone)
         rating = min(r for r in RATINGS if r >= 1.25 * amps)
-        awg = self.gauge_for(rating)
-        cb = self.breaker(bus, rating, f"{desc} {k}", [ld.split()[0]], fuse=self.rng.random() < 0.15)
+        fuse = self.rng.random() < 0.15
+        awg = self.gauge_for(rating, fuse)
+        cb = self.breaker(bus, rating, f"{desc} {k}", [ld.split()[0]], fuse=fuse)
         code = cb.split()[0]
         src: tuple[str, str, str] = (cb, "LOAD", "")
         cls = "P" if bus == "14 V" else "T"
@@ -285,9 +287,8 @@ def generate(n: int, seed: int) -> Synth:
         s.run((cb, "LOAD", ""), "CB", (d, "J1", "1"), "CB", f"Display {k} supply", "14 V", 22, 0.71, cb.split()[0])
         s.ground((d, "J1", "2"), "CB", 22, 0.71, f"Display {k} supply")
         dsps.append((d, "CB"))
-    per = -(-len(ecus) // nb)
     for b in range(nb):
-        mine = [(e["raw"], e["zone"]) for e in ecus[b * per:(b + 1) * per]]
+        mine = [(e["raw"], e["zone"]) for e in ecus[b::nb]]
         s.can([dsps[b]] + mine, b + 1)
     def pending() -> int:  # ground trunk conductors still to come
         return sum(len(s.path(z, "CB")) for z in s.gsplice) + sum(len(s.path(z, "CB")) for z, _, _ in s.gtrunks)

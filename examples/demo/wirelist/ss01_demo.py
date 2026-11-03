@@ -20,8 +20,8 @@ row("PWR-ECU-N2", BH, "Engine half", "2", "SP-ECU-N ECU supply splice (engine)",
 row("PWR-ECU-B", "SP-ECU-N ECU supply splice (engine)", "Splice", "", "ECU engine control unit", "J1", "1", "ECU supply", "14 V", "20")
 row("PWR-CB-ECU", "BB1 14 V bus bar", "Stud", "", "CB-ECU 5 A", "LINE", "", "ECU breaker feed", "14 V", "20")
 # ECU ground
-row("GND-ECU-C", "GNDB ground bus", "Stud", "", BH, "Cabin half", "3", "ECU ground", "GND", "20")
-row("GND-ECU-N", BH, "Engine half", "3", "ECU engine control unit", "J1", "2", "ECU ground", "GND", "20")
+row("GND-ECU-C", BH, "Cabin half", "3", "GNDB ground bus", "Stud", "", "ECU ground", "GND", "20")
+row("GND-ECU-N", "ECU engine control unit", "J1", "2", BH, "Engine half", "3", "ECU ground", "GND", "20")
 # CAN between the ECU and the dashboard display
 row("CAN-H-C", "DSP dashboard display", "CAN", "H", BH, "Cabin half", "4", "CAN_H", "—", "22")
 row("CAN-H-N", BH, "Engine half", "4", "ECU engine control unit", "J1", "3", "CAN_H", "—", "22")
@@ -33,6 +33,13 @@ row("PWR-OTS-N", BH, "Engine half", "6", "OTS oil temperature sensor", "Lead", "
 row("SIG-OTS-N", "OTS oil temperature sensor", "Lead", "2", BH, "Engine half", "7", "Oil temperature signal", "—", "22")
 row("SIG-OTS-C", BH, "Cabin half", "7", "DSP dashboard display", "Sensor", "AI1", "Oil temperature signal", "—", "22")
 # 24 V starter-generator field, pin not yet decided at the generator
-row("PWR-GEN-C", "CB-GEN 10 A", "LOAD", "", BH, "Cabin half", "8", "Generator field", "24 V", "20")
+row("PWR-GEN-C", "CB-GEN 7.5 A", "LOAD", "", BH, "Cabin half", "8", "Generator field", "24 V", "20")
 row("PWR-GEN-N", BH, "Engine half", "8", "GEN starter-generator", "Field", "TBD", "Generator field", "24 V", "20", st="Open")
-row("PWR-CB-GEN", "BB24 24 V bus bar", "Stud", "", "CB-GEN 10 A", "LINE", "", "Generator breaker feed", "24 V", "20")
+row("PWR-CB-GEN", "BB24 24 V bus bar", "Stud", "", "CB-GEN 7.5 A", "LINE", "", "Generator breaker feed", "24 V", "20")
+
+# protective devices: rating and panel label (the drawings and checks read them from here)
+P = [dict(id="CB-MAIN", rating=30, panel="MAIN", loads=["BB1"]),
+     dict(id="CB-ECU", rating=5, panel="ECU", loads=["ECU"]),
+     dict(id="CB-GEN", rating=7.5, panel="GEN FIELD", loads=["GEN"])]
+D = [dict(id="D-01", date="2026-09-14", text="ECU supply over two D-SUB contacts in parallel, spliced on both sides", by="demo team")]
+O = [dict(id="O-01", text="Generator field pin at the starter-generator not decided", status="open", owner="demo team", objects=["GEN"])]

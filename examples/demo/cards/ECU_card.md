@@ -13,8 +13,8 @@ connectors:
     pins:
       - {n: 1, name: VBAT, type: power_in, v_max: 16, i_max: 5}
       - {n: 2, name: GND, type: ground}
-      - {n: 3, name: CAN_H, type: can}
-      - {n: 4, name: CAN_L, type: can}
+      - {n: 3, name: CAN_H, type: can_h, term: true}
+      - {n: 4, name: CAN_L, type: can_l, term: true}
 ```
 
 | Pin | Signal | Dir | Type | Rule |

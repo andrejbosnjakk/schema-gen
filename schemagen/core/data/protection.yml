@@ -1,0 +1,33 @@
+# Largest protective-device rating per copper wire gauge (AWG), amperes.
+# Source: FAA Advisory Circular AC 43.13-1B (1998, change 1 2001), chapter 11, Table 11-3
+# "Wire and circuit protector chart". Basis of the chart (from the AC): wire bundles in 135 °F ambient at up to
+# 30,000 ft, bundles of 15 or more wires each carrying no more than 20 % of the bundle's total capacity
+# (MIL-W-5088), protectors in 75-85 °F ambient. Check against the AC before relying on it.
+# Override per project in schemagen.yml:  tables: {protection: {breaker: {22: 5, ...}, fuse: {...}}}
+source: "FAA AC 43.13-1B, Table 11-3 (wire and circuit protector chart)"
+breaker:  # circuit breaker, A
+  22: 5
+  20: 7.5
+  18: 10
+  16: 15
+  14: 20
+  12: 30
+  10: 40
+  8: 50
+  6: 80
+  4: 100
+  2: 125
+fuse:     # fuse, A
+  22: 5
+  20: 5
+  18: 10
+  16: 10
+  14: 15
+  12: 20
+  10: 30
+  8: 50
+  6: 70
+  4: 70
+  2: 100
+  1: 150
+  0: 150

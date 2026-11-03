@@ -35,7 +35,15 @@ pytest
 
 | command | does |
 |---|---|
-| `schemagen draw <project> [X-BH ...] [--all] [--split none\|side\|function\|auto] [--no-render]` | drawings and their extras |
+| `schemagen draw <project> [X-BH ...] [--all] [--split none\|side\|function\|auto] [--no-render] [--no-interfaces]` | harness drawings, interface drawings for every conductor no harness drawing reaches, coverage report, and their extras |
+| `schemagen check <project> [--format text\|json\|sarif] [-o FILE]` | the rules (severity, objects, fix hint); exits 1 on an error |
+| `schemagen fix direction <project> [--apply]` | a reviewable change set (JSON + diff) that makes every wire follow the direction convention; `--apply` stores it in `changes/` |
+| `schemagen pinout <project>` | pinout per component and harness connector (XLSX + HTML), spares included |
+| `schemagen wirelist <project> -o wirelist.xlsx` | readable wire list with the project's display names |
+| `schemagen template [<project>] -o sheet.xlsx` | the editable workbook with dropdowns (works after upload to Google Sheets) |
+| `schemagen labels <project> --update` | label ledger: records labels in use, retires removed ones with a reason |
+| `schemagen diff <A> <B> [--project DIR] [--format text\|json\|html]` | added, removed and changed wires, pins, labels, protection, open items; A and B are folders or git revisions |
+| `schemagen changes <project> [--undo]` | list or undo the stored change sets |
 | `schemagen export <project> -o wires.xlsx` | the project in the neutral table format: `.xlsx` workbook, a folder of CSVs, `.csv` (wires only) or `.json` (the whole model) |
 | `schemagen schema [-o schemas]` | JSON Schemas of the model, the part library and issues |
 | `schemagen synth --wires N --seed S -o DIR` | a synthetic (fictional) project for tests and benchmarks |
@@ -114,6 +122,35 @@ connectors:
 Cards without a block can still be used through `cardmap` (markdown pin tables), but that is fragile; ask whoever
 writes the cards for the block.
 
+## Rules
+
+`schemagen check` runs every rule; each finding has an id, a severity, the objects it concerns
+(`conductor:W12`, `pin:X-BH//3`, `component:ECU`, ...) and a fix hint. Switch a rule off or change its severity in
+`schemagen.yml`: `rules: {duplicate-ends: off, contact-current: warning}`.
+
+| rule | severity | checks |
+|---|---|---|
+| duplicate-id, duplicate-ends, label-duplicate, label-reused | error / warning | identity: ids, end pairs, printed labels, the label ledger |
+| direction | warning | the wire direction convention (below) |
+| gauge-protection | error | wire gauge vs breaker / fuse rating, FAA AC 43.13-1B Table 11-3 (`core/data/protection.yml`) |
+| contact-gauge, contact-current, dsub-gauge | error | contact AWG range and current per contact from part data; D-sub crimp contacts 20–24 AWG |
+| output-conflict, power-ground, required-pin | error / warning | pin types on a net: two outputs, power wired to ground, required pins left open |
+| can-terminators, can-nodes, can-stub, can-part-data | error / warning / info | two terminations per bus, node count and stub length (SAE J1939-11, `core/data/can.yml`) |
+| open-end, pin-clash, half-naming, side-guessed, gauge-change, class-change | error / warning | harness connector pins (ported from 0.2) |
+| open-status, open-item, pin-tbd, gauge-tbd | info / warning | open items and fields still to be decided |
+
+Every number from a standard is in `schemagen/core/data/*.yml` with its source, and overridable per project
+(`tables: {protection: {breaker: {22: 5}}}`, `tables: {can: {max_stub_m: 0.3}}`).
+
+**Wire direction convention** (`direction:` in schemagen.yml): supply runs source → load; returns run device → where
+they return (ground bus, else the supplying unit's ground pin, else a splice); one-way signals run sender → receiver;
+CAN runs in bus order from one terminator end, other bidirectional links from the controlling unit outward. Pin types
+come from the part cards; breakers, switches and relays fall back to their terminal names (LINE / LOAD, IN / OUT,
+COM / NO). `schemagen fix direction` swaps ends in a change set and never touches a label.
+
+**Change sets** (`changes/*.json`) are applied on every load, in order. They are how the app and the fixes edit a
+project whatever its source format; commit them like any other file.
+
 ## Code map
 
 | module | role |
@@ -123,7 +160,11 @@ writes the cards for the block.
 | `core/load.py`, `core/build.py` | pick the importer, resolve labels / classes / sides, derive components and protection |
 | `core/net.py` | typed connectivity (union-find); breakers and switches are elements, not connections |
 | `importers/` | row modules, tables (XLSX / CSV / CSV folder / JSON), WireViz YAML, part cards |
-| `exporters/` | neutral table (workbook / CSV folder / CSV), JSON model |
+| `exporters/` | neutral table (workbook / CSV folder / CSV), JSON model, pinout, readable wire list, sheet template |
+| `core/rules.py`, `core/context.py`, `core/direction.py` | rules engine, shared analysis (pin types, protection regions, CAN buses), direction convention |
+| `core/changes.py`, `core/diff.py`, `core/ledger.py` | change sets, project diff (folders or git revisions), label ledger |
+| `core/tables.py`, `core/data/` | cited reference tables (protection, copper, CAN, simulation defaults) |
+| `renderers/` | interface drawings, the WireViz command runner (parallel batches) |
 | `project.py`, `table.py`, `config.py` | 0.2 interfaces on top of the model (wire dicts for the drawing code) |
 | `styles.py`, `palette.py` | function class, wire colour, gauge; the palette for other tools |
 | `net.py` | 0.2 interface to `core/net.py` for the drawing code: reachable terminals, next hops |

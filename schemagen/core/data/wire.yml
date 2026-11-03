@@ -1,0 +1,14 @@
+# Copper wire data used by the rules and the DC simulation. Override in schemagen.yml: tables: {wire: {...}}
+#
+# AWG diameter: d = 0.127 mm x 92^((36 - n) / 39)  (ASTM B258, standard nominal diameters of solid AWG wire).
+# Resistivity of annealed copper at 20 °C: 1.7241e-8 ohm m (IEC 60028, International Annealed Copper Standard).
+# Temperature coefficient of copper at 20 °C: 0.00393 / K (IEC 60028).
+# Stranded wire is treated as solid wire of the same nominal area (conservative to within a few per cent).
+source: "ASTM B258 (AWG diameters), IEC 60028 (copper resistivity and temperature coefficient)"
+resistivity_ohm_m: 1.7241e-8
+alpha_per_K: 0.00393
+reference_C: 20
+# Adiabatic short-circuit limit I^2 t <= (k A)^2, A in mm^2, t in s (IEC 60364-4-43:2008, Table 43A).
+# k = 143 for copper with XLPE/EPR insulation (90 °C to 250 °C); PVC is 115. Choose per project.
+source_k: "IEC 60364-4-43:2008, Table 43A"
+k_insulation: 143

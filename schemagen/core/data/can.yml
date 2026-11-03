@@ -1,0 +1,6 @@
+# CAN physical-layer limits used by the rules. Override in schemagen.yml: tables: {can: {...}}
+source: "SAE J1939-11 (physical layer, 250 kbit/s): at most 30 nodes, stub length at most 1 m, two 120 ohm terminations"
+max_nodes: 30
+min_nodes: 2
+max_stub_m: 1.0
+terminators: 2
