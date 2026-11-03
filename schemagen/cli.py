@@ -68,10 +68,15 @@ def main(argv=None):
     e.add_argument("config"); e.add_argument("-o", "--output", required=True, help=".csv or .json")
     p = sub.add_parser("palette", help="print the wire palette (function class -> colour)")
     p.add_argument("config"); p.add_argument("--json", action="store_true")
+    y = sub.add_parser("synth", help="write a synthetic (fictional) project for tests and benchmarks")
+    y.add_argument("--wires", type=int, default=1000); y.add_argument("--seed", type=int, default=1)
+    y.add_argument("-o", "--output", required=True)
     a = ap.parse_args(argv)
     if a.cmd == "draw": draw(a.config, a.harness, a.all, a.no_render, split=a.split)
     elif a.cmd == "export":
         pr = Project(load_config(a.config)); table.export(pr, Path(a.output)); print(f"{len(pr.wires)} wires -> {a.output}")
+    elif a.cmd == "synth":
+        from . import synth; synth.main(a.wires, a.seed, a.output)
     elif a.cmd == "palette": palette.write(load_config(a.config), "json" if a.json else "csv", sys.stdout)
 
 
