@@ -85,12 +85,14 @@ def read(root: Path, src: dict[str, Any]) -> Tables:
             setattr(t, key, _wires(raw, f.name, mapping) if key == "rows" else _plain(raw, f.name))
     elif path.suffix.lower() == ".xlsx":
         wb = _xlsx(path)
-        names = {ws.title: ws for ws in wb.worksheets}
-        wsheet = src.get("sheet") or ("Wires" if "Wires" in names else wb.worksheets[0].title)
-        t.rows = _wires(_sheet(names[wsheet], hr), f"{path.name} [{wsheet}]", mapping)
-        for key, sheet in SHEETS.items():
-            if key != "rows" and sheet in names:
-                setattr(t, key, _plain(_sheet(names[sheet]), f"{path.name} [{sheet}]"))
+        try:  # read-only workbooks keep the file open (locked on Windows) until closed
+            names = {ws.title: ws for ws in wb.worksheets}
+            wsheet = src.get("sheet") or ("Wires" if "Wires" in names else wb.worksheets[0].title)
+            t.rows = _wires(_sheet(names[wsheet], hr), f"{path.name} [{wsheet}]", mapping)
+            for key, sheet in SHEETS.items():
+                if key != "rows" and sheet in names:
+                    setattr(t, key, _plain(_sheet(names[sheet]), f"{path.name} [{sheet}]"))
+        finally: wb.close()
     elif path.suffix.lower() == ".json":
         raw = json.loads(path.read_text(encoding="utf-8"))
         t.rows = _wires(list(enumerate(raw, 1)), path.name, mapping)
