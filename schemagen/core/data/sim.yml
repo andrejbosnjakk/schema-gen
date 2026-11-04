@@ -15,3 +15,8 @@ i_interrupt_A: 1000              # assumed interrupt rating when part data has n
 generic_trip_curve: [[1.15, 3600], [1.5, 120], [2, 30], [5, 3], [10, 0.05]]
 no_trip_below: 1.15              # multiple of rating that never trips (assumed, with the generic curve)
 gmin_S: 1.0e-12                  # leak to ground for floating nodes (numerical)
+# --infer (schemagen sim --infer or sim: {infer: true}): sources for devices without part data, matched by regex on
+# the device code or name; voltage from v_oc / v_out, else the highest nominal bus voltage of its conductors.
+# All assumed. Override or extend in schemagen.yml: sim: {sources: {"^GEN": {kind: dcdc, v_out: 14.2, i_limit: 60}}}
+infer: false
+sources: {"^BAT": {kind: battery, r_int: 0.01}, "^DCDC": {kind: dcdc, r_out: 0.01}}

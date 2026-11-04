@@ -10,7 +10,7 @@
     schemagen labels <project> [--update] [--retire LABEL --reason TEXT]
     schemagen diff <A> <B> [--project DIR] [--format text|json|html] [-o FILE]   (A, B: folders or git revisions)
     schemagen changes <project> [--undo]
-    schemagen sim <project> [scenario.yml ...] [--faults all]
+    schemagen sim <project> [scenario.yml ...] [--faults all] [--infer]
     schemagen app <project> [--port 8765]
     schemagen palette <project> [--json] | schema [-o schemas] | synth --wires N --seed S -o DIR
 """
@@ -66,6 +66,7 @@ def main(argv=None):
     sm = sub.add_parser("sim", help="DC simulation: scenarios and fault sweep (HTML + JSON report)")
     sm.add_argument("config"); sm.add_argument("scenarios", nargs="*", help="scenario YAML files (default: <project>/scenarios/*.yml)")
     sm.add_argument("--faults", choices=["all"], help="short every node to ground"); sm.add_argument("-o", "--output", help="report folder")
+    sm.add_argument("--infer", action="store_true", help="assume sources (sim.sources) and loads (conductor current) missing from part data")
     a_ = sub.add_parser("app", help="the local app (browser UI)")
     a_.add_argument("config"); a_.add_argument("--port", type=int, default=8765); a_.add_argument("--host", default="127.0.0.1")
     a_.add_argument("--no-browser", action="store_true")

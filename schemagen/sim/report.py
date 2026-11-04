@@ -1,5 +1,6 @@
 """`schemagen sim`: run scenario files and the fault sweep, write an HTML + JSON report, exit 1 when an
-expectation fails or a scenario does not converge.
+expectation fails or a scenario does not converge, 2 when the project lacks the sources or loads to simulate
+(`--infer` assumes them from the wire list: sources matched by sim.sources, loads from conductor current values).
 
 Scenario file (one per scenario, default <project>/scenarios/*.yml):
 
@@ -36,9 +37,11 @@ def _jsonable(x: Any) -> Any:
     return x
 
 
-def run(project: str | Path, scenario_files: list[str] | None = None, faults: bool = False, out: Path | None = None) -> dict[str, Any]:
+def run(project: str | Path, scenario_files: list[str] | None = None, faults: bool = False, out: Path | None = None,
+        infer: bool = False) -> dict[str, Any]:
     L = load(project)
     cfg, m = L.cfg, L.model
+    if infer: cfg.sim = {**cfg.sim, "infer": True}
     meas = measured_lengths(cfg)
     files = [Path(f) for f in scenario_files] if scenario_files else sorted((cfg.root / "scenarios").glob("*.yml"))
     ctx = Ctx(m, cfg)
@@ -72,7 +75,9 @@ def to_html(rep: dict[str, Any]) -> str:
         fail = [ld for ld in sc["loads"] if not ld["powered"] and not ld["off"]]
         fl = "".join(f"<li>{e(ld['component'])}: {ld['voltage_V']:.2f} V (min {ld['v_min']} V)</li>" for ld in fail) or "<li>none</li>"
         asm = "".join(f"<li><b>{e(a['what'])}</b> ({e(a['provenance'])}): {e(a['note'])}</li>" for a in sc["assumptions"])
+        miss = "".join(f"<li>{e(x)}</li>" for x in sc["missing"])
         parts.append(f"<section><h2>{e(sc['scenario'])} <span class=\"{st.lower()}\">{st}</span></h2>"
+                     + (f"<h3>Cannot simulate</h3><ul>{miss}</ul>" if miss else "") +
                      f"<p>{'converged' if sc['converged'] else 'NOT converged: ' + e(sc['message'])} in {sc['iterations']} iterations, "
                      f"KCL residual {sc['residual']:.1e} A, {sc['seconds'] * 1000:.0f} ms</p>"
                      f"<h3>Expectations</h3><table>{exp or '<tr><td>none</td></tr>'}</table>"
@@ -112,7 +117,12 @@ def _sec(x: float | None) -> str:
 
 
 def run_cli(a: Any) -> int:
-    rep = run(a.config, a.scenarios or None, a.faults == "all", Path(a.output) if a.output else None)
+    rep = run(a.config, a.scenarios or None, a.faults == "all", Path(a.output) if a.output else None, getattr(a, "infer", False))
+    missing = sorted({x for sc in rep["scenarios"] for x in sc["missing"]})
+    if missing:
+        print("cannot simulate this project:")
+        for x in missing: print(f"      {x}")
+        return 2
     bad = 0
     for sc in rep["scenarios"]:
         flag = "pass" if sc["ok"] else "FAIL"

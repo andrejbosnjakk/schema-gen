@@ -311,3 +311,18 @@ def test_ngspice_cross_check():
         assert len(ref) >= 2
         for k, v in ref.items():
             if k in mine and abs(v) > 1e-6: assert abs(mine[k] - v) <= 0.005 * abs(v), (k, mine[k], v)
+
+
+def test_no_part_data_is_not_a_pass_and_infer_assumes_it(synth_projects, tmp_path, capsys):
+    d = tmp_path / "bare"
+    shutil.copytree(synth_projects / "s1000", d, ignore=shutil.ignore_patterns("out", "cards"))
+    assert main(["sim", str(d), "--faults", "all"]) == 2  # 0.5 printed "pass" with 0 nodes here
+    assert "cannot simulate this project:" in capsys.readouterr().out
+    L = load(d)
+    L.cfg.sim = {**L.cfg.sim, "infer": True}
+    op = api.operating_point(L.model, L.cfg)
+    assert op.converged and not op.missing and {s["component"] for s in op.sources} >= {"BAT"}
+    assert all(a.provenance == "assumed" for a in op.assumptions if "inferred" in a.note)
+    assert any(ld["powered"] for ld in op.loads)
+    assert len(api.fault_sweep(L.model, L.cfg).rows) > 0
+    assert main(["sim", str(d), "--infer"]) in (0, 1)  # simulated: pass or fail on the scenario expectations

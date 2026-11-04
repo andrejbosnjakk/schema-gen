@@ -189,3 +189,14 @@ One entry per open choice taken during the 0.2 → 0.5 work: context, choice, wh
   an entry that is neither dict nor tuple, is a load warning naming file, table and index.
 - Why: the `tables:` key already holds per-project overrides; `fields` is a key no cited table uses, so the two do
   not collide. A shorter tuple is accepted (the missing fields stay empty).
+
+## D29. Simulating without part data
+- Context: without battery, source or load part data `schemagen sim` reported `pass` on an empty circuit.
+- Choice: a circuit with no source or no load is not a result: the CLI lists what is missing and exits 2, the report
+  shows it and the scenario is not ok. `--infer` (or `sim: {infer: true}`) adds sources for devices matched by
+  `sim.sources` (regex -> kind battery/dcdc, v_oc / v_out, r_int / r_out, i_limit; defaults `^BAT` and `^DCDC` in
+  core/data/sim.yml); without a voltage the highest nominal bus voltage ("14 V") on the device's conductors is used,
+  and only those conductors are its output. A DC/DC's input current is not modelled. Loads come from the conductor
+  `current` field, as before. Every inferred value is an "assumed" entry in the report.
+- Why: the simplest model that gives an operating point and a non-empty fault sweep from a wire list alone, and it
+  never hides that the numbers are assumptions.
