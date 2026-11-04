@@ -16,7 +16,7 @@ from schemagen.cli import main
 from schemagen.cli.commands import direction_changeset
 from schemagen.core import changes as ch
 from schemagen.core import diff as df
-from schemagen.core import ledger
+from schemagen.core import ledger, tables
 from schemagen.core.context import Ctx
 from schemagen.core.direction import analyse
 from schemagen.core.load import load, measured_lengths
@@ -221,6 +221,29 @@ def test_rule_switch_and_severity_override(s600, tmp_path):
     assert [i.severity for i in run_rules(L.model, L.cfg) if i.rule == "open-item"] == ["error"]
 
 
+# ---------------------------------------------------------------- CAN without card data
+def test_can_checked_without_cards(tmp_path):
+    full = tmp_path / "full"; synth.main(1000, 1, str(full))
+    bare = tmp_path / "bare"; shutil.copytree(full, bare, ignore=shutil.ignore_patterns("cards", "out"))
+    nodes = lambda L: sorted(len(b.nodes) + len(b.unknown) for b in Ctx(L.model, L.cfg).can_buses)  # noqa: E731
+    Lf, L = load(full), load(bare)
+    assert nodes(L) == nodes(Lf) and nodes(L)  # terminators are not nodes; nodes come from their stubs
+    found = run_rules(L.model, L.cfg)
+    assert not [i for i in found if i.rule in ("can-terminators", "can-nodes")]  # both ends inferred as terminations
+    assert any("terminations taken from the name" in i.message for i in found if i.rule == "can-part-data")
+    tr = next(c.raw for c in L.model.components if c.id.startswith("TR-"))
+    m = L.rebuild([r for r in L.records if tr not in (r.data.get("p1"), r.data.get("p2"))])  # cut one terminator off
+    assert [i for i in run_rules(m, L.cfg) if i.rule == "can-terminators"]
+    L.cfg.tables = {"can": {"max_nodes": 1}}
+    assert len([i for i in run_rules(L.model, L.cfg) if i.rule == "can-nodes"]) == len(nodes(L))
+    from schemagen.core.rules import max_stub
+    assert [max_stub(tables.table("can", type("C", (), {"tables": {"can": {"bitrate_kbit": br}}}))) for br in (125, 250, 500, 1000)] == [1.0, 1.0, 0.3, 0.3]
+    assert max_stub(tables.table("can", type("C", (), {"tables": {"can": {"bitrate_kbit": 500, "max_stub_m": 2}}}))) == 2.0
+    L.cfg.tables = {"can": {"bitrate_kbit": 500, "max_stub_m_by_bitrate": {500: 0.2}}}  # the synthetic stubs are 0.3 m
+    stubs = [i for i in run_rules(L.model, L.cfg, measured=measured_lengths(L.cfg)) if i.rule == "can-stub"]
+    assert stubs and all("at most 0.2 m at 500 kbit/s" in i.message for i in stubs)
+
+
 # ---------------------------------------------------------------- direction without pin data
 def _w(i, a, ac, ap, b, bc, bp, func, bus=""):
     return dict(id=i, p1=a, p1c=ac, p1p=ap, p2=b, p2c=bc, p2p=bp, func=func, bus=bus, awg="22")
@@ -407,7 +430,8 @@ def test_template_dropdowns_and_reimport(tmp_path):
     assert "GNDB ground bus" in [c.value for c in wb["Lists"]["D"]]
     d = tmp_path / "d"; shutil.copytree(DEMO, d, ignore=shutil.ignore_patterns("out"))
     shutil.copy(tmp_path / "t.xlsx", d / "t.xlsx")
-    cfg = yaml.safe_load((d / "schemagen.yml").read_text(encoding="utf-8")); cfg["source"] = {"path": "t.xlsx"}; (d / "schemagen.yml").write_text(yaml.safe_dump(cfg), encoding="utf-8")
+    cfg = yaml.safe_load((d / "schemagen.yml").read_text(encoding="utf-8")); cfg["source"] = {"path": "t.xlsx"}
+    (d / "schemagen.yml").write_text(yaml.safe_dump(cfg), encoding="utf-8")
     assert load(d).model.model_dump() == L.model.model_dump()
     template_xlsx(None, tmp_path / "empty.xlsx")
     wirelist_xlsx(Project(L.cfg), tmp_path / "w.xlsx")
@@ -425,7 +449,8 @@ def test_label_ledger(tmp_path):
     main(["labels", str(d), "--update", "--reason", "removed in rev B"])
     e = next(x for x in json.loads((d / "label_ledger.json").read_text(encoding="utf-8"))["entries"] if x["label"] == "T03")
     assert e["status"] == "retired" and e["reason"] == "removed in rev B"
-    lj = json.loads((d / "wirelist" / "labels.json").read_text(encoding="utf-8")); lj["PWR-OTS-C"] = "T03"; (d / "wirelist" / "labels.json").write_text(json.dumps(lj), encoding="utf-8")
+    lj = json.loads((d / "wirelist" / "labels.json").read_text(encoding="utf-8")); lj["PWR-OTS-C"] = "T03"
+    (d / "wirelist" / "labels.json").write_text(json.dumps(lj), encoding="utf-8")
     assert [i.objects[0] for i in run_rules(load(d).model) if i.rule == "label-reused"] == ["conductor:PWR-OTS-C"]
     led2, msgs = ledger.update(load(d).model)
     assert any("T03" in m for m in msgs) or True

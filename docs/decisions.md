@@ -231,3 +231,15 @@ One entry per open choice taken during the 0.2 → 0.5 work: context, choice, wh
   Signal wires still without a direction are one `direction-unknown` info finding with the count.
 - Why: the smallest set of fallbacks that covers the cases seen, all overridable; a pattern that is wrong for a
   project is replaced in its schemagen.yml rather than in code.
+
+## D33. CAN checks without card data
+- Context: without CAN pin data every device on a CAN net was "unknown" and the termination check was skipped, so a
+  list without cards got no termination or node-count findings (and terminator plugs counted as nodes).
+- Choice: a device without CAN pin data whose code or name matches `tables.can.terminator_pattern` (default
+  `^R-CAN|terminator|120 ?(Ω|ohm)`) is a termination; every other device on the net is a node (from its stub
+  conductor). The termination check is skipped only when no termination is known at all, since an unknown node may
+  be terminated inside; otherwise its fix text says so. `can-part-data` (info) names what was inferred.
+- Stub limit: `max_stub_m_by_bitrate` (250 kbit/s: 1 m from SAE J1939-11; 500 kbit/s and above: about 0.3 m, the
+  ISO 11898-2 design guideline) at `bitrate_kbit` (default 250), one rate per project; `max_stub_m` set in the
+  project still wins.
+- Why: a bit rate per project is what real lists state; per-bus rates can come later if a project needs them.

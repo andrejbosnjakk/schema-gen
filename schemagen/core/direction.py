@@ -54,7 +54,7 @@ DEFAULTS: dict[str, Any] = {"bond": [r"\bbond", "structure", "airframe"], "groun
 
 
 def _pats(opts: dict[str, Any], key: str) -> list[tuple[re.Pattern[str], re.Pattern[str] | None]]:
-    out = []
+    out: list[tuple[re.Pattern[str], re.Pattern[str] | None]] = []
     for x in opts.get(key, DEFAULTS[key]) or []:
         dev, fn = (x.get("device", "."), x.get("function")) if isinstance(x, dict) else (x, None)
         out.append((re.compile(str(dev), re.I), re.compile(str(fn), re.I) if fn else None))
@@ -114,7 +114,7 @@ def _judge(ctx: Ctx) -> tuple[list[Flip], list[int]]:
         starts: list[NodeKey] = []
         if kind == "GND":
             buses: list[NodeKey] = [x for x, r in role.items() if r == "bus"]
-            gp = [x for x in n.nodes if len(x) == 3 and x[0] in ctx.comp and ctx.comp[x[0]].kind != "harness" and match(x[0], gpts)
+            gp: list[NodeKey] = [x for x in n.nodes if len(x) == 3 and x[0] in ctx.comp and ctx.comp[x[0]].kind != "harness" and match(x[0], gpts)
                   and not any(is_bond(i) for i, _ in net.at[x])]
             sup = [x for x, ty in typed.items() if ty == "ground" and _supplies(ctx, x[0])]
             spl: list[NodeKey] = [x for x, r in role.items() if r == "splice"]
