@@ -12,6 +12,20 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
+DISPLAY = '''"""Display names for the e2e copy of the demo (fictional): the default names, with DSP renamed."""
+from pathlib import Path
+from schemagen.core.config import load_config
+from schemagen.importers.display import DefaultDisplay
+
+_d = DefaultDisplay(load_config(Path(__file__).resolve().parents[1]))
+HARNESS, SHORT = _d.HARNESS, _d.SHORT
+harness, terminal, strip, set_protection = _d.harness, _d.terminal, _d.strip, _d.set_protection
+
+
+def device(raw, extra=None):
+    return "Cockpit display" if str(raw).startswith("DSP ") else _d.device(raw, extra)
+'''
+
 
 def prepare(kind: str) -> Path:
     tmp = Path(tempfile.mkdtemp(prefix=f"sg-e2e-{kind}-"))
@@ -22,6 +36,7 @@ def prepare(kind: str) -> Path:
         p.write_text(p.read_text(encoding="utf-8").replace(
             'row("GND-BAT-1", "BAT battery 14 V", "−", "", "GNDB ground bus", "Stud", ""',
             'row("GND-BAT-1", "GNDB ground bus", "Stud", "", "BAT battery 14 V", "−", ""'), encoding="utf-8")
+        (d / "wirelist" / "display.py").write_text(DISPLAY, encoding="utf-8")  # a project display module that renames DSP
         git = lambda *a: subprocess.run(["git", "-C", str(d), *a], check=True, capture_output=True)  # noqa: E731
         git("init", "-q"); git("add", "."); git("-c", "user.email=e2e@example.invalid", "-c", "user.name=e2e", "commit", "-qm", "demo")
         if shutil.which("wireviz") and shutil.which("dot"):

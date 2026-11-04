@@ -85,6 +85,15 @@ class State:
     def pin_id(self, t: Terminal) -> str:
         return f"{self.cid(t.device)}/{t.connector}/{t.pin}"
 
+    def dname(self, cid: str) -> str:
+        """A component's display name, with its code when the name does not contain it; the code when there is none."""
+        c = self.ctx.comp_by_id.get(cid)
+        n = (c.name if c else "") or cid
+        return n if cid in n else f"{n} ({cid})"
+
+    def pin_text(self, t: Terminal) -> str:
+        return " ".join(x for x in (self.dname(self.cid(t.device)), t.connector, t.pin) if x)
+
     def index(self) -> dict[str, Any]:
         """Everything the frontend needs at start: compact rows for every object."""
         if self._index is not None: return self._index
@@ -141,11 +150,12 @@ class State:
             if i is None: raise HTTPException(404, f"no conductor {oid}")
             c = conds[i]
             src = self.L.records[i] if i < len(self.L.records) else None
-            links = [link("pin", self.pin_id(c.from_), f"from {self.pin_id(c.from_)}"), link("pin", self.pin_id(c.to), f"to {self.pin_id(c.to)}"),
-                     link("component", self.cid(c.from_.device)), link("component", self.cid(c.to.device)),
+            links = [link("pin", self.pin_id(c.from_), f"from {self.pin_text(c.from_)}"), link("pin", self.pin_id(c.to), f"to {self.pin_text(c.to)}"),
+                     link("component", self.cid(c.from_.device), self.dname(self.cid(c.from_.device))),
+                     link("component", self.cid(c.to.device), self.dname(self.cid(c.to.device))),
                      link("net", self.net_of.get(i, ""), f"net {self.net_of.get(i, '')}")]
             if c.harness: links.append(link("harness", c.harness))
-            if c.protection: links.append(link("component", c.protection, f"protected by {c.protection}"))
+            if c.protection: links.append(link("component", c.protection, f"protected by {self.dname(c.protection)}"))
             props = c.model_dump(by_alias=True, exclude={"extra", "sources", "from_", "to"})
             return dict(type=typ, id=oid, title=f"{c.label} {c.name}", props=dict(props, **{"from": self.pin_id(c.from_), "to": self.pin_id(c.to)}),
                         extra=c.extra, sources=[s.text() for s in c.sources], links=links, issues=self.issues_for([f"conductor:{c.id}"]),
@@ -158,9 +168,10 @@ class State:
             at = [(i, e) for i, e in ctx.net.by_dev[comp.raw] if conds[i].end(e).connector == con and conds[i].end(e).pin == pin]
             d = ctx.pin(t)
             props = dict(component=comp.id, connector=con, pin=pin, **(d.model_dump(exclude={"extra", "n", "type"}) if d else {}), type=ctx.pin_type(t) or "")
-            links = [link("component", comp.id)] + [link("conductor", conds[i].id, f"{conds[i].label} → {self.pin_id(conds[i].end(3 - e))}") for i, e in at]
+            links = [link("component", comp.id, self.dname(comp.id))] + [link("conductor", conds[i].id, f"{conds[i].label} → {self.pin_text(conds[i].end(3 - e))}")
+                                                                      for i, e in at]
             if at: links.append(link("net", self.net_of[at[0][0]], f"net {self.net_of[at[0][0]]}"))
-            return dict(type=typ, id=oid, title=f"{comp.id} {con} {pin}".strip(), props=props, links=links, issues=self.issues_for([f"pin:{oid}"]),
+            return dict(type=typ, id=oid, title=self.pin_text(t), props=props, links=links, issues=self.issues_for([f"pin:{oid}"]),
                         history=[], sources=[], conductors=sorted({i for i, _ in at}))
         if typ in ("component", "connector"):
             comp = ctx.comp_by_id.get(oid)
@@ -172,10 +183,11 @@ class State:
             if pd: cprops.update(rating_A=pd.rating_a, panel=pd.panel, loads=", ".join(pd.loads), trip_curve=pd.trip_curve)
             hc = next((x for x in m.connectors if x.id == comp.id), None)
             if hc: cprops.update(halves=", ".join(f"{h.name}: {h.side}{' (guessed)' if h.guessed else ''}" for h in hc.halves), pin_count=hc.pin_count)
-            links = [link("pin", p) for p in pins] + ([link("part", comp.part)] if comp.part else [])
+            links = [link("pin", p, " ".join(x for x in (self.dname(comp.id), *p.split("/")[1:]) if x)) for p in pins]
+            links += [link("part", comp.part)] if comp.part else []
             if pd and pd.id in ctx.protected_by:
                 links += [link("conductor", conds[i].id, f"protects {conds[i].label}") for i in ctx.protected_by[pd.id][:50]]
-            return dict(type="connector" if comp.kind == "harness" else "component", id=oid, title=f"{comp.id} {comp.name}", props=cprops, extra=comp.extra,
+            return dict(type="connector" if comp.kind == "harness" else "component", id=oid, title=self.dname(comp.id), props=cprops, extra=comp.extra,
                         links=links, issues=self.issues_for([f"component:{oid}", f"connector:{oid}", f"protective:{oid}", f"pin:{oid}"]),
                         history=self.history(comp.id), sources=[], conductors=sorted({i for i, _ in ends}))
         if typ == "harness":

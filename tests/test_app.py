@@ -30,7 +30,7 @@ def test_index_has_every_object_type(client):
     assert c.get("/api/health").json() == {"ready": True, "error": ""}
 
 
-@pytest.mark.parametrize("typ,oid,title", [("conductor", "PWR-ECU-A", "L04"), ("pin", "ECU/J1/1", "ECU J1 1"), ("component", "CB-ECU", "CB-ECU"),
+@pytest.mark.parametrize("typ,oid,title", [("conductor", "PWR-ECU-A", "L04"), ("pin", "ECU/J1/1", "ECU engine control unit J1 1"), ("component", "CB-ECU", "CB-ECU"),
                                            ("connector", "X-BH", "X-BH"), ("part", "demo battery 12 Ah", "part")])
 def test_object_pages(client, typ, oid, title):
     c, _ = client

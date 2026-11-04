@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import cytoscape from "cytoscape";
 import { useApp } from "../App";
-import { api, href } from "../data";
+import { api, href, withCode } from "../data";
 
 interface G { nodes: { id: string; kind: string; name: string }[]; edges: { a: string; b: string; w: number }[] }
 const COL: Record<string, string> = { bus: "#c0392b", breaker: "#d68910", fuse: "#d68910", harness: "#2e86c1", battery: "#27ae60", dcdc: "#27ae60",
@@ -22,7 +22,7 @@ export function Graph() {
     const dark = matchMedia("(prefers-color-scheme: dark)").matches && document.documentElement.dataset.theme !== "light" || document.documentElement.dataset.theme === "dark";
     const c = cytoscape({
       container: box.current,
-      elements: [...ns.map((n) => ({ data: { id: n.id, label: n.id, kind: n.kind } })),
+      elements: [...ns.map((n) => ({ data: { id: n.id, label: withCode(n.name, n.id), kind: n.kind } })),
         ...g.edges.filter((e) => ids.has(e.a) && ids.has(e.b)).map((e) => ({ data: { id: `${e.a}~${e.b}`, source: e.a, target: e.b, w: e.w } }))],
       style: [
         { selector: "node", style: { label: "data(label)", "font-size": 10, color: dark ? "#eee" : "#111", "background-color": (n: cytoscape.NodeSingular) => COL[n.data("kind")] || "#95a5a6", width: 14, height: 14 } },

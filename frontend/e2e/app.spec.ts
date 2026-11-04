@@ -47,11 +47,26 @@ test("search finds a component and opens it", async ({ page }) => {
   await expect(page.getByRole("heading", { level: 1 })).toContainText("ECU engine control unit");
 });
 
+test("display names from display.py show in the wire table and on object pages", async ({ page }) => {
+  await page.goto(DEMO + "#/table");
+  await page.getByLabel("Filter wires").fill("Cockpit display");
+  const pin = page.locator('[data-pin="DSP/CAN/H"]').first();
+  await expect(pin).toHaveText("Cockpit display (DSP) CAN H");
+  await expect(pin).toHaveAttribute("title", /DSP\/CAN\/H/);  // the code stays one hover away
+  await page.goto(DEMO + "#/object/component/DSP");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Cockpit display (DSP)");
+  await page.goto(DEMO + "#/table");
+  await page.getByText("Columns", { exact: true }).click();
+  await page.getByRole("checkbox", { name: "colour" }).uncheck();
+  await expect(page.getByRole("columnheader", { name: "colour" })).toHaveCount(0);
+  await page.getByRole("checkbox", { name: "colour" }).check();
+});
+
 test("open object: a pin page shows links, issues and history", async ({ page }) => {
   await page.goto(DEMO + "#/object/conductor/PWR-ECU-B");
   await expect(page.getByRole("heading", { level: 1 })).toContainText("L09");
-  await page.getByRole("link", { name: "to ECU/J1/1" }).click();
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("ECU J1 1");
+  await page.getByRole("link", { name: "to ECU engine control unit J1 1" }).click();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("ECU engine control unit J1 1");
   await expect(page.getByRole("heading", { name: "Links" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Issues" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "History" })).toBeVisible();
