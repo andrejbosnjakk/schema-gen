@@ -173,3 +173,10 @@ One entry per open choice taken during the 0.2 → 0.5 work: context, choice, wh
 - Choice: code lives in `core/`, `importers/`, `exporters/`, `renderers/`, `sim/`, `app/`, `cli/`; the 0.2 module
   paths remain as one-line re-exports.
 - Why: backward compatible for anyone importing schemagen modules directly (the 0.2 tests still do).
+
+## D27. Tutorial edits without sed
+- Context: the tutorial changed `wires.csv` with `sed -i`, which Windows does not have; `cmd /c` also runs only the
+  first line of a multi-line block.
+- Choice: an `<!-- edit: path -->` marker with `old  ->  new` lines (find and replace in any editor; the test applies
+  them in Python); the test joins a run block's lines with `&&`, which bash and cmd both understand.
+- Why: the tutorial stays tested on both platforms, and a reader on Windows can follow it as written.
