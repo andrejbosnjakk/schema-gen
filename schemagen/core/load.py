@@ -24,7 +24,7 @@ class Loaded:
     model: Model
     naming: Any                      # the project's display module (or the default display)
     display: dict[str, str] = field(default_factory=dict)
-    protection_raw: list[dict[str, Any]] = field(default_factory=list)  # P rows as given, for display.set_protection
+    protection_raw: list[Any] = field(default_factory=list)  # P entries as given (module tuples or dicts), for display.set_protection
     warnings: list[str] = field(default_factory=list)
     records: list[Any] = field(default_factory=list)  # wire Records (input order, same as model.conductors)
     inputs: Any = None                                 # the build Inputs, to rebuild with edited records
@@ -81,7 +81,7 @@ def load(cfg: Config | str | Path, apply_changes: bool = True) -> Loaded:
     display = dict(t.display)
     for r in t.components:  # Components sheet names stand in for DISPLAY when the source is a table
         if r.data.get("device") and r.data.get("name"): display.setdefault(str(r.data["device"]), str(r.data["name"]))
-    prot_raw = [dict(r.data) for r in t.protection]
+    prot_raw = t.protection_raw if t.protection_raw is not None else [dict(r.data) for r in t.protection]  # hooks get what was written
     naming.set_protection(prot_raw)
     inp = Inputs(rows=t.rows, protection=t.protection, decisions=t.decisions, open_items=t.open_items, components=t.components,
                  connectors=t.connectors, labels_sheet=t.labels, parts=parts, labels=labels, names=names, display=display, ledger=ledger)

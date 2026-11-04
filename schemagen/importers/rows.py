@@ -36,6 +36,7 @@ class Tables:
     labels: list[Record] = field(default_factory=list)
     display: dict[str, str] = field(default_factory=dict)
     warnings: list[str] = field(default_factory=list)  # table entries that could not be read (file, table, index)
+    protection_raw: list[Any] | None = None             # row modules: P entries as written (tuples stay tuples), for display.py
 
 
 def _recs(items: list[Any], file: str, table: str, fields: list[str], warnings: list[str]) -> list[Record]:
@@ -58,11 +59,12 @@ def read(wl: Path, tables: dict[str, Any] | None = None) -> Tables:
     if not paths: raise SystemExit(f"no ss??_*.py row modules in {wl} (or set 'source' in schemagen.yml)")
     sys.dont_write_bytecode = True  # the wire list folder is input only
     if str(wl) not in sys.path: sys.path.insert(0, str(wl))  # row modules import their helpers (_lib.py)
-    t = Tables()
+    t = Tables(protection_raw=[])
     for p in paths:
         m = module(p, p.stem)
         f = p.name
         t.display.update(getattr(m, "DISPLAY", {}))
+        t.protection_raw += list(getattr(m, "P", []))  # type: ignore[operator]
         for key, name in (("protection", "P"), ("decisions", "D"), ("open_items", "O")):
             getattr(t, key).extend(_recs(list(getattr(m, name, [])), f, key, fields[key], t.warnings))
         sub = getattr(m, "SUBSYSTEM", (m.__name__,))[0]

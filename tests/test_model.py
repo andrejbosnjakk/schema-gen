@@ -180,6 +180,46 @@ def test_tuple_tables_survive_and_nothing_drops_silently(tmp_path):
     assert load(tmp_path / "p").model.open_items[0].owner == "pin of the lamp"  # the configured order is used
 
 
+DISPLAY_PY = '''
+import re
+HARNESS, SHORT, PANEL = {}, {}, {}
+def set_protection(P):  # a 0.2-style hook: indexes the module's tuples
+    PANEL.clear(); PANEL.update({p[0]: p[1] for p in P}); [float(p[3]) for p in P]
+def strip(t): return re.sub(r"\\s{2,}", " ", str(t)).strip()
+def harness(raw): return None
+def device(raw, extra=None):
+    code = str(raw).split()[0]
+    return f"{strip(raw)} [{PANEL[code]}]" if code in PANEL else strip(raw)
+def terminal(dev, c, p): return f"{c} {p}".strip()
+'''
+
+
+def test_protection_tuples_lossless_and_display_hook_gets_tuples(tmp_path):
+    from openpyxl import load_workbook
+    from schemagen.exporters import pinout
+    fields = ["id", "location", "part", "rating", "bus", "function", "basis", "awg", "status", "notes"]
+    rows = [dict(id="W1", p1="BAT battery 14 V", p1c="+", p1p="", p2="CB-1 5 A", p2c="LINE", p2p="", func="feed", bus="14 V", awg="20"),
+            dict(id="W2", p1="CB-1 5 A", p1c="LOAD", p1p="", p2="LMP lamp", p2c="J1", p2p="1", func="lamp", bus="14 V", awg="20")]
+    P = [("CB-1", "panel A", "MS-1", 5, "14 V", "lamp", "2 A x 2", 20, "released", "fictional")]
+    d = tmp_path / "p"
+    write_rows_project(d, rows, P, [], [])
+    (d / "wirelist" / "display.py").write_text(DISPLAY_PY, encoding="utf-8")
+    cfg = yaml.safe_load((d / "schemagen.yml").read_text(encoding="utf-8")); cfg["tables"] = {"protection": {"fields": fields}}
+    (d / "schemagen.yml").write_text(yaml.safe_dump(cfg), encoding="utf-8")
+    L = load(d)
+    assert L.protection_raw == P  # the hook saw the tuples as written
+    assert next(c for c in L.model.components if c.id == "CB-1").name == "CB-1 5 A [panel A]"
+    pinout.write_xlsx(L.model, tmp_path / "pin.xlsx")  # 0.6.0 crashed here (KeyError: 1 in the hook)
+    pd = next(p for p in L.model.protective_devices if p.id == "CB-1")
+    assert (pd.rating_a, pd.extra) == (5.0, {k: v for k, v in zip(fields, P[0]) if k not in ("id", "rating")})
+    table_out.export(L.model, tmp_path / "w.xlsx")
+    head = [c.value for c in load_workbook(tmp_path / "w.xlsx")["Protection"][1]]
+    assert {"location", "part", "bus", "function", "basis", "status", "notes"} <= set(head)
+    q = copy_project(d, tmp_path / "q"); table_out.export(L.model, q / "w.xlsx"); with_source(q, "w.xlsx")
+    (q / "wirelist" / "display.py").unlink()  # a table source has no module tuples; its hook gets the rows as dicts
+    assert [p.model_dump() for p in load(q).model.protective_devices] == [p.model_dump() for p in L.model.protective_devices]
+
+
 def test_table_input_unknown_columns_kept(tmp_path):
     d = copy_project(DEMO, tmp_path / "d")
     (d / "w.csv").write_text("id,from,from pin,to,to pin,gauge,My column,src\nW1,ECU unit,1,BB1 bus,,20,hello,DOC p. 2\n", encoding="utf-8")

@@ -211,3 +211,10 @@ One entry per open choice taken during the 0.2 → 0.5 work: context, choice, wh
   `schemagen pinout --page-breaks` starts each component on a new page. Excel repeats only one title-row range per
   sheet, so a block longer than a page does not repeat its header on the next page.
 - Why: one sheet is what gets printed and ticked off; one sheet per component would need 200+ tabs on a real list.
+
+## D31. Project hooks get the protection table as written
+- Context: D28 turned `P` tuples into dicts, so a project's `display.set_protection(P)` that indexes tuples broke.
+- Choice: with row modules, `set_protection` receives the modules' `P` entries unchanged (tuples stay tuples, dicts
+  stay dicts); with a table source it receives the rows as dicts, as before. Extra tuple fields stay in the
+  protective device's `extra` and so in the export's Protection sheet (a test round-trips ten-field tuples).
+- Why: existing display.py files keep working without edits; a table source never had tuples to give.
