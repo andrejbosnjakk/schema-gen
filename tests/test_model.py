@@ -29,9 +29,9 @@ def copy_project(src, dst):
 
 
 def with_source(proj, path):
-    cfg = yaml.safe_load((proj / "schemagen.yml").read_text())
+    cfg = yaml.safe_load((proj / "schemagen.yml").read_text(encoding="utf-8"))
     cfg["source"] = {"path": str(path)}
-    (proj / "schemagen.yml").write_text(yaml.safe_dump(cfg, allow_unicode=True))
+    (proj / "schemagen.yml").write_text(yaml.safe_dump(cfg, allow_unicode=True), encoding="utf-8")
 
 
 def roundtrip(proj, fmt, tmp):
@@ -110,7 +110,7 @@ def write_rows_project(d, rows, P, D, O):
     (d / "wirelist").mkdir(parents=True)
     (d / "wirelist" / "ss01_x.py").write_text(f"R = {rows!r}\nP = {P!r}\nD = {D!r}\nO = {O!r}\n", encoding="utf-8")
     (d / "schemagen.yml").write_text(yaml.safe_dump(dict(harnesses={"X-BH": ["Bulkhead", "X-BH", "engine"]}, breaker_prefixes=["CB-"],
-                                                         relay_prefixes=["K-"], sides={"X-BH": {"Cabin half": "near"}})))
+                                                         relay_prefixes=["K-"], sides={"X-BH": {"Cabin half": "near"}})), encoding="utf-8")
 
 
 @settings(max_examples=200, deadline=None, suppress_health_check=[HealthCheck.too_slow])
@@ -163,9 +163,9 @@ def test_table_input_unknown_columns_kept(tmp_path):
 def test_validation_errors_name_file_row_column(tmp_path):
     d = copy_project(DEMO, tmp_path / "d")
     (d / "w.csv").write_text("Wire ID,from,to,to side\nW1,ECU unit,,\n,A,B,\nW3,A,X-BH bulkhead D-SUB 9,left\n", encoding="utf-8")
-    cfg = yaml.safe_load((d / "schemagen.yml").read_text())
+    cfg = yaml.safe_load((d / "schemagen.yml").read_text(encoding="utf-8"))
     cfg["source"] = {"path": "w.csv", "columns": {"id": "Wire ID"}}
-    (d / "schemagen.yml").write_text(yaml.safe_dump(cfg))
+    (d / "schemagen.yml").write_text(yaml.safe_dump(cfg), encoding="utf-8")
     with pytest.raises(ModelError) as e:
         load(d)
     msg = str(e.value)
@@ -188,7 +188,7 @@ def test_explicit_sides_and_guess_warning(tmp_path):
     assert [(h.name, h.side, h.guessed) for h in x.halves] == [("Cabin half", "near", False), ("Engine half", "far", False)]
     assert not L.warnings
     d = copy_project(DEMO, tmp_path / "d")
-    cfg = yaml.safe_load((d / "schemagen.yml").read_text()); cfg.pop("sides"); (d / "schemagen.yml").write_text(yaml.safe_dump(cfg))
+    cfg = yaml.safe_load((d / "schemagen.yml").read_text(encoding="utf-8")); cfg.pop("sides"); (d / "schemagen.yml").write_text(yaml.safe_dump(cfg), encoding="utf-8")
     L = load(d)
     assert any("half 'Engine half' guessed as far" in w for w in L.warnings)
 

@@ -146,9 +146,9 @@ def test_table_roundtrip_csv_and_json(pr, demo_copy, tmp_path):
     for ext in ("csv", "json"):
         out = tmp_path / f"wires.{ext}"
         table.export(pr, out)
-        cfg = yaml.safe_load((demo_copy / "schemagen.yml").read_text())
+        cfg = yaml.safe_load((demo_copy / "schemagen.yml").read_text(encoding="utf-8"))
         cfg["source"] = {"path": str(out)}
-        (demo_copy / "schemagen.yml").write_text(yaml.safe_dump(cfg))
+        (demo_copy / "schemagen.yml").write_text(yaml.safe_dump(cfg), encoding="utf-8")
         p2 = Project(load_config(demo_copy))
         assert [(w["label"], w["p1"], w["p2p"], w["color"]) for w in p2.wires] == [(w["label"], w["p1"], w["p2p"], w["color"]) for w in pr.wires]
 
@@ -162,9 +162,9 @@ def test_table_xlsx_with_column_mapping(pr, demo_copy, tmp_path):
     for w in pr.wires: ws.append([w.get(f, "") for f in table.FIELDS])
     ws.append(["", "", "", "Section header row"])  # skipped: no id
     wb.save(tmp_path / "wires.xlsx")
-    cfg = yaml.safe_load((demo_copy / "schemagen.yml").read_text())
+    cfg = yaml.safe_load((demo_copy / "schemagen.yml").read_text(encoding="utf-8"))
     cfg["source"] = {"path": str(tmp_path / "wires.xlsx"), "sheet": "Wires", "header_row": 2, "columns": cols}
-    (demo_copy / "schemagen.yml").write_text(yaml.safe_dump(cfg))
+    (demo_copy / "schemagen.yml").write_text(yaml.safe_dump(cfg), encoding="utf-8")
     assert len(Project(load_config(demo_copy)).wires) == len(pr.wires)
 
 

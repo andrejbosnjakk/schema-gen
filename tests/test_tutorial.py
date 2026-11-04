@@ -38,6 +38,6 @@ def test_tutorial_runs(tmp_path):
     fixed = out["sed -i.bak 's/,14 V,22,/,14 V,20,/; s/,GND,22,/,GND,20,/' wires.csv && rm wires.csv.bak"].stdout
     assert "0 error(s), 0 warning(s), 0 info" in fixed and "pass  tail lamp on:" in fixed
     assert "fault sweep: 10 nodes, 2 not cleared, 3 not selective, 1 wire damage, 0 over interrupt rating" in fixed
-    assert (d / "out" / "coverage.txt").read_text().startswith("9 of 9 conductors in a drawing")
+    assert (d / "out" / "coverage.txt").read_text(encoding="utf-8").startswith("9 of 9 conductors in a drawing")
     for f in ("pinout.xlsx", "pinout.html", "wirelist.xlsx", "sheet.xlsx", "project.xlsx", "sim/report.html"): assert (d / "out" / f).exists(), f
     assert (d / "label_ledger.json").exists()

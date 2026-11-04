@@ -246,15 +246,15 @@ def test_direction_fix_on_seeded_project(s600, tmp_path):
 def test_fix_direction_cli_writes_changeset_and_diff(tmp_path):
     d = tmp_path / "demo"; shutil.copytree(DEMO, d, ignore=shutil.ignore_patterns("out"))
     p = d / "wirelist" / "ss01_demo.py"
-    s = p.read_text()
+    s = p.read_text(encoding="utf-8")
     s = s.replace('row("GND-BAT-1", "BAT battery 14 V", "−", "", "GNDB ground bus", "Stud", ""',
                   'row("GND-BAT-1", "GNDB ground bus", "Stud", "", "BAT battery 14 V", "−", ""')
-    p.write_text(s)
+    p.write_text(s, encoding="utf-8")
     assert main(["check", str(d), "--rule", "direction"]) == 0  # direction findings are warnings
     main(["fix", "direction", str(d)])
-    cs = json.loads((d / "out" / "changes" / "direction.json").read_text())
+    cs = json.loads((d / "out" / "changes" / "direction.json").read_text(encoding="utf-8"))
     assert {o["id"] for o in cs["ops"]} == {"GND-BAT-1"} and "label" not in {o["field"] for o in cs["ops"]}
-    assert "-GND-BAT-1,L03" in (d / "out" / "changes" / "direction.diff").read_text()
+    assert "-GND-BAT-1,L03" in (d / "out" / "changes" / "direction.diff").read_text(encoding="utf-8")
     assert not (d / "changes").exists()  # never edits silently
     main(["fix", "direction", str(d), "--apply"])
     assert not [i for i in run_rules(load(d).model, None) if i.rule == "direction"]
@@ -266,15 +266,15 @@ def test_fix_direction_cli_writes_changeset_and_diff(tmp_path):
 def test_check_formats_and_exit_code(tmp_path, s600):
     out = tmp_path / "c.sarif"
     assert main(["check", str(DEMO), "--format", "sarif", "-o", str(out)]) == 0
-    s = json.loads(out.read_text())
+    s = json.loads(out.read_text(encoding="utf-8"))
     assert s["version"] == "2.1.0" and s["runs"][0]["results"]
     r = next(x for x in s["runs"][0]["results"] if x["ruleId"] == "pin-tbd")
     assert r["locations"][0]["physicalLocation"]["artifactLocation"]["uri"] == "ss01_demo.py"
     d = tmp_path / "bad"; shutil.copytree(DEMO, d, ignore=shutil.ignore_patterns("out"))
     p = d / "wirelist" / "ss01_demo.py"
-    p.write_text(p.read_text().replace('"Cabin half", "4"', '"Cabin half", "5"'))  # pin clash on X-BH 5
+    p.write_text(p.read_text(encoding="utf-8").replace('"Cabin half", "4"', '"Cabin half", "5"'), encoding="utf-8")  # pin clash on X-BH 5
     assert main(["check", str(d), "--format", "json", "-o", str(tmp_path / "c.json")]) == 1
-    assert any(i["rule"] == "pin-clash" for i in json.loads((tmp_path / "c.json").read_text()))
+    assert any(i["rule"] == "pin-clash" for i in json.loads((tmp_path / "c.json").read_text(encoding="utf-8")))
 
 
 # ---------------------------------------------------------------- coverage
@@ -283,11 +283,11 @@ def test_every_conductor_in_a_drawing(tmp_path, s1k):
     for proj in (DEMO, s1k):
         d = tmp_path / proj.name; shutil.copytree(proj, d, ignore=shutil.ignore_patterns("out"))
         draw(d, no_render=True)
-        cov = json.loads((d / "out" / "coverage.json").read_text())
+        cov = json.loads((d / "out" / "coverage.json").read_text(encoding="utf-8"))
         assert cov["covered"] == cov["total"] and not cov["uncovered"]
         labels = set()
         for y in (d / "out").glob("*.yml"):
-            for cab in (yaml.safe_load(y.read_text()).get("cables") or {}).values():
+            for cab in (yaml.safe_load(y.read_text(encoding="utf-8")).get("cables") or {}).values():
                 labels |= {w.split(" · ")[0] for w in cab["wirelabels"]}
         assert labels == {c.label for c in load(d).model.conductors}
 
@@ -302,7 +302,7 @@ def test_pinout_two_ended_wire_on_both(tmp_path):
     assert ecu["2"]["ids"] == ["GND-ECU-N"] and "GND-ECU-N" in xbh["3"]["ids"]
     assert xbh["9"]["signal"] == "spare" and "GNDB" in ecu["2"]["far"]
     pinout.write_xlsx(L.model, tmp_path / "p.xlsx"); pinout.write_html(L.model, tmp_path / "p.html")
-    assert "SENS 5V" in (tmp_path / "p.html").read_text()
+    assert "SENS 5V" in (tmp_path / "p.html").read_text(encoding="utf-8")
 
 
 def test_spares_from_part_data(s600):
@@ -325,7 +325,7 @@ def test_template_dropdowns_and_reimport(tmp_path):
     assert "GNDB ground bus" in [c.value for c in wb["Lists"]["D"]]
     d = tmp_path / "d"; shutil.copytree(DEMO, d, ignore=shutil.ignore_patterns("out"))
     shutil.copy(tmp_path / "t.xlsx", d / "t.xlsx")
-    cfg = yaml.safe_load((d / "schemagen.yml").read_text()); cfg["source"] = {"path": "t.xlsx"}; (d / "schemagen.yml").write_text(yaml.safe_dump(cfg))
+    cfg = yaml.safe_load((d / "schemagen.yml").read_text(encoding="utf-8")); cfg["source"] = {"path": "t.xlsx"}; (d / "schemagen.yml").write_text(yaml.safe_dump(cfg), encoding="utf-8")
     assert load(d).model.model_dump() == L.model.model_dump()
     template_xlsx(None, tmp_path / "empty.xlsx")
     wirelist_xlsx(Project(L.cfg), tmp_path / "w.xlsx")
@@ -335,15 +335,15 @@ def test_template_dropdowns_and_reimport(tmp_path):
 def test_label_ledger(tmp_path):
     d = tmp_path / "d"; shutil.copytree(DEMO, d, ignore=shutil.ignore_patterns("out"))
     assert main(["labels", str(d), "--update"]) == 0
-    led = json.loads((d / "label_ledger.json").read_text())["entries"]
+    led = json.loads((d / "label_ledger.json").read_text(encoding="utf-8"))["entries"]
     assert len(led) == 23 and all(e["status"] == "active" for e in led)
     p = d / "wirelist" / "ss01_demo.py"
-    s = p.read_text()
-    p.write_text(s.replace('row("PWR-CB-GEN"', '# row("PWR-CB-GEN"'))  # cut a conductor
+    s = p.read_text(encoding="utf-8")
+    p.write_text(s.replace('row("PWR-CB-GEN"', '# row("PWR-CB-GEN"'), encoding="utf-8")  # cut a conductor
     main(["labels", str(d), "--update", "--reason", "removed in rev B"])
-    e = next(x for x in json.loads((d / "label_ledger.json").read_text())["entries"] if x["label"] == "T03")
+    e = next(x for x in json.loads((d / "label_ledger.json").read_text(encoding="utf-8"))["entries"] if x["label"] == "T03")
     assert e["status"] == "retired" and e["reason"] == "removed in rev B"
-    lj = json.loads((d / "wirelist" / "labels.json").read_text()); lj["PWR-OTS-C"] = "T03"; (d / "wirelist" / "labels.json").write_text(json.dumps(lj))
+    lj = json.loads((d / "wirelist" / "labels.json").read_text(encoding="utf-8")); lj["PWR-OTS-C"] = "T03"; (d / "wirelist" / "labels.json").write_text(json.dumps(lj), encoding="utf-8")
     assert [i.objects[0] for i in run_rules(load(d).model) if i.rule == "label-reused"] == ["conductor:PWR-OTS-C"]
     led2, msgs = ledger.update(load(d).model)
     assert any("T03" in m for m in msgs) or True
@@ -385,11 +385,11 @@ def test_diff_git_revisions(tmp_path):
     git = lambda *a: subprocess.run(["git", "-C", str(repo), *a], check=True, capture_output=True)
     git("init", "-q"); git("add", "."); git("-c", "user.email=a@b", "-c", "user.name=t", "commit", "-qm", "a")
     p = repo / "proj" / "wirelist" / "ss01_demo.py"
-    p.write_text(p.read_text().replace('"ECU supply", "14 V", "20")', '"ECU supply", "14 V", "18")', 1))
+    p.write_text(p.read_text(encoding="utf-8").replace('"ECU supply", "14 V", "20")', '"ECU supply", "14 V", "18")', 1), encoding="utf-8")
     git("-c", "user.email=a@b", "-c", "user.name=t", "commit", "-qam", "b")
     out = tmp_path / "d.json"
     assert main(["diff", "HEAD~1", "HEAD", "--project", str(repo / "proj"), "--format", "json", "-o", str(out)]) == 0
-    d = json.loads(out.read_text())
+    d = json.loads(out.read_text(encoding="utf-8"))
     assert d["conductors"]["changed"]["PWR-ECU-A"]["gauge"] == ["20", "18"]
 
 
