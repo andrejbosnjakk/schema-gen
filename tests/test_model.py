@@ -257,7 +257,8 @@ def test_explicit_sides_and_guess_warning(tmp_path):
     assert [(h.name, h.side, h.guessed) for h in x.halves] == [("Cabin half", "near", False), ("Engine half", "far", False)]
     assert not L.warnings
     d = copy_project(DEMO, tmp_path / "d")
-    cfg = yaml.safe_load((d / "schemagen.yml").read_text(encoding="utf-8")); cfg.pop("sides"); (d / "schemagen.yml").write_text(yaml.safe_dump(cfg), encoding="utf-8")
+    cfg = yaml.safe_load((d / "schemagen.yml").read_text(encoding="utf-8")); cfg.pop("sides")
+    (d / "schemagen.yml").write_text(yaml.safe_dump(cfg), encoding="utf-8")
     L = load(d)
     assert any("half 'Engine half' guessed as far" in w for w in L.warnings)
 

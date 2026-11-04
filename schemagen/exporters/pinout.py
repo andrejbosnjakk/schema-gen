@@ -68,9 +68,9 @@ def blocks(m: Model, ctx: Ctx | None = None) -> list[dict[str, Any]]:
         part = ctx.parts.get(comp.part) if comp.part else None
         if comp.kind == "harness":
             con = next((x for x in m.connectors if x.id == comp.id), None)
-            used = {p for _, p in at}
+            wired = {p for _, p in at}
             for h in (con.halves if con else []):
-                keys += [(h.name, str(k)) for k in range(1, (con.pin_count or 0) + 1) if str(k) not in used]  # type: ignore[union-attr]
+                keys += [(h.name, str(k)) for k in range(1, (con.pin_count or 0) + 1) if str(k) not in wired]  # type: ignore[union-attr]
         elif part:
             for cd in part.connectors:
                 used = [k for k in at if k[0] == cd.id or (cd.match and re.search(cd.match, k[0]))]
