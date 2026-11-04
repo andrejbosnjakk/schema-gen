@@ -324,7 +324,7 @@ def test_pinout_lists_every_conductor_once_per_end(proj, request):
 
 
 def test_pinout_xlsx_golden(tmp_path):
-    """Layout and print settings of the reintegration checklist (tests/golden/demo/pinout_layout.txt)."""
+    """Layout and print settings of the reintegration checklist (tests/golden/pinout_layout.txt)."""
     from openpyxl import load_workbook
     from schemagen.exporters import pinout
     pinout.write_xlsx(load(DEMO).model, tmp_path / "p.xlsx", page_breaks=True)
@@ -334,7 +334,7 @@ def test_pinout_xlsx_golden(tmp_path):
              f"print area {ws.print_area}", f"page breaks after rows {[b.id for b in ws.row_breaks.brk]}"]
     lines += [" | ".join("" if c.value is None else str(c.value) for c in row).rstrip(" |") for row in ws.iter_rows()]
     got = "".join(x + "\n" for x in lines)
-    gold = GOLDEN / "pinout_layout.txt"
+    gold = GOLDEN.parent / "pinout_layout.txt"  # not in golden/demo: those are all draw outputs
     if os.environ.get("UPDATE_GOLDEN"): gold.write_text(got, encoding="utf-8")
     assert got == gold.read_text(encoding="utf-8")
 
