@@ -221,6 +221,54 @@ def test_rule_switch_and_severity_override(s600, tmp_path):
     assert [i.severity for i in run_rules(L.model, L.cfg) if i.rule == "open-item"] == ["error"]
 
 
+# ---------------------------------------------------------------- direction without pin data
+def _w(i, a, ac, ap, b, bc, bp, func, bus=""):
+    return dict(id=i, p1=a, p1c=ac, p1p=ap, p2=b, p2c=bc, p2p=bp, func=func, bus=bus, awg="22")
+
+
+DIRECTION_CORPUS = [  # (row written the right way, flipping it must be flagged)
+    (_w("G1", "LMP1 lamp", "J1", "2", "GNDB ground bus", "Stud", "", "lamp return", "GND"), True),
+    (_w("B1", "GNDB ground bus", "Stud", "", "STR-1 airframe bond point", "", "", "bus bond", "GND"), False),  # no direction
+    (_w("R1", "SNS1 sensor", "J1", "2", "SP-G1 return splice", "Splice", "", "sensor return", "GND"), True),
+    (_w("R2", "SP-G1 return splice", "Splice", "", "X-BH bulkhead", "Cabin half", "6", "sensor return", "GND"), True),
+    (_w("R3", "X-BH bulkhead", "Engine half", "6", "GNDS ground stud", "Stud", "", "sensor return", "GND"), True),
+    (_w("S1", "SW-1 lamp switch", "C", "OUT", "ECU unit", "J2", "1", "switch input"), True),
+    (_w("S2", "SNS2 pressure sensor", "J1", "1", "ECU unit", "J2", "2", "oil pressure"), True),
+    (_w("S3", "MIC1 headset mic", "J1", "1", "AUD audio panel", "J1", "1", "pilot mic"), True),
+    (_w("S4", "LMP2 lamp", "J1", "2", "DRV lamp driver", "J1", "1", "lamp low-side drive"), True),
+    (_w("S5", "DRV lamp driver", "J1", "2", "LMP3 lamp", "J1", "1", "lamp high-side drive"), False),  # not low-side: unknown
+    (_w("U1", "ECU unit", "J2", "3", "DSP display", "J1", "3", "discrete"), False),  # unknown
+]
+
+
+def _corpus_project(d, flip=None):
+    rows = []
+    for r, _ in DIRECTION_CORPUS:
+        r = dict(r)
+        if r["id"] == flip:
+            for k in ("", "c", "p"): r[f"p1{k}"], r[f"p2{k}"] = r[f"p2{k}"], r[f"p1{k}"]
+        rows.append(r)
+    (d / "wirelist").mkdir(parents=True, exist_ok=True)
+    (d / "wirelist" / "ss01_x.py").write_text(f"R = {rows!r}\n", encoding="utf-8")
+    (d / "schemagen.yml").write_text(yaml.safe_dump(dict(harnesses={"X-BH": ["Bulkhead", "X-BH", "engine"]},
+                                                         sides={"X-BH": {"Cabin half": "near", "Engine half": "far"}})), encoding="utf-8")
+    return d
+
+
+def test_direction_without_pin_data(tmp_path):
+    L = load(_corpus_project(tmp_path / "ok"))
+    ctx = Ctx(L.model, L.cfg)
+    assert analyse(ctx) == []  # 0 false positives (bond, return through splice and harness to a stud)
+    unk = [i for i in run_rules(L.model, L.cfg) if i.rule == "direction-unknown"]
+    assert len(unk) == 1 and unk[0].message.startswith("2 signal wire(s)") and unk[0].severity == "info"
+    assert {o.split(":")[1] for o in unk[0].objects} == {"S5", "U1"}
+    missed = []
+    for r, judged in DIRECTION_CORPUS:
+        got = {f.id for f in analyse(Ctx(*(lambda x: (x.model, x.cfg))(load(_corpus_project(tmp_path / r["id"], r["id"])))))}
+        if got != ({r["id"]} if judged else set()): missed.append((r["id"], got))
+    assert not missed, missed  # recall 100 %, and flipping a case never flags another conductor
+
+
 # ---------------------------------------------------------------- direction fix
 def test_direction_fix_on_seeded_project(s600, tmp_path):
     d = tmp_path / "p"

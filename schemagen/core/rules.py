@@ -91,6 +91,13 @@ def r_direction(ctx: Ctx) -> Iterator[tuple[str, list[str], str]]:
             "run `schemagen fix direction` to swap its ends (the label stays)"
 
 
+@rule("direction-unknown", "info", "Signal wires whose direction cannot be told")
+def r_direction_unknown(ctx: Ctx) -> Iterator[tuple[str, list[str], str]]:
+    idx = direction.unknown(ctx)
+    if idx: yield f"{len(idx)} signal wire(s) have no known direction", [cref(ctx, i) for i in idx], \
+        "add pin types (signal_in / signal_out) to the part data, or direction.senders / receivers patterns"
+
+
 # ---------------------------------------------------------------- protection and contacts
 @rule("gauge-protection", "error", "Wire gauge too light for its protective device")
 def r_gauge_prot(ctx: Ctx) -> Iterator[tuple[str, list[str], str]]:

@@ -218,3 +218,16 @@ One entry per open choice taken during the 0.2 → 0.5 work: context, choice, wh
   stay dicts); with a table source it receives the rows as dicts, as before. Extra tuple fields stay in the
   protective device's `extra` and so in the export's Protection sheet (a test round-trips ten-field tuples).
 - Why: existing display.py files keep working without edits; a table source never had tuples to give.
+
+## D32. Direction rule without pin data
+- Context: on a list without part data the rule flagged bonds to structure and returns that run splice → harness →
+  ground stud (it took the nearest splice as the return's target), and never judged one-way signals.
+- Choice: `direction:` patterns (regex on device code or name), with defaults:
+  - `bond` (`\bbond`, `structure`, `airframe`, or conductor class `bond`): no direction, never flagged;
+  - `ground_points` (`^GND`, `\bground\b`, `earth`): where a return ends when the net has no ground bus; tried after
+    buses and before the supplying unit's ground pin and splices;
+  - `senders` (`^SW-`, `switch`, `sensor`, `\bmic`) and `receivers` (`{device: driver, function: low.?side}`) type
+    untyped signal ends; a `{device, function}` entry also needs a conductor there whose function text matches.
+  Signal wires still without a direction are one `direction-unknown` info finding with the count.
+- Why: the smallest set of fallbacks that covers the cases seen, all overridable; a pattern that is wrong for a
+  project is replaced in its schemagen.yml rather than in code.
