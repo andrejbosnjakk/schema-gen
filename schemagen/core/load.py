@@ -66,8 +66,8 @@ def load(cfg: Config | str | Path, apply_changes: bool = True) -> Loaded:
             return Loaded(cfg, m, naming, {c.raw: c.name for c in m.components})
     if src and str(src.get("path", "")).lower().endswith((".yml", ".yaml")): t = wireviz_in.read(cfg.root / src["path"])
     elif src: t = table_in.read(cfg.root, src)
-    else: t = rows_in.read(wl)
-    warnings: list[str] = changes.apply(t.rows, changes.load_all(cfg.root)) if apply_changes else []
+    else: t = rows_in.read(wl, cfg.tables)
+    warnings: list[str] = t.warnings + (changes.apply(t.rows, changes.load_all(cfg.root)) if apply_changes else [])
     problems: list[Problem] = []
     parts = parts_in.from_cards(cfg.cards, warnings, problems)
     sheet = parts_in.from_sheet(t.parts, problems) if t.parts else []

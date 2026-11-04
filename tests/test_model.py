@@ -151,6 +151,35 @@ def test_unknown_keys_survive_export(tmp_path):
     assert "curve_ref" in [c.value for c in wb["Protection"][1]] and "due" in [c.value for c in wb["Open items"][1]]
 
 
+def test_tuple_tables_survive_and_nothing_drops_silently(tmp_path):
+    rows = [dict(id="W1", p1="ECU unit", p1c="J1", p1p="1", p2="CB-1 5 A", p2c="LOAD", p2p="", func="x", bus="14 V", awg="20")]
+    P = [("CB-1", 5, "ECU", ["ECU"])]
+    D = [("D1", "Supply", "ECU fed from CB-1", "short run", "memo 3"), ("D2", "Ground"), dict(id="D3", text="t"),
+         ("D4", "a", "b", "c", "d", "one too many"), "D5 as a bare string"]
+    O = [("O1", "pin of the lamp", "demo team"), ("O2", "harness length")]
+    write_rows_project(tmp_path / "p", rows, P, D, O)
+    L = load(tmp_path / "p")
+    m = L.model
+    assert [d.id for d in m.decisions] == ["D1", "D2", "D3"] and [o.id for o in m.open_items] == ["O1", "O2"]
+    assert (m.decisions[0].text, m.decisions[0].extra) == ("ECU fed from CB-1", dict(title="Supply", rationale="short run", reference="memo 3"))
+    assert (m.open_items[0].text, m.open_items[0].owner) == ("pin of the lamp", "demo team")
+    pd = next(p for p in m.protective_devices if p.id == "CB-1")
+    assert (pd.rating_a, pd.panel) == (5.0, "ECU")
+    dropped = [w for w in L.warnings if "decisions[" in w]
+    assert len(m.decisions) + len(dropped) == len(D)  # every entry is either read or named in a warning
+    assert any("ss01_x.py: decisions[4]" in w for w in dropped) and any("decisions[5]" in w for w in dropped)
+    for fmt, out in (("csvdir", "tables"), ("xlsx", "model.xlsx")):
+        q = copy_project(tmp_path / "p", tmp_path / fmt)
+        table_out.export(m, q / out); with_source(q, out)
+        b = load(q).model
+        assert [x.model_dump() for x in b.decisions] == [x.model_dump() for x in m.decisions], fmt
+        assert [x.model_dump() for x in b.open_items] == [x.model_dump() for x in m.open_items], fmt
+    cfg = yaml.safe_load((tmp_path / "p" / "schemagen.yml").read_text(encoding="utf-8"))
+    cfg["tables"] = {"open_items": {"fields": ["id", "owner", "text"]}}
+    (tmp_path / "p" / "schemagen.yml").write_text(yaml.safe_dump(cfg), encoding="utf-8")
+    assert load(tmp_path / "p").model.open_items[0].owner == "pin of the lamp"  # the configured order is used
+
+
 def test_table_input_unknown_columns_kept(tmp_path):
     d = copy_project(DEMO, tmp_path / "d")
     (d / "w.csv").write_text("id,from,from pin,to,to pin,gauge,My column,src\nW1,ECU unit,1,BB1 bus,,20,hello,DOC p. 2\n", encoding="utf-8")

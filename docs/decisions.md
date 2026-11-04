@@ -180,3 +180,12 @@ One entry per open choice taken during the 0.2 → 0.5 work: context, choice, wh
 - Choice: an `<!-- edit: path -->` marker with `old  ->  new` lines (find and replace in any editor; the test applies
   them in Python); the test joins a run block's lines with `&&`, which bash and cmd both understand.
 - Why: the tutorial stays tested on both platforms, and a reader on Windows can follow it as written.
+
+## D28. Tuple entries in row-module tables
+- Context: row modules may give `P`, `D` and `O` as tuples; 0.5 kept only dicts and dropped the rest silently.
+- Choice: tuples are zipped with `tables.<table>.fields` from schemagen.yml (defaults: decisions `id, title, decision,
+  rationale, reference`; open items `id, text, owner`; protection `id, rating, panel, loads`). Fields the model has no
+  slot for (title, rationale, reference) go to `extra` and so survive export. A tuple longer than the field list, or
+  an entry that is neither dict nor tuple, is a load warning naming file, table and index.
+- Why: the `tables:` key already holds per-project overrides; `fields` is a key no cited table uses, so the two do
+  not collide. A shorter tuple is accepted (the missing fields stay empty).
