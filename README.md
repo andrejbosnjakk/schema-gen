@@ -19,8 +19,10 @@ connectors, splices, breakers and buses.
 - **Part data from datasheet cards**: pin names from a structured block in each card (the start of a part library).
 - **One palette** for every output; other tools read it with `schemagen palette`.
 
-Next: a neutral data model, then a DC current-flow simulation on the same net model ("does this load get power with
-these switches, how much current flows in each wire, does this breaker protect this wire?"). See [docs/ROADMAP.md](docs/ROADMAP.md).
+Since 0.3 the wire list loads into a typed, lossless model; on top of it sit a rules engine, pinouts, a sheet template
+for teams, a label ledger, diffs, a DC simulation with a fault sweep (0.4) and a local app (0.5). Start with the
+[tutorial](docs/tutorial.md); see [CHANGELOG.md](CHANGELOG.md), [docs/ROADMAP.md](docs/ROADMAP.md),
+[docs/decisions.md](docs/decisions.md) and [docs/metrics.md](docs/metrics.md).
 
 ![demo harness](docs/demo_X-BH.png)
 
@@ -28,15 +30,30 @@ these switches, how much current flows in each wire, does this breaker protect t
 
 ```bash
 sudo apt-get install graphviz        # WireViz needs Graphviz's `dot`
-pip install -e ".[dev]"
+pip install -e ".[dev]"              # PyPI: pip install schema-gen (the command is `schemagen`)
 schemagen draw examples/demo         # writes examples/demo/out/
+schemagen check examples/demo        # rules
+schemagen sim examples/demo          # DC simulation of the demo's scenarios
+schemagen app examples/demo          # the app in your browser
 pytest
 ```
 
 | command | does |
 |---|---|
-| `schemagen draw <project> [X-BH ...] [--all] [--split none\|side\|function\|auto] [--no-render]` | drawings and their extras |
-| `schemagen export <project> -o wires.csv` | the wire list in the neutral table format (`.csv` or `.json`) |
+| `schemagen draw <project> [X-BH ...] [--all] [--split none\|side\|function\|auto] [--no-render] [--no-interfaces]` | harness drawings, interface drawings for every conductor no harness drawing reaches, coverage report, and their extras |
+| `schemagen check <project> [--format text\|json\|sarif] [-o FILE]` | the rules (severity, objects, fix hint); exits 1 on an error |
+| `schemagen fix direction <project> [--apply]` | a reviewable change set (JSON + diff) that makes every wire follow the direction convention; `--apply` stores it in `changes/` |
+| `schemagen pinout <project>` | pinout per component and harness connector (XLSX + HTML), spares included |
+| `schemagen wirelist <project> -o wirelist.xlsx` | readable wire list with the project's display names |
+| `schemagen template [<project>] -o sheet.xlsx` | the editable workbook with dropdowns (works after upload to Google Sheets) |
+| `schemagen labels <project> --update` | label ledger: records labels in use, retires removed ones with a reason |
+| `schemagen diff <A> <B> [--project DIR] [--format text\|json\|html]` | added, removed and changed wires, pins, labels, protection, open items; A and B are folders or git revisions |
+| `schemagen changes <project> [--undo]` | list or undo the stored change sets |
+| `schemagen app <project> [--port 8765]` | the local app in the browser: wire table editor, object pages, net explorer, drawings, system graph, simulation, issues, diff |
+| `schemagen sim <project> [scenario.yml ...] [--faults all]` | DC operating point per scenario and the fault sweep; HTML + JSON report in `<out>/sim/`; exits 1 when an expectation fails |
+| `schemagen export <project> -o wires.xlsx` | the project in the neutral table format: `.xlsx` workbook, a folder of CSVs, `.csv` (wires only) or `.json` (the whole model) |
+| `schemagen schema [-o schemas]` | JSON Schemas of the model, the part library and issues |
+| `schemagen synth --wires N --seed S -o DIR` | a synthetic (fictional) project for tests and benchmarks |
 | `schemagen palette <project> [--json]` | function class → colour code and hex, for spreadsheets and schematic tools |
 
 `<project>` is a `schemagen.yml` or the folder that holds it. `--no-render` writes YAML, CSVs and checks without WireViz.
@@ -62,6 +79,15 @@ Row fields (the neutral format, `schemagen export` writes it): `id`, `label`, `n
 connector / pin, `p2`/`p2c`/`p2p` = to, `func`, `bus`, `awg`, `amps`, `st` (status; `Open…` is flagged),
 `subsystem`, `notes`. Device strings start with a code (`SP-…` splice, `CB-…` breaker, `GNDB` ground bus, `X-…`
 harness connector); the prefixes are set in `schemagen.yml`.
+
+The neutral table is lossless: every input key that has no column of its own is kept in the model's `extra` and gets
+its own column on export (`key:json` when it holds lists or numbers). Row-module keys `src` (sources: `DOC p. 4; DOC2 p. 7`),
+`zone`, `harn` (harness), `prot` (protective device) and `col` (explicit colour) map to model fields; module-level
+`P` (protection), `D` (decisions) and `O` (open items) tables become objects. Plain column names (`from`, `from connector`,
+`from pin`, `from side`, `gauge`, `current_A`, ...) and the 0.2 names (`p1`, `p1c`, ...) are both accepted.
+
+Connector-half sides: give them in `schemagen.yml` (`sides: {X-BH: {Cabin half: near, Engine half: far}}`) or in the
+table's `from side` / `to side` columns. `near_words` is only a fallback, and every guess is reported as a warning.
 
 A *readable* wire list (display names, connector and pin merged into one text cell) is a view, not a source: it has
 lost the device codes and pin structure the net model needs. Export the structured rows instead.
@@ -103,20 +129,100 @@ connectors:
 Cards without a block can still be used through `cardmap` (markdown pin tables), but that is fragile; ask whoever
 writes the cards for the block.
 
+## Rules
+
+`schemagen check` runs every rule; each finding has an id, a severity, the objects it concerns
+(`conductor:W12`, `pin:X-BH//3`, `component:ECU`, ...) and a fix hint. Switch a rule off or change its severity in
+`schemagen.yml`: `rules: {duplicate-ends: off, contact-current: warning}`.
+
+| rule | severity | checks |
+|---|---|---|
+| duplicate-id, duplicate-ends, label-duplicate, label-reused | error / warning | identity: ids, end pairs, printed labels, the label ledger |
+| direction | warning | the wire direction convention (below) |
+| gauge-protection | error | wire gauge vs breaker / fuse rating, FAA AC 43.13-1B Table 11-3 (`core/data/protection.yml`) |
+| contact-gauge, contact-current, dsub-gauge | error | contact AWG range and current per contact from part data; D-sub crimp contacts 20–24 AWG |
+| output-conflict, power-ground, required-pin | error / warning | pin types on a net: two outputs, power wired to ground, required pins left open |
+| can-terminators, can-nodes, can-stub, can-part-data | error / warning / info | two terminations per bus, node count and stub length (SAE J1939-11, `core/data/can.yml`) |
+| open-end, pin-clash, half-naming, side-guessed, gauge-change, class-change | error / warning | harness connector pins (ported from 0.2) |
+| open-status, open-item, pin-tbd, gauge-tbd | info / warning | open items and fields still to be decided |
+
+Every number from a standard is in `schemagen/core/data/*.yml` with its source, and overridable per project
+(`tables: {protection: {breaker: {22: 5}}}`, `tables: {can: {max_stub_m: 0.3}}`).
+
+**Wire direction convention** (`direction:` in schemagen.yml): supply runs source → load; returns run device → where
+they return (ground bus, else the supplying unit's ground pin, else a splice); one-way signals run sender → receiver;
+CAN runs in bus order from one terminator end, other bidirectional links from the controlling unit outward. Pin types
+come from the part cards; breakers, switches and relays fall back to their terminal names (LINE / LOAD, IN / OUT,
+COM / NO). `schemagen fix direction` swaps ends in a change set and never touches a label.
+
+**Change sets** (`changes/*.json`) are applied on every load, in order. They are how the app and the fixes edit a
+project whatever its source format; commit them like any other file.
+
+## Simulation
+
+`schemagen sim` builds a DC circuit from the model (modified nodal analysis, scipy sparse): every conductor is copper
+resistance (Ω/m by AWG × length × temperature factor) plus contact resistance at each pin; breakers and fuses are
+small resistances with a trip curve; switch and relay contacts are present when closed and relay coils close their
+contacts at pick-up (iterated to a fixed point, oscillation reported). Sources and loads come from the part cards:
+
+```yaml schemagen
+kind: battery
+source: {v_oc: 13.2, r_int: 0.02}            # DC/DC: {v_out, i_limit, r_out, efficiency}
+load: {model: constant_power, p_w: 12, v_min: 9}   # or constant_current (i_a) or resistive (r_ohm)
+trip_curve: [[1.15, 3600], [2, 12], [10, 0.02]]    # breakers / fuses: multiple of rating -> seconds
+```
+
+Lengths come from `lengths.csv` (measured), then the conductor's `length_m` (design), then zone-to-zone estimates
+(`zones: {CB: {xy: [1.5, 0]}}`), then a default; every parameter is marked measured / datasheet / design / estimated /
+assumed and every result lists the assumptions it rests on. Defaults and their sources: `schemagen/core/data/sim.yml`,
+`wire.yml`; override them under `sim:` and `tables:` in schemagen.yml.
+
+Scenarios are YAML files in `<project>/scenarios/` (`set` switch / relay / breaker / load states, `faults` short /
+open / fail, `expect` `powered`, `max_drop_V`, `min_voltage`, `no_trip`); see `schemagen/sim/report.py`.
+`--faults all` shorts every powered node to ground and reports the prospective current, the device that trips first
+and when, wire survival (I²t, IEC 60364-4-43 k), the interrupt rating and selectivity. A design check, not certification evidence.
+
+## The app
+
+`schemagen app <project>` starts a local server (127.0.0.1 only, no telemetry, assets bundled in the package) and
+opens the browser:
+
+- **Wires**: a virtualised table with dropdowns for gauge, function class and status, inline findings; edits are
+  saved as a change set in `changes/` (Undo removes the last one).
+- **Object pages** for every wire, pin, component, harness connector, harness, net and part: properties, links,
+  sources, findings and git history. **Ctrl K** searches every object.
+- **Net explorer**: click a pin and its net lights up in the table, the drawings (wire labels are clickable) and the
+  system graph.
+- **System graph**, **Drawings**, **Simulation** (scenario, bus voltage tree, breaker and wire loading, failing loads,
+  fault sweep), **Issues** (findings and open items, filters), **Changes & diff** (diff against a git revision,
+  direction-fix preview and apply).
+
+Frontend development: `cd frontend && npm ci && npm run dev` (proxies `/api` to a running `schemagen app`);
+`npm run build` writes `schemagen/app/static/`; `npx playwright test` runs the end-to-end tests.
+
 ## Code map
 
 | module | role |
 |---|---|
-| `config.py` | `schemagen.yml` → `Config` |
-| `project.py` | loads rows (modules or table); device roles and readable names |
-| `table.py` | CSV / XLSX / JSON input with column mapping; neutral export |
-| `styles.py`, `palette.py` | function class, wire colour, gauge; the palette for other tools |
-| `net.py` | connectivity over the whole wire list (union-find), reachable terminals, next hops; the base for notes, tests and the simulation |
-| `cards.py` | pin data from card blocks (or markdown tables) |
-| `drawing.py` | WireViz document for one harness connector or one part of it |
-| `checks.py` | consistency checks |
-| `outputs.py` | YAML, render (WireViz command), footnotes, cut list, test sheet, checks, index page |
-| `cli.py` | `schemagen` command |
+| `core/model.py` | the typed model (Pydantic v2): conductors, components, connectors, parts, protection, decisions, open items, ledger; JSON Schemas in `schemas/` |
+| `core/config.py` | `schemagen.yml` → `Config` |
+| `core/load.py`, `core/build.py` | pick the importer, resolve labels / classes / sides, derive components and protection |
+| `core/net.py` | typed connectivity (union-find); breakers and switches are elements, not connections |
+| `importers/` | row modules, tables (XLSX / CSV / CSV folder / JSON), WireViz YAML, part cards |
+| `exporters/` | neutral table (workbook / CSV folder / CSV), JSON model, pinout, readable wire list, sheet template |
+| `core/rules.py`, `core/context.py`, `core/direction.py` | rules engine, shared analysis (pin types, protection regions, CAN buses), direction convention |
+| `core/changes.py`, `core/diff.py`, `core/ledger.py` | change sets, project diff (folders or git revisions), label ledger |
+| `core/tables.py`, `core/data/` | cited reference tables (protection, copper, CAN, simulation defaults) |
+| `renderers/` | interface drawings, the WireViz command runner (parallel batches) |
+| `app/server.py`, `frontend/` | the local app: FastAPI server and the React + TypeScript frontend (built into `app/static/`) |
+| `sim/engine.py`, `sim/build.py`, `sim/api.py`, `sim/report.py` | MNA solver (Newton, relays, current limits), model → circuit with provenance, operating point / expectations / fault sweep, report and CLI |
+| `renderers/project.py`, `renderers/wirenet.py` | the loaded project as 0.2-style wire dicts and net queries, for the drawing code |
+| `drawing.py`, `outputs.py`, `cards.py`, `project.py`, `net.py`, `palette.py`, `config.py`, `table.py`, `styles.py` | 0.2 import paths, kept as re-exports |
+| `core/classes.py` | function class, wire colour, gauge |
+| `importers/cards.py`, `importers/display.py` | pin names from card blocks (or markdown tables); default readable names |
+| `renderers/harness.py`, `renderers/checks.py` | WireViz document for one harness connector or one part of it; its 0.2 checks |
+| `exporters/documents.py`, `exporters/palette.py` | YAML, footnotes, cut list, test sheet, checks, index page; the palette |
+| `cli/` | `schemagen` command (`cli/draw.py`, `cli/commands.py`) |
 
 ## Why WireViz 0.4.1 (and not Filare)
 

@@ -1,0 +1,66 @@
+{
+ "$id": "https://schemagen.invalid/schemas/issue.schema.json",
+ "additionalProperties": false,
+ "description": "A rule finding.",
+ "properties": {
+  "column": {
+   "default": "",
+   "title": "Column",
+   "type": "string"
+  },
+  "file": {
+   "default": "",
+   "title": "File",
+   "type": "string"
+  },
+  "fix": {
+   "default": "",
+   "title": "Fix",
+   "type": "string"
+  },
+  "message": {
+   "title": "Message",
+   "type": "string"
+  },
+  "objects": {
+   "items": {
+    "type": "string"
+   },
+   "title": "Objects",
+   "type": "array"
+  },
+  "row": {
+   "anyOf": [
+    {
+     "type": "integer"
+    },
+    {
+     "type": "null"
+    }
+   ],
+   "default": null,
+   "title": "Row"
+  },
+  "rule": {
+   "title": "Rule",
+   "type": "string"
+  },
+  "severity": {
+   "enum": [
+    "error",
+    "warning",
+    "info"
+   ],
+   "title": "Severity",
+   "type": "string"
+  }
+ },
+ "required": [
+  "rule",
+  "severity",
+  "message"
+ ],
+ "title": "Issue",
+ "type": "object",
+ "x-schema-version": "0.5"
+}

@@ -1,0 +1,7 @@
+scenario: normal operation, battery only
+set: {CB-GEN: open}          # no 24 V source in the demo yet: the generator field breaker stays open
+expect:
+  powered: [ECU]               # the DSP supply is not in the demo wire list
+  max_drop_V: {ECU: 0.5}
+  min_voltage: {BB1: 12.5}
+  no_trip: true

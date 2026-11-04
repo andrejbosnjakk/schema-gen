@@ -1,53 +1,30 @@
-"""Tabular wire lists: read rows from CSV / XLSX / JSON, and export any project to the neutral CSV.
+"""0.2 interface for tabular wire lists (importers.table, exporters.table hold the code).
 
-The neutral format has one row per conductor with the FIELDS below. Other column names are mapped in schemagen.yml:
+The neutral format has one row per conductor. Columns may use the plain names the exporter writes (from, from
+connector, ...) or the 0.2 field names (p1, p1c, ...); other names are mapped in schemagen.yml:
 
     source:
-      path: wires.xlsx            # .csv, .xlsx or .json (a list of row objects), relative to schemagen.yml
-      sheet: Wires                # xlsx only (default: first sheet)
+      path: wires.xlsx            # .csv, .xlsx, .json, or a folder of CSV files, relative to schemagen.yml
+      sheet: Wires                # xlsx only (default: Wires, else the first sheet)
       header_row: 1               # row holding the column names (csv/xlsx)
-      columns: {id: Wire ID, p1: From, p1c: From connector, p1p: From pin}   # field -> column; unmapped = same name
+      columns: {id: Wire ID, p1: From, p1c: From connector, p1p: From pin}   # field -> column
 """
-import csv, json
+from pathlib import Path
 
-FIELDS = ["id", "label", "name", "p1", "p1c", "p1p", "p2", "p2c", "p2p", "func", "bus", "awg", "amps", "st", "subsystem", "notes"]
-
-
-def _rows_xlsx(path, sheet, header_row):
-    from openpyxl import load_workbook  # optional dependency: pip install schemagen[xlsx]
-    ws = load_workbook(path, read_only=True, data_only=True)
-    ws = ws[sheet] if sheet else ws.worksheets[0]
-    rows = list(ws.iter_rows(min_row=header_row, values_only=True))
-    head = [str(h).strip() if h is not None else "" for h in rows[0]]
-    return [dict(zip(head, r)) for r in rows[1:]]
+from .exporters import json_model
+from .exporters import table as table_out
+from .importers import table as table_in
+from .importers.records import FIELDS_02 as FIELDS  # noqa: F401  (0.2 name)
 
 
 def read(cfg):
-    """Rows (dicts with FIELDS keys) from the configured source table."""
-    src = cfg.source
-    path = cfg.root / src["path"]
-    hr = int(src.get("header_row", 1))
-    if path.suffix.lower() == ".xlsx":
-        raw = _rows_xlsx(path, src.get("sheet"), hr)
-    elif path.suffix.lower() == ".json":
-        raw = json.loads(path.read_text(encoding="utf-8"))
-    else:
-        with open(path, newline="", encoding="utf-8-sig") as fh:
-            lines = fh.readlines()[hr - 1:]
-        raw = list(csv.DictReader(lines))
-    cols = src.get("columns", {})
-    out = []
-    for r in raw:
-        row = {f: r.get(cols.get(f, f)) for f in FIELDS}
-        row = {k: ("" if v is None else str(v).strip()) for k, v in row.items()}
-        if row["id"] and row["p1"] and row["p2"]: out.append(row)  # skip section headers and blank lines
-    return out
+    """Rows (dicts with neutral field keys) from the configured source table."""
+    return [r.data for r in table_in.read(cfg.root, cfg.source).rows]
 
 
 def export(pr, path):
-    """Write the project's wires in the neutral format (CSV, or JSON when path ends in .json)."""
-    rows = [{f: w.get(f, "") for f in FIELDS} for w in pr.wires]
-    if str(path).endswith(".json"):
-        path.write_text(json.dumps(rows, ensure_ascii=False, indent=1), encoding="utf-8"); return
-    with open(path, "w", newline="", encoding="utf-8") as fh:
-        cw = csv.DictWriter(fh, FIELDS); cw.writeheader(); cw.writerows(rows)
+    """Write the project: .xlsx workbook, folder of CSVs, .csv (wires only) or .json (whole model). Returns warnings."""
+    path = Path(path)
+    if path.suffix.lower() == ".json":
+        json_model.export(pr.model, path); return []
+    return table_out.export(pr.model, path)

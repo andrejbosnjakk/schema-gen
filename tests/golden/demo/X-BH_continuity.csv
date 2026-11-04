@@ -1,0 +1,35 @@
+#,test,wire(s),from,from terminal,to,to terminal,expected,result ☐,remarks
+1,connector half to equipment (unmated),L05 + L04,X-BH,"Cabin half, pin 1",CB-ECU 5 A,LOAD,continuity,☐,
+2,connector half to equipment (unmated),L05 + L06,X-BH,"Cabin half, pin 1",X-BH,"Cabin half, pin 2",continuity,☐,tied pin (same splice)
+3,connector half to equipment (unmated),L07 + L08,X-BH,"Engine half, pin 1",X-BH,"Engine half, pin 2",continuity,☐,tied pin (same splice)
+4,connector half to equipment (unmated),L07 + L09,X-BH,"Engine half, pin 1",ECU engine control unit,"J1, pin 1",continuity,☐,
+5,connector half to equipment (unmated),L06 + L04,X-BH,"Cabin half, pin 2",CB-ECU 5 A,LOAD,continuity,☐,
+6,connector half to equipment (unmated),L08 + L09,X-BH,"Engine half, pin 2",ECU engine control unit,"J1, pin 1",continuity,☐,
+7,connector half to equipment (unmated),L11,X-BH,"Cabin half, pin 3",GNDB ground bus,Stud,continuity,☐,
+8,connector half to equipment (unmated),L12,X-BH,"Engine half, pin 3",ECU engine control unit,"J1, pin 2",continuity,☐,
+9,connector half to equipment (unmated),N01,X-BH,"Cabin half, pin 4",DSP dashboard display,"CAN, pin H",continuity,☐,
+10,connector half to equipment (unmated),N02,X-BH,"Engine half, pin 4",ECU engine control unit,"J1, pin 3",continuity,☐,
+11,connector half to equipment (unmated),N03,X-BH,"Cabin half, pin 5",DSP dashboard display,"CAN, pin L",continuity,☐,
+12,connector half to equipment (unmated),N04,X-BH,"Engine half, pin 5",ECU engine control unit,"J1, pin 4",continuity,☐,
+13,connector half to equipment (unmated),M01,X-BH,"Cabin half, pin 6",DSP dashboard display,"Sensor, pin 5V",continuity,☐,
+14,connector half to equipment (unmated),M02,X-BH,"Engine half, pin 6",OTS oil temperature sensor,"Lead, pin 1",continuity,☐,
+15,connector half to equipment (unmated),M04,X-BH,"Cabin half, pin 7",DSP dashboard display,"Sensor, pin AI1",continuity,☐,
+16,connector half to equipment (unmated),M03,X-BH,"Engine half, pin 7",OTS oil temperature sensor,"Lead, pin 2",continuity,☐,
+17,connector half to equipment (unmated),T01,X-BH,"Cabin half, pin 8",CB-GEN 7.5 A,LOAD,continuity,☐,
+18,connector half to equipment (unmated),T02,X-BH,"Engine half, pin 8",GEN starter-generator,"Field, pin TBD",continuity,☐,
+19,end to end through X-BH pin 1 (mated),L04 + L05 + L07 + L09,CB-ECU 5 A,LOAD,ECU engine control unit,"J1, pin 1",continuity,☐,"parallel with pin 2: proves the group, not each contact (the unmated tests do)"
+20,end to end through X-BH pin 2 (mated),L04 + L06 + L08 + L09,CB-ECU 5 A,LOAD,ECU engine control unit,"J1, pin 1",continuity,☐,"parallel with pin 1: proves the group, not each contact (the unmated tests do)"
+21,end to end through X-BH pin 3 (mated),L11 + L12,GNDB ground bus,Stud,ECU engine control unit,"J1, pin 2",continuity,☐,
+22,end to end through X-BH pin 4 (mated),N01 + N02,DSP dashboard display,"CAN, pin H",ECU engine control unit,"J1, pin 3",continuity,☐,
+23,end to end through X-BH pin 5 (mated),N03 + N04,DSP dashboard display,"CAN, pin L",ECU engine control unit,"J1, pin 4",continuity,☐,
+24,end to end through X-BH pin 6 (mated),M01 + M02,DSP dashboard display,"Sensor, pin 5V",OTS oil temperature sensor,"Lead, pin 1",continuity,☐,
+25,end to end through X-BH pin 7 (mated),M04 + M03,DSP dashboard display,"Sensor, pin AI1",OTS oil temperature sensor,"Lead, pin 2",continuity,☐,
+26,end to end through X-BH pin 8 (mated),T01 + T02,CB-GEN 7.5 A,LOAD,GEN starter-generator,"Field, pin TBD",continuity,☐,
+27,"isolation X-BH pin 1 (mated, harness ends disconnected from equipment)",,X-BH,pin 1,X-BH,"all other pins + shell, except pin 2 (same splice)",no continuity (insulation),☐,tied pins must show continuity
+28,"isolation X-BH pin 2 (mated, harness ends disconnected from equipment)",,X-BH,pin 2,X-BH,"all other pins + shell, except pin 1 (same splice)",no continuity (insulation),☐,tied pins must show continuity
+29,"isolation X-BH pin 3 (mated, harness ends disconnected from equipment)",,X-BH,pin 3,X-BH,all other pins + shell,no continuity (insulation),☐,
+30,"isolation X-BH pin 4 (mated, harness ends disconnected from equipment)",,X-BH,pin 4,X-BH,all other pins + shell,no continuity (insulation),☐,
+31,"isolation X-BH pin 5 (mated, harness ends disconnected from equipment)",,X-BH,pin 5,X-BH,all other pins + shell,no continuity (insulation),☐,
+32,"isolation X-BH pin 6 (mated, harness ends disconnected from equipment)",,X-BH,pin 6,X-BH,all other pins + shell,no continuity (insulation),☐,
+33,"isolation X-BH pin 7 (mated, harness ends disconnected from equipment)",,X-BH,pin 7,X-BH,all other pins + shell,no continuity (insulation),☐,
+34,"isolation X-BH pin 8 (mated, harness ends disconnected from equipment)",,X-BH,pin 8,X-BH,all other pins + shell,no continuity (insulation),☐,

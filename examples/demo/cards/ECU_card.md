@@ -6,6 +6,8 @@ Structured block read by schemagen (the table below is for people):
 
 ```yaml schemagen
 device: '^ECU$'
+kind: controller
+load: {model: constant_power, p_w: 12, v_min: 9}
 connectors:
   - id: J1
     match: '^J1$'
@@ -13,8 +15,8 @@ connectors:
     pins:
       - {n: 1, name: VBAT, type: power_in, v_max: 16, i_max: 5}
       - {n: 2, name: GND, type: ground}
-      - {n: 3, name: CAN_H, type: can}
-      - {n: 4, name: CAN_L, type: can}
+      - {n: 3, name: CAN_H, type: can_h, term: true}
+      - {n: 4, name: CAN_L, type: can_l, term: true}
 ```
 
 | Pin | Signal | Dir | Type | Rule |

@@ -170,7 +170,8 @@ def test_table_xlsx_with_column_mapping(pr, demo_copy, tmp_path):
 
 def test_wireviz_is_never_imported():
     # WireViz is GPL-3.0: schemagen runs it as a separate program and must not import it
-    code = "import sys, schemagen.cli, schemagen.outputs, schemagen.drawing; print('wireviz' in sys.modules)"
+    code = ("import sys, schemagen.cli, schemagen.cli.commands, schemagen.outputs, schemagen.drawing, schemagen.renderers.interface, "
+            "schemagen.renderers.wireviz, schemagen.app.server, schemagen.sim.report; print('wireviz' in sys.modules)")
     assert subprocess.run([sys.executable, "-c", code], capture_output=True, text=True).stdout.strip() == "False"
 
 

@@ -6,3 +6,9 @@ dist/
 .pytest_cache/
 # generated drawings: rebuild with `schemagen draw`
 examples/*/out/
+frontend/node_modules/
+frontend/test-results/
+frontend/e2e-results/
+frontend/playwright-report/
+tests/.sim-out/
+.coverage

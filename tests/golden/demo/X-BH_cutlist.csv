@@ -1,0 +1,17 @@
+label,wire id,name,bundle,from,from terminal,to,to terminal,gauge,colour,function class,length_m,status,continues at
+L05,PWR-ECU-C1,ECU supply,X-BH-C01,SP-ECU-C ECU supply splice,Splice,Bulkhead connector X-BH,"Cabin half, pin 1",22 AWG,RD,14 V,TBD,Proposed,"L04 (CB-ECU LOAD), L06 (X-BH 2) | net ends: CB-ECU LOAD, ECU J1 1"
+L06,PWR-ECU-C2,ECU supply,X-BH-C01,SP-ECU-C ECU supply splice,Splice,Bulkhead connector X-BH,"Cabin half, pin 2",22 AWG,RD,14 V,TBD,Proposed,"L04 (CB-ECU LOAD), L05 (X-BH 1) | net ends: CB-ECU LOAD, ECU J1 1"
+L07,PWR-ECU-N1,ECU supply,X-BH-F01,Bulkhead connector X-BH,"Engine half, pin 1",SP-ECU-N ECU supply splice,Splice,22 AWG,RD,14 V,TBD,Proposed,"L08 (X-BH 2), L09 (ECU 1) | net ends: CB-ECU LOAD, ECU J1 1"
+L08,PWR-ECU-N2,ECU supply,X-BH-F01,Bulkhead connector X-BH,"Engine half, pin 2",SP-ECU-N ECU supply splice,Splice,22 AWG,RD,14 V,TBD,Proposed,"L07 (X-BH 1), L09 (ECU 1) | net ends: CB-ECU LOAD, ECU J1 1"
+L11,GND-ECU-C,ECU ground,X-BH-C02,Bulkhead connector X-BH,"Cabin half, pin 3",GNDB ground bus,Stud,20 AWG,BK,GND,TBD,Proposed,"L03 (BAT −) | net ends: BAT −, ECU J1 2"
+L12,GND-ECU-N,ECU ground,X-BH-F02,ECU engine control unit,"J1, pin 2",Bulkhead connector X-BH,"Engine half, pin 3",20 AWG,BK,GND,TBD,Proposed,
+M01,PWR-OTS-C,Sensor supply,X-BH-C04,DSP dashboard display,"Sensor, pin 5V",Bulkhead connector X-BH,"Cabin half, pin 6",22 AWG,VT,5 V,TBD,Proposed,
+M02,PWR-OTS-N,Sensor supply,X-BH-F04,Bulkhead connector X-BH,"Engine half, pin 6",OTS oil temperature sensor,"Lead, pin 1",22 AWG,VT,5 V,TBD,Proposed,
+M03,SIG-OTS-N,Oil temperature signal,X-BH-F04,OTS oil temperature sensor,"Lead, pin 2",Bulkhead connector X-BH,"Engine half, pin 7",22 AWG,BU,signal,TBD,Proposed,
+M04,SIG-OTS-C,Oil temperature signal,X-BH-C04,Bulkhead connector X-BH,"Cabin half, pin 7",DSP dashboard display,"Sensor, pin AI1",22 AWG,BU,signal,TBD,Proposed,
+N01,CAN-H-C,CAN_H,X-BH-C03,DSP dashboard display,"CAN, pin H",Bulkhead connector X-BH,"Cabin half, pin 4",22 AWG,GN,CAN,TBD,Proposed,
+N02,CAN-H-N,CAN_H,X-BH-F03,Bulkhead connector X-BH,"Engine half, pin 4",ECU engine control unit,"J1, pin 3",22 AWG,GN,CAN,TBD,Proposed,
+N03,CAN-L-C,CAN_L,X-BH-C03,DSP dashboard display,"CAN, pin L",Bulkhead connector X-BH,"Cabin half, pin 5",22 AWG,GNWH,CAN,TBD,Proposed,
+N04,CAN-L-N,CAN_L,X-BH-F03,Bulkhead connector X-BH,"Engine half, pin 5",ECU engine control unit,"J1, pin 4",22 AWG,GNWH,CAN,TBD,Proposed,
+T01,PWR-GEN-C,Generator field,X-BH-C05,CB-GEN 7.5 A,LOAD,Bulkhead connector X-BH,"Cabin half, pin 8",20 AWG,YE,24 V,TBD,Proposed,T03 (BB24) | net ends: GEN Field TBD
+T02,PWR-GEN-N,Generator field,X-BH-F05,Bulkhead connector X-BH,"Engine half, pin 8",GEN starter-generator,"Field, pin TBD",20 AWG,YE,24 V,TBD,Open,

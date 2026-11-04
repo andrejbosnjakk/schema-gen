@@ -5,14 +5,79 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: sudo apt-get update && sudo apt-get install -y graphviz
+      - run: sudo apt-get update && sudo apt-get install -y graphviz ngspice
       - run: pip install -e ".[dev]"
-      - run: pytest -q
+      - run: ruff check schemagen tests benchmarks tools frontend/e2e
+      - run: python -m mypy schemagen
+      - run: python -m pytest -q -m "not perf" --cov=schemagen --cov-report=term
+      - run: python -m pytest -q -m perf
       - run: schemagen draw examples/demo
+      - run: schemagen check examples/demo && schemagen sim examples/demo --faults all
       - uses: actions/upload-artifact@v4
         with:
           name: demo-drawings
           path: examples/demo/out/
+
+  app:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: sudo apt-get update && sudo apt-get install -y graphviz
+      - run: pip install -e ".[dev]"
+      - run: npm ci
+        working-directory: frontend
+      - run: npm run build
+        working-directory: frontend
+      - name: built assets are committed and up to date
+        run: git diff --stat --exit-code schemagen/app/static
+      - name: licences (Python and npm runtime dependencies)
+        run: python tools/check_licences.py
+      - run: npx playwright install --with-deps chromium
+        working-directory: frontend
+      - run: npx playwright test
+        working-directory: frontend
+        env:
+          PYTHON: python
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e2e-results
+          path: |
+            frontend/e2e-results/
+            frontend/test-results/
+
+  wheel:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: pip install build && python -m build --wheel
+      - name: install the wheel with pipx in a clean environment
+        run: pipx install dist/*.whl
+      - name: start the installed app on the demo
+        run: |
+          cp -r examples/demo "$RUNNER_TEMP/demo"
+          (cd "$RUNNER_TEMP" && schemagen app "$RUNNER_TEMP/demo" --no-browser --port 8765 > app.log 2>&1 &)
+          for i in $(seq 60); do curl -fs http://127.0.0.1:8765/api/health && break; sleep 1; done
+      - run: npm ci && npx playwright install --with-deps chromium
+        working-directory: frontend
+      - run: npx playwright test
+        working-directory: frontend
+        env:
+          SMOKE_URL: http://127.0.0.1:8765/
