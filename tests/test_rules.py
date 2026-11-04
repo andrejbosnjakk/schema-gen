@@ -1,6 +1,7 @@
 """M2: rules engine, direction convention, views, diff, coverage."""
 import copy
 import json
+import os
 import random
 import shutil
 import subprocess
@@ -24,6 +25,7 @@ from schemagen.core.rules import RULES, run_rules
 
 ROOT = Path(__file__).resolve().parents[1]
 DEMO = ROOT / "examples" / "demo"
+GOLDEN = ROOT / "tests" / "golden" / "demo"
 
 
 @pytest.fixture(scope="module")
@@ -298,11 +300,43 @@ def test_pinout_two_ended_wire_on_both(tmp_path):
     L = load(DEMO)
     b = {x["id"]: x for x in pinout.blocks(L.model)}
     ecu = {r["pin"]: r for r in b["ECU"]["rows"]}
-    xbh = {r["pin"]: r for r in b["X-BH"]["rows"]}
-    assert ecu["2"]["ids"] == ["GND-ECU-N"] and "GND-ECU-N" in xbh["3"]["ids"]
-    assert xbh["9"]["signal"] == "spare" and "GNDB" in ecu["2"]["far"]
+    xbh = [r for r in b["X-BH"]["rows"]]
+    assert ecu["2"]["id"] == "GND-ECU-N" and "GND-ECU-N" in [r["id"] for r in xbh if r["pin"] == "3"]
+    assert {r["signal"] for r in xbh if r["pin"] == "9"} == {"spare"} and "GNDB ground bus" in ecu["2"]["far"]
     pinout.write_xlsx(L.model, tmp_path / "p.xlsx"); pinout.write_html(L.model, tmp_path / "p.html")
     assert "SENS 5V" in (tmp_path / "p.html").read_text(encoding="utf-8")
+
+
+@pytest.mark.parametrize("proj", ["demo", "s600"])
+def test_pinout_lists_every_conductor_once_per_end(proj, request):
+    from collections import Counter
+    from schemagen.exporters import pinout
+    from schemagen.core.context import Ctx
+    L = load(DEMO if proj == "demo" else request.getfixturevalue("s600"))
+    ctx = Ctx(L.model, L.cfg)
+    bs = pinout.blocks(L.model, ctx)
+    n = Counter(r["id"] for b in bs for r in b["rows"] if r["id"])
+    assert {c.id: n[c.id] for c in L.model.conductors} == {c.id: 2 for c in L.model.conductors}  # splice and bus ends under the splice or bus
+    assert {"splice", "bus", "harness", "breaker"} <= {b["kind"] for b in bs if b["rows"]}
+    for r in (r for b in bs for r in b["rows"] if r["id"]):  # no self-references, no "CB-X LOAD → CB-X LOAD"
+        first, _, rest = r["far"].partition(" → ")
+        assert r["here"] != first and r["here"] not in rest.split(", ") and first not in rest.split(", "), r
+
+
+def test_pinout_xlsx_golden(tmp_path):
+    """Layout and print settings of the reintegration checklist (tests/golden/demo/pinout_layout.txt)."""
+    from openpyxl import load_workbook
+    from schemagen.exporters import pinout
+    pinout.write_xlsx(load(DEMO).model, tmp_path / "p.xlsx", page_breaks=True)
+    wb = load_workbook(tmp_path / "p.xlsx"); ws = wb["Pinout"]
+    ps = ws.page_setup
+    lines = [f"paper {ps.paperSize} {ps.orientation} fit {ps.fitToWidth}x{ps.fitToHeight} fitToPage {ws.sheet_properties.pageSetUpPr.fitToPage}",
+             f"print area {ws.print_area}", f"page breaks after rows {[b.id for b in ws.row_breaks.brk]}"]
+    lines += [" | ".join("" if c.value is None else str(c.value) for c in row).rstrip(" |") for row in ws.iter_rows()]
+    got = "".join(x + "\n" for x in lines)
+    gold = GOLDEN / "pinout_layout.txt"
+    if os.environ.get("UPDATE_GOLDEN"): gold.write_text(got, encoding="utf-8")
+    assert got == gold.read_text(encoding="utf-8")
 
 
 def test_spares_from_part_data(s600):

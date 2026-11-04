@@ -200,3 +200,14 @@ One entry per open choice taken during the 0.2 → 0.5 work: context, choice, wh
   `current` field, as before. Every inferred value is an "assumed" entry in the report.
 - Why: the simplest model that gives an operating point and a non-empty fault sweep from a wire list alone, and it
   never hides that the numbers are assumptions.
+
+## D30. Pinout as a reintegration checklist
+- Choice: one row per conductor end, so each conductor is listed exactly twice; splices, buses and harness
+  connectors get their own blocks (their ends are listed there). Columns: connector/half, pin, pin name, wire label,
+  wire name, gauge, colour, far end (display names, codes where there is none), then empty `connected`,
+  `continuity`, `initials`. The far end continues through splices and harness pins only, away from the row's own
+  end, and stops at devices, breakers and buses (so a breaker never appears twice and a row never names itself).
+- Print: one sheet, each block with its own title and header row, A4 landscape, fit to one page wide;
+  `schemagen pinout --page-breaks` starts each component on a new page. Excel repeats only one title-row range per
+  sheet, so a block longer than a page does not repeat its header on the next page.
+- Why: one sheet is what gets printed and ticked off; one sheet per component would need 200+ tabs on a real list.

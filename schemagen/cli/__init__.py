@@ -4,7 +4,7 @@
     schemagen check <project> [--format text|json|sarif] [-o FILE]
     schemagen fix direction <project> [--apply]
     schemagen export <project> -o wires.xlsx | DIR | wires.csv | model.json
-    schemagen pinout <project> [-o out/pinout.xlsx]       (also writes .html)
+    schemagen pinout <project> [-o out/pinout.xlsx] [--page-breaks]   (also writes .html)
     schemagen wirelist <project> -o wirelist.xlsx
     schemagen template [<project>] -o sheet.xlsx
     schemagen labels <project> [--update] [--retire LABEL --reason TEXT]
@@ -51,6 +51,7 @@ def main(argv=None):
     e.add_argument("config"); e.add_argument("-o", "--output", required=True, help=".xlsx, a folder, .csv (wires only) or .json (model)")
     po = sub.add_parser("pinout", help="pinout per component and harness connector (XLSX and HTML)")
     po.add_argument("config"); po.add_argument("-o", "--output", help="default <out>/pinout.xlsx")
+    po.add_argument("--page-breaks", action="store_true", help="start every component on a new printed page")
     wl = sub.add_parser("wirelist", help="readable wire list (XLSX) with the project's display names")
     wl.add_argument("config"); wl.add_argument("-o", "--output", required=True)
     t = sub.add_parser("template", help="the editable sheet: neutral workbook with dropdowns (works in Google Sheets)")

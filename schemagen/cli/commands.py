@@ -106,7 +106,7 @@ def pinout(a):
     out = Path(a.output) if a.output else L.cfg.out / "pinout.xlsx"
     out.parent.mkdir(parents=True, exist_ok=True)
     ctx = Ctx(L.model, L.cfg)
-    po.write_xlsx(L.model, out, ctx); po.write_html(L.model, out.with_suffix(".html"), ctx)
+    po.write_xlsx(L.model, out, ctx, a.page_breaks); po.write_html(L.model, out.with_suffix(".html"), ctx)
     print(f"pinout -> {out} and {out.with_suffix('.html')}")
 
 
