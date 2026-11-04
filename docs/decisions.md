@@ -243,3 +243,17 @@ One entry per open choice taken during the 0.2 → 0.5 work: context, choice, wh
   ISO 11898-2 design guideline) at `bitrate_kbit` (default 250), one rate per project; `max_stub_m` set in the
   project still wins.
 - Why: a bit rate per project is what real lists state; per-bus rates can come later if a project needs them.
+
+## D34. Display names in the app
+- Choice: the app shows a component's display name (from display.py, DISPLAY or the default), with its code in
+  brackets when the name does not contain it, in the wire table, object page titles and links, and graph labels.
+  The code stays in tooltips and in URLs and `data-pin`, so links and tests do not depend on names. Pin cells that
+  may be cut off carry the full text in `title`. The wire table's column chooser is kept per browser
+  (localStorage, optional).
+- Why: names are what people read; codes are what the data joins on.
+
+## D35. Citation status
+- Choice: `docs/citations.md` lists every value in `core/data/` with its clause and a status: *definition* (defined
+  constants and formulas) or *to verify* (written from memory of the document, not yet checked against a copy).
+  Nothing is marked verified until someone has checked it against the current edition.
+- Why: the tool cannot check standards it does not hold; the list makes the check a short, explicit task.
