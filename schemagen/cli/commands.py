@@ -3,6 +3,7 @@ import difflib
 import io
 import json
 import sys
+from typing import Any
 from pathlib import Path
 
 from ..core import changes as ch
@@ -13,6 +14,7 @@ from ..core.context import Ctx
 from ..core.direction import analyse
 from ..core.load import ledger_path, load, measured_lengths
 from ..core.rules import RULES, run_rules
+from ..importers.records import text as text_of
 
 
 def _loaded(p, **kw):
@@ -79,20 +81,42 @@ def direction_changeset(L):
     return ch.new_set(f"direction convention: swap the ends of {len(flips)} conductor(s)", ops, slug="direction"), flips
 
 
+def names_changeset(L: Any) -> tuple[ch.ChangeSet, list[tuple[str, str]]]:
+    """Near-duplicate device names merged into the more used spelling: one set op per conductor end."""
+    from ..importers.readable import near_duplicates
+    from collections import Counter
+    name_of = {c.raw: c.name for c in L.model.components if c.name}
+    seen = dict.fromkeys(r.data.get(f) for r in L.records for f in ("p1", "p2"))  # first use in the list decides ties
+    raw_of = {name_of[raw]: raw for raw in seen if raw in name_of}
+    uses = Counter(r.data.get(f) for r in L.records for f in ("p1", "p2"))
+    pairs = near_duplicates(list(raw_of), uses, raw_of)
+    to = {raw_of[a]: raw_of[b] for a, b in pairs}
+    ops = [ch.Op(op="set", id=text_of(r.data.get("id")), field=f, old=r.data.get(f), new=to[r.data.get(f)])
+           for r in L.records for f in ("p1", "p2") if r.data.get(f) in to]
+    return ch.new_set("merge near-duplicate device names", ops, slug="names"), pairs
+
+
 def fix(a):
     L = _loaded(a.config)
-    cs, flips = direction_changeset(L)
-    if not flips: print("no direction findings: nothing to change"); return 0
+    if a.what == "names":
+        cs, pairs = names_changeset(L)
+        if not pairs: print("no near-duplicate names: nothing to change"); return 0
+        for x, y in pairs: print(f"merge: '{x}' -> '{y}'")
+        flips: list[Any] = pairs
+    else:
+        cs, flips = direction_changeset(L)
+        if not flips: print("no direction findings: nothing to change"); return 0
     out = L.cfg.out / "changes"; out.mkdir(parents=True, exist_ok=True)
-    p = out / "direction.json"
+    p = out / f"{a.what}.json"
     p.write_text(json.dumps(cs.model_dump(), ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
     import copy
     recs = copy.deepcopy(L.records)
     ch.apply(recs, [cs])
     m2 = L.rebuild(recs)
     patch = "".join(difflib.unified_diff(_wires_csv(L.model), _wires_csv(m2), "wires (before)", "wires (after)"))
-    (out / "direction.diff").write_text(patch, encoding="utf-8")
-    for f in flips: print(f"swap ends: {f.label} ({f.id}): {f.reason}")
+    (out / f"{a.what}.diff").write_text(patch, encoding="utf-8")
+    if a.what == "direction":
+        for f in flips: print(f"swap ends: {f.label} ({f.id}): {f.reason}")
     print(f"change set: {p}\ndiff:       {out / 'direction.diff'}")
     if a.apply:
         print(f"stored as {ch.save(L.cfg.root, cs)} (applied on every load; commit it, or undo with `schemagen changes --undo`)")

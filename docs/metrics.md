@@ -149,3 +149,15 @@ Measured on a Windows 11 laptop (Python 3.14), and in CI on Ubuntu and Windows.
 | display name shown where display.py gives one (Playwright) | yes | wire table and object page show "Cockpit display (DSP)" | yes |
 | Playwright end-to-end | 15/15 | CI (Ubuntu, Windows): all green. Locally 14/15: the drawing test passes with Graphviz; the cold-start test measured 3.4–3.9 s (limit 3 s) on a laptop running on battery | partly |
 | cited values listed with clause and status | all | 17 values in `docs/citations.md`: 5 definition, 11 to verify, 1 naming pattern | yes |
+
+## 0.7 item 2: readable-sheet importer
+
+Fictional fixtures from `schemagen synth --readable --wires 500` (502 wires, 79 rows of subsystem bars and component headers).
+
+| metric | target | measured | pass |
+|---|---|---|---|
+| readable → model → readable, clean fixture | cell-identical | 582 rows × 11 columns identical, merged bars kept | yes |
+| connector / pin cells parsed automatically, seeded fixture | ≥ 98 % | 99.5 % (999 of 1004); the 5 others all flagged at their sheet row and column | yes |
+| seeded near-duplicate names found | 100 % | 12 / 12 (case, spacing, punctuation, one-letter typos), merged by `schemagen fix names` | yes |
+| false merges on the clean fixture | 0 | 0 | yes |
+| check and pinout straight from the sheet | run | clean fixture: 0 errors, 0 warnings, 1 info; pinout checklist written | yes |

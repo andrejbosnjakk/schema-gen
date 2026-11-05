@@ -51,6 +51,7 @@ class Ctx:
         if d and d.type: return d.type
         c = self.comp.get(t.device)
         if c and c.kind in ("breaker", "fuse", "switch", "relay", "battery", "dcdc"):
+            if t.connector.strip().lower() == "coil": return "ground" if t.pin.strip() in ("-", "−", "A2") else "power_in"  # coil +/A1 is a load
             n = (t.pin or t.connector).strip().lower()
             if n in SOURCE_NAMES: return "power_out"
             if n in SINK_NAMES: return "power_in"

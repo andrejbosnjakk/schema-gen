@@ -257,3 +257,20 @@ One entry per open choice taken during the 0.2 → 0.5 work: context, choice, wh
   constants and formulas) or *to verify* (written from memory of the document, not yet checked against a copy).
   Nothing is marked verified until someone has checked it against the current edition.
 - Why: the tool cannot check standards it does not hold; the list makes the check a short, explicit task.
+
+## D36. The readable sheet
+- Context: the team's source of truth is a hand-edited sheet with plain device names and free-text connector / pin
+  cells; the tool could not read it.
+- Choice: a separate importer (`importers/readable.py`, docs/readable.md) that keeps every original cell in the
+  conductor's `extra.readable`, so an unedited sheet exports cell for cell; codes are generated from the kind and
+  name and registered in the in-memory config (prefixes, harness connectors, sides) so the model builder needs no
+  changes. Unparseable cells are a rule finding (`readable-cell`), not a load error, so a half-finished sheet still
+  loads. Near-duplicates are a load warning plus `schemagen fix names` (a change set), never merged silently.
+- Limits: empty rows and a component header with no wires under it are not written back; a relay coil terminal
+  (`coil +` / `coil -`) is typed as a load / return everywhere, not only in readable sheets.
+- Why: the sheet stays the team's file; schemagen reads it, checks it and proposes edits as change sets.
+
+## D37. CLI output on Windows pipes
+- Choice: when stdout / stderr are not UTF-8 (a Windows pipe is cp1252), characters it cannot encode (→, −) are
+  printed as `?` instead of raising UnicodeEncodeError.
+- Why: a check that crashes while printing its findings is worse than a `?`.

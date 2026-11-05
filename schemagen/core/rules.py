@@ -83,6 +83,14 @@ def r_label_reused(ctx: Ctx) -> Iterator[tuple[str, list[str], str]]:
             "printed labels are never reused: assign a new label"
 
 
+@rule("readable-cell", "warning", "A readable-sheet cell could not be read")
+def r_readable_cell(ctx: Ctx) -> Iterator[tuple[str, list[str], str]]:
+    for c in ctx.m.conductors:
+        for u in (c.extra.get("readable") or {}).get("unparsed", []):
+            yield (f"{u['sheet']}, row {u['row']}, column '{u['column']}': cannot read '{u['text']}' as a connector / pin",
+                   [f"conductor:{c.id}"], "write it as in docs/readable.md, e.g. 'pin 3', 'X1.A', 'J2, pin 5', 'line side'")
+
+
 # ---------------------------------------------------------------- direction
 @rule("direction", "warning", "Conductor runs against the direction convention")
 def r_direction(ctx: Ctx) -> Iterator[tuple[str, list[str], str]]:

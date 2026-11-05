@@ -8,6 +8,7 @@ from typing import Any
 
 from ..importers.display import DefaultDisplay
 from ..importers import parts as parts_in
+from ..importers import readable as readable_in
 from ..importers import rows as rows_in
 from ..importers import table as table_in
 from ..importers import wireviz as wireviz_in
@@ -65,6 +66,9 @@ def load(cfg: Config | str | Path, apply_changes: bool = True) -> Loaded:
             naming.set_protection([])
             return Loaded(cfg, m, naming, {c.raw: c.name for c in m.components})
     if src and str(src.get("path", "")).lower().endswith((".yml", ".yaml")): t = wireviz_in.read(cfg.root / src["path"])
+    elif src and (src.get("format") == "readable" or (src.get("format") is None and readable_in.detect(cfg.root / src["path"]))):
+        t = readable_in.read(cfg, src)
+        naming = naming_for(cfg)  # the importer registered its harness connectors in cfg
     elif src: t = table_in.read(cfg.root, src)
     else: t = rows_in.read(wl, cfg.tables)
     warnings: list[str] = t.warnings + (changes.apply(t.rows, changes.load_all(cfg.root)) if apply_changes else [])
