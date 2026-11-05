@@ -72,6 +72,13 @@ def unknown(ctx: Ctx) -> list[int]:
 
 
 def _judge(ctx: Ctx) -> tuple[list[Flip], list[int]]:
+    """(flips, unknown signal conductors), computed once per context (the rules ask for both)."""
+    got: tuple[list[Flip], list[int]] | None = ctx.__dict__.get("_direction")
+    if got is None: got = ctx.__dict__["_direction"] = _judge_net(ctx)
+    return got
+
+
+def _judge_net(ctx: Ctx) -> tuple[list[Flip], list[int]]:
     opts: dict[str, Any] = (getattr(ctx.cfg, "direction", None) or {})
     if opts.get("enabled", True) is False: return [], []
     net, conds = ctx.net, ctx.m.conductors
