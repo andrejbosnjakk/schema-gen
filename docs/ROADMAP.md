@@ -28,6 +28,13 @@ simulation), with checks built in and every value traceable to its source.
 - P3 the app: table editor, object pages, net explorer, clickable drawings, system graph, simulation dashboard,
   issues board, change sets with undo
 
+**0.6** (see CHANGELOG.md)
+- Windows support (CI on Ubuntu and Windows), tuple tables in row modules, `sim --infer`, pinout reintegration
+  checklist, direction and CAN checks without part data, display names in the app, `docs/citations.md`
+
+**Next (0.7):** readable-sheet importer, Blueprint workspace shell, system canvas, schematic and connector views
+with sheet output, import wizard, revisions, desktop packaging spike.
+
 Still open: KiCad netlist import, label-printer / harness-tester / CATIA exporters, zones with route segments and
 service loops for lengths, transients, a 2D vehicle map, change-set review/approve, an assistant panel.
 

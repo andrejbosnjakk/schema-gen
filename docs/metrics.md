@@ -132,3 +132,20 @@ Final benchmark (`python benchmarks/bench.py`, seconds):
 
 Rendering every drawing of synthetic 1k with WireViz (115 drawings, 4 parallel processes): 8.0 s (0.2: 15.0 s for
 24 harness drawings covering 57 % of the conductors).
+
+## 0.6: fixes from a real project, Windows
+
+Measured on a Windows 11 laptop (Python 3.14), and in CI on Ubuntu and Windows.
+
+| metric | target | measured | pass |
+|---|---|---|---|
+| `pytest -q` on Windows and Ubuntu (CI) | 0 failures, no new skips | 96 passed, 2 skipped locally; CI green on ubuntu-latest and windows-latest × 3.12, 3.14 | yes |
+| text I/O without an encoding | 0 | 0 (AST check over `schemagen/` and `tests/`) | yes |
+| tuple tables survive import → export → import | lossless, nothing dropped silently | decisions, open items and ten-field protection tuples round-trip (CSV, XLSX); unreadable entries are warnings | yes |
+| sim without part data | not a pass | exit 2 with what is missing; synthetic 1k without cards + `--infer`: operating point, fault sweep 426 nodes | yes |
+| pinout: each conductor listed exactly twice, no self-references | yes | demo and synthetic 600: every conductor twice, 0 self-references; golden test for the XLSX layout and print setup | yes |
+| direction rule on the seeded no-pin-data corpus | 0 false positives, 100 % recall, unknown counted | 0 false positives (0.5: 3), 9/9 flips caught, unknown count reported | yes |
+| CAN on synthetic 1k without cards | termination and node-count findings | node counts equal to the carded project; a cut terminator is an error; stub limit 1 m / 0.3 m by bit rate | yes |
+| display name shown where display.py gives one (Playwright) | yes | wire table and object page show "Cockpit display (DSP)" | yes |
+| Playwright end-to-end | 15/15 | CI (Ubuntu, Windows): all green. Locally 14/15: the drawing test passes with Graphviz; the cold-start test measured 3.4–3.9 s (limit 3 s) on a laptop running on battery | partly |
+| cited values listed with clause and status | all | 17 values in `docs/citations.md`: 5 definition, 11 to verify, 1 naming pattern | yes |

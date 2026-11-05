@@ -1,6 +1,26 @@
 # Changelog
 
-## 0.5.0 (unreleased)
+## 0.6.0 (unreleased)
+
+Fixes from running 0.5 on a real wire list, and Windows support.
+
+- **Windows:** XLSX sources are closed after reading (no lock); every text read/write names UTF-8, enforced by a
+  test; the tutorial edits files without `sed`; CI runs test, app (Playwright) and wheel jobs on Ubuntu and Windows
+  with Python 3.12 and 3.14; frontend sources and built assets are LF so builds match across systems.
+- **Row modules:** `P` / `D` / `O` entries may be tuples (field order in `tables.<table>.fields`); unreadable entries
+  are warnings naming file, table and index; `display.set_protection` receives the entries as written.
+- **Simulation:** a project without sources or loads is no longer a pass (exit 2, says what is missing);
+  `schemagen sim --infer` assumes sources (`sim.sources`) and loads (conductor current), all marked assumed.
+- **Pinout:** a printable reintegration checklist: one row per conductor end (splices and buses included), display
+  names, gauge, colour, wire name, check columns, A4 landscape, `--page-breaks`.
+- **Direction rule:** bonds have no direction; returns judged by where the chain ends; sender / receiver fallbacks
+  for untyped signals; `direction-unknown` (info) counts the rest.
+- **CAN:** terminations inferred from device names and nodes from stubs when there is no card data; stub limit by bit
+  rate (SAE J1939-11, ISO 11898-2).
+- **App:** display names in the wire table, object pages and graph (codes in tooltips), column chooser.
+- `docs/citations.md`: every cited value with its clause and whether it has been checked.
+
+## 0.5.0
 
 Distribution renamed to **`schema-gen`** on PyPI (the name `schemagen` is taken by another project); the import
 package and the command stay `schemagen`. Every 0.2 command, the row-module input and the table input keep working;
