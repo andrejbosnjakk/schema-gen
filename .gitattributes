@@ -1,0 +1,3 @@
+# LF everywhere for the frontend, so a build on Windows hashes the same as on Linux (CI checks the built assets)
+frontend/** text=auto eol=lf
+schemagen/app/static/** text=auto eol=lf

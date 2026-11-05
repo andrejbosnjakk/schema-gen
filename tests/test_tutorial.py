@@ -3,6 +3,7 @@ import os
 import re
 import subprocess
 import sys
+import sysconfig
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -18,8 +19,8 @@ def blocks():
 def test_tutorial_runs(tmp_path):
     d = tmp_path / "tail-lamp"
     d.mkdir()
-    bin_dir = Path(sys.executable).parent
-    env = {"PATH": os.pathsep.join([str(bin_dir), "/usr/bin", "/bin"]), "HOME": str(tmp_path)}
+    bin_dirs = [sysconfig.get_path("scripts"), str(Path(sys.executable).parent)]  # console scripts (Windows: Scripts\), python
+    env = {"PATH": os.pathsep.join([*bin_dirs, "/usr/bin", "/bin"]), "HOME": str(tmp_path)}
     if os.name == "nt": env["SYSTEMROOT"] = os.environ["SYSTEMROOT"]
     out = []
     bl = blocks()
