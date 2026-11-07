@@ -178,4 +178,29 @@ def test_harness_code_from_name(name, code):
 def test_fixture_harness_codes_are_the_names_codes(fixtures):
     L = load(fixtures / "clean")
     hs = [c for c in L.model.components if c.kind == "harness"]
-    assert hs and all(c.id == c.name.split()[-1] for c in hs)
+    assert hs and all(c.id == rd.name_code(c.name) and c.id in c.name.split() for c in hs)
+
+
+@pytest.mark.parametrize("text,n", [("D-sub 25", 25), ("Panel connector X-IP (D-SUB 25)", 25), ("DB25", 25), ("DE-9", 9),
+                                    ("Deutsch DT 12-pin", 12), ("4 way", 4), ("J1", None), ("Connector X-FW2", None)])
+def test_connector_size(text, n):
+    from schemagen.core.classes import connector_size
+    assert connector_size(text) == n
+
+
+def test_connector_size_shows_spares(fixtures, tmp_path):
+    """A 25-way D-sub with one pin pair used is a 25-pin connector (24 spares), not a 3-pin one; the same for a device's J1."""
+    import shutil
+
+    import yaml
+
+    from schemagen.cli.draw import draw
+    L = load(fixtures / "clean")
+    assert next(c for c in L.model.connectors if c.id == "X-IP").pin_count == 25
+    d = tmp_path / "p"; shutil.copytree(fixtures / "clean", d)
+    draw(d, harnesses=["X-IP"], no_render=True)
+    x = yaml.safe_load((d / "out" / "X-IP.yml").read_text(encoding="utf-8"))["connectors"]["X-IP"]
+    assert len(x["pins"]) == 25 and x["pinlabels"].count("spare") == 24
+    j = yaml.safe_load(next((d / "out").glob("IF-*INTERCOM-BOX*.yml")).read_text(encoding="utf-8"))["connectors"]
+    box = next(v for v in j.values() if "Intercom box" in str(v.get("type")))
+    assert len(box["pins"]) == 15 and box["pinlabels"].count("spare") == 12

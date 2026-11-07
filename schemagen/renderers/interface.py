@@ -8,6 +8,7 @@ import re
 from collections import defaultdict
 from typing import Any
 
+from ..core.classes import connector_size
 from .harness import Drawing, clean_func, pv, safe
 
 PRIORITY = {"device": 0, "breaker": 1, "bus": 2, "splice": 3}
@@ -68,6 +69,12 @@ def build_item(pr: Any, net: Any, cards: Any, dev: str, wires: list[dict[str, An
         if not simple:
             pid = _pid(pr, dev, w[f"p{e}c"], w[f"p{e}p"])
             mypins.setdefault(pid, cards.pin(pr.code(dev), w[f"p{e}c"], w[f"p{e}p"]) or clean_func(w["func"], 30) or clean_func(w["name"], 30))
+    if not simple:  # the real size when the name says it ("D-sub 25"): unused pins listed as spare
+        conns = {w[f"p{e}c"] for w, e, f, _ in ends}
+        for c in sorted(conns):
+            n = connector_size(c) or (connector_size(pr.device(dev)) if len(conns) == 1 else None)
+            for k in range(1, (n or 0) + 1): mypins.setdefault(_pid(pr, dev, c, str(k)), "spare")
+            if n: mypins = dict(sorted(mypins.items(), key=lambda kv: [int(x) if x.isdigit() else x for x in re.split(r"(\d+)", kv[0])]))
     connectors[me] = dict(style="simple", type=safe(f"{me}: {pr.device(dev)}")) if simple else \
         dict(type=safe(pr.device(dev)), pins=[pv(p) for p in mypins], pinlabels=[safe(v) for v in mypins.values()])
     des: dict[str, str] = {}

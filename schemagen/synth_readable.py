@@ -157,6 +157,12 @@ def forms(s: Sheet) -> None:
     s.wire("Oil level switch", "Oil level switch", "output", "Engine computer", "X3, pin 2", "signal", 0.1, 22)
     s.wire("Aux outlet sense", "Aux outlet", "Connector, Signal", "Engine computer", "X3, pin 3", "signal", 0.1, 22)
     s.wire("Hour meter pulse", "Hour meter", "out", "Engine computer", "X3, pin 4", "signal", 0.1, 22)
+    s.rows.append(["head", "Intercom box"])  # connector sizes in the names: unused pins are spares, not a smaller connector
+    s.wire("Intercom box supply", "Fuse 'AUX' 5 A", "fuse output", "Intercom box", "J1 (D-sub 15), pin 1", "14 V", 1.0, 22)
+    s.wire("Intercom box return", "Intercom box", "J1 (D-sub 15), pin 2", "Ground bus", "stud", "GND", 1.0, 22)
+    s.wire("Intercom audio", "Intercom box", "J1 (D-sub 15), pin 9", "Instrument panel connector X-IP (D-sub 25)", "cockpit side, pin 3",
+           "signal", 0.1, 22)
+    s.wire("Intercom audio", "Instrument panel connector X-IP (D-sub 25)", "nose side, pin 3", "Audio panel", "pin 7", "signal", 0.1, 22)
     s.rows.append(["head", "Spare outlet"])  # values not known yet: text in the number columns
     s.wire("Spare outlet feed", "Main bus", "stud", "Fuse 'SPARE' 5 A", "in", "14 V", 3.0, 20)
     s.rows[-1][8], s.rows[-1][10], s.rows[-1][11] = "TBD", "TBD", "TBD"

@@ -10,7 +10,7 @@ from typing import Any
 from pydantic import ValidationError
 
 from ..importers.records import Problem, Record, clean_extra, listof, number, sources, text
-from .classes import classify
+from .classes import classify, connector_size
 from .config import Config
 from .model import (Bus, Component, Conductor, Connector, ConnectorHalf, Decision, Harness, LabelEntry, LabelLedger, Model,
                     OpenItem, Part, ProtectiveDevice, Relay, Splice, Switch, Terminal, Zone)
@@ -140,9 +140,8 @@ class Builder:
                 hn = self.harness(t.device)
                 h = hn[1]
                 if h not in out:
-                    ds = re.search(r"D-SUB (\d+)", t.device)
                     out[h] = Connector(id=h, raw=t.device, name=str(hn[0]), far_side=str(hn[2]) if len(hn) > 2 else "",
-                                       pin_count=int(ds.group(1)) if ds else None)
+                                       pin_count=connector_size(t.device))
                 half = halves[h].get(t.connector)
                 if half is None:
                     gs = given.get((h, t.connector))
@@ -161,7 +160,7 @@ class Builder:
                     h = self.harness(t.device)[1]; top[h] = max(top.get(h, 0), int(t.pin))
         for h, con in out.items():
             con.halves = sorted(halves[h].values(), key=lambda x: (x.side != "near", x.name))
-            if con.pin_count is None: con.pin_count = top.get(h)
+            if con.pin_count is None: con.pin_count = connector_size(*(x.name for x in con.halves)) or top.get(h)
         return out
 
     # ---------------------------------------------------------------- everything else

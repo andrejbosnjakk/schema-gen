@@ -44,6 +44,9 @@ Harness connector halves get their side from the connector text ("cockpit side, 
 *fuselage side* and *cabin side* are near and *nose side*, *tank side*, *wing side*, *back cabin side* and *side-wall
 sensor side* far; add or override under `readable: {sides: {"engine side": far, "nose side": near}}`.
 
+A size written in a connector or device name ("Instrument panel connector X-IP (D-sub 25)", "J1 (D-sub 15), pin 4",
+"DB25", "DE-9", "12-pin", "4 way") is the connector's pin count: drawings show all its pins, the unused ones as spare.
+
 ## Connector / pin grammar
 
 Whitespace is collapsed and a trailing `(note)` is allowed and ignored ("terminal 87 (NO)", "positive terminal (M6)").
