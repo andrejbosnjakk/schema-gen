@@ -23,6 +23,9 @@ FIELD = ["label", "name", "p1", "p1t", "p2", "p2t", "bus", "amps", "awg", "lengt
 # device kind from its name: first matching pattern wins (override: readable.kinds in schemagen.yml, or the Components tab)
 KINDS: dict[str, str] = {"splice": r"\bsplice\b", "bus": r"\bbus\b|\bbus ?bar\b", "breaker": r"^breaker\b|\bcircuit breaker\b",
                          "fuse": r"^fuse\b", "harness": r"\bconnector\b", "relay": r"\brelay\b|\bcontactor\b", "switch": r"\bswitch\b"}
+# harness connector halves by their cell text (override or extend: readable.sides in schemagen.yml)
+SIDES = {"cockpit side": "near", "fuselage side": "near", "cabin side": "near", "nose side": "far", "tank side": "far",
+         "wing side": "far", "back cabin side": "far", "side-wall sensor side": "far"}
 PREFIX = {"breaker": "CB-", "fuse": "FU-", "splice": "SP-", "bus": "BB-", "harness": "X-", "relay": "K-", "switch": "SW-", "device": ""}
 
 _NOTE = re.compile(r"^(.*?)\s*\(([^()]*)\)$")
@@ -112,7 +115,7 @@ def read(cfg: Any, src: dict[str, Any]) -> Tables:
     path = cfg.root / src["path"]
     opts = dict(cfg.raw.get("readable") or {})
     kinds = {**KINDS, **(opts.get("kinds") or {})}
-    sides = {str(k).lower(): str(v) for k, v in (opts.get("sides") or {}).items()}
+    sides = {str(k).lower(): str(v) for k, v in {**SIDES, **(opts.get("sides") or {})}.items()}
     wb = load_workbook(path, read_only=True, data_only=True)
     try:
         ws = wb[src["sheet"]] if src.get("sheet") else wb.worksheets[0]

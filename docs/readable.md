@@ -38,7 +38,9 @@ Each device gets a code: its kind's prefix (`CB-`, `FU-`, `SP-`, `BB-`, `X-`, `K
 (for breakers, fuses and switches the quoted part: `CB-AVIONICS`). An optional **Components** tab (columns Name, Kind,
 Code, Location, Part) overrides the kind and code and sets the zone and part number. The name stays the display name.
 
-Harness connector halves get their side from `readable: {sides: {"cockpit side": near, "engine side": far}}`.
+Harness connector halves get their side from the connector text ("cockpit side, pin 7"). By default *cockpit side*,
+*fuselage side* and *cabin side* are near and *nose side*, *tank side*, *wing side*, *back cabin side* and *side-wall
+sensor side* far; add or override under `readable: {sides: {"engine side": far, "nose side": near}}`.
 
 ## Connector / pin grammar
 

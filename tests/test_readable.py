@@ -134,3 +134,16 @@ def test_components_tab_overrides(tmp_path):
     assert (c["Sling panel"].id, c["Sling panel"].zone, c["Sling panel"].part) == ("PNL-1", "cockpit", "PN-77")
     assert c["Ground stud"].kind == "bus" and c["Tail lamp"].kind == "device"
     assert m.conductors[0].subsystem == "Lighting"
+
+
+def test_default_sides_and_override(fixtures, tmp_path):
+    """cockpit / fuselage / cabin side are near and nose / tank / wing / back cabin / side-wall sensor side far by default."""
+    L = load(fixtures / "clean")
+    got = {h: s for halves in L.cfg.sides.values() for h, s in halves.items()}
+    assert {h: got[h] for h in ("cockpit side", "fuselage side", "cabin side")} == dict.fromkeys(("cockpit side", "fuselage side", "cabin side"), "near")
+    assert all(got[h] == "far" for h in ("nose side", "tank side", "wing side", "back cabin side", "side-wall sensor side"))
+    import shutil
+    shutil.copytree(fixtures / "clean", tmp_path / "o")
+    y = tmp_path / "o" / "schemagen.yml"
+    y.write_text(y.read_text(encoding="utf-8").replace("engine side: far", "engine side: far\n    nose side: near"), encoding="utf-8")
+    assert {h: s for halves in load(tmp_path / "o").cfg.sides.values() for h, s in halves.items()}["nose side"] == "near"
