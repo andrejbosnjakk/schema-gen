@@ -69,7 +69,8 @@ not names. A cell that matches none of these is kept as written (as the connecto
 
 ## Round trip and edits
 
-The cell text is kept with each conductor. Export writes it back unchanged while the connector and pin it means are
+The cell text is kept with each conductor, and text in a number column (`TBD` in Current (A)) is kept and written
+back as read. Export writes it back unchanged while the connector and pin it means are
 unchanged; after an edit the cell is written in the canonical form of the table above (first form per row).
 
 ## Near-duplicate names

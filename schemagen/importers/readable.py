@@ -267,7 +267,9 @@ def export(m: Any, path: Path) -> None:
             cp = written if same else format_cp(t.connector, t.pin)
             row += [(c.name if c else t.device) or None, cp if cp != "" else None]
         g = cd.gauge
-        row += [cd.bus or None, cd.current_a, int(g) if g.isdigit() else (g or None), cd.length_m, cd.extra.get("weight_g")]
+        num = lambda v, key: cd.extra.get(key) if v is None else v  # text in a number column ("TBD") is kept in extra
+        row += [cd.bus or None, num(cd.current_a, "amps"), int(g) if g.isdigit() else (g or None), num(cd.length_m, "length"),
+                cd.extra.get("weight_g")]
         ws.append(row)  # type: ignore[union-attr]
     for j, w in enumerate((8, 26, 26, 22, 26, 22, 9, 11, 7, 10, 10), 1):
         ws.column_dimensions[ws.cell(1, j).column_letter].width = w  # type: ignore[union-attr]

@@ -159,3 +159,11 @@ def test_can_trunk_and_stubs_have_no_direction(fixtures):
     assert {L.model.conductors[i].can for i in can if "L" in L.model.conductors[i].name.split()[1]} == {"CAN_L"}
     assert next(c for c in L.model.conductors if c.name == "Bus link").kind == "CAN"  # between CAN splices, no CAN in its name
     assert not set(can) & ({f.index for f in direction.analyse(ctx)} | set(direction.unknown(ctx)))
+
+
+def test_text_in_number_columns_round_trips(fixtures):
+    """TBD / TBC in Current (A), Length (m) and Weight (g) are written back as read."""
+    rows = [r for r in cells(fixtures / "clean" / "wires.xlsx") if r[1] and str(r[1]).startswith("Spare outlet")]
+    assert {"TBD", "TBC", "n/a"} <= {v for r in rows for v in r[7:11]}
+    L = load(fixtures / "clean")
+    assert sum(isinstance(c.extra.get("amps"), str) for c in L.model.conductors) == 2

@@ -156,6 +156,13 @@ def forms(s: Sheet) -> None:
     s.wire("Oil level switch", "Oil level switch", "output", "Engine computer", "X3, pin 2", "signal", 0.1, 22)
     s.wire("Aux outlet sense", "Aux outlet", "Connector, Signal", "Engine computer", "X3, pin 3", "signal", 0.1, 22)
     s.wire("Hour meter pulse", "Hour meter", "out", "Engine computer", "X3, pin 4", "signal", 0.1, 22)
+    s.rows.append(["head", "Spare outlet"])  # values not known yet: text in the number columns
+    s.wire("Spare outlet feed", "Main bus", "stud", "Fuse 'SPARE' 5 A", "in", "14 V", 3.0, 20)
+    s.rows[-1][8], s.rows[-1][10], s.rows[-1][11] = "TBD", "TBD", "TBD"
+    s.wire("Spare outlet supply", "Fuse 'SPARE' 5 A", "output", "Spare outlet", "pin 1", "14 V", 3.0, 20)
+    s.rows[-1][8] = "TBC"
+    s.wire("Spare outlet return", "Spare outlet", "pin 2", "Ground bus", "stud", "GND", 3.0, 20)
+    s.rows[-1][10:12] = ["TBD", "n/a"]
     s.rows.append(["head", "CAN bus"])  # trunk and stubs: no direction, never one-way signals
     for pol, p in (("H", 1), ("L", 2)):
         s.wire(f"CAN1 {pol} trunk", f"CAN1 {pol} splice front", "splice", "Engine computer", f"X4, pin {p}", "signal", 0.1, 22, 0.4)
