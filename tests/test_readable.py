@@ -147,3 +147,15 @@ def test_default_sides_and_override(fixtures, tmp_path):
     y = tmp_path / "o" / "schemagen.yml"
     y.write_text(y.read_text(encoding="utf-8").replace("engine side: far", "engine side: far\n    nose side: near"), encoding="utf-8")
     assert {h: s for halves in load(tmp_path / "o").cfg.sides.values() for h, s in halves.items()}["nose side"] == "near"
+
+
+def test_can_trunk_and_stubs_have_no_direction(fixtures):
+    """CAN1 / GCAN / CAN_H / CAN_L names and wires between CAN splices are CAN, never judged as one-way signals."""
+    from schemagen.core import direction
+    L = load(fixtures / "clean")
+    ctx = Ctx(L.model, L.cfg)
+    can = [i for i, c in enumerate(L.model.conductors) if c.extra.get("readable", {}).get("header") == "CAN bus"]
+    assert len(can) == 12 and all(L.model.conductors[i].kind == "CAN" for i in can)
+    assert {L.model.conductors[i].can for i in can if "L" in L.model.conductors[i].name.split()[1]} == {"CAN_L"}
+    assert next(c for c in L.model.conductors if c.name == "Bus link").kind == "CAN"  # between CAN splices, no CAN in its name
+    assert not set(can) & ({f.index for f in direction.analyse(ctx)} | set(direction.unknown(ctx)))

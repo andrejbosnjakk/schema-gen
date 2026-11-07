@@ -46,9 +46,9 @@ class Sheet:
         self.rows: list[list[Any]] = []
         self.conns: list[list[Any]] = []  # [name, near half, far half, next pin]
 
-    def wire(self, name: str, a: str, ap: str, b: str, bp: str, volt: str, amps: float, awg: int) -> None:
+    def wire(self, name: str, a: str, ap: str, b: str, bp: str, volt: str, amps: float, awg: int, ln: float | None = None) -> None:
         self.n += 1
-        ln = round(self.rng.uniform(0.3, 6.0), 2)
+        ln = ln or round(self.rng.uniform(0.3, 6.0), 2)
         self.rows.append(["wire", f"L{self.n:03d}", name, a, ap, b, bp, volt, amps, awg, ln, round(ln * G_PER_M[awg], 1)])
 
     def harness(self, zone: str) -> tuple[str, str, str, int]:
@@ -156,6 +156,14 @@ def forms(s: Sheet) -> None:
     s.wire("Oil level switch", "Oil level switch", "output", "Engine computer", "X3, pin 2", "signal", 0.1, 22)
     s.wire("Aux outlet sense", "Aux outlet", "Connector, Signal", "Engine computer", "X3, pin 3", "signal", 0.1, 22)
     s.wire("Hour meter pulse", "Hour meter", "out", "Engine computer", "X3, pin 4", "signal", 0.1, 22)
+    s.rows.append(["head", "CAN bus"])  # trunk and stubs: no direction, never one-way signals
+    for pol, p in (("H", 1), ("L", 2)):
+        s.wire(f"CAN1 {pol} trunk", f"CAN1 {pol} splice front", "splice", "Engine computer", f"X4, pin {p}", "signal", 0.1, 22, 0.4)
+        s.wire("Bus link", f"CAN1 {pol} splice front", "splice", f"CAN1 {pol} splice aft", "splice", "signal", 0.1, 22, 0.4)
+        s.wire(f"Display CAN_{pol} stub", f"CAN1 {pol} splice front", "splice", "Primary display", f"J3, pin {p}", "signal", 0.1, 22, 0.4)
+        s.wire(f"GCAN {pol} stub", f"CAN1 {pol} splice aft", "splice", "Air data computer", f"J2, pin {p}", "signal", 0.1, 22, 0.4)
+        s.wire(f"CAN1 {pol} end", f"CAN1 {pol} splice aft", "splice", "CAN terminator aft", f"pin {p}", "signal", 0.1, 22, 0.4)
+        s.wire(f"CAN1 {pol} start", "CAN terminator front", f"pin {p}", f"CAN1 {pol} splice front", "splice", "signal", 0.1, 22, 0.4)
 
 
 def _typo(name: str, rng: random.Random, kind: int) -> str:

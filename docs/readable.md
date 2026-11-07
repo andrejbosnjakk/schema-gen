@@ -78,3 +78,10 @@ Names that differ only in case, spacing or punctuation, or by a typo of one lett
 letters) are reported when the sheet loads. `schemagen fix names <project>` proposes a change set that merges each
 variant into the more used spelling (the first used on a tie). Names whose numbers differ, or that differ in a token
 of one or two letters (L / R, A / B), are never merged.
+
+## CAN
+
+A wire whose name starts with `CAN1`, `CAN2` ... or `GCAN`, or contains `CAN_H` / `CAN_L`, and a wire touching a splice
+with CAN in its name, is CAN (`CAN_L` when the name says L, else `CAN_H`); override the pattern with
+`readable: {can: <regex>}`. CAN has no one-way direction: it is never judged as a signal from sender to receiver, only in bus
+order from a termination (when two are found).

@@ -23,6 +23,9 @@ FIELD = ["label", "name", "p1", "p1t", "p2", "p2t", "bus", "amps", "awg", "lengt
 # device kind from its name: first matching pattern wins (override: readable.kinds in schemagen.yml, or the Components tab)
 KINDS: dict[str, str] = {"splice": r"\bsplice\b", "bus": r"\bbus\b|\bbus ?bar\b", "breaker": r"^breaker\b|\bcircuit breaker\b",
                          "fuse": r"^fuse\b", "harness": r"\bconnector\b", "relay": r"\brelay\b|\bcontactor\b", "switch": r"\bswitch\b"}
+# CAN conductors by name (override: readable.can); a conductor touching a splice whose name matches is CAN too
+CAN = r"^(CAN\d|GCAN)|CAN_[HL]\b"
+CAN_L = r"(CAN\d*|GCAN)[ _-]?L\b"
 # harness connector halves by their cell text (override or extend: readable.sides in schemagen.yml)
 SIDES = {"cockpit side": "near", "fuselage side": "near", "cabin side": "near", "nose side": "far", "tank side": "far",
          "wing side": "far", "back cabin side": "far", "side-wall sensor side": "far"}
@@ -115,6 +118,7 @@ def read(cfg: Any, src: dict[str, Any]) -> Tables:
     path = cfg.root / src["path"]
     opts = dict(cfg.raw.get("readable") or {})
     kinds = {**KINDS, **(opts.get("kinds") or {})}
+    can = re.compile(str(opts.get("can", CAN)), re.I)
     sides = {str(k).lower(): str(v) for k, v in {**SIDES, **(opts.get("sides") or {})}.items()}
     wb = load_workbook(path, read_only=True, data_only=True)
     try:
@@ -177,6 +181,9 @@ def read(cfg: Any, src: dict[str, Any]) -> Tables:
             d[f"{f}c"], d[f"{f}p"] = cp
             side = sides.get(cp[0].lower())
             if side: cfg.sides.setdefault(d[f].split()[0], {})[cp[0]] = side
+        cans = ([cells[1]] if can.search(cells[1]) else []) + [cells[c] for c in (2, 4) if classify(cells[c], kinds) == "splice"
+                                                               and re.search(r"\bG?CAN", cells[c], re.I)]
+        if cans: d["cls"] = "CAN_L" if re.search(CAN_L, cans[0], re.I) else "CAN_H"  # no direction (bus order), never a one-way signal
         for f in ("bus", "amps", "awg", "length", "weight_g"):
             if vals[f] not in (None, ""): d[f] = vals[f]
         d["readable"] = rd
