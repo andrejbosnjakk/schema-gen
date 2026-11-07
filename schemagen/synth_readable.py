@@ -35,8 +35,9 @@ G_PER_M = {22: 3.0, 20: 4.5, 18: 6.5, 16: 9.0, 14: 13.5, 12: 21.0}
 # harness halves per subsystem (default sides of the readable importer, plus engine / tail side set in schemagen.yml)
 HALVES = {"Engine": ("cockpit side", "engine side"), "Fuel": ("cabin side", "tank side"), "Avionics": ("fuselage side", "nose side"),
           "Environmental": ("cabin side", "side-wall sensor side"), "Interior lighting": ("cabin side", "back cabin side")}
-PLACE = {"engine side": "Firewall", "wing side": "Wing root", "tail side": "Tail cone", "tank side": "Tank bay", "nose side": "Nose bay",
-         "side-wall sensor side": "Side-wall", "back cabin side": "Rear cabin"}
+PLACE = {"engine side": ("Firewall", "X-FW"), "wing side": ("Wing root", "X-WR"), "tail side": ("Tail cone", "TC"),
+         "tank side": ("Tank bay", "BC"), "nose side": ("Nose bay", "X-NB"), "side-wall sensor side": ("Side-wall", "SWS"),
+         "back cabin side": ("Rear cabin", "RCB")}
 BAD_CELLS = ["see drawing", "pin ?", "TBD", "J?", "pin 3 or 4", "—", "spare?", "X1-A3?"]
 
 
@@ -59,7 +60,7 @@ class Sheet:
                 c[3] += 2
                 return c[0], c[1], c[2], c[3] - 2
         k = len(self.conns) + 1
-        self.conns.append([f"{PLACE[far]} connector P{k}", near, far, 3])
+        self.conns.append([f"{PLACE[far][0]} connector {PLACE[far][1]}{k}", near, far, 3])  # the code is in the name
         return self.conns[-1][0], near, far, 1
 
 

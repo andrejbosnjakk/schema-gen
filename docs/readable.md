@@ -35,7 +35,9 @@ From and To hold plain names ("Breaker 'AVIONICS' 10 A", "Sling panel", "Firewal
 | device | anything else |
 
 Each device gets a code: its kind's prefix (`CB-`, `FU-`, `SP-`, `BB-`, `X-`, `K-`, `SW-`) and the name in capitals
-(for breakers, fuses and switches the quoted part: `CB-AVIONICS`). An optional **Components** tab (columns Name, Kind,
+(for breakers, fuses and switches the quoted part: `CB-AVIONICS`). A harness connector whose name already carries a
+code keeps it: the last all-capitals token of two or more characters ("Firewall connector PSW" is `PSW`, "Wing
+connector X-WL" is `X-WL`). An optional **Components** tab (columns Name, Kind,
 Code, Location, Part) overrides the kind and code and sets the zone and part number. The name stays the display name.
 
 Harness connector halves get their side from the connector text ("cockpit side, pin 7"). By default *cockpit side*,

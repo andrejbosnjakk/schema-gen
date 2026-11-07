@@ -83,6 +83,15 @@ def norm_name(s: str) -> str:
     return re.sub(r"\s+", " ", re.sub(r"[^\w]+", " ", s.lower())).strip()
 
 
+_CODE = re.compile(r"^(?=.*[A-Z].*[A-Z0-9])[A-Z][A-Z0-9]*(?:-[A-Z0-9]+)*$")
+
+
+def name_code(name: str) -> str:
+    """The code a harness connector name already carries ("Firewall connector PSW" -> PSW, "X-FW2"), else ""."""
+    toks = [t.strip("()[],") for t in name.split()]
+    return next((t for t in reversed(toks) if len(t) >= 2 and _CODE.match(t) and not re.match(r"^D-?SUB$", t)), "")
+
+
 def _slug(name: str, kind: str) -> str:
     q = re.search(r"'([^']+)'", name) if kind in ("breaker", "fuse", "switch") else None
     s = re.sub(r"[^A-Z0-9]+", "-", (q[1] if q else name).upper()).strip("-")[:28].strip("-")
@@ -145,7 +154,7 @@ def read(cfg: Any, src: dict[str, Any]) -> Tables:
         if name in raw_of: return raw_of[name]
         o = over.get(norm_name(name), {})
         kind = o.get("kind") or classify(name, kinds)
-        code = o.get("code") or PREFIX.get(kind, "") + _slug(name, kind)
+        code = o.get("code") or (kind == "harness" and name_code(name)) or PREFIX.get(kind, "") + _slug(name, kind)
         taken = tuple(p for p in (*cfg.breaker_prefixes, *cfg.bus_prefixes, cfg.splice_prefix, *cfg.relay_prefixes, *cfg.switch_prefixes,
                                   *PREFIX.values(), *cfg.harnesses) if p)
         if kind == "device" and not o.get("code") and (code.startswith(taken) or code in cfg.buses): code = "D-" + code  # never read as another kind

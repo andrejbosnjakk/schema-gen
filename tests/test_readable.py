@@ -167,3 +167,15 @@ def test_text_in_number_columns_round_trips(fixtures):
     assert {"TBD", "TBC", "n/a"} <= {v for r in rows for v in r[7:11]}
     L = load(fixtures / "clean")
     assert sum(isinstance(c.extra.get("amps"), str) for c in L.model.conductors) == 2
+
+
+@pytest.mark.parametrize("name,code", [("Firewall connector PSW", "PSW"), ("Connector X-FW2", "X-FW2"), ("HPW connector", "HPW"),
+                                       ("Tank connector BC1 (D-SUB 25)", "BC1"), ("Wing connector X-WL", "X-WL"), ("Firewall connector", "")])
+def test_harness_code_from_name(name, code):
+    assert rd.name_code(name) == code
+
+
+def test_fixture_harness_codes_are_the_names_codes(fixtures):
+    L = load(fixtures / "clean")
+    hs = [c for c in L.model.components if c.kind == "harness"]
+    assert hs and all(c.id == c.name.split()[-1] for c in hs)
