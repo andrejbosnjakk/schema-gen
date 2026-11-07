@@ -71,6 +71,7 @@ def build(n: int, seed: int) -> list[list[Any]]:
     s.wire("Master switch feed", "Battery", "positive terminal (M6)", "Master switch", "pin 1", "14 V", 0.5, 22)
     s.wire("Battery return", "Battery", "negative terminal (M6)", "Ground bus", "stud", "GND", 40.0, 12)
     s.wire("Ground bus bond", "Ground bus", "stud", "Airframe bond point", "stud", "GND", 40.0, 12)
+    forms(s)
     loads = [(sub, ld) for sub, lst in SUBSYSTEMS.items() for ld in lst]
     k, cur = 0, "Power distribution"
     while s.n < n:
@@ -111,6 +112,46 @@ def build(n: int, seed: int) -> list[list[Any]]:
         s.wire(f"{ld} return", sp, "splice", hn, f"{hf}, pin {p + 1}", "GND", amps, awg)
         s.wire(f"{ld} return", hn, f"{hc}, pin {p + 1}", "Ground bus", "stud", "GND", amps, awg)
     return s.rows
+
+
+def forms(s: Sheet) -> None:
+    """Wires written in the other forms people use: named terminals (studs, leads, in / out, coax ends, jack
+    contacts, loops), T-piece ports and "Connector, name" cells."""
+    s.rows.append(["head", "Main contactor"])
+    s.wire("Starter contactor feed", "Starter battery", "positive terminal (M8)", "Main contactor", "line stud", "14 V", 40.0, 12)
+    s.wire("Starter motor feed", "Main contactor", "load stud", "Starter motor", "feed stud", "14 V", 40.0, 12)
+    s.wire("Starter motor return", "Starter motor", "negative terminal", "Ground bus", "stud", "GND", 40.0, 12)
+    s.wire("Starter battery return", "Starter battery", "negative terminal (M8)", "Ground bus", "stud", "GND", 40.0, 12)
+    s.wire("Main contactor coil", "Master switch", "pin 4", "Main contactor", "A1 (+) M8 stud (battery side)", "14 V", 0.5, 22)
+    s.wire("Main contactor coil return", "Main contactor", "A2 (-) M8 stud", "Ground bus", "stud", "GND", 0.5, 22)
+    s.rows.append(["head", "Auxiliary outlets"])
+    s.wire("Aux fuse feed", "Main bus", "stud", "Fuse 'AUX' 5 A", "in", "14 V", 3.0, 20)
+    s.wire("Aux outlet supply", "Fuse 'AUX' 5 A", "fuse output", "Aux outlet", "Connector, V_in 5 V", "14 V", 3.0, 20)
+    s.wire("Aux outlet return", "Aux outlet", "Connector, GND", "Ground bus", "stud", "GND", 3.0, 20)
+    s.wire("Charger fuse feed", "Main bus", "stud", "Fuse 'CHARGER' 3 A", "in", "14 V", 2.0, 22)
+    s.wire("Charger T-tap feed", "Fuse 'CHARGER' 3 A", "fuse holder lead", "Power T-tap", "3, in", "14 V", 2.0, 22)
+    s.wire("USB charger supply", "Power T-tap", "3, out", "USB charger", "red lead", "14 V", 1.0, 22)
+    s.wire("Hour meter supply", "Power T-tap", "2, drop", "Hour meter", "brown lead (control)", "14 V", 0.1, 22)
+    s.wire("USB charger return", "USB charger", "black lead", "Ground bus", "stud", "GND", 1.0, 22)
+    s.wire("Hour meter return", "Hour meter", "lead to ground bus", "Ground bus", "stud", "GND", 0.1, 22)
+    s.rows.append(["head", "DC-DC converter"])
+    s.wire("Converter fuse feed", "Main bus", "stud", "Fuse 'CONVERTER' 7.5 A", "in", "14 V", 4.0, 18)
+    s.wire("Converter feed", "Fuse 'CONVERTER' 7.5 A", "output", "DC-DC converter", "in", "14 V", 4.0, 18)
+    s.wire("Converter output", "DC-DC converter", "LV1 output (SurLok plug)", "Avionics bus", "stud", "14 V", 4.0, 18)
+    s.wire("Converter return", "DC-DC converter", "lead", "Ground bus", "stud", "GND", 4.0, 18)
+    s.rows.append(["head", "Antennas and headset"])
+    s.wire("Com antenna coax", "Com antenna", "TNC", "Com radio", "BNC", "RF", 0.1, 22)
+    s.wire("GPS antenna coax", "GPS antenna", "QMA", "GPS receiver", "QMA", "RF", 0.1, 22)
+    s.wire("Headset mic", "Headset jack", "tip", "Audio panel", "pin 5", "signal", 0.1, 22)
+    s.wire("Headset audio", "Audio panel", "pin 6", "Headset jack", "tip + ring", "signal", 0.1, 22)
+    s.wire("Headset shield", "Headset jack", "sleeve", "Ground bus", "stud", "GND", 0.1, 22)
+    s.rows.append(["head", "Safety loop"])
+    s.wire("Safety loop", "Emergency stop", "loop out", "Engine computer", "safety loop in", "signal", 0.1, 22)
+    s.wire("Safety loop return", "Engine computer", "loop out", "Emergency stop", "loop in", "signal", 0.1, 22)
+    s.wire("Oil level sender", "Oil level sensor", "yellow lead (sensor)", "Engine computer", "X3, pin 1", "signal", 0.1, 22)
+    s.wire("Oil level switch", "Oil level switch", "output", "Engine computer", "X3, pin 2", "signal", 0.1, 22)
+    s.wire("Aux outlet sense", "Aux outlet", "Connector, Signal", "Engine computer", "X3, pin 3", "signal", 0.1, 22)
+    s.wire("Hour meter pulse", "Hour meter", "out", "Engine computer", "X3, pin 4", "signal", 0.1, 22)
 
 
 def _typo(name: str, rng: random.Random, kind: int) -> str:

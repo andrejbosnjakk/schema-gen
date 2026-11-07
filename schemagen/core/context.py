@@ -53,8 +53,9 @@ class Ctx:
         if c and c.kind in ("breaker", "fuse", "switch", "relay", "battery", "dcdc"):
             if t.connector.strip().lower() == "coil": return "ground" if t.pin.strip() in ("-", "−", "A2") else "power_in"  # coil +/A1 is a load
             n = (t.pin or t.connector).strip().lower()
-            if n in SOURCE_NAMES: return "power_out"
-            if n in SINK_NAMES: return "power_in"
+            words = set(n.split())  # named terminals: "load stud", "fuse output", "LV1 output"
+            if n in SOURCE_NAMES or words & SOURCE_NAMES - {"+"}: return "power_out"
+            if n in SINK_NAMES or words & SINK_NAMES: return "power_in"
             if n in ("-", "−", "gnd"): return "ground"
         return None
 

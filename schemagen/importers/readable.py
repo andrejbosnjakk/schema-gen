@@ -26,40 +26,50 @@ KINDS: dict[str, str] = {"splice": r"\bsplice\b", "bus": r"\bbus\b|\bbus ?bar\b"
 PREFIX = {"breaker": "CB-", "fuse": "FU-", "splice": "SP-", "bus": "BB-", "harness": "X-", "relay": "K-", "switch": "SW-", "device": ""}
 
 _NOTE = re.compile(r"^(.*?)\s*\(([^()]*)\)$")
+_TOKEN = re.compile(r"^[\w+-]+$")
+COLOURS = "red|black|brown|yellow|white|blue|green|orange|grey|gray|violet|purple|pink"
 _FORMS: list[tuple[re.Pattern[str], Any]] = [
     (re.compile(r"^pin\s+([\w+-]+)$", re.I), lambda m: ("", m[1])),
     (re.compile(r"^terminal\s+([\w+-]+)$", re.I), lambda m: ("", m[1])),
     (re.compile(r"^([A-Za-z][\w-]*)\.([\w+-]+)$"), lambda m: (m[1], m[2])),
     (re.compile(r"^(.+?),\s*pin\s+([\w+-]+)$", re.I), lambda m: (m[1], m[2])),
     (re.compile(r"^lead\s+(\w+)$", re.I), lambda m: ("lead", m[1])),
+    (re.compile(rf"^({COLOURS})\s+lead$", re.I), lambda m: ("lead", m[1].lower())),
     (re.compile(r"^coil\s*([+-]|A1|A2)$", re.I), lambda m: ("coil", m[1])),
+    (re.compile(r"^(A1|A2)\s*\([+-]\)\s*(?:M\d+\s+)?stud$", re.I), lambda m: ("", m[1].upper())),
     (re.compile(r"^(positive|negative)\s+terminal$", re.I), lambda m: ("+" if m[1].lower() == "positive" else "-", "")),
     (re.compile(r"^(load|line)\s+side$", re.I), lambda m: (m[1].upper(), "")),
     (re.compile(r"^(splice|stud)$", re.I), lambda m: (m[1].capitalize(), "")),
+    (re.compile(r"^([\w-]+),\s*([A-Za-z][\w .+/-]*)$"), lambda m: (m[1], m[2])),  # "3, in", "Connector, V_in 5 V"
     (re.compile(r"^$"), lambda m: ("", "")),
 ]
+# a cell without a pin number is a named terminal ("line stud", "fuse output", "TNC", "tip + ring", "loop in"), unless
+# it is a placeholder or a question: those stay unparsed
+_NAMED = re.compile(r"^(?!(?:pin|terminal)\b)[A-Za-z0-9][\w .,+/&-]*(?:\([^()?]*\)[\w .,+/&-]*)*$", re.I)
+_PLACEHOLDER = re.compile(r"^(tbd|tbc|tba|n/?a|none|unknown|spare|see\b.*|check\b.*|ask\b.*)$", re.I)
 
 
 def parse_cp(cell: Any) -> tuple[str, str] | None:
     """Connector / pin text -> (connector, pin), or None when it does not follow the grammar. A trailing "(note)" is
-    allowed and ignored here (it stays in the cell text)."""
+    allowed and ignored here (it stays in the cell text); text without a pin number is a named terminal (name, "")."""
     s = re.sub(r"\s+", " ", "" if cell is None else str(cell)).strip()
     m = _NOTE.match(s)
     if m: s = m[1]
     for pat, out in _FORMS:
         x = pat.match(s)
         if x: return out(x)
-    return None
+    return (s, "") if _NAMED.match(s) and not _PLACEHOLDER.match(s) else None
 
 
 def format_cp(con: str, pin: str) -> str:
     """The canonical cell text for (connector, pin): the inverse of parse_cp."""
     if con == "": return f"pin {pin}" if pin else ""
-    if con in ("lead", "coil"): return f"{con} {pin}"
+    if con in ("lead", "coil") and pin: return f"{con} {pin}"
     if con in ("+", "-") and not pin: return "positive terminal" if con == "+" else "negative terminal"
     if con in ("LOAD", "LINE") and not pin: return f"{con.lower()} side"
     if con in ("Splice", "Stud") and not pin: return con.lower()
-    return f"{con}, pin {pin}" if pin else con
+    if not pin: return con
+    return f"{con}, pin {pin}" if _TOKEN.match(pin) else f"{con}, {pin}"
 
 
 def norm_name(s: str) -> str:

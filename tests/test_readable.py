@@ -32,10 +32,29 @@ def cells(path):
     ("positive terminal (M6)", ("+", "")), ("cockpit side, pin 19", ("cockpit side", "19")), ("splice", ("Splice", "")),
     ("stud", ("Stud", "")), ("load side", ("LOAD", "")), ("line side", ("LINE", "")), ("lead 1", ("lead", "1")),
     ("coil - (black lead)", ("coil", "-")), ("", ("", "")), ("  pin   12 ", ("", "12")),
+    ("red lead", ("lead", "red")), ("brown lead (control)", ("lead", "brown")), ("line stud", ("line stud", "")),
+    ("A1 (+) M8 stud (battery side)", ("", "A1")), ("A2 (-) M8 stud", ("", "A2")), ("out", ("out", "")), ("3, in", ("3", "in")),
+    ("2, drop", ("2", "drop")), ("fuse holder lead", ("fuse holder lead", "")), ("lead", ("lead", "")),
+    ("LV1 output (SurLok plug)", ("LV1 output", "")), ("Connector, V_in 5 V", ("Connector", "V_in 5 V")), ("TNC", ("TNC", "")),
+    ("tip + ring", ("tip + ring", "")), ("safety loop in", ("safety loop in", "")),
     ("see drawing", None), ("pin ?", None), ("TBD", None), ("J?", None), ("pin 3 or 4", None)])
 def test_grammar(text, want):
     assert rd.parse_cp(text) == want
     if want: assert rd.parse_cp(rd.format_cp(*want)) == want  # the canonical form reads back the same
+
+
+REAL_FORMS = ["red lead", "black lead", "brown lead (control)", "yellow lead (sensor)", "line stud", "load stud", "feed stud",
+              "A1 (+) M8 stud (battery side)", "A2 (-) M8 stud", "in", "out", "output", "3, in", "3, out", "2, drop", "fuse output",
+              "fuse holder lead", "lead to ground bus", "lead", "LV1 output (SurLok plug)", "Connector, GND", "Connector, V_in 5 V",
+              "Connector, Signal", "TNC", "BNC", "QMA", "tip", "tip + ring", "sleeve", "loop in", "loop out", "safety loop in",
+              "coil - (black lead)"]
+
+
+def test_real_forms_in_fixture_and_parse_rate(fixtures):
+    """Every written form is in the fixture, and at least 98 % of its cells parse (the rest are the seeded ones)."""
+    cs = [r[c] for r in cells(fixtures / "seeded" / "wires.xlsx")[1:] if r[2] is not None for c in (3, 5)]
+    assert set(REAL_FORMS) <= set(cs)
+    assert sum(rd.parse_cp(x) is not None for x in cs) / len(cs) >= 0.98
 
 
 def test_round_trip_is_cell_identical(fixtures, tmp_path):

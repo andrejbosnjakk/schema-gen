@@ -51,15 +51,19 @@ The rest must be one of:
 | `terminal T` | | T |
 | `C.P` (e.g. `X1.A`) | C | P |
 | `C, pin P` (e.g. `J2, pin C3`, `cockpit side, pin 19`) | C | P |
-| `lead N` | lead | N |
+| `lead N`, `red lead` (any wire colour) | lead | N / red |
 | `coil +`, `coil -`, `coil A1`, `coil A2` | coil | + / - / A1 / A2 |
+| `A1 (+) M8 stud`, `A2 (-) stud` | | A1 / A2 |
 | `positive terminal`, `negative terminal` | + / - | |
 | `line side`, `load side` | LINE / LOAD | |
 | `splice`, `stud` | Splice / Stud | |
+| `C, name` (e.g. `3, in`, `2, drop`, `Connector, V_in 5 V`) | C | name |
+| a name without a pin number (`line stud`, `fuse output`, `in`, `TNC`, `tip + ring`, `safety loop in`) | the name | |
 | (empty) | | |
 
-P, T and N are letters, digits, `+` and `-`. A cell that matches none of these is kept as written (as the connector
-name) and reported by the `readable-cell` rule with its sheet, row and column.
+P, T and N are letters, digits, `+` and `-`. A named terminal is letters, digits, spaces and `.,+/&-`; placeholders
+(`TBD`, `TBC`, `n/a`, `spare`, `see ...`, `check ...`), questions (`?`) and `pin` / `terminal` without a single pin are
+not names. A cell that matches none of these is kept as written (as the connector name) and reported by the `readable-cell` rule with its sheet, row and column.
 
 ## Round trip and edits
 
