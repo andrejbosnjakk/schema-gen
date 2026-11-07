@@ -355,14 +355,24 @@ def test_every_conductor_in_a_drawing(tmp_path, s1k):
     from schemagen.cli.draw import draw
     for proj in (DEMO, s1k):
         d = tmp_path / proj.name; shutil.copytree(proj, d, ignore=shutil.ignore_patterns("out"))
-        draw(d, no_render=True)
+        sets = draw(d, no_render=True)
         cov = json.loads((d / "out" / "coverage.json").read_text(encoding="utf-8"))
         assert cov["covered"] == cov["total"] and not cov["uncovered"]
         labels = set()
         for y in (d / "out").glob("*.yml"):
             for cab in (yaml.safe_load(y.read_text(encoding="utf-8")).get("cables") or {}).values():
                 labels |= {w.split(" · ")[0] for w in cab["wirelabels"]}
-        assert labels == {c.label for c in load(d).model.conductors}
+        m = load(d).model
+        assert labels == {c.label for c in m.conductors}
+        # an item's interface drawing has every conductor end on it (grounds to a bus or splice too), and every item
+        # with a conductor outside the harness drawings has one
+        own = {full.ends[0][0][f"p{full.ends[0][1]}"]: {w["label"] for w, *_ in full.ends} for full, _ in sets if full.harness.startswith("IF-")}
+        in_harness = {w["label"] for full, _ in sets if not full.harness.startswith("IF-") for w, *_ in full.ends}
+        kind = {c.raw: c.kind for c in m.components}
+        for c in m.conductors:
+            for t in (c.from_, c.to):
+                if t.device in own: assert c.label in own[t.device], (t.device, c.label)
+                elif kind.get(t.device) not in ("harness", "splice"): assert c.label in in_harness, (t.device, c.label)
 
 
 # ---------------------------------------------------------------- views

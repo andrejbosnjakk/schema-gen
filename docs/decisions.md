@@ -274,3 +274,12 @@ One entry per open choice taken during the 0.2 → 0.5 work: context, choice, wh
 - Choice: when stdout / stderr are not UTF-8 (a Windows pipe is cp1252), characters it cannot encode (→, −) are
   printed as `?` instead of raising UnicodeEncodeError.
 - Why: a check that crashes while printing its findings is worse than a `?`.
+
+## D38. An item's interface drawing has all its wires
+- Context: interface drawings were a set cover, so each conductor appeared once; a device's grounds were only on the
+  ground-bus drawing and its harness wires only on the harness drawing.
+- Choice: every device, breaker or bus with a conductor outside the harness drawings gets a drawing with every
+  conductor on it; a conductor that is on another drawing too is labelled "(also on X-BH, IF-GNDB)". Splices are only
+  drawn for what is still undrawn. Items whose conductors all run through harness drawings get no drawing of their
+  own (as before).
+- Why: a drawing that misses a device's ground is read as "no ground"; repeating costs a few drawings.
