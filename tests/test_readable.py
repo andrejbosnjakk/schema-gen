@@ -204,3 +204,27 @@ def test_connector_size_shows_spares(fixtures, tmp_path):
     j = yaml.safe_load(next((d / "out").glob("IF-*INTERCOM-BOX*.yml")).read_text(encoding="utf-8"))["connectors"]
     box = next(v for v in j.values() if "Intercom box" in str(v.get("type")))
     assert len(box["pins"]) == 15 and box["pinlabels"].count("spare") == 12
+
+
+def test_sim_infer_finds_sources_by_name(fixtures, tmp_path):
+    """--infer on a readable sheet: batteries and DC/DC converters by name (never the battery relay); a battery's voltage
+    from its name when the wires give none."""
+    from schemagen.sim import api
+    L = load(fixtures / "clean")
+    L.cfg.sim = {**L.cfg.sim, "infer": True}
+    op = api.operating_point(L.model, L.cfg)
+    names = {c.id: c.name for c in L.model.components}
+    assert op.converged and not op.missing
+    assert {names[s["component"]] for s in op.sources} == {"Battery", "Starter battery", "DC-DC converter"}
+    wb = Workbook(); ws = wb.active; ws.title = "Wires"
+    ws.append(rd.HEAD)
+    ws.append(["L1", "lamp feed", "24 V battery", "positive terminal", "Work lamp", "pin 1", None, 1.0, 22, 2.0, 6.0])
+    ws.append(["L2", "lamp return", "Work lamp", "pin 2", "24 V battery", "negative terminal", "GND", 1.0, 22, 2.0, 6.0])
+    ws.append(["L3", "charger", "DC/DC converter", "output", "Work lamp", "pin 3", "14 V", 1.0, 22, 2.0, 6.0])
+    wb.save(tmp_path / "w.xlsx")
+    (tmp_path / "schemagen.yml").write_text("source: {path: w.xlsx}\nsim: {infer: true}\n", encoding="utf-8")
+    L2 = load(tmp_path)
+    op = api.operating_point(L2.model, L2.cfg)
+    notes = {a.what: a.note for a in op.assumptions if "inferred" in a.note}
+    assert any("battery" in k and "24 V" in v for k, v in notes.items()), notes
+    assert any("dcdc" in k for k in notes), notes

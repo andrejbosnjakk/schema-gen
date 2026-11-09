@@ -201,7 +201,8 @@ def build(m: Model, cfg: Any = None, measured: dict[str, float] | None = None, s
                 if st in ("energized", "energised", "on"): c.off.update(nc)
                 elif st in ("de-energized", "de-energised", "off"): c.off.update(no)
                 else: c.relays.append(Relay(comp.id, cn, p.coil.v_pickup, p.coil.v_dropout, no, nc))
-        if infer and st not in ("off", "failed", "fail") and not (p and (p.source or p.supply_out)) and comp.raw in by_dev:
+        if infer and st not in ("off", "failed", "fail") and not (p and (p.source or p.supply_out)) and comp.raw in by_dev \
+                and comp.kind not in ("relay", "switch", "breaker", "fuse", "bus", "splice", "harness"):
             spec = next((v for k, v in infer.items() if re.search(k, comp.id) or re.search(k, comp.raw)), None)
             if spec: _inferred_source(sm, comp, dict(spec), terms, N)
         if p and st not in ("off", "failed", "fail") and comp.raw in by_dev:
@@ -243,7 +244,8 @@ def _inferred_source(sm: SimModel, comp: Component, spec: dict[str, Any], terms:
     for g in gnd[1:]: c.merge(N(net.node_of(g)), minus)
     volts = {i: nominal_v(cd.bus) for i, e, cd in ends if cd.kind != "GND"}
     kind = str(spec.get("kind", "battery"))
-    v = spec.get("v_oc" if kind == "battery" else "v_out") or max((x for x in volts.values() if x), default=None)
+    v = spec.get("v_oc" if kind == "battery" else "v_out") or (nominal_v(comp.name) if kind == "battery" else None) \
+        or max((x for x in volts.values() if x), default=None)
     if v is None: return
     plus = [net.node(i, e) for i, e, cd in ends if cd.kind != "GND" and volts[i] in (None, float(v))]
     if not plus: return
