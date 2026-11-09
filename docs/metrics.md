@@ -161,3 +161,19 @@ Fictional fixtures from `schemagen synth --readable --wires 500` (502 wires, 79 
 | seeded near-duplicate names found | 100 % | 12 / 12 (case, spacing, punctuation, one-letter typos), merged by `schemagen fix names` | yes |
 | false merges on the clean fixture | 0 | 0 | yes |
 | check and pinout straight from the sheet | run | clean fixture: 0 errors, 0 warnings, 1 info; pinout checklist written | yes |
+
+### Item 2 fixes from the team's real sheet (452 wires)
+
+The fixes are measured on the fictional fixture, which now has regression rows for every case reported from the real
+sheet (`synth --readable --wires 500`: 505 wires, 586 rows).
+
+| # | metric | target | measured | pass |
+|---|---|---|---|---|
+| 1 | connector / pin cells parsed, fixture with every reported form (33 forms) | ≥ 98 % | 99.5 % (1005 of 1010); the 5 unparsed are the seeded bad cells, all flagged | yes |
+| 2 | false open-end / pin-clash errors from unknown harness sides | 0 | 0 errors on the clean fixture, which uses cockpit, fuselage, cabin, nose, tank, wing, back cabin and side-wall sensor sides with none set in schemagen.yml | yes |
+| 3 | CAN trunk / stub wires judged as one-way signals | 0 | 12 CAN wires (CAN1 H/L, GCAN, CAN_H/CAN_L, between CAN splices): all class CAN; 0 direction or direction-unknown findings on them | yes |
+| 4 | round trip with TBD / TBC / n/a in number columns | cell-identical | identical, 586 rows, 6 text cells in number columns | yes |
+| 5 | harness codes from the name | the code in the name | 10 of 10 harness connectors (X-FW5, BC4, X-IP ...) | yes |
+| 6 | every conductor end on its item's interface drawing | 100 % | 100 % on the demo and 1000-wire synthetic project (test_every_conductor_in_a_drawing); repeats labelled "also on" | yes |
+| 7 | connector size from the name | real size, spares listed | D-sub 25 harness: 25 pins, 24 spare; D-sub 15 device J1: 15 pins, 12 spare | yes |
+| 8 | sim --infer finds sources on a readable sheet | ≥ 1 source | 3 of 3 (Battery, Starter battery, DC-DC converter); "Battery relay" not taken; a "24 V battery" gets 24 V from its name | yes |

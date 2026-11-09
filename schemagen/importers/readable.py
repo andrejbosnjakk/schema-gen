@@ -196,7 +196,7 @@ def read(cfg: Any, src: dict[str, Any]) -> Tables:
         for f in ("bus", "amps", "awg", "length", "weight_g"):
             if vals[f] not in (None, ""): d[f] = vals[f]
         d["readable"] = rd
-        t.rows.append(Record(d, sheet, n, {"p1": HEAD[2], "p2": HEAD[4], "p1c": HEAD[3], "p2c": HEAD[5], "label": HEAD[0]}))
+        t.rows.append(Record(d, sheet, n, {"p1": HEAD[2], "p2": HEAD[4], "p1c": HEAD[3], "p2c": HEAD[5], "label": HEAD[0], "amps": HEAD[7], "length": HEAD[9]}))
     uses = Counter(r.data[f] for r in t.rows for f in ("p1", "p2"))
     t.warnings += [f"{sheet}: device names '{a}' and '{b}' look like one device (schemagen fix names proposes the merge)"
                    for a, b in near_duplicates(list(raw_of), uses, raw_of)]
