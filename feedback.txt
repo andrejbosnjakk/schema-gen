@@ -1,0 +1,20 @@
+- the overall feel of the app is still vibe coded and sloppy
+- the text on the system graph overlays each other
+- the overall direction of the app is unclear
+- "render failed: Error: 500 Internal Server Error" when trying to render a drawing
+- simulation also wont run, presumably due to a failed render
+- the dark mode looks sloppy, light mode is better, or a revised dark mode as well
+- all wires and info fail to fetch, I assume that this is because the agent is currently working on the files
+- the app is very non-intuitive to use, and was overcomplicated with the features
+- it needs the following:
+drag and drop excel sheet to import
+must be packaged as a standalone app with a simplistic logo, this is a logo that can be discussed
+animations must be made smoother and the app must simply feel better to use
+the layout must fit on the screen, the wires table is too big for the section of the page that it is allocated, which results in an internal side to side scrolling requirement to see all the wire info
+after an import, the list, errors, and drawing render immediately
+instead of rendering several drawings, the whole project should be displated as one large processing block diagram essentially, with the possibility to scroll to zoom, and pan over all of the wires.
+upon clicking on a component, it's information is displayed in a pop up window
+the simulation layer shouldn't be a seperate tab, but rather an addition to the drawing diagram, where a simple simulate button can be clicked to run, which flags wires, breakers, or componennts that are faulty in any way (wire too small/too big, breaker missized, component not getting emough power)
+include an option to add a power source in a position and specify it's metrics such as power supply current voltage etc. 
+I must restate this, but the feel of the app isn't where it needs to be, it simply looks like foundry (to some extent), but doesn't feel like foundry at all. It must be a simple and intuitive app to use for everyone, and it is also definitely worth having a quickstart tutorial upon opening the app for the frist time, which guides the user through the app, highlights buttons or actions and encourages them to try to use the app on a prepared fake project before implementing their own (the project is something that is shipped with the release of the app) so that they can understand the power of the app before using it with their own project.
+The app must be packaged so that It can simply be downloaded, and opened with a shortcut from the desktop, not from a command line in a terminal, this is something that is very important for making the app more accessible.

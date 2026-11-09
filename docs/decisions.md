@@ -311,3 +311,14 @@ One entry per open choice taken during the 0.2 → 0.5 work: context, choice, wh
   simplex took minutes on the synthetic 5k graph. The React Flow attribution stays visible.
 - Limits: the 5k main view has about 98 000 straight-line crossings (hub buses and harness connectors); grouping by
   subsystem or zone is the next step if it is used at that size.
+
+## D42. 1.0: one screen, one idea
+- Context: the owner's first real use of the 0.7 app: it felt overloaded and sloppy, drawings failed with a 500, the
+  simulation said "pass" with unpowered 14 V buses, the wire table scrolled sideways.
+- Choice: the engine stays; the UI is rebuilt around "drop your wire sheet → see the whole system as one diagram →
+  see what is wrong → press Simulate". Drawings, simulation, diff and revisions are no longer views: harness drawings,
+  pinout and the fault sweep are Export options. The shell, navigator, Omnibar commands and hotkeys leave the default UI.
+- Work is split into five streams (A engine and API, B main screen, C design system, D example project and tour,
+  E desktop packaging), each in its own git worktree and branch `dev/1.0-<stream>`, merged by the lead into `dev/1.0`.
+  The contracts come first: `docs/api.md` (A ↔ B), `docs/design-tokens.md` (C → B), `docs/tour.md` (B ↔ D).
+- Why: one clear path a new user can follow in ten minutes matters more than feature count.
