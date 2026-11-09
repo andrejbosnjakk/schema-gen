@@ -1,0 +1,102 @@
+/* Shared component classes (docs/design-tokens.md, "Component classes"). Tokens only; shadows only on popups. */
+
+/* buttons: .btn is the secondary (default) look */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px; flex-shrink: 0;
+  height: var(--control-h); padding: 0 12px; border-radius: var(--radius);
+  border: var(--border-w) solid var(--border-strong); background: var(--surface); color: var(--text);
+  font-weight: var(--fw-med); white-space: nowrap; user-select: none;
+  transition: background-color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+}
+.btn:hover { background: var(--surface-2); }
+.btn:active { transform: translateY(0.5px); }
+.btn:disabled, .btn[aria-disabled="true"] { opacity: 0.5; pointer-events: none; }
+.btn > svg { color: var(--text-2); }
+.btn-sm { height: var(--control-h-sm); padding: 0 var(--s1); }
+.btn-primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.btn-primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+.btn-primary > svg, .btn-danger > svg { color: inherit; }
+.btn-ghost { background: transparent; border-color: transparent; color: var(--text-2); }
+.btn-ghost:hover { background: var(--surface-2); color: var(--text); }
+.btn-ghost[aria-pressed="true"], .btn-ghost[aria-expanded="true"] { background: var(--surface-2); color: var(--text); }
+.btn-danger { background: var(--err); border-color: var(--err); color: var(--surface); }
+.btn-danger:hover { filter: brightness(0.93); background: var(--err); }
+.btn-icon { width: var(--control-h); padding: 0; }
+.btn-icon.btn-sm { width: var(--control-h-sm); }
+.btn-icon > svg { color: inherit; }
+
+/* text inputs and selects */
+.input {
+  height: var(--control-h); padding: 0 10px; width: 100%; min-width: 0;
+  border: var(--border-w) solid var(--border-strong); border-radius: var(--radius);
+  background: var(--surface); color: var(--text);
+  transition: border-color var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
+}
+.input:hover { border-color: var(--text-3); }
+.input:focus, .input:focus-visible { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--focus); }
+.input[aria-invalid="true"] { border-color: var(--err); }
+.input:disabled { opacity: 0.6; }
+select.input {
+  appearance: none; padding-right: 28px; cursor: pointer;
+  background-image: linear-gradient(45deg, transparent 50%, var(--text-2) 50%), linear-gradient(135deg, var(--text-2) 50%, transparent 50%);
+  background-position: calc(100% - 15px) 14px, calc(100% - 11px) 14px; background-size: 4px 4px; background-repeat: no-repeat;
+}
+textarea.input { height: auto; padding: 6px 10px; resize: vertical; }
+
+/* status badge: a soft pill; the dot is drawn with ::before */
+.badge {
+  display: inline-flex; align-items: center; gap: 6px; height: 20px; padding: 0 var(--s1);
+  border-radius: 10px; font-size: var(--fs-xs); font-weight: var(--fw-med); line-height: 1; white-space: nowrap;
+  background: var(--surface-2); color: var(--text-2); font-variant-numeric: tabular-nums;
+}
+.badge::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.badge-ok { background: var(--ok-soft); color: var(--ok); }
+.badge-warn { background: var(--warn-soft); color: var(--warn); }
+.badge-err { background: var(--err-soft); color: var(--err); }
+
+/* card: a flat surface with a border (a diagram block, a panel section) */
+.card { background: var(--surface); border: var(--border-w) solid var(--border); border-radius: var(--radius); padding: 12px var(--s2); }
+
+/* dialog / popup card: the only things with a shadow */
+.dialog {
+  background: var(--surface); border: var(--border-w) solid var(--border); border-radius: var(--radius);
+  box-shadow: var(--shadow-pop); z-index: var(--z-dialog); min-width: 280px; max-width: min(560px, calc(100vw - 32px));
+}
+.dialog > header { display: flex; align-items: center; gap: var(--s1); padding: 12px 12px 12px var(--s2); border-bottom: var(--border-w) solid var(--border); font-weight: var(--fw-bold); }
+.dialog > header > :first-child { flex: 1; }
+.dialog > section { padding: var(--s2); }
+.dialog > footer { display: flex; justify-content: flex-end; gap: var(--s1); padding: 12px var(--s2); border-top: var(--border-w) solid var(--border); }
+
+/* menu: dropdowns, context menus */
+.menu {
+  background: var(--surface); border: var(--border-w) solid var(--border); border-radius: var(--radius);
+  box-shadow: var(--shadow-pop); padding: var(--s-half); min-width: 180px; z-index: var(--z-menu);
+}
+.menu-item {
+  display: flex; align-items: center; gap: var(--s1); width: 100%; height: var(--control-h-sm); padding: 0 var(--s1);
+  border-radius: var(--radius-sm); color: var(--text); text-align: left; white-space: nowrap; cursor: pointer;
+}
+.menu-item > svg { color: var(--text-2); }
+.menu-item:hover, .menu-item[aria-selected="true"], .menu-item:focus-visible { background: var(--surface-2); outline: none; }
+.menu-item .kbd { margin-left: auto; }
+.menu-item-danger, .menu-item-danger > svg { color: var(--err); }
+
+/* keyboard key */
+.kbd {
+  display: inline-flex; align-items: center; justify-content: center; min-width: 18px; height: 18px; padding: 0 5px;
+  border: var(--border-w) solid var(--border); border-bottom-width: 2px; border-radius: var(--radius-sm);
+  background: var(--surface); color: var(--text-2); font-size: var(--fs-xs); font-weight: var(--fw-med); line-height: 1;
+}
+
+/* divider: horizontal by default, .divider-v inside a flex row */
+.divider { height: var(--border-w); background: var(--border); border: 0; margin: var(--s1) 0; flex-shrink: 0; }
+.divider-v { width: var(--border-w); height: 20px; margin: 0 var(--s-half); align-self: center; }
+
+/* tooltip: inverted chip, no shadow needed */
+.tooltip {
+  position: absolute; z-index: var(--z-toast); padding: var(--s-half) var(--s1); border-radius: var(--radius-sm);
+  background: var(--text); color: var(--bg); font-size: var(--fs-sm); line-height: 1.35; max-width: 280px;
+  pointer-events: none; animation: sg-pop var(--dur-fast) var(--ease) both;
+}
+.tooltip .kbd { background: transparent; color: inherit; border-color: currentColor; opacity: 0.7; margin-left: 6px; }
+@media (prefers-reduced-motion: reduce) { .tooltip { animation: none; } }

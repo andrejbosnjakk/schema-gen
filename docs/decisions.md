@@ -329,6 +329,39 @@ One entry per open choice taken during the 0.2 → 0.5 work: context, choice, wh
   icon is the white mark on a near-black rounded tile (the black mark on a white tile only where a light icon fits
   better). Every icon (.ico, PNG sizes, window, installer, start screen) is generated from that one SVG. The rest of
   the UI keeps its accent colour.
+
+## D60. Design tokens: one accent, cool neutrals, designed dark
+- Choice: accent blue `#2f5fd0` (dark `#6d8ff0` with near-black text on it); neutrals are a slightly cool grey ramp
+  (light: `--canvas #f6f7f9` under white surfaces; dark: elevation by lightness, `--canvas #111316` < `--bg #17191d` <
+  `--surface #1d2025` < `--surface-2 #25282e`). Status colours are darker in light (`#1d7a43`, `#a15c00`, `#c8323c`) so
+  they work as text on their soft fills, lifted in dark. Only popups and menus have a shadow.
+- Check: `node frontend/src/theme/contrast.mjs` verifies `--text` / `--text-2` ≥ 4.5:1 on every background, the accent
+  and on-accent ≥ 4.5:1, and status ≥ 3:1 on soft fills and surfaces, in both themes.
+
+## D61. Inter, bundled
+- Choice: `@fontsource-variable/inter` (OFL-1.1), imported by `src/theme/index.ts`; Vite bundles the woff2 files, so no
+  font is fetched from the network. `tools/check_licences.py` now allows `OFL` (a font licence that permits bundling
+  and redistribution with software). Base 13 px, `cv05` on (a tailed lowercase l, so wire ids like l1 / I1 / 11 read
+  apart).
+
+## D62. Base styles, motion and component classes
+- Choice: `base.css` (element defaults, one `:focus-visible` ring, thin token-coloured scrollbars, motion classes) and
+  `components.css` (`.btn`, `.input`, `.badge`, `.card`, `.dialog`, `.menu`, `.kbd`, `.divider`, `.tooltip`) so screens
+  share one look without a component library. Motion animates transform and opacity only (no layout jumps),
+  150-200 ms ease-out; `prefers-reduced-motion` turns animations and transitions off.
+
+## D63. Icons are hand-drawn
+- Choice: 18 component-kind icons (`KindIcon`) and 25 UI icons (`Icon`), 16 x 16, 1.5 px round strokes in
+  `currentColor`, written as SVG paths in `icons.tsx`; no icon library. Electrical kinds follow IEC symbols where one
+  fits at 16 px (breaker: switch with a cross, lamp: circle with a cross, motor: M in a circle, ground, fuse).
+
+## D64. Logo and app icons from one SVG
+- Choice: `Logo` inlines `logo.svg` (`?raw`) so the mark's `currentColor` follows `--logo` (D43a). `make_icons.py`
+  (dev-only, Pillow) reads the polyline, stroke and pin circles from that SVG and draws the white mark on a `#111418`
+  rounded tile: `packaging/assets/icon.ico` (16-256) and `icon-16/32/48/256/512.png`, supersampled 8x.
+- At 16 and 24 px the wire is drawn 1.45x and 1.25x thicker and the mark fills 80 % of the tile (72 % from 32 px): at
+  the original weight the 16 px wire is about one pixel and blurs; thickened it reads as the bolt.
+
 ## D65. The 1.0 example: a fictional electric aircraft
 - Choice: `examples/aircraft`, the Kestrel E2 demonstrator, 121 wires in the readable layout, with a 14 V main and
   essential bus, two 14 V batteries, a DC-DC converter from a 400 V pack stub, firewall and wing-root connectors, one
