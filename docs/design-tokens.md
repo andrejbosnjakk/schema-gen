@@ -57,6 +57,10 @@ of the accent ring, for zoom-to-object), `.skeleton` (loading shimmer). `prefers
 - `import { KindIcon, Logo } from "./theme/icons"`. `KindIcon({kind, size = 16})` covers: battery, dcdc, source,
   breaker, fuse, bus, ground, splice, harness, connector, switch, relay, device, avionics, light, motor, can, sensor;
   anything else falls back to `device`. Stroke icons, `currentColor`, 1.5 px stroke at 16 px.
-- `Logo({size})` renders `frontend/src/theme/logo.svg` (the single source of the logo: two pins joined by one smooth
-  S-shaped wire in a rounded square, one accent colour, readable at 16 px). App icons (`.ico`, `.png`) are generated
-  from it into `packaging/assets/` by `frontend/src/theme/make_icons.py`.
+- `Logo({size})` renders `frontend/src/theme/logo.svg`, the single source of the logo: the owner's bolt mark (a
+  lightning bolt drawn as one wire between two round pin nodes, rounded corners), used as given. The logo and icons
+  are strictly black and white, never the accent: `--logo` is near-black `#111418` on light backgrounds and white on
+  dark (the SVG uses `currentColor`, so `Logo` inlines it). App icon: the white mark on a near-black rounded tile; the
+  black mark on a white tile only where a light icon fits better. The `.ico`, PNG sizes, window icon, installer
+  icon and start-screen logo are all generated from that one SVG into `packaging/assets/` by
+  `frontend/src/theme/make_icons.py`, and checked for legibility at 16 px.

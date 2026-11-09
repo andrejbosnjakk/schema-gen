@@ -322,3 +322,10 @@ One entry per open choice taken during the 0.2 → 0.5 work: context, choice, wh
   E desktop packaging), each in its own git worktree and branch `dev/1.0-<stream>`, merged by the lead into `dev/1.0`.
   The contracts come first: `docs/api.md` (A ↔ B), `docs/design-tokens.md` (C → B), `docs/tour.md` (B ↔ D).
 - Why: one clear path a new user can follow in ten minutes matters more than feature count.
+
+## D43a. The logo is black and white (owner's decision)
+- Choice: the logo is the owner's bolt mark (`logo_bolt.svg`: a lightning bolt drawn as one wire between two round pin
+  nodes), used as given, strictly black and white: near-black `#111418` on light backgrounds, white on dark. The app
+  icon is the white mark on a near-black rounded tile (the black mark on a white tile only where a light icon fits
+  better). Every icon (.ico, PNG sizes, window, installer, start screen) is generated from that one SVG. The rest of
+  the UI keeps its accent colour.
