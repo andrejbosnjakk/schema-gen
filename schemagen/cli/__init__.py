@@ -85,7 +85,14 @@ def main(argv=None):
     sc.add_argument("-o", "--output", default="schemas")
     a = ap.parse_args(argv)
     from . import commands
-    if a.cmd == "draw": draw(a.config, a.harness, a.all, a.no_render, split=a.split, interfaces=not a.no_interfaces)
+    if a.cmd == "draw":
+        from ..renderers.wireviz import RenderError
+        try: draw(a.config, a.harness, a.all, a.no_render, split=a.split, interfaces=not a.no_interfaces)
+        except RenderError as e:
+            if e.detail and e.code != "graphviz-missing": print(e.detail.rstrip(), file=sys.stderr)
+            print(f"error: {e.message}" + (" Install it from graphviz.org (or set SCHEMAGEN_DOT), or use --no-render." if e.code == "graphviz-missing" else ""),
+                  file=sys.stderr)
+            return 1
     elif a.cmd == "check": return commands.check(a)
     elif a.cmd == "fix": return commands.fix(a)
     elif a.cmd == "export" and a.readable:
