@@ -326,3 +326,27 @@ def test_no_part_data_is_not_a_pass_and_infer_assumes_it(synth_projects, tmp_pat
     assert any(ld["powered"] for ld in op.loads)
     assert len(api.fault_sweep(L.model, L.cfg).rows) > 0
     assert main(["sim", str(d), "--infer"]) in (0, 1)  # simulated: pass or fail on the scenario expectations
+
+
+def unfed_bus_project(d):
+    """tiny_project plus BB2 (14 V) with load LD2 on it and nothing feeding BB2."""
+    tiny_project(d)
+    R = [dict(id="W8", p1="BB2 bus", p1c="Stud", p2="LD2", p2c="P", p2p="1", func="x", bus="14 V", awg="20", length=1.0),
+         dict(id="W9", p1="LD2", p1c="P", p1p="2", p2="GNDB", p2c="Stud", func="x", bus="GND", awg="20", length=1.0)]
+    (d / "wirelist" / "ss02_unfed.py").write_text(f"R = {R!r}\n", encoding="utf-8")
+    (d / "cards" / "LD2.md").write_text(f"```yaml schemagen\n{yaml.safe_dump(dict(CARDS['LD'], device='^LD2$'))}```\n", encoding="utf-8")
+    cfg = yaml.safe_load((d / "schemagen.yml").read_text(encoding="utf-8")); cfg["buses"].append("BB2")
+    (d / "schemagen.yml").write_text(yaml.safe_dump(cfg), encoding="utf-8")
+    return d
+
+
+def test_unfed_bus_with_loads_is_never_a_pass(tmp_path, capsys):
+    d = unfed_bus_project(tmp_path / "p")
+    L = load(d)
+    op = api.operating_point(L.model, L.cfg)
+    bus = {b["id"]: b for b in op.buses}
+    assert op.converged and op.unpowered == ["BB2"] and not op.ok
+    assert bus["BB2"] == dict(id="BB2", voltage_V=0.0, nominal_V=14.0, powered=False, loads=1)  # floats near the return: shown as 0 V
+    assert bus["BB1"]["powered"] and bus["BB1"]["voltage_V"] > 11
+    assert not next(x for x in op.loads if x["component"] == "LD2")["powered"]
+    assert main(["sim", str(d)]) == 1 and "bus BB2 has loads but no source reaches it" in capsys.readouterr().out
