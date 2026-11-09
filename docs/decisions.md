@@ -322,3 +322,76 @@ One entry per open choice taken during the 0.2 → 0.5 work: context, choice, wh
   E desktop packaging), each in its own git worktree and branch `dev/1.0-<stream>`, merged by the lead into `dev/1.0`.
   The contracts come first: `docs/api.md` (A ↔ B), `docs/design-tokens.md` (C → B), `docs/tour.md` (B ↔ D).
 - Why: one clear path a new user can follow in ten minutes matters more than feature count.
+
+## D43a. The logo is black and white (owner's decision)
+- Choice: the logo is the owner's bolt mark (`logo_bolt.svg`: a lightning bolt drawn as one wire between two round pin
+  nodes), used as given, strictly black and white: near-black `#111418` on light backgrounds, white on dark. The app
+  icon is the white mark on a near-black rounded tile (the black mark on a white tile only where a light icon fits
+  better). Every icon (.ico, PNG sizes, window, installer, start screen) is generated from that one SVG. The rest of
+  the UI keeps its accent colour.
+
+## D60. Design tokens: one accent, cool neutrals, designed dark
+- Choice: accent blue `#2f5fd0` (dark `#6d8ff0` with near-black text on it); neutrals are a slightly cool grey ramp
+  (light: `--canvas #f6f7f9` under white surfaces; dark: elevation by lightness, `--canvas #111316` < `--bg #17191d` <
+  `--surface #1d2025` < `--surface-2 #25282e`). Status colours are darker in light (`#1d7a43`, `#a15c00`, `#c8323c`) so
+  they work as text on their soft fills, lifted in dark. Only popups and menus have a shadow.
+- Check: `node frontend/src/theme/contrast.mjs` verifies `--text` / `--text-2` ≥ 4.5:1 on every background, the accent
+  and on-accent ≥ 4.5:1, and status ≥ 3:1 on soft fills and surfaces, in both themes.
+
+## D61. Inter, bundled
+- Choice: `@fontsource-variable/inter` (OFL-1.1), imported by `src/theme/index.ts`; Vite bundles the woff2 files, so no
+  font is fetched from the network. `tools/check_licences.py` now allows `OFL` (a font licence that permits bundling
+  and redistribution with software). Base 13 px, `cv05` on (a tailed lowercase l, so wire ids like l1 / I1 / 11 read
+  apart).
+
+## D62. Base styles, motion and component classes
+- Choice: `base.css` (element defaults, one `:focus-visible` ring, thin token-coloured scrollbars, motion classes) and
+  `components.css` (`.btn`, `.input`, `.badge`, `.card`, `.dialog`, `.menu`, `.kbd`, `.divider`, `.tooltip`) so screens
+  share one look without a component library. Motion animates transform and opacity only (no layout jumps),
+  150-200 ms ease-out; `prefers-reduced-motion` turns animations and transitions off.
+
+## D63. Icons are hand-drawn
+- Choice: 18 component-kind icons (`KindIcon`) and 25 UI icons (`Icon`), 16 x 16, 1.5 px round strokes in
+  `currentColor`, written as SVG paths in `icons.tsx`; no icon library. Electrical kinds follow IEC symbols where one
+  fits at 16 px (breaker: switch with a cross, lamp: circle with a cross, motor: M in a circle, ground, fuse).
+
+## D64. Logo and app icons from one SVG
+- Choice: `Logo` inlines `logo.svg` (`?raw`) so the mark's `currentColor` follows `--logo` (D43a). `make_icons.py`
+  (dev-only, Pillow) reads the polyline, stroke and pin circles from that SVG and draws the white mark on a `#111418`
+  rounded tile: `packaging/assets/icon.ico` (16-256) and `icon-16/32/48/256/512.png`, supersampled 8x.
+- At 16 and 24 px the wire is drawn 1.45x and 1.25x thicker and the mark fills 80 % of the tile (72 % from 32 px): at
+  the original weight the 16 px wire is about one pixel and blurs; thickened it reads as the bolt.
+
+## D65. The 1.0 example: a fictional electric aircraft
+- Choice: `examples/aircraft`, the Kestrel E2 demonstrator, 121 wires in the readable layout, with a 14 V main and
+  essential bus, two 14 V batteries, a DC-DC converter from a 400 V pack stub, firewall and wing-root connectors, one
+  terminated CAN bus, avionics, lights, the motor controller's LV side and sensors. The HV side is a single stub (two
+  wires) so the example stays about LV wiring, which is what the rules and the simulation check.
+- Why: the tour and a first-time user need a project that looks like theirs (a sheet, not Python wire lists) and is
+  small enough to read in one screen; the demo vehicle stays for the 0.2 tests.
+
+## D66. Exactly three deliberate mistakes, everything else clean
+- Choice: an undersized wire (W045, 22 AWG on the 10 A landing-light breaker), an oversized breaker (CB-XPDR 15 A on a
+  1.5 A transponder, 20 AWG) and a bus with loads and no feed (the cabin bus). Any other finding was fixed in the data,
+  not the code; `check` leaves two `gauge-protection` errors and one info (antenna coax has no direction).
+- Today `gauge-protection` catches both 1 and 2 (the wire is lighter than the breaker allows); the 1.0 overlay tells
+  them apart (wire too small vs breaker oversized). No rule catches 3: the simulation shows the bus at 0 V but `sim`
+  still says pass; stream A's overlay flags it. The test pins the ids so the tour texts stay true.
+
+## D67. The example sheet is generated, and byte-reproducible
+- Choice: `examples/aircraft/make_sheet.py` writes `wires.xlsx` from rows in the script (openpyxl only); the zip entry
+  times and the document's modified time are fixed, so the same rows give the same bytes, and a test checks the
+  committed sheet against the script.
+- Why: a binary sheet in git is unreviewable; the script is the reviewable source, the xlsx is what users open.
+
+## D68. Example card data: only what the simulation needs
+- Choice: cards for sources (v_oc / v_out, r_int), a generic SPST card for every `SW-` switch, the battery contactor's
+  coil and contacts, constant-power loads with v_min for the avionics, motor controller and BMS, and CAN pin types
+  (terminations as `kind: terminator`). Lights, pump and cabin loads stay as currents from the sheet (assumed). Signal,
+  RF and sensor-supply rows have no current, so the simulation does not read sensors and antennas as loads.
+- Why: without switch and contactor cards the simulation sees open circuits; without the rest it still runs.
+
+## D69. Tour steps follow the example's findings
+- Choice: eight steps (diagram, a component card, its contents, Issues, Wires, Simulate, + Source, Import), each naming
+  the real finding it shows (W045, CB-XPDR, the 0 V cabin bus) instead of generic help; listed in docs/tour.md.
+- Why: a tour that points at a real mistake teaches what the tool is for in the first minute.
