@@ -22,3 +22,11 @@ gmin_S: 1.0e-12                  # leak to ground for floating nodes (numerical)
 infer: false
 sources: {"^BAT": {kind: battery, r_int: 0.01}, "^DCDC": {kind: dcdc, r_out: 0.01},
           '(?i)\bbattery\b': {kind: battery, r_int: 0.01}, '(?i)\b(dc ?[/-]? ?dc|converter)\b': {kind: dcdc, r_out: 0.01}}
+# the app's simulation (infer on): a device without part data and without a current value on its conductors draws this
+# much (constant current) from its first supply conductor, so a bus with such devices counts as loaded. Assumed: a
+# small instrument or controller; set the conductors' current (or part data) for real values.
+default_load_A: 0.5
+# overlay flags (design heuristics, not from a standard): a breaker above this share of its rating is a warning, and a
+# wire at least this many sizes of the protection table heavier than its current and breaker need is "far heavier".
+breaker_warn_loading: 0.8
+oversize_steps: 3

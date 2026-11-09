@@ -201,15 +201,20 @@ def build(m: Model, cfg: Any = None, measured: dict[str, float] | None = None, s
                 if st in ("energized", "energised", "on"): c.off.update(nc)
                 elif st in ("de-energized", "de-energised", "off"): c.off.update(no)
                 else: c.relays.append(Relay(comp.id, cn, p.coil.v_pickup, p.coil.v_dropout, no, nc))
+        spec = None
         if infer and st not in ("off", "failed", "fail") and not (p and (p.source or p.supply_out)) and comp.raw in by_dev \
                 and comp.kind not in ("relay", "switch", "breaker", "fuse", "bus", "splice", "harness"):
-            spec = next((v for k, v in infer.items() if re.search(k, comp.id) or re.search(k, comp.raw)), None)
+            spec = infer_spec(comp, infer)
             if spec: _inferred_source(sm, comp, dict(spec), terms, N)
         if p and st not in ("off", "failed", "fail") and comp.raw in by_dev:
             _sources_and_loads(sm, comp, p, terms, N, used)
         elif p is None and comp.kind in ("device", "load", "sensor", "controller") and st not in ("off",):
-            _assumed_loads(sm, comp, N)
-    for what, cnt in counts.items(): sm.assumptions.append(Assumption(what, "assumed", f"{cnt} element(s)"))
+            if not _assumed_loads(sm, comp, N) and infer and not spec and d.get("default_load_A"):
+                counts["load"] += _default_load(sm, comp, float(d["default_load_A"]), N)
+    for what, cnt in counts.items():
+        sm.assumptions.append(Assumption(what, "assumed", f"{cnt} device(s) without part data or a current value: {d['default_load_A']} A each "
+                                                          "(sim.default_load_A)" if what == "load" else f"{cnt} element(s)"))
+    for src in sc.get("sources") or []: _app_source(sm, dict(src), N)
     for f in faults:  # shorts to ground
         if f.get("short") is None: continue
         fk = node_ref(sm, str(f["short"]))
@@ -226,6 +231,14 @@ def build(m: Model, cfg: Any = None, measured: dict[str, float] | None = None, s
     if not sm.sources: sm.missing.append("no source: no battery or DC/DC part data (source: v_oc / v_out)" + hint)
     if not sm.loads: sm.missing.append("no load: no load part data and no conductor with a current value")
     return sm
+
+
+def infer_spec(comp: Component, specs: dict[str, Any]) -> dict[str, Any] | None:
+    """The sim.sources entry whose regex matches the component's code or name (an inferred battery or DC/DC)."""
+    return next((dict(v) for k, v in specs.items() if re.search(k, comp.id) or re.search(k, comp.raw)), None)
+
+
+POWER = re.compile(r"\d\s*V\b")  # a supply function class: "14 V", "24 V", "5 V"
 
 
 def nominal_v(bus: str) -> float | None:
@@ -306,7 +319,42 @@ def _sources_and_loads(sm: SimModel, comp: Component, p: Part, terms: Any, N: An
         sm.loads.append(LoadInfo(comp.id, nm, pn, minus, L.v_min, L.model, L.provenance))
 
 
-def _assumed_loads(sm: SimModel, comp: Component, N: Any) -> None:
+def _app_source(sm: SimModel, s: dict[str, Any], N: Any) -> None:
+    """A source added in the app (scenario `sources`): nominal_V behind r_int_ohm from the attached component's
+    supply node (a bus or splice itself, else its first power output, else its first power conductor) to the reference."""
+    ctx, c, net = sm.ctx, sm.circuit, sm.ctx.net
+    comp = ctx.comp_by_id.get(str(s.get("attach", "")))
+    if comp is None: return
+    if comp.kind in ("bus", "splice"): node: NodeKey = (comp.raw,)
+    else:
+        ends = net.by_dev[comp.raw]
+        outs = [net.node(i, e) for i, e in ends if ctx.pin_type(ctx.m.conductors[i].end(e)) == "power_out"]
+        pw = [net.node(i, e) for i, e in ends if POWER.search(ctx.m.conductors[i].kind)]
+        if not (outs or pw): return
+        node = (outs or pw)[0]
+    nm = f"src:{s['id']}"
+    r = float(s.get("r_int_ohm") or 0.01)
+    c.vsrc(nm, N(node), REF, float(s["nominal_V"]), r, s.get("i_limit_A"), f"component:{comp.id}")
+    sm.sources[nm] = str(s["id"])
+    sm.assumptions.append(Assumption(f"{s['id']} {s.get('type', 'source')}", "design", f"added in the app: {float(s['nominal_V']):g} V behind {r:g} ohm"
+                                     + (f", limit {s['i_limit_A']} A" if s.get("i_limit_A") else "") + f" at {comp.id}, returning through the reference"))
+
+
+def _default_load(sm: SimModel, comp: Component, amps: float, N: Any) -> int:
+    """--infer: a device with power conductors but no part data and no current value draws `amps` (constant current) from
+    its first power conductor, so a bus with such devices on it counts as loaded. Returns 1 when a load was added."""
+    ctx, c, net = sm.ctx, sm.circuit, sm.ctx.net
+    pw = [(i, e) for i, e in net.by_dev[comp.raw] if POWER.search(ctx.m.conductors[i].kind)]
+    if not pw: return 0
+    gnd = [(i, e) for i, e in net.by_dev[comp.raw] if ctx.m.conductors[i].kind == "GND"]
+    pn, minus = N(net.node(*pw[0])), N(net.node(*gnd[0])) if gnd else REF
+    nm = f"load:{comp.id}"
+    c.load(nm, pn, minus, "constant_current", amps, 0.0, 1.0, f"component:{comp.id}")
+    sm.loads.append(LoadInfo(comp.id, nm, pn, minus, 0.0, "constant_current", "assumed"))
+    return 1
+
+
+def _assumed_loads(sm: SimModel, comp: Component, N: Any) -> bool:
     """A device without part data: constant-current loads from its conductors' `current` field (marked assumed)."""
     ctx, c, net = sm.ctx, sm.circuit, sm.ctx.net
     gnd = [(i, e) for i, e in net.by_dev[comp.raw] if ctx.m.conductors[i].kind == "GND"]
@@ -322,6 +370,7 @@ def _assumed_loads(sm: SimModel, comp: Component, N: Any) -> None:
         c.load(nm, pn, minus, "constant_current", cd.current_a, 0.0, 1.0, f"component:{comp.id}")
         sm.loads.append(LoadInfo(comp.id, nm, pn, minus, 0.0, "constant_current", "assumed"))
         sm.assumptions.append(Assumption(f"{comp.id} load", "assumed", f"{cd.current_a} A constant current from {cd.label}'s current field"))
+    return bool(seen)
 
 
 def node_ref(sm: SimModel, ref: str) -> NodeKey | None:

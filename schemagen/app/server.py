@@ -1,6 +1,8 @@
-"""`schemagen app <project>`: a local server (FastAPI + uvicorn) and the bundled frontend. Nothing leaves the machine:
+"""`schemagen app [<project>]`: a local server (FastAPI + uvicorn) and the bundled frontend. Nothing leaves the machine:
 the server binds to 127.0.0.1 by default, the frontend is served from the wheel, no CDN, no telemetry.
 
+Without a project it starts on the start screen (open the example, import a sheet, or a recent project). The 1.0 API
+is docs/api.md; every error is {"error": {code, message, retry}} (app/errors.py), causes go to the log file.
 Edits are stored as change sets in <project>/changes/ (git-friendly; undo removes the last one).
 """
 from __future__ import annotations
@@ -14,7 +16,7 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-from fastapi import Body, FastAPI, HTTPException
+from fastapi import Body, FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import FileResponse, HTMLResponse, Response
 from fastapi.staticfiles import StaticFiles
@@ -29,6 +31,9 @@ from ..core.model import Terminal
 from ..core.rules import run_rules
 from ..exporters.palette import HEX
 from ..importers.records import text as text_of
+from . import userdata
+from . import workspace as ws
+from .errors import AppError, body, convert, install
 
 EDITABLE = {"label", "name", "awg", "colour", "cls", "st", "length", "amps", "notes", "func", "bus", "zone", "harn", "prot",
             "p1", "p1c", "p1p", "p1side", "p2", "p2c", "p2p", "p2side", "subsystem"}
@@ -42,6 +47,7 @@ class State:
         self.lock = threading.Lock()
         self.ready = threading.Event()
         self.error = ""
+        self.failure: AppError | None = None
         self._json: bytes | None = None
         if background: threading.Thread(target=self._first_load, daemon=True).start()
         else: self.reload(); self.ready.set()
@@ -49,12 +55,12 @@ class State:
     def _first_load(self) -> None:
         try: self.reload(); self.index_json()
         except BaseException as e:  # noqa: BLE001  (shown to the user instead of a hung page)
-            self.error = str(e)
+            self.failure = convert(e, f"loading {self.cfg.root}"); self.error = self.failure.message
         self.ready.set()
 
     def wait(self) -> None:
         self.ready.wait()
-        if self.error: raise HTTPException(500, f"could not load the project: {self.error}")
+        if self.failure: raise self.failure
 
     def index_json(self) -> bytes:
         """The index, serialised once per reload."""
@@ -76,6 +82,15 @@ class State:
         self._json = None
         self._graph: dict[str, Any] | None = None
         self._history: dict[str, list[dict[str, str]]] = {}
+        self.sources = ch.app_sources(ch.load_all(self.cfg.root))
+        self._ws: dict[str, Any] | None = None
+        self.overlay: dict[str, Any] | None = None
+
+    def save(self, cs: ch.ChangeSet) -> None:
+        """Store a change set and reload."""
+        with self.lock:
+            ch.save(self.cfg.root, cs)
+            self.reload()
 
     # ---------------------------------------------------------------- refs
     def cid(self, raw: str) -> str:
@@ -253,48 +268,300 @@ class State:
 
 
 SEV = {"error": 0, "warning": 1, "info": 2}
+WIRE_FIELDS = {"label": "label", "name": "name", "gauge": "awg", "current": "amps", "notes": "notes"}
+SOURCE_TYPES = ("battery", "dcdc", "bench")
+OPEN_PATHS = ("/api/health", "/api/session", "/api/settings", "/api/open", "/api/import")
 
 
-def create_app(project: str | Path, background: bool = False) -> FastAPI:
-    st = State(project, background)
+class Session:
+    """The open project (or none: the start screen)."""
+
+    def __init__(self) -> None:
+        self.st: State | None = None
+
+    def cur(self) -> State:
+        if self.st is None: raise AppError("no-project", "No project is open. Open the example or import a wire sheet.")
+        self.st.wait()
+        return self.st
+
+    def open(self, path: str | Path, background: bool = False) -> State:
+        p = Path(path).expanduser()
+        if p.is_file() and p.suffix.lower() in (".yml", ".yaml"): p = p.parent
+        if not (p / "schemagen.yml").is_file(): raise AppError("not-found", f"There is no schemagen.yml in {p}.")
+        st = State(p, background)
+        if not background: st.wait()
+        self.st = st
+        userdata.add_recent(st.cfg.root.name, st.cfg.root)
+        return st
+
+
+def _open_folder(p: Path) -> None:
+    """Show a folder in the file manager."""
+    import os, sys
+    if os.name == "nt": os.startfile(str(p))  # type: ignore[attr-defined]  # noqa: S606
+    else: subprocess.Popen(["open" if sys.platform == "darwin" else "xdg-open", str(p)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+
+def _num(v: Any, what: str, positive: bool = True) -> float | None:
+    if v is None or v == "": return None
+    try: x = float(v)
+    except (TypeError, ValueError): raise AppError("bad-request", f"{what} must be a number, not '{v}'.") from None
+    if positive and x <= 0: raise AppError("bad-request", f"{what} must be more than 0.")
+    return x
+
+
+def _keys(body: Any, allowed: set[str]) -> dict[str, Any]:
+    if not isinstance(body, dict): raise AppError("bad-request", "The request body must be a JSON object.")
+    extra = set(body) - allowed
+    if extra: raise AppError("bad-request", f"Unknown field(s): {', '.join(sorted(extra))}.")
+    return body
+
+
+def create_app(project: str | Path | None = None, background: bool = False) -> FastAPI:
+    S = Session()
     import inspect
     kw: dict[str, Any] = {}
     if "telemetry" in inspect.signature(FastAPI.__init__).parameters:  # FastAPI >= 0.16x: no traces, metrics or logs, never exported
         kw["telemetry"] = dict(tracing=False, metrics=False, logs=False, operation_spans=False, auto_configure=False, exclude=lambda scope: True)
     app = FastAPI(title="schemagen", version=__version__, docs_url=None, redoc_url=None, openapi_url=None, **kw)
+    install(app)
     app.add_middleware(GZipMiddleware, minimum_size=1000)
-    app.state.st = st
+    from ..renderers.wireviz import graphviz
+    app.state.graphviz = graphviz()  # checked once at start
+    lg = userdata.log()
+    lg.info("schemagen %s starting; graphviz: %s", __version__, app.state.graphviz)
+    if project is not None: S.open(project, background)
+    app.state.session = S
 
     @app.middleware("http")
     async def ready(request: Any, call_next: Any) -> Any:
-        if request.url.path.startswith("/api/") and request.url.path != "/api/health":
+        if request.url.path.startswith("/api/") and request.url.path not in OPEN_PATHS and S.st is not None:
             import anyio
-            await anyio.to_thread.run_sync(st.wait)
+            try: await anyio.to_thread.run_sync(S.st.wait)
+            except AppError as e: return body(e.code, e.message, e.retry)
         return await call_next(request)
 
+    def cur() -> State:
+        return S.cur()
+
+    # ---------------------------------------------------------------- 1.0: session and projects
     @app.get("/api/health")
     def health() -> dict[str, Any]:
-        return dict(ready=st.ready.is_set(), error=st.error)
+        return dict(ready=S.st is None or S.st.ready.is_set(), version=__version__, graphviz=app.state.graphviz,
+                    error=S.st.error if S.st else "")
 
+    def info(st: State) -> dict[str, Any]:
+        return dict(name=st.cfg.root.name, root=str(st.cfg.root), version=__version__, warnings=st.L.warnings if st.ready.is_set() and not st.failure else [])
+
+    @app.get("/api/session")
+    def session() -> dict[str, Any]:
+        s = userdata.settings()
+        recent = [r for r in s["recent"] if isinstance(r, dict) and Path(str(r.get("path", ""))).joinpath("schemagen.yml").is_file()]
+        st = S.st
+        return dict(project=info(st) if st and st.ready.is_set() and not st.failure else None, recent=recent, tour_done=bool(s["tour_done"]),
+                    theme=s["theme"] if s["theme"] in ("light", "dark") else "light")
+
+    @app.post("/api/settings")
+    def settings(body: dict[str, Any] = Body(...)) -> dict[str, Any]:  # noqa: B008
+        b = _keys(body, {"tour_done", "theme"})
+        if "tour_done" in b and not isinstance(b["tour_done"], bool): raise AppError("bad-request", "tour_done must be true or false.")
+        if "theme" in b and b["theme"] not in ("light", "dark"): raise AppError("bad-request", "theme must be light or dark.")
+        userdata.save_settings(**b)
+        return dict(ok=True)
+
+    @app.post("/api/open")
+    def open_(body: dict[str, Any] = Body(...)) -> dict[str, Any]:  # noqa: B008
+        b = _keys(body, {"path", "example"})
+        if b.get("example") is True:
+            try: path = userdata.example()
+            except FileNotFoundError as e: raise AppError("not-found", "The example project is missing from this installation.", detail=str(e)) from None
+        elif isinstance(b.get("path"), str) and b["path"].strip(): path = Path(b["path"].strip())
+        else: raise AppError("bad-request", "Give a project folder (path) or example: true.")
+        return ws.workspace(S.open(path))
+
+    @app.post("/api/import")
+    async def import_(file: UploadFile = File(...)) -> dict[str, Any]:  # noqa: B008
+        name = file.filename or "sheet.xlsx"
+        if Path(name).suffix.lower() not in (".xlsx", ".csv"): raise AppError("bad-request", f"{name} is not a wire sheet: choose an .xlsx or .csv file.")
+        data = await file.read()
+        if not data: raise AppError("import-failed", f"{name} is empty.")
+        import anyio
+
+        def do() -> dict[str, Any]:
+            try: folder = userdata.new_import(name, data)
+            except ValueError as e: raise AppError("import-failed", f"{e}.") from None
+            try: return ws.workspace(S.open(folder))
+            except BaseException:
+                import shutil
+                shutil.rmtree(folder, ignore_errors=True)
+                raise
+        try: return await anyio.to_thread.run_sync(do)
+        except AppError: raise
+        except BaseException as e:  # noqa: BLE001
+            a = convert(e, f"import {name}")
+            raise AppError("import-failed", f"{name} could not be read: {a.message}" if a.code == "internal" else a.message) from None
+
+    @app.get("/api/workspace")
+    def workspace() -> dict[str, Any]:
+        return ws.workspace(cur())
+
+    # ---------------------------------------------------------------- 1.0: cards and edits
+    @app.get("/api/card/component/{cid:path}")
+    def card_component(cid: str) -> dict[str, Any]:
+        out = ws.component_card(cur(), cid)
+        if out is None: raise AppError("not-found", f"There is no component {cid}.")
+        return out
+
+    @app.get("/api/card/wire/{wid:path}")
+    def card_wire(wid: str) -> dict[str, Any]:
+        out = ws.wire_card(cur(), wid)
+        if out is None: raise AppError("not-found", f"There is no wire {wid}.")
+        return out
+
+    @app.post("/api/component/{cid:path}")
+    def edit_component(cid: str, body: dict[str, Any] = Body(...)) -> dict[str, Any]:  # noqa: B008
+        st = cur()
+        b = _keys(body, {"name", "kind", "rating_A"})
+        c = st.ctx.comp_by_id.get(cid)
+        if c is None: raise AppError("not-found", f"There is no component {cid}.")
+        from ..core.model import KINDS
+        pd = next((p for p in st.m.protective_devices if p.id == cid), None)
+        ops = []
+        if "name" in b:
+            if not isinstance(b["name"], str) or not b["name"].strip(): raise AppError("bad-request", "The name cannot be empty.")
+            if b["name"].strip() != c.name: ops.append(ch.Op(op="component", id=cid, field="name", old=c.name, new=b["name"].strip(), row={"device": c.raw}))
+        kind = c.kind
+        if "kind" in b:
+            if b["kind"] not in KINDS or b["kind"] == "harness": raise AppError("bad-request", f"kind must be one of {', '.join(k for k in KINDS if k != 'harness')}.")
+            if c.kind == "harness": raise AppError("bad-request", f"{cid} is a harness connector; its kind comes from the project settings.")
+            kind = b["kind"]
+            if kind != c.kind: ops.append(ch.Op(op="component", id=cid, field="kind", old=c.kind, new=kind, row={"device": c.raw}))
+        if "rating_A" in b:
+            r = _num(b["rating_A"], "rating_A")
+            if kind not in ("breaker", "fuse"): raise AppError("bad-request", f"{cid} is not a breaker or fuse, so it has no rating.")
+            if r != (pd.rating_a if pd else None): ops.append(ch.Op(op="component", id=cid, field="rating_A", old=pd.rating_a if pd else None, new=r))
+        if ops: st.save(ch.new_set(f"edit {cid} in the app", ops, author="app", slug="app-component"))
+        return ws.workspace(st)
+
+    @app.post("/api/wire/{wid:path}")
+    def edit_wire(wid: str, body: dict[str, Any] = Body(...)) -> dict[str, Any]:  # noqa: B008
+        st = cur()
+        b = _keys(body, set(WIRE_FIELDS))
+        r = next((x for x in st.L.records if text_of(x.data.get("id")) == wid), None)
+        if r is None: raise AppError("not-found", f"There is no wire {wid}.")
+        if "current" in b: b["current"] = _num(b["current"], "current", positive=False)
+        if "gauge" in b and not isinstance(b["gauge"], (str, int)): raise AppError("bad-request", "gauge must be text such as 20 or 20 AWG.")
+        ops = []
+        for k, v in b.items():
+            f, new = WIRE_FIELDS[k], "" if v is None else v
+            if text_of(new) != text_of(r.data.get(f)): ops.append(ch.Op(op="set", id=wid, field=f, old=text_of(r.data.get(f)), new=new))
+        if ops: st.save(ch.new_set(f"edit {wid} in the app", ops, author="app", slug="app-edit"))
+        return ws.workspace(st)
+
+    @app.post("/api/positions")
+    def positions(body: dict[str, Any] = Body(...)) -> dict[str, Any]:  # noqa: B008
+        b = _keys(body, {"positions"})
+        if not isinstance(b.get("positions"), dict): raise AppError("bad-request", "positions must be an object {id: [x, y]}.")
+        try: ws.save_positions(cur(), b["positions"])
+        except ValueError as e: raise AppError("bad-request", f"{e}.") from None
+        return dict(ok=True)
+
+    # ---------------------------------------------------------------- 1.0: simulate and app sources
+    @app.post("/api/simulate")
+    def simulate(body: dict[str, Any] = Body(default={})) -> dict[str, Any]:  # noqa: B008
+        st = cur()
+        from ..sim.overlay import overlay
+        try: st.overlay = overlay(st.m, st.cfg, st.sources, st.measured, st.ctx)
+        except Exception as e:  # noqa: BLE001
+            convert(e, "simulate")  # logs the cause
+            raise AppError("sim-failed", "The simulation failed. The details are in the log file.", retry=True) from None
+        return st.overlay
+
+    @app.post("/api/sources")
+    def add_source(body: dict[str, Any] = Body(...)) -> dict[str, Any]:  # noqa: B008
+        st = cur()
+        b = _keys(body, {"attach", "type", "nominal_V", "r_int_ohm", "i_limit_A", "capacity_Ah", "name"})
+        if str(b.get("attach", "")) not in st.ctx.comp_by_id: raise AppError("not-found", f"There is no component {b.get('attach')} to attach the source to.")
+        typ = b.get("type", "battery")
+        if typ not in SOURCE_TYPES: raise AppError("bad-request", f"type must be one of {', '.join(SOURCE_TYPES)}.")
+        v = _num(b.get("nominal_V"), "nominal_V")
+        if v is None: raise AppError("bad-request", "nominal_V is needed (the source's voltage).")
+        taken = {s["id"] for s in st.sources} | set(st.ctx.comp_by_id)
+        sid = next(f"SRC-{k}" for k in range(1, 10_000) if f"SRC-{k}" not in taken)
+        row = dict(name=str(b.get("name") or f"{ {'battery': 'Battery', 'dcdc': 'DC/DC', 'bench': 'Bench supply'}[typ]} {v:g} V"), attach=str(b["attach"]),
+                   type=typ, nominal_V=v, r_int_ohm=_num(b.get("r_int_ohm"), "r_int_ohm") or 0.01, i_limit_A=_num(b.get("i_limit_A"), "i_limit_A"),
+                   capacity_Ah=_num(b.get("capacity_Ah"), "capacity_Ah"))
+        st.save(ch.new_set(f"add source {sid} in the app", [ch.Op(op="add-source", id=sid, row=row)], author="app", slug="app-source"))
+        return ws.workspace(st)
+
+    @app.delete("/api/sources/{sid}")
+    def delete_source(sid: str) -> dict[str, Any]:
+        st = cur()
+        if sid not in {s["id"] for s in st.sources}: raise AppError("not-found", f"There is no source {sid}.")
+        st.save(ch.new_set(f"delete source {sid} in the app", [ch.Op(op="delete-source", id=sid)], author="app", slug="app-source"))
+        return ws.workspace(st)
+
+    # ---------------------------------------------------------------- 1.0: export
+    @app.post("/api/export")
+    def export(body: dict[str, Any] = Body(...)) -> dict[str, Any]:  # noqa: B008
+        st = cur()
+        b = _keys(body, {"kind"})
+        kind, out = b.get("kind"), st.cfg.out
+        import contextlib, io
+        before = {p: p.stat().st_mtime for p in out.rglob("*") if p.is_file()} if out.exists() else {}
+        out.mkdir(parents=True, exist_ok=True)
+        if kind == "drawings":
+            from ..renderers.wireviz import GRAPHVIZ_MISSING, find_dot
+            if not find_dot(): raise AppError("graphviz-missing", GRAPHVIZ_MISSING)
+            from ..cli.draw import draw
+            with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()): draw(st.cfg.root, all_=True)
+        elif kind == "pinout":
+            from ..exporters import pinout as po
+            po.write_xlsx(st.m, out / "pinout.xlsx", st.ctx); po.write_html(st.m, out / "pinout.html", st.ctx)
+        elif kind == "faults":
+            from ..sim import report
+            report.run(st.cfg.root, faults=True, out=out / "faults", infer=True)
+        elif kind == "wirelist":
+            from ..exporters.views import wirelist_xlsx
+            from ..renderers.project import Project
+            wirelist_xlsx(Project(st.cfg), out / "wirelist.xlsx")
+        else: raise AppError("bad-request", "kind must be drawings, pinout, faults or wirelist.")
+        files = sorted(str(p.relative_to(out)).replace("\\", "/") for p in out.rglob("*") if p.is_file() and before.get(p) != p.stat().st_mtime)
+        return dict(folder=str(out), files=files)
+
+    @app.post("/api/reveal")
+    def reveal(body: dict[str, Any] = Body(...)) -> dict[str, Any]:  # noqa: B008
+        b = _keys(body, {"path"})
+        if not isinstance(b.get("path"), str): raise AppError("bad-request", "Give the path to show.")
+        p = Path(b["path"]).resolve()
+        roots = [userdata.home().resolve()] + ([S.st.cfg.root.resolve()] if S.st else [])
+        if not any(p == r or r in p.parents for r in roots): raise AppError("bad-request", "Only folders of the open project can be shown.")
+        if not p.exists(): raise AppError("not-found", f"{p} does not exist.")
+        _open_folder(p if p.is_dir() else p.parent)
+        return dict(ok=True)
+
+    # ---------------------------------------------------------------- 0.7 (CLI tests and power users)
     @app.get("/api/index")
     def index() -> Response:
-        return Response(st.index_json(), media_type="application/json")
+        return Response(cur().index_json(), media_type="application/json")
 
     @app.get("/api/object")
     def obj(type: str, id: str) -> dict[str, Any]:  # noqa: A002
-        return st.obj(type, id)
+        return cur().obj(type, id)
 
     @app.get("/api/graph")
     def graph() -> dict[str, Any]:
-        return st.graph()
+        return cur().graph()
 
     @app.post("/api/edit")
     def edit(body: dict[str, Any] = Body(...)) -> dict[str, Any]:  # noqa: B008
+        st = cur()
         cs = st.edit(body.get("edits", []), body.get("title", ""))
         return dict(changeset=cs.model_dump(), index=st.index())
 
     @app.post("/api/undo")
     def undo() -> dict[str, Any]:
+        st = cur()
         with st.lock:
             p = ch.undo(st.cfg.root)
             st.reload()
@@ -303,20 +570,21 @@ def create_app(project: str | Path, background: bool = False) -> FastAPI:
     @app.get("/api/fix/direction")
     def fix_preview() -> dict[str, Any]:
         from ..cli.commands import direction_changeset
-        cs, flips = direction_changeset(st.L)
+        cs, flips = direction_changeset(cur().L)
         return dict(flips=[dict(id=f.id, label=f.label, reason=f.reason) for f in flips], ops=[o.model_dump() for o in cs.ops])
 
     @app.post("/api/fix/direction")
     def fix_apply() -> dict[str, Any]:
         from ..cli.commands import direction_changeset
+        st = cur()
         cs, flips = direction_changeset(st.L)
         if not flips: raise HTTPException(400, "nothing to fix")
-        with st.lock:
-            ch.save(st.cfg.root, cs); st.reload()
+        st.save(cs)
         return dict(applied=len(flips), index=st.index())
 
     @app.get("/api/diff")
     def diff(rev: str = "HEAD") -> dict[str, Any]:
+        st = cur()
         try: other = load(df.checkout(rev, st.cfg.root)).model
         except subprocess.CalledProcessError as e: raise HTTPException(400, f"git revision {rev!r} not found: {e.stderr!s}") from None
         except SystemExit as e: raise HTTPException(400, str(e)) from None
@@ -325,12 +593,13 @@ def create_app(project: str | Path, background: bool = False) -> FastAPI:
 
     @app.get("/api/sim/scenarios")
     def scenarios() -> list[str]:
-        return st.index()["project"]["scenarios"]
+        return cur().index()["project"]["scenarios"]
 
     @app.post("/api/sim/run")
     def sim_run(body: dict[str, Any] = Body(...)) -> dict[str, Any]:  # noqa: B008
         from ..sim import api as sim
         from ..sim.report import _jsonable
+        st = cur()
         name = body.get("scenario")
         sc = yaml.safe_load((st.cfg.root / "scenarios" / str(name)).read_text(encoding="utf-8")) if name else body.get("inline")
         op = sim.operating_point(st.m, st.cfg, sc, st.measured, st.ctx)
@@ -345,6 +614,7 @@ def create_app(project: str | Path, background: bool = False) -> FastAPI:
     def sim_faults(body: dict[str, Any] = Body(default={})) -> dict[str, Any]:  # noqa: B008
         from ..sim import api as sim
         from ..sim.report import _jsonable
+        st = cur()
         name = body.get("scenario")
         sc = yaml.safe_load((st.cfg.root / "scenarios" / str(name)).read_text(encoding="utf-8")) if name else None
         sw = sim.fault_sweep(st.m, st.cfg, sc, st.measured, st.ctx)
@@ -352,7 +622,7 @@ def create_app(project: str | Path, background: bool = False) -> FastAPI:
 
     @app.get("/api/drawings")
     def drawings() -> list[dict[str, str]]:
-        out = st.cfg.out
+        out = cur().cfg.out
         return [dict(name=p.stem) for p in sorted(out.glob("*.svg"))] if out.exists() else []
 
     @app.post("/api/drawings/render")
@@ -360,13 +630,14 @@ def create_app(project: str | Path, background: bool = False) -> FastAPI:
         import contextlib, io
         from ..cli.draw import draw
         with contextlib.redirect_stdout(io.StringIO()):
-            draw(st.cfg.root, all_=True, no_render=bool(body.get("no_render")))
+            draw(cur().cfg.root, all_=True, no_render=bool(body.get("no_render")))
         return drawings()
 
     @app.get("/api/drawing/{name}")
     def drawing(name: str) -> FileResponse:
-        p = (st.cfg.out / f"{name}.svg").resolve()
-        if p.parent != st.cfg.out.resolve() or not p.exists(): raise HTTPException(404, "no such drawing")
+        out = cur().cfg.out
+        p = (out / f"{name}.svg").resolve()
+        if p.parent != out.resolve() or not p.exists(): raise HTTPException(404, "no such drawing")
         return FileResponse(p, media_type="image/svg+xml")
 
     static = files("schemagen.app").joinpath("static")
@@ -405,10 +676,12 @@ def bus_tree(st: State, op: Any) -> list[dict[str, Any]]:
     return out
 
 
-def serve(project: str | Path, host: str = "127.0.0.1", port: int = 8765, open_browser: bool = True) -> None:
+def serve(project: str | Path | None, host: str = "127.0.0.1", port: int = 8765, open_browser: bool = True) -> None:
     import uvicorn
     app = create_app(project, background=True)  # listen at once; the project loads while the browser fetches the page
     url = f"http://{host}:{port}/"
-    print(f"schemagen app: {url}  (Ctrl-C to stop)")
+    print(f"schemagen app: {url}  (Ctrl-C to stop)" + ("" if project else ", start screen: no project given"))
+    gv = app.state.graphviz
+    if not gv["found"]: print(f"note: {gv['message']}")
     if open_browser: threading.Timer(0.5, lambda: webbrowser.open(url)).start()
     uvicorn.run(app, host=host, port=port, log_level="warning")
