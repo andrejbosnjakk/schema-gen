@@ -132,3 +132,62 @@ Final benchmark (`python benchmarks/bench.py`, seconds):
 
 Rendering every drawing of synthetic 1k with WireViz (115 drawings, 4 parallel processes): 8.0 s (0.2: 15.0 s for
 24 harness drawings covering 57 % of the conductors).
+
+## 0.6: fixes from a real project, Windows
+
+Measured on a Windows 11 laptop (Python 3.14), and in CI on Ubuntu and Windows.
+
+| metric | target | measured | pass |
+|---|---|---|---|
+| `pytest -q` on Windows and Ubuntu (CI) | 0 failures, no new skips | 96 passed, 2 skipped locally; CI green on ubuntu-latest and windows-latest × 3.12, 3.14 | yes |
+| text I/O without an encoding | 0 | 0 (AST check over `schemagen/` and `tests/`) | yes |
+| tuple tables survive import → export → import | lossless, nothing dropped silently | decisions, open items and ten-field protection tuples round-trip (CSV, XLSX); unreadable entries are warnings | yes |
+| sim without part data | not a pass | exit 2 with what is missing; synthetic 1k without cards + `--infer`: operating point, fault sweep 426 nodes | yes |
+| pinout: each conductor listed exactly twice, no self-references | yes | demo and synthetic 600: every conductor twice, 0 self-references; golden test for the XLSX layout and print setup | yes |
+| direction rule on the seeded no-pin-data corpus | 0 false positives, 100 % recall, unknown counted | 0 false positives (0.5: 3), 9/9 flips caught, unknown count reported | yes |
+| CAN on synthetic 1k without cards | termination and node-count findings | node counts equal to the carded project; a cut terminator is an error; stub limit 1 m / 0.3 m by bit rate | yes |
+| display name shown where display.py gives one (Playwright) | yes | wire table and object page show "Cockpit display (DSP)" | yes |
+| Playwright end-to-end | 15/15 | CI (Ubuntu, Windows): all green. Locally 14/15: the drawing test passes with Graphviz; the cold-start test measured 3.4–3.9 s (limit 3 s) on a laptop running on battery | partly |
+| cited values listed with clause and status | all | 17 values in `docs/citations.md`: 5 definition, 11 to verify, 1 naming pattern | yes |
+
+## 0.7 item 2: readable-sheet importer
+
+Fictional fixtures from `schemagen synth --readable --wires 500` (502 wires, 79 rows of subsystem bars and component headers).
+
+| metric | target | measured | pass |
+|---|---|---|---|
+| readable → model → readable, clean fixture | cell-identical | 582 rows × 11 columns identical, merged bars kept | yes |
+| connector / pin cells parsed automatically, seeded fixture | ≥ 98 % | 99.5 % (999 of 1004); the 5 others all flagged at their sheet row and column | yes |
+| seeded near-duplicate names found | 100 % | 12 / 12 (case, spacing, punctuation, one-letter typos), merged by `schemagen fix names` | yes |
+| false merges on the clean fixture | 0 | 0 | yes |
+| check and pinout straight from the sheet | run | clean fixture: 0 errors, 0 warnings, 1 info; pinout checklist written | yes |
+
+### Item 2 fixes from the team's real sheet (452 wires)
+
+The fixes are measured on the fictional fixture, which now has regression rows for every case reported from the real
+sheet (`synth --readable --wires 500`: 505 wires, 586 rows).
+
+| # | metric | target | measured | pass |
+|---|---|---|---|---|
+| 1 | connector / pin cells parsed, fixture with every reported form (33 forms) | ≥ 98 % | 99.5 % (1005 of 1010); the 5 unparsed are the seeded bad cells, all flagged | yes |
+| 2 | false open-end / pin-clash errors from unknown harness sides | 0 | 0 errors on the clean fixture, which uses cockpit, fuselage, cabin, nose, tank, wing, back cabin and side-wall sensor sides with none set in schemagen.yml | yes |
+| 3 | CAN trunk / stub wires judged as one-way signals | 0 | 12 CAN wires (CAN1 H/L, GCAN, CAN_H/CAN_L, between CAN splices): all class CAN; 0 direction or direction-unknown findings on them | yes |
+| 4 | round trip with TBD / TBC / n/a in number columns | cell-identical | identical, 586 rows, 6 text cells in number columns | yes |
+| 5 | harness codes from the name | the code in the name | 10 of 10 harness connectors (X-FW5, BC4, X-IP ...) | yes |
+| 6 | every conductor end on its item's interface drawing | 100 % | 100 % on the demo and 1000-wire synthetic project (test_every_conductor_in_a_drawing); repeats labelled "also on" | yes |
+| 7 | connector size from the name | real size, spares listed | D-sub 25 harness: 25 pins, 24 spare; D-sub 15 device J1: 15 pins, 12 spare | yes |
+| 8 | sim --infer finds sources on a readable sheet | ≥ 1 source | 3 of 3 (Battery, Starter battery, DC-DC converter); "Battery relay" not taken; a "24 V battery" gets 24 V from its name | yes |
+
+## 0.7 item 3: workspace shell
+
+Icon rail (views, panel toggles), navigator (components by kind, with a filter), canvas, inspector, problems panel;
+Omnibar (Ctrl K: objects, and commands after `>` or when empty); hotkeys (`?` lists them); light / dark / auto
+themes; a plain-text wire table with editors only on the selected row. Playwright (Chrome) on this laptop, mains power.
+
+| metric | target | measured | pass |
+|---|---|---|---|
+| e2e | all pass | 16 / 16, including the new shell test (rail, navigator, inspector, problems, Omnibar commands, hotkeys, editors only on the selected row) | yes |
+| axe serious / critical | 0 | 0 on 8 pages × 2 themes, and on the shell with the navigator open, a component in the inspector and a row being edited | yes |
+| interactive on synthetic 5k (cold start to a filtered table) | ≤ 2 s | 1.52 s (the e2e budget stays 3 s for CI runners) | yes |
+| bundle | ≤ 1.5 MB gzipped | 0.454 MB (8 files; Blueprint's icon paths are two lazy chunks of about 0.1 MB each) | yes |
+| any object from the Omnibar | ≤ 2 clicks | 2 for each of the 7 object types on synthetic 5k | yes |

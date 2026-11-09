@@ -24,7 +24,8 @@ class CanBus:
     conductors: list[int] = field(default_factory=list)
     nodes: list[str] = field(default_factory=list)          # component ids with CAN pins (terminators excluded)
     terminators: list[NodeKey] = field(default_factory=list)
-    unknown: list[str] = field(default_factory=list)        # components on the bus without CAN pin data
+    unknown: list[str] = field(default_factory=list)        # components on the bus without CAN pin data (nodes inferred from their stubs)
+    inferred_terms: list[str] = field(default_factory=list) # terminations inferred from the device name (no pin data)
 
 
 class Ctx:
@@ -50,9 +51,11 @@ class Ctx:
         if d and d.type: return d.type
         c = self.comp.get(t.device)
         if c and c.kind in ("breaker", "fuse", "switch", "relay", "battery", "dcdc"):
+            if t.connector.strip().lower() == "coil": return "ground" if t.pin.strip() in ("-", "−", "A2") else "power_in"  # coil +/A1 is a load
             n = (t.pin or t.connector).strip().lower()
-            if n in SOURCE_NAMES: return "power_out"
-            if n in SINK_NAMES: return "power_in"
+            words = set(n.split())  # named terminals: "load stud", "fuse output", "LV1 output"
+            if n in SOURCE_NAMES or words & SOURCE_NAMES - {"+"}: return "power_out"
+            if n in SINK_NAMES or words & SINK_NAMES: return "power_in"
             if n in ("-", "−", "gnd"): return "ground"
         return None
 
@@ -118,6 +121,10 @@ class Ctx:
     # ---------------------------------------------------------------- CAN
     @cached_property
     def can_buses(self) -> list[CanBus]:
+        """CAN nets with their nodes and terminations; without pin data a device matching tables.can.terminator_pattern
+        is a termination and any other device on the net a node (from its stub conductor)."""
+        from . import tables
+        tpat = re.compile(str(tables.table("can", self.cfg)["terminator_pattern"]), re.I)
         out = []
         for n in self.net.nets():
             if self.net_kind(n.conductors) != "CAN": continue
@@ -131,6 +138,8 @@ class Ctx:
                 if comp is None or comp.kind == "harness": continue
                 d, p = self.pin(t), self.part_of(t.device)
                 if d and (d.term or (p and p.term and d.type in ("can_h", "can_l"))): b.terminators.append(node)
+                elif not (d and d.type in ("can_h", "can_l")) and not (p and p.kind == "terminator") and (tpat.search(comp.raw) or tpat.search(comp.id)):
+                    b.terminators.append(node); b.inferred_terms.append(comp.id); continue
                 if p and p.kind == "terminator": continue
                 if comp.id in seen: continue
                 seen.add(comp.id)

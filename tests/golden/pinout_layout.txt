@@ -1,0 +1,92 @@
+paper 9 landscape fit 1x0 fitToPage True
+print area 'Pinout'!$A$1:$K$89
+page breaks after rows [4, 9, 13, 18, 23, 28, 35, 42, 46, 51, 56, 62, 68, 89]
+BAT battery 14 V  part demo battery 12 Ah
+connector / half | pin | pin name | wire label | wire name | gauge | colour | far end | connected | continuity | initials
++ |  |  | L01 | Battery feed | 8 | RD | CB-MAIN 30 A LINE
+− |  |  | L03 | Battery return | 8 | BK | GNDB ground bus
+
+BB1 14 V bus bar
+connector / half | pin | pin name | wire label | wire name | gauge | colour | far end | connected | continuity | initials
+Stud |  |  | L02 | Bus feed | 8 | RD | CB-MAIN 30 A LOAD
+Stud |  |  | L10 | ECU breaker feed | 20 | RD | CB-ECU 5 A LINE
+
+BB24 24 V bus bar
+connector / half | pin | pin name | wire label | wire name | gauge | colour | far end | connected | continuity | initials
+Stud |  |  | T03 | Generator breaker feed | 20 | YE | CB-GEN 7.5 A LINE
+
+CB-ECU 5 A
+connector / half | pin | pin name | wire label | wire name | gauge | colour | far end | connected | continuity | initials
+LINE |  |  | L10 | ECU breaker feed | 20 | RD | BB1 14 V bus bar
+LOAD |  |  | L04 | ECU supply | 20 | RD | SP-ECU-C ECU supply splice → ECU engine control unit J1 1
+
+CB-GEN 7.5 A
+connector / half | pin | pin name | wire label | wire name | gauge | colour | far end | connected | continuity | initials
+LINE |  |  | T03 | Generator breaker feed | 20 | YE | BB24 24 V bus bar
+LOAD |  |  | T01 | Generator field | 20 | YE | Bulkhead connector X-BH Cabin half 8 → GEN starter-generator Field TBD
+
+CB-MAIN 30 A
+connector / half | pin | pin name | wire label | wire name | gauge | colour | far end | connected | continuity | initials
+LINE |  |  | L01 | Battery feed | 8 | RD | BAT battery 14 V +
+LOAD |  |  | L02 | Bus feed | 8 | RD | BB1 14 V bus bar
+
+DSP dashboard display  part demo display
+connector / half | pin | pin name | wire label | wire name | gauge | colour | far end | connected | continuity | initials
+CAN | H | CAN_H | N01 | CAN_H | 22 | GN | Bulkhead connector X-BH Cabin half 4 → ECU engine control unit J1 3
+CAN | L | CAN_L | N03 | CAN_L | 22 | GNWH | Bulkhead connector X-BH Cabin half 5 → ECU engine control unit J1 4
+Sensor | 5V | SENS 5V | M01 | Sensor supply | 22 | VT | Bulkhead connector X-BH Cabin half 6 → OTS oil temperature sensor Lead 1
+Sensor | AI1 | AI1 oil temp | M04 | Oil temperature signal | 22 | BU | Bulkhead connector X-BH Cabin half 7 → OTS oil temperature sensor Lead 2
+
+ECU engine control unit  part ECU_card
+connector / half | pin | pin name | wire label | wire name | gauge | colour | far end | connected | continuity | initials
+J1 | 1 | VBAT | L09 | ECU supply | 20 | RD | SP-ECU-N ECU supply splice → CB-ECU 5 A LOAD
+J1 | 2 | GND | L12 | ECU ground | 20 | BK | Bulkhead connector X-BH Engine half 3 → GNDB ground bus
+J1 | 3 | CAN_H | N02 | CAN_H | 22 | GN | Bulkhead connector X-BH Engine half 4 → DSP dashboard display CAN H
+J1 | 4 | CAN_L | N04 | CAN_L | 22 | GNWH | Bulkhead connector X-BH Engine half 5 → DSP dashboard display CAN L
+
+GEN starter-generator
+connector / half | pin | pin name | wire label | wire name | gauge | colour | far end | connected | continuity | initials
+Field | TBD |  | T02 | Generator field | 20 | YE | Bulkhead connector X-BH Engine half 8 → CB-GEN 7.5 A LOAD
+
+GNDB ground bus
+connector / half | pin | pin name | wire label | wire name | gauge | colour | far end | connected | continuity | initials
+Stud |  |  | L03 | Battery return | 8 | BK | BAT battery 14 V −
+Stud |  |  | L11 | ECU ground | 20 | BK | Bulkhead connector X-BH Cabin half 3 → ECU engine control unit J1 2
+
+OTS oil temperature sensor
+connector / half | pin | pin name | wire label | wire name | gauge | colour | far end | connected | continuity | initials
+Lead | 1 |  | M02 | Sensor supply | 22 | VT | Bulkhead connector X-BH Engine half 6 → DSP dashboard display Sensor 5V
+Lead | 2 |  | M03 | Oil temperature signal | 22 | BU | Bulkhead connector X-BH Engine half 7 → DSP dashboard display Sensor AI1
+
+SP-ECU-C ECU supply splice
+connector / half | pin | pin name | wire label | wire name | gauge | colour | far end | connected | continuity | initials
+Splice |  |  | L04 | ECU supply | 20 | RD | CB-ECU 5 A LOAD
+Splice |  |  | L05 | ECU supply | 22 | RD | Bulkhead connector X-BH Cabin half 1 → CB-ECU 5 A LOAD, ECU engine control unit J1 1
+Splice |  |  | L06 | ECU supply | 22 | RD | Bulkhead connector X-BH Cabin half 2 → CB-ECU 5 A LOAD, ECU engine control unit J1 1
+
+SP-ECU-N ECU supply splice
+connector / half | pin | pin name | wire label | wire name | gauge | colour | far end | connected | continuity | initials
+Splice |  |  | L07 | ECU supply | 22 | RD | Bulkhead connector X-BH Engine half 1 → CB-ECU 5 A LOAD, ECU engine control unit J1 1
+Splice |  |  | L08 | ECU supply | 22 | RD | Bulkhead connector X-BH Engine half 2 → CB-ECU 5 A LOAD, ECU engine control unit J1 1
+Splice |  |  | L09 | ECU supply | 20 | RD | ECU engine control unit J1 1
+
+Bulkhead connector X-BH
+connector / half | pin | pin name | wire label | wire name | gauge | colour | far end | connected | continuity | initials
+Cabin half | 1 |  | L05 | ECU supply | 22 | RD | SP-ECU-C ECU supply splice → CB-ECU 5 A LOAD, ECU engine control unit J1 1
+Engine half | 1 |  | L07 | ECU supply | 22 | RD | SP-ECU-N ECU supply splice → CB-ECU 5 A LOAD, ECU engine control unit J1 1
+Cabin half | 2 |  | L06 | ECU supply | 22 | RD | SP-ECU-C ECU supply splice → CB-ECU 5 A LOAD, ECU engine control unit J1 1
+Engine half | 2 |  | L08 | ECU supply | 22 | RD | SP-ECU-N ECU supply splice → CB-ECU 5 A LOAD, ECU engine control unit J1 1
+Cabin half | 3 |  | L11 | ECU ground | 20 | BK | GNDB ground bus
+Engine half | 3 |  | L12 | ECU ground | 20 | BK | ECU engine control unit J1 2
+Cabin half | 4 |  | N01 | CAN_H | 22 | GN | DSP dashboard display CAN H
+Engine half | 4 |  | N02 | CAN_H | 22 | GN | ECU engine control unit J1 3
+Cabin half | 5 |  | N03 | CAN_L | 22 | GNWH | DSP dashboard display CAN L
+Engine half | 5 |  | N04 | CAN_L | 22 | GNWH | ECU engine control unit J1 4
+Cabin half | 6 |  | M01 | Sensor supply | 22 | VT | DSP dashboard display Sensor 5V
+Engine half | 6 |  | M02 | Sensor supply | 22 | VT | OTS oil temperature sensor Lead 1
+Cabin half | 7 |  | M04 | Oil temperature signal | 22 | BU | DSP dashboard display Sensor AI1
+Engine half | 7 |  | M03 | Oil temperature signal | 22 | BU | OTS oil temperature sensor Lead 2
+Cabin half | 8 |  | T01 | Generator field | 20 | YE | CB-GEN 7.5 A LOAD
+Engine half | 8 |  | T02 | Generator field | 20 | YE | GEN starter-generator Field TBD
+Cabin half | 9
+Engine half | 9

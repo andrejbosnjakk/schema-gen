@@ -173,3 +173,123 @@ One entry per open choice taken during the 0.2 → 0.5 work: context, choice, wh
 - Choice: code lives in `core/`, `importers/`, `exporters/`, `renderers/`, `sim/`, `app/`, `cli/`; the 0.2 module
   paths remain as one-line re-exports.
 - Why: backward compatible for anyone importing schemagen modules directly (the 0.2 tests still do).
+
+## D27. Tutorial edits without sed
+- Context: the tutorial changed `wires.csv` with `sed -i`, which Windows does not have; `cmd /c` also runs only the
+  first line of a multi-line block.
+- Choice: an `<!-- edit: path -->` marker with `old  ->  new` lines (find and replace in any editor; the test applies
+  them in Python); the test joins a run block's lines with `&&`, which bash and cmd both understand.
+- Why: the tutorial stays tested on both platforms, and a reader on Windows can follow it as written.
+
+## D28. Tuple entries in row-module tables
+- Context: row modules may give `P`, `D` and `O` as tuples; 0.5 kept only dicts and dropped the rest silently.
+- Choice: tuples are zipped with `tables.<table>.fields` from schemagen.yml (defaults: decisions `id, title, decision,
+  rationale, reference`; open items `id, text, owner`; protection `id, rating, panel, loads`). Fields the model has no
+  slot for (title, rationale, reference) go to `extra` and so survive export. A tuple longer than the field list, or
+  an entry that is neither dict nor tuple, is a load warning naming file, table and index.
+- Why: the `tables:` key already holds per-project overrides; `fields` is a key no cited table uses, so the two do
+  not collide. A shorter tuple is accepted (the missing fields stay empty).
+
+## D29. Simulating without part data
+- Context: without battery, source or load part data `schemagen sim` reported `pass` on an empty circuit.
+- Choice: a circuit with no source or no load is not a result: the CLI lists what is missing and exits 2, the report
+  shows it and the scenario is not ok. `--infer` (or `sim: {infer: true}`) adds sources for devices matched by
+  `sim.sources` (regex -> kind battery/dcdc, v_oc / v_out, r_int / r_out, i_limit; defaults `^BAT` and `^DCDC` in
+  core/data/sim.yml); without a voltage the highest nominal bus voltage ("14 V") on the device's conductors is used,
+  and only those conductors are its output. A DC/DC's input current is not modelled. Loads come from the conductor
+  `current` field, as before. Every inferred value is an "assumed" entry in the report.
+- Why: the simplest model that gives an operating point and a non-empty fault sweep from a wire list alone, and it
+  never hides that the numbers are assumptions.
+
+## D30. Pinout as a reintegration checklist
+- Choice: one row per conductor end, so each conductor is listed exactly twice; splices, buses and harness
+  connectors get their own blocks (their ends are listed there). Columns: connector/half, pin, pin name, wire label,
+  wire name, gauge, colour, far end (display names, codes where there is none), then empty `connected`,
+  `continuity`, `initials`. The far end continues through splices and harness pins only, away from the row's own
+  end, and stops at devices, breakers and buses (so a breaker never appears twice and a row never names itself).
+- Print: one sheet, each block with its own title and header row, A4 landscape, fit to one page wide;
+  `schemagen pinout --page-breaks` starts each component on a new page. Excel repeats only one title-row range per
+  sheet, so a block longer than a page does not repeat its header on the next page.
+- Why: one sheet is what gets printed and ticked off; one sheet per component would need 200+ tabs on a real list.
+
+## D31. Project hooks get the protection table as written
+- Context: D28 turned `P` tuples into dicts, so a project's `display.set_protection(P)` that indexes tuples broke.
+- Choice: with row modules, `set_protection` receives the modules' `P` entries unchanged (tuples stay tuples, dicts
+  stay dicts); with a table source it receives the rows as dicts, as before. Extra tuple fields stay in the
+  protective device's `extra` and so in the export's Protection sheet (a test round-trips ten-field tuples).
+- Why: existing display.py files keep working without edits; a table source never had tuples to give.
+
+## D32. Direction rule without pin data
+- Context: on a list without part data the rule flagged bonds to structure and returns that run splice → harness →
+  ground stud (it took the nearest splice as the return's target), and never judged one-way signals.
+- Choice: `direction:` patterns (regex on device code or name), with defaults:
+  - `bond` (`\bbond`, `structure`, `airframe`, or conductor class `bond`): no direction, never flagged;
+  - `ground_points` (`^GND`, `\bground\b`, `earth`): where a return ends when the net has no ground bus; tried after
+    buses and before the supplying unit's ground pin and splices;
+  - `senders` (`^SW-`, `switch`, `sensor`, `\bmic`) and `receivers` (`{device: driver, function: low.?side}`) type
+    untyped signal ends; a `{device, function}` entry also needs a conductor there whose function text matches.
+  Signal wires still without a direction are one `direction-unknown` info finding with the count.
+- Why: the smallest set of fallbacks that covers the cases seen, all overridable; a pattern that is wrong for a
+  project is replaced in its schemagen.yml rather than in code.
+
+## D33. CAN checks without card data
+- Context: without CAN pin data every device on a CAN net was "unknown" and the termination check was skipped, so a
+  list without cards got no termination or node-count findings (and terminator plugs counted as nodes).
+- Choice: a device without CAN pin data whose code or name matches `tables.can.terminator_pattern` (default
+  `^R-CAN|terminator|120 ?(Ω|ohm)`) is a termination; every other device on the net is a node (from its stub
+  conductor). The termination check is skipped only when no termination is known at all, since an unknown node may
+  be terminated inside; otherwise its fix text says so. `can-part-data` (info) names what was inferred.
+- Stub limit: `max_stub_m_by_bitrate` (250 kbit/s: 1 m from SAE J1939-11; 500 kbit/s and above: about 0.3 m, the
+  ISO 11898-2 design guideline) at `bitrate_kbit` (default 250), one rate per project; `max_stub_m` set in the
+  project still wins.
+- Why: a bit rate per project is what real lists state; per-bus rates can come later if a project needs them.
+
+## D34. Display names in the app
+- Choice: the app shows a component's display name (from display.py, DISPLAY or the default), with its code in
+  brackets when the name does not contain it, in the wire table, object page titles and links, and graph labels.
+  The code stays in tooltips and in URLs and `data-pin`, so links and tests do not depend on names. Pin cells that
+  may be cut off carry the full text in `title`. The wire table's column chooser is kept per browser
+  (localStorage, optional).
+- Why: names are what people read; codes are what the data joins on.
+
+## D35. Citation status
+- Choice: `docs/citations.md` lists every value in `core/data/` with its clause and a status: *definition* (defined
+  constants and formulas) or *to verify* (written from memory of the document, not yet checked against a copy).
+  Nothing is marked verified until someone has checked it against the current edition.
+- Why: the tool cannot check standards it does not hold; the list makes the check a short, explicit task.
+
+## D36. The readable sheet
+- Context: the team's source of truth is a hand-edited sheet with plain device names and free-text connector / pin
+  cells; the tool could not read it.
+- Choice: a separate importer (`importers/readable.py`, docs/readable.md) that keeps every original cell in the
+  conductor's `extra.readable`, so an unedited sheet exports cell for cell; codes are generated from the kind and
+  name and registered in the in-memory config (prefixes, harness connectors, sides) so the model builder needs no
+  changes. Unparseable cells are a rule finding (`readable-cell`), not a load error, so a half-finished sheet still
+  loads. Near-duplicates are a load warning plus `schemagen fix names` (a change set), never merged silently.
+- Limits: empty rows and a component header with no wires under it are not written back; a relay coil terminal
+  (`coil +` / `coil -`) is typed as a load / return everywhere, not only in readable sheets.
+- Why: the sheet stays the team's file; schemagen reads it, checks it and proposes edits as change sets.
+
+## D37. CLI output on Windows pipes
+- Choice: when stdout / stderr are not UTF-8 (a Windows pipe is cp1252), characters it cannot encode (→, −) are
+  printed as `?` instead of raising UnicodeEncodeError.
+- Why: a check that crashes while printing its findings is worse than a `?`.
+
+## D38. An item's interface drawing has all its wires
+- Context: interface drawings were a set cover, so each conductor appeared once; a device's grounds were only on the
+  ground-bus drawing and its harness wires only on the harness drawing.
+- Choice: every device, breaker or bus with a conductor outside the harness drawings gets a drawing with every
+  conductor on it; a conductor that is on another drawing too is labelled "(also on X-BH, IF-GNDB)". Splices are only
+  drawn for what is still undrawn. Items whose conductors all run through harness drawings get no drawing of their
+  own (as before).
+- Why: a drawing that misses a device's ground is read as "no ground"; repeating costs a few drawings.
+
+## D39. The workspace shell
+- Choice: Blueprint 5 (`@blueprintjs/core`, Apache-2.0) for icons, buttons and hotkeys (`HotkeysProvider`,
+  `useHotkeys`; `?` shows the list), not for the tree or the Omnibar: the navigator is plain nested lists with
+  `aria-expanded` buttons, and the Omnibar is the existing Ctrl K palette with commands added (after `>`, or when the
+  box is empty) so its listbox / option roles and the two-click measurement stay as they were. The page keeps one h1
+  (the canvas); panels use h2 / h3. Panel visibility is kept per viewer in localStorage.
+- Hotkeys: Ctrl K Omnibar, Alt 1-6 views, `[` navigator, `]` inspector, Shift P problems, Shift T theme.
+- Why: Blueprint's Tree and Omnibar would bring their own ARIA patterns to re-check with axe for little gain; the
+  bundle stays at a third of its budget.

@@ -8,6 +8,7 @@ from typing import Any
 
 from ..importers.display import DefaultDisplay
 from ..importers import parts as parts_in
+from ..importers import readable as readable_in
 from ..importers import rows as rows_in
 from ..importers import table as table_in
 from ..importers import wireviz as wireviz_in
@@ -24,7 +25,7 @@ class Loaded:
     model: Model
     naming: Any                      # the project's display module (or the default display)
     display: dict[str, str] = field(default_factory=dict)
-    protection_raw: list[dict[str, Any]] = field(default_factory=list)  # P rows as given, for display.set_protection
+    protection_raw: list[Any] = field(default_factory=list)  # P entries as given (module tuples or dicts), for display.set_protection
     warnings: list[str] = field(default_factory=list)
     records: list[Any] = field(default_factory=list)  # wire Records (input order, same as model.conductors)
     inputs: Any = None                                 # the build Inputs, to rebuild with edited records
@@ -65,9 +66,12 @@ def load(cfg: Config | str | Path, apply_changes: bool = True) -> Loaded:
             naming.set_protection([])
             return Loaded(cfg, m, naming, {c.raw: c.name for c in m.components})
     if src and str(src.get("path", "")).lower().endswith((".yml", ".yaml")): t = wireviz_in.read(cfg.root / src["path"])
+    elif src and (src.get("format") == "readable" or (src.get("format") is None and readable_in.detect(cfg.root / src["path"]))):
+        t = readable_in.read(cfg, src)
+        naming = naming_for(cfg)  # the importer registered its harness connectors in cfg
     elif src: t = table_in.read(cfg.root, src)
-    else: t = rows_in.read(wl)
-    warnings: list[str] = changes.apply(t.rows, changes.load_all(cfg.root)) if apply_changes else []
+    else: t = rows_in.read(wl, cfg.tables)
+    warnings: list[str] = t.warnings + (changes.apply(t.rows, changes.load_all(cfg.root)) if apply_changes else [])
     problems: list[Problem] = []
     parts = parts_in.from_cards(cfg.cards, warnings, problems)
     sheet = parts_in.from_sheet(t.parts, problems) if t.parts else []
@@ -81,7 +85,7 @@ def load(cfg: Config | str | Path, apply_changes: bool = True) -> Loaded:
     display = dict(t.display)
     for r in t.components:  # Components sheet names stand in for DISPLAY when the source is a table
         if r.data.get("device") and r.data.get("name"): display.setdefault(str(r.data["device"]), str(r.data["name"]))
-    prot_raw = [dict(r.data) for r in t.protection]
+    prot_raw = t.protection_raw if t.protection_raw is not None else [dict(r.data) for r in t.protection]  # hooks get what was written
     naming.set_protection(prot_raw)
     inp = Inputs(rows=t.rows, protection=t.protection, decisions=t.decisions, open_items=t.open_items, components=t.components,
                  connectors=t.connectors, labels_sheet=t.labels, parts=parts, labels=labels, names=names, display=display, ledger=ledger)

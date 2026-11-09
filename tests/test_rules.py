@@ -1,6 +1,7 @@
 """M2: rules engine, direction convention, views, diff, coverage."""
 import copy
 import json
+import os
 import random
 import shutil
 import subprocess
@@ -15,7 +16,7 @@ from schemagen.cli import main
 from schemagen.cli.commands import direction_changeset
 from schemagen.core import changes as ch
 from schemagen.core import diff as df
-from schemagen.core import ledger
+from schemagen.core import ledger, tables
 from schemagen.core.context import Ctx
 from schemagen.core.direction import analyse
 from schemagen.core.load import load, measured_lengths
@@ -24,6 +25,7 @@ from schemagen.core.rules import RULES, run_rules
 
 ROOT = Path(__file__).resolve().parents[1]
 DEMO = ROOT / "examples" / "demo"
+GOLDEN = ROOT / "tests" / "golden" / "demo"
 
 
 @pytest.fixture(scope="module")
@@ -219,6 +221,77 @@ def test_rule_switch_and_severity_override(s600, tmp_path):
     assert [i.severity for i in run_rules(L.model, L.cfg) if i.rule == "open-item"] == ["error"]
 
 
+# ---------------------------------------------------------------- CAN without card data
+def test_can_checked_without_cards(tmp_path):
+    full = tmp_path / "full"; synth.main(1000, 1, str(full))
+    bare = tmp_path / "bare"; shutil.copytree(full, bare, ignore=shutil.ignore_patterns("cards", "out"))
+    nodes = lambda L: sorted(len(b.nodes) + len(b.unknown) for b in Ctx(L.model, L.cfg).can_buses)  # noqa: E731
+    Lf, L = load(full), load(bare)
+    assert nodes(L) == nodes(Lf) and nodes(L)  # terminators are not nodes; nodes come from their stubs
+    found = run_rules(L.model, L.cfg)
+    assert not [i for i in found if i.rule in ("can-terminators", "can-nodes")]  # both ends inferred as terminations
+    assert any("terminations taken from the name" in i.message for i in found if i.rule == "can-part-data")
+    tr = next(c.raw for c in L.model.components if c.id.startswith("TR-"))
+    m = L.rebuild([r for r in L.records if tr not in (r.data.get("p1"), r.data.get("p2"))])  # cut one terminator off
+    assert [i for i in run_rules(m, L.cfg) if i.rule == "can-terminators"]
+    L.cfg.tables = {"can": {"max_nodes": 1}}
+    assert len([i for i in run_rules(L.model, L.cfg) if i.rule == "can-nodes"]) == len(nodes(L))
+    from schemagen.core.rules import max_stub
+    assert [max_stub(tables.table("can", type("C", (), {"tables": {"can": {"bitrate_kbit": br}}}))) for br in (125, 250, 500, 1000)] == [1.0, 1.0, 0.3, 0.3]
+    assert max_stub(tables.table("can", type("C", (), {"tables": {"can": {"bitrate_kbit": 500, "max_stub_m": 2}}}))) == 2.0
+    L.cfg.tables = {"can": {"bitrate_kbit": 500, "max_stub_m_by_bitrate": {500: 0.2}}}  # the synthetic stubs are 0.3 m
+    stubs = [i for i in run_rules(L.model, L.cfg, measured=measured_lengths(L.cfg)) if i.rule == "can-stub"]
+    assert stubs and all("at most 0.2 m at 500 kbit/s" in i.message for i in stubs)
+
+
+# ---------------------------------------------------------------- direction without pin data
+def _w(i, a, ac, ap, b, bc, bp, func, bus=""):
+    return dict(id=i, p1=a, p1c=ac, p1p=ap, p2=b, p2c=bc, p2p=bp, func=func, bus=bus, awg="22")
+
+
+DIRECTION_CORPUS = [  # (row written the right way, flipping it must be flagged)
+    (_w("G1", "LMP1 lamp", "J1", "2", "GNDB ground bus", "Stud", "", "lamp return", "GND"), True),
+    (_w("B1", "GNDB ground bus", "Stud", "", "STR-1 airframe bond point", "", "", "bus bond", "GND"), False),  # no direction
+    (_w("R1", "SNS1 sensor", "J1", "2", "SP-G1 return splice", "Splice", "", "sensor return", "GND"), True),
+    (_w("R2", "SP-G1 return splice", "Splice", "", "X-BH bulkhead", "Cabin half", "6", "sensor return", "GND"), True),
+    (_w("R3", "X-BH bulkhead", "Engine half", "6", "GNDS ground stud", "Stud", "", "sensor return", "GND"), True),
+    (_w("S1", "SW-1 lamp switch", "C", "OUT", "ECU unit", "J2", "1", "switch input"), True),
+    (_w("S2", "SNS2 pressure sensor", "J1", "1", "ECU unit", "J2", "2", "oil pressure"), True),
+    (_w("S3", "MIC1 headset mic", "J1", "1", "AUD audio panel", "J1", "1", "pilot mic"), True),
+    (_w("S4", "LMP2 lamp", "J1", "2", "DRV lamp driver", "J1", "1", "lamp low-side drive"), True),
+    (_w("S5", "DRV lamp driver", "J1", "2", "LMP3 lamp", "J1", "1", "lamp high-side drive"), False),  # not low-side: unknown
+    (_w("U1", "ECU unit", "J2", "3", "DSP display", "J1", "3", "discrete"), False),  # unknown
+]
+
+
+def _corpus_project(d, flip=None):
+    rows = []
+    for r, _ in DIRECTION_CORPUS:
+        r = dict(r)
+        if r["id"] == flip:
+            for k in ("", "c", "p"): r[f"p1{k}"], r[f"p2{k}"] = r[f"p2{k}"], r[f"p1{k}"]
+        rows.append(r)
+    (d / "wirelist").mkdir(parents=True, exist_ok=True)
+    (d / "wirelist" / "ss01_x.py").write_text(f"R = {rows!r}\n", encoding="utf-8")
+    (d / "schemagen.yml").write_text(yaml.safe_dump(dict(harnesses={"X-BH": ["Bulkhead", "X-BH", "engine"]},
+                                                         sides={"X-BH": {"Cabin half": "near", "Engine half": "far"}})), encoding="utf-8")
+    return d
+
+
+def test_direction_without_pin_data(tmp_path):
+    L = load(_corpus_project(tmp_path / "ok"))
+    ctx = Ctx(L.model, L.cfg)
+    assert analyse(ctx) == []  # 0 false positives (bond, return through splice and harness to a stud)
+    unk = [i for i in run_rules(L.model, L.cfg) if i.rule == "direction-unknown"]
+    assert len(unk) == 1 and unk[0].message.startswith("2 signal wire(s)") and unk[0].severity == "info"
+    assert {o.split(":")[1] for o in unk[0].objects} == {"S5", "U1"}
+    missed = []
+    for r, judged in DIRECTION_CORPUS:
+        got = {f.id for f in analyse(Ctx(*(lambda x: (x.model, x.cfg))(load(_corpus_project(tmp_path / r["id"], r["id"])))))}
+        if got != ({r["id"]} if judged else set()): missed.append((r["id"], got))
+    assert not missed, missed  # recall 100 %, and flipping a case never flags another conductor
+
+
 # ---------------------------------------------------------------- direction fix
 def test_direction_fix_on_seeded_project(s600, tmp_path):
     d = tmp_path / "p"
@@ -246,15 +319,15 @@ def test_direction_fix_on_seeded_project(s600, tmp_path):
 def test_fix_direction_cli_writes_changeset_and_diff(tmp_path):
     d = tmp_path / "demo"; shutil.copytree(DEMO, d, ignore=shutil.ignore_patterns("out"))
     p = d / "wirelist" / "ss01_demo.py"
-    s = p.read_text()
+    s = p.read_text(encoding="utf-8")
     s = s.replace('row("GND-BAT-1", "BAT battery 14 V", "−", "", "GNDB ground bus", "Stud", ""',
                   'row("GND-BAT-1", "GNDB ground bus", "Stud", "", "BAT battery 14 V", "−", ""')
-    p.write_text(s)
+    p.write_text(s, encoding="utf-8")
     assert main(["check", str(d), "--rule", "direction"]) == 0  # direction findings are warnings
     main(["fix", "direction", str(d)])
-    cs = json.loads((d / "out" / "changes" / "direction.json").read_text())
+    cs = json.loads((d / "out" / "changes" / "direction.json").read_text(encoding="utf-8"))
     assert {o["id"] for o in cs["ops"]} == {"GND-BAT-1"} and "label" not in {o["field"] for o in cs["ops"]}
-    assert "-GND-BAT-1,L03" in (d / "out" / "changes" / "direction.diff").read_text()
+    assert "-GND-BAT-1,L03" in (d / "out" / "changes" / "direction.diff").read_text(encoding="utf-8")
     assert not (d / "changes").exists()  # never edits silently
     main(["fix", "direction", str(d), "--apply"])
     assert not [i for i in run_rules(load(d).model, None) if i.rule == "direction"]
@@ -266,15 +339,15 @@ def test_fix_direction_cli_writes_changeset_and_diff(tmp_path):
 def test_check_formats_and_exit_code(tmp_path, s600):
     out = tmp_path / "c.sarif"
     assert main(["check", str(DEMO), "--format", "sarif", "-o", str(out)]) == 0
-    s = json.loads(out.read_text())
+    s = json.loads(out.read_text(encoding="utf-8"))
     assert s["version"] == "2.1.0" and s["runs"][0]["results"]
     r = next(x for x in s["runs"][0]["results"] if x["ruleId"] == "pin-tbd")
     assert r["locations"][0]["physicalLocation"]["artifactLocation"]["uri"] == "ss01_demo.py"
     d = tmp_path / "bad"; shutil.copytree(DEMO, d, ignore=shutil.ignore_patterns("out"))
     p = d / "wirelist" / "ss01_demo.py"
-    p.write_text(p.read_text().replace('"Cabin half", "4"', '"Cabin half", "5"'))  # pin clash on X-BH 5
+    p.write_text(p.read_text(encoding="utf-8").replace('"Cabin half", "4"', '"Cabin half", "5"'), encoding="utf-8")  # pin clash on X-BH 5
     assert main(["check", str(d), "--format", "json", "-o", str(tmp_path / "c.json")]) == 1
-    assert any(i["rule"] == "pin-clash" for i in json.loads((tmp_path / "c.json").read_text()))
+    assert any(i["rule"] == "pin-clash" for i in json.loads((tmp_path / "c.json").read_text(encoding="utf-8")))
 
 
 # ---------------------------------------------------------------- coverage
@@ -282,14 +355,24 @@ def test_every_conductor_in_a_drawing(tmp_path, s1k):
     from schemagen.cli.draw import draw
     for proj in (DEMO, s1k):
         d = tmp_path / proj.name; shutil.copytree(proj, d, ignore=shutil.ignore_patterns("out"))
-        draw(d, no_render=True)
-        cov = json.loads((d / "out" / "coverage.json").read_text())
+        sets = draw(d, no_render=True)
+        cov = json.loads((d / "out" / "coverage.json").read_text(encoding="utf-8"))
         assert cov["covered"] == cov["total"] and not cov["uncovered"]
         labels = set()
         for y in (d / "out").glob("*.yml"):
-            for cab in (yaml.safe_load(y.read_text()).get("cables") or {}).values():
+            for cab in (yaml.safe_load(y.read_text(encoding="utf-8")).get("cables") or {}).values():
                 labels |= {w.split(" · ")[0] for w in cab["wirelabels"]}
-        assert labels == {c.label for c in load(d).model.conductors}
+        m = load(d).model
+        assert labels == {c.label for c in m.conductors}
+        # an item's interface drawing has every conductor end on it (grounds to a bus or splice too), and every item
+        # with a conductor outside the harness drawings has one
+        own = {full.ends[0][0][f"p{full.ends[0][1]}"]: {w["label"] for w, *_ in full.ends} for full, _ in sets if full.harness.startswith("IF-")}
+        in_harness = {w["label"] for full, _ in sets if not full.harness.startswith("IF-") for w, *_ in full.ends}
+        kind = {c.raw: c.kind for c in m.components}
+        for c in m.conductors:
+            for t in (c.from_, c.to):
+                if t.device in own: assert c.label in own[t.device], (t.device, c.label)
+                elif kind.get(t.device) not in ("harness", "splice"): assert c.label in in_harness, (t.device, c.label)
 
 
 # ---------------------------------------------------------------- views
@@ -298,11 +381,43 @@ def test_pinout_two_ended_wire_on_both(tmp_path):
     L = load(DEMO)
     b = {x["id"]: x for x in pinout.blocks(L.model)}
     ecu = {r["pin"]: r for r in b["ECU"]["rows"]}
-    xbh = {r["pin"]: r for r in b["X-BH"]["rows"]}
-    assert ecu["2"]["ids"] == ["GND-ECU-N"] and "GND-ECU-N" in xbh["3"]["ids"]
-    assert xbh["9"]["signal"] == "spare" and "GNDB" in ecu["2"]["far"]
+    xbh = [r for r in b["X-BH"]["rows"]]
+    assert ecu["2"]["id"] == "GND-ECU-N" and "GND-ECU-N" in [r["id"] for r in xbh if r["pin"] == "3"]
+    assert {r["signal"] for r in xbh if r["pin"] == "9"} == {"spare"} and "GNDB ground bus" in ecu["2"]["far"]
     pinout.write_xlsx(L.model, tmp_path / "p.xlsx"); pinout.write_html(L.model, tmp_path / "p.html")
-    assert "SENS 5V" in (tmp_path / "p.html").read_text()
+    assert "SENS 5V" in (tmp_path / "p.html").read_text(encoding="utf-8")
+
+
+@pytest.mark.parametrize("proj", ["demo", "s600"])
+def test_pinout_lists_every_conductor_once_per_end(proj, request):
+    from collections import Counter
+    from schemagen.exporters import pinout
+    from schemagen.core.context import Ctx
+    L = load(DEMO if proj == "demo" else request.getfixturevalue("s600"))
+    ctx = Ctx(L.model, L.cfg)
+    bs = pinout.blocks(L.model, ctx)
+    n = Counter(r["id"] for b in bs for r in b["rows"] if r["id"])
+    assert {c.id: n[c.id] for c in L.model.conductors} == {c.id: 2 for c in L.model.conductors}  # splice and bus ends under the splice or bus
+    assert {"splice", "bus", "harness", "breaker"} <= {b["kind"] for b in bs if b["rows"]}
+    for r in (r for b in bs for r in b["rows"] if r["id"]):  # no self-references, no "CB-X LOAD → CB-X LOAD"
+        first, _, rest = r["far"].partition(" → ")
+        assert r["here"] != first and r["here"] not in rest.split(", ") and first not in rest.split(", "), r
+
+
+def test_pinout_xlsx_golden(tmp_path):
+    """Layout and print settings of the reintegration checklist (tests/golden/pinout_layout.txt)."""
+    from openpyxl import load_workbook
+    from schemagen.exporters import pinout
+    pinout.write_xlsx(load(DEMO).model, tmp_path / "p.xlsx", page_breaks=True)
+    wb = load_workbook(tmp_path / "p.xlsx"); ws = wb["Pinout"]
+    ps = ws.page_setup
+    lines = [f"paper {ps.paperSize} {ps.orientation} fit {ps.fitToWidth}x{ps.fitToHeight} fitToPage {ws.sheet_properties.pageSetUpPr.fitToPage}",
+             f"print area {ws.print_area}", f"page breaks after rows {[b.id for b in ws.row_breaks.brk]}"]
+    lines += [" | ".join("" if c.value is None else str(c.value) for c in row).rstrip(" |") for row in ws.iter_rows()]
+    got = "".join(x + "\n" for x in lines)
+    gold = GOLDEN.parent / "pinout_layout.txt"  # not in golden/demo: those are all draw outputs
+    if os.environ.get("UPDATE_GOLDEN"): gold.write_text(got, encoding="utf-8")
+    assert got == gold.read_text(encoding="utf-8")
 
 
 def test_spares_from_part_data(s600):
@@ -325,7 +440,8 @@ def test_template_dropdowns_and_reimport(tmp_path):
     assert "GNDB ground bus" in [c.value for c in wb["Lists"]["D"]]
     d = tmp_path / "d"; shutil.copytree(DEMO, d, ignore=shutil.ignore_patterns("out"))
     shutil.copy(tmp_path / "t.xlsx", d / "t.xlsx")
-    cfg = yaml.safe_load((d / "schemagen.yml").read_text()); cfg["source"] = {"path": "t.xlsx"}; (d / "schemagen.yml").write_text(yaml.safe_dump(cfg))
+    cfg = yaml.safe_load((d / "schemagen.yml").read_text(encoding="utf-8")); cfg["source"] = {"path": "t.xlsx"}
+    (d / "schemagen.yml").write_text(yaml.safe_dump(cfg), encoding="utf-8")
     assert load(d).model.model_dump() == L.model.model_dump()
     template_xlsx(None, tmp_path / "empty.xlsx")
     wirelist_xlsx(Project(L.cfg), tmp_path / "w.xlsx")
@@ -335,15 +451,16 @@ def test_template_dropdowns_and_reimport(tmp_path):
 def test_label_ledger(tmp_path):
     d = tmp_path / "d"; shutil.copytree(DEMO, d, ignore=shutil.ignore_patterns("out"))
     assert main(["labels", str(d), "--update"]) == 0
-    led = json.loads((d / "label_ledger.json").read_text())["entries"]
+    led = json.loads((d / "label_ledger.json").read_text(encoding="utf-8"))["entries"]
     assert len(led) == 23 and all(e["status"] == "active" for e in led)
     p = d / "wirelist" / "ss01_demo.py"
-    s = p.read_text()
-    p.write_text(s.replace('row("PWR-CB-GEN"', '# row("PWR-CB-GEN"'))  # cut a conductor
+    s = p.read_text(encoding="utf-8")
+    p.write_text(s.replace('row("PWR-CB-GEN"', '# row("PWR-CB-GEN"'), encoding="utf-8")  # cut a conductor
     main(["labels", str(d), "--update", "--reason", "removed in rev B"])
-    e = next(x for x in json.loads((d / "label_ledger.json").read_text())["entries"] if x["label"] == "T03")
+    e = next(x for x in json.loads((d / "label_ledger.json").read_text(encoding="utf-8"))["entries"] if x["label"] == "T03")
     assert e["status"] == "retired" and e["reason"] == "removed in rev B"
-    lj = json.loads((d / "wirelist" / "labels.json").read_text()); lj["PWR-OTS-C"] = "T03"; (d / "wirelist" / "labels.json").write_text(json.dumps(lj))
+    lj = json.loads((d / "wirelist" / "labels.json").read_text(encoding="utf-8")); lj["PWR-OTS-C"] = "T03"
+    (d / "wirelist" / "labels.json").write_text(json.dumps(lj), encoding="utf-8")
     assert [i.objects[0] for i in run_rules(load(d).model) if i.rule == "label-reused"] == ["conductor:PWR-OTS-C"]
     led2, msgs = ledger.update(load(d).model)
     assert any("T03" in m for m in msgs) or True
@@ -385,11 +502,11 @@ def test_diff_git_revisions(tmp_path):
     git = lambda *a: subprocess.run(["git", "-C", str(repo), *a], check=True, capture_output=True)
     git("init", "-q"); git("add", "."); git("-c", "user.email=a@b", "-c", "user.name=t", "commit", "-qm", "a")
     p = repo / "proj" / "wirelist" / "ss01_demo.py"
-    p.write_text(p.read_text().replace('"ECU supply", "14 V", "20")', '"ECU supply", "14 V", "18")', 1))
+    p.write_text(p.read_text(encoding="utf-8").replace('"ECU supply", "14 V", "20")', '"ECU supply", "14 V", "18")', 1), encoding="utf-8")
     git("-c", "user.email=a@b", "-c", "user.name=t", "commit", "-qam", "b")
     out = tmp_path / "d.json"
     assert main(["diff", "HEAD~1", "HEAD", "--project", str(repo / "proj"), "--format", "json", "-o", str(out)]) == 0
-    d = json.loads(out.read_text())
+    d = json.loads(out.read_text(encoding="utf-8"))
     assert d["conductors"]["changed"]["PWR-ECU-A"]["gauge"] == ["20", "18"]
 
 

@@ -29,9 +29,9 @@ def copy_project(src, dst):
 
 
 def with_source(proj, path):
-    cfg = yaml.safe_load((proj / "schemagen.yml").read_text())
+    cfg = yaml.safe_load((proj / "schemagen.yml").read_text(encoding="utf-8"))
     cfg["source"] = {"path": str(path)}
-    (proj / "schemagen.yml").write_text(yaml.safe_dump(cfg, allow_unicode=True))
+    (proj / "schemagen.yml").write_text(yaml.safe_dump(cfg, allow_unicode=True), encoding="utf-8")
 
 
 def roundtrip(proj, fmt, tmp):
@@ -110,7 +110,7 @@ def write_rows_project(d, rows, P, D, O):
     (d / "wirelist").mkdir(parents=True)
     (d / "wirelist" / "ss01_x.py").write_text(f"R = {rows!r}\nP = {P!r}\nD = {D!r}\nO = {O!r}\n", encoding="utf-8")
     (d / "schemagen.yml").write_text(yaml.safe_dump(dict(harnesses={"X-BH": ["Bulkhead", "X-BH", "engine"]}, breaker_prefixes=["CB-"],
-                                                         relay_prefixes=["K-"], sides={"X-BH": {"Cabin half": "near"}})))
+                                                         relay_prefixes=["K-"], sides={"X-BH": {"Cabin half": "near"}})), encoding="utf-8")
 
 
 @settings(max_examples=200, deadline=None, suppress_health_check=[HealthCheck.too_slow])
@@ -151,6 +151,75 @@ def test_unknown_keys_survive_export(tmp_path):
     assert "curve_ref" in [c.value for c in wb["Protection"][1]] and "due" in [c.value for c in wb["Open items"][1]]
 
 
+def test_tuple_tables_survive_and_nothing_drops_silently(tmp_path):
+    rows = [dict(id="W1", p1="ECU unit", p1c="J1", p1p="1", p2="CB-1 5 A", p2c="LOAD", p2p="", func="x", bus="14 V", awg="20")]
+    P = [("CB-1", 5, "ECU", ["ECU"])]
+    D = [("D1", "Supply", "ECU fed from CB-1", "short run", "memo 3"), ("D2", "Ground"), dict(id="D3", text="t"),
+         ("D4", "a", "b", "c", "d", "one too many"), "D5 as a bare string"]
+    O = [("O1", "pin of the lamp", "demo team"), ("O2", "harness length")]
+    write_rows_project(tmp_path / "p", rows, P, D, O)
+    L = load(tmp_path / "p")
+    m = L.model
+    assert [d.id for d in m.decisions] == ["D1", "D2", "D3"] and [o.id for o in m.open_items] == ["O1", "O2"]
+    assert (m.decisions[0].text, m.decisions[0].extra) == ("ECU fed from CB-1", dict(title="Supply", rationale="short run", reference="memo 3"))
+    assert (m.open_items[0].text, m.open_items[0].owner) == ("pin of the lamp", "demo team")
+    pd = next(p for p in m.protective_devices if p.id == "CB-1")
+    assert (pd.rating_a, pd.panel) == (5.0, "ECU")
+    dropped = [w for w in L.warnings if "decisions[" in w]
+    assert len(m.decisions) + len(dropped) == len(D)  # every entry is either read or named in a warning
+    assert any("ss01_x.py: decisions[4]" in w for w in dropped) and any("decisions[5]" in w for w in dropped)
+    for fmt, out in (("csvdir", "tables"), ("xlsx", "model.xlsx")):
+        q = copy_project(tmp_path / "p", tmp_path / fmt)
+        table_out.export(m, q / out); with_source(q, out)
+        b = load(q).model
+        assert [x.model_dump() for x in b.decisions] == [x.model_dump() for x in m.decisions], fmt
+        assert [x.model_dump() for x in b.open_items] == [x.model_dump() for x in m.open_items], fmt
+    cfg = yaml.safe_load((tmp_path / "p" / "schemagen.yml").read_text(encoding="utf-8"))
+    cfg["tables"] = {"open_items": {"fields": ["id", "owner", "text"]}}
+    (tmp_path / "p" / "schemagen.yml").write_text(yaml.safe_dump(cfg), encoding="utf-8")
+    assert load(tmp_path / "p").model.open_items[0].owner == "pin of the lamp"  # the configured order is used
+
+
+DISPLAY_PY = '''
+import re
+HARNESS, SHORT, PANEL = {}, {}, {}
+def set_protection(P):  # a 0.2-style hook: indexes the module's tuples
+    PANEL.clear(); PANEL.update({p[0]: p[1] for p in P}); [float(p[3]) for p in P]
+def strip(t): return re.sub(r"\\s{2,}", " ", str(t)).strip()
+def harness(raw): return None
+def device(raw, extra=None):
+    code = str(raw).split()[0]
+    return f"{strip(raw)} [{PANEL[code]}]" if code in PANEL else strip(raw)
+def terminal(dev, c, p): return f"{c} {p}".strip()
+'''
+
+
+def test_protection_tuples_lossless_and_display_hook_gets_tuples(tmp_path):
+    from openpyxl import load_workbook
+    from schemagen.exporters import pinout
+    fields = ["id", "location", "part", "rating", "bus", "function", "basis", "awg", "status", "notes"]
+    rows = [dict(id="W1", p1="BAT battery 14 V", p1c="+", p1p="", p2="CB-1 5 A", p2c="LINE", p2p="", func="feed", bus="14 V", awg="20"),
+            dict(id="W2", p1="CB-1 5 A", p1c="LOAD", p1p="", p2="LMP lamp", p2c="J1", p2p="1", func="lamp", bus="14 V", awg="20")]
+    P = [("CB-1", "panel A", "MS-1", 5, "14 V", "lamp", "2 A x 2", 20, "released", "fictional")]
+    d = tmp_path / "p"
+    write_rows_project(d, rows, P, [], [])
+    (d / "wirelist" / "display.py").write_text(DISPLAY_PY, encoding="utf-8")
+    cfg = yaml.safe_load((d / "schemagen.yml").read_text(encoding="utf-8")); cfg["tables"] = {"protection": {"fields": fields}}
+    (d / "schemagen.yml").write_text(yaml.safe_dump(cfg), encoding="utf-8")
+    L = load(d)
+    assert L.protection_raw == P  # the hook saw the tuples as written
+    assert next(c for c in L.model.components if c.id == "CB-1").name == "CB-1 5 A [panel A]"
+    pinout.write_xlsx(L.model, tmp_path / "pin.xlsx")  # 0.6.0 crashed here (KeyError: 1 in the hook)
+    pd = next(p for p in L.model.protective_devices if p.id == "CB-1")
+    assert (pd.rating_a, pd.extra) == (5.0, {k: v for k, v in zip(fields, P[0]) if k not in ("id", "rating")})
+    table_out.export(L.model, tmp_path / "w.xlsx")
+    head = [c.value for c in load_workbook(tmp_path / "w.xlsx")["Protection"][1]]
+    assert {"location", "part", "bus", "function", "basis", "status", "notes"} <= set(head)
+    q = copy_project(d, tmp_path / "q"); table_out.export(L.model, q / "w.xlsx"); with_source(q, "w.xlsx")
+    (q / "wirelist" / "display.py").unlink()  # a table source has no module tuples; its hook gets the rows as dicts
+    assert [p.model_dump() for p in load(q).model.protective_devices] == [p.model_dump() for p in L.model.protective_devices]
+
+
 def test_table_input_unknown_columns_kept(tmp_path):
     d = copy_project(DEMO, tmp_path / "d")
     (d / "w.csv").write_text("id,from,from pin,to,to pin,gauge,My column,src\nW1,ECU unit,1,BB1 bus,,20,hello,DOC p. 2\n", encoding="utf-8")
@@ -163,9 +232,9 @@ def test_table_input_unknown_columns_kept(tmp_path):
 def test_validation_errors_name_file_row_column(tmp_path):
     d = copy_project(DEMO, tmp_path / "d")
     (d / "w.csv").write_text("Wire ID,from,to,to side\nW1,ECU unit,,\n,A,B,\nW3,A,X-BH bulkhead D-SUB 9,left\n", encoding="utf-8")
-    cfg = yaml.safe_load((d / "schemagen.yml").read_text())
+    cfg = yaml.safe_load((d / "schemagen.yml").read_text(encoding="utf-8"))
     cfg["source"] = {"path": "w.csv", "columns": {"id": "Wire ID"}}
-    (d / "schemagen.yml").write_text(yaml.safe_dump(cfg))
+    (d / "schemagen.yml").write_text(yaml.safe_dump(cfg), encoding="utf-8")
     with pytest.raises(ModelError) as e:
         load(d)
     msg = str(e.value)
@@ -188,7 +257,8 @@ def test_explicit_sides_and_guess_warning(tmp_path):
     assert [(h.name, h.side, h.guessed) for h in x.halves] == [("Cabin half", "near", False), ("Engine half", "far", False)]
     assert not L.warnings
     d = copy_project(DEMO, tmp_path / "d")
-    cfg = yaml.safe_load((d / "schemagen.yml").read_text()); cfg.pop("sides"); (d / "schemagen.yml").write_text(yaml.safe_dump(cfg))
+    cfg = yaml.safe_load((d / "schemagen.yml").read_text(encoding="utf-8")); cfg.pop("sides")
+    (d / "schemagen.yml").write_text(yaml.safe_dump(cfg), encoding="utf-8")
     L = load(d)
     assert any("half 'Engine half' guessed as far" in w for w in L.warnings)
 

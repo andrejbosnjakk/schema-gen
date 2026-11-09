@@ -33,6 +33,8 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const pinId = (e: End) => `${e[0]}/${e[1]}/${e[2]}`;
+/** A display name with its code when the name does not contain it; the code when there is none. */
+export const withCode = (name: string, id: string) => (!name ? id : name.includes(id) ? name : `${name} (${id})`);
 
 const TYPE_ORDER: Record<string, number> = { component: 0, connector: 1, harness: 2, conductor: 3, net: 4, part: 5, pin: 6 };
 
@@ -68,6 +70,10 @@ export class Derived {
     for (const p of new Set(ix.components.map((c) => c.part).filter(Boolean))) add("part", p, `part ${p}`, "part library");
     this.search = s;
   }
+
+  /** Display name of a component (code when the project gives none). */
+  dn(id: string): string { return withCode(this.comp.get(id)?.name ?? "", id); }
+  pinText(e: End): string { return [this.dn(e[0]), e[1], e[2]].filter(Boolean).join(" "); }
 
   find(q: string, limit = 50): SearchEntry[] {
     const t = q.trim().toLowerCase();

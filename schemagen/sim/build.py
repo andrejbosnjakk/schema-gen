@@ -10,6 +10,7 @@ outputs are current-limited sources, loads come from part data (or, marked assum
 from __future__ import annotations
 
 import fnmatch
+import re
 from collections import Counter, defaultdict
 from dataclasses import dataclass, field
 from typing import Any
@@ -53,6 +54,7 @@ class SimModel:
     curves: dict[str, tuple[list[tuple[float, float]], str]] = field(default_factory=dict)  # protective id -> (curve, provenance)
     rating: dict[str, float] = field(default_factory=dict)
     interrupt: dict[str, tuple[float, str]] = field(default_factory=dict)
+    missing: list[str] = field(default_factory=list)                  # why the circuit cannot be simulated (empty: it can)
 
     def name(self, key: NodeKey) -> str:
         return REF if key == self.ref_node else "|".join(key)
@@ -152,6 +154,7 @@ def build(m: Model, cfg: Any = None, measured: dict[str, float] | None = None, s
         return sorted(out, key=lambda t: t.key())
 
     pds = {p.id: p for p in m.protective_devices}
+    infer: dict[str, Any] = dict(d.get("sources") or {}) if d.get("infer") else {}
     counts: Counter[str] = Counter()
     for comp in m.components:
         p = ctx.part_of(comp.raw)
@@ -198,6 +201,10 @@ def build(m: Model, cfg: Any = None, measured: dict[str, float] | None = None, s
                 if st in ("energized", "energised", "on"): c.off.update(nc)
                 elif st in ("de-energized", "de-energised", "off"): c.off.update(no)
                 else: c.relays.append(Relay(comp.id, cn, p.coil.v_pickup, p.coil.v_dropout, no, nc))
+        if infer and st not in ("off", "failed", "fail") and not (p and (p.source or p.supply_out)) and comp.raw in by_dev \
+                and comp.kind not in ("relay", "switch", "breaker", "fuse", "bus", "splice", "harness"):
+            spec = next((v for k, v in infer.items() if re.search(k, comp.id) or re.search(k, comp.raw)), None)
+            if spec: _inferred_source(sm, comp, dict(spec), terms, N)
         if p and st not in ("off", "failed", "fail") and comp.raw in by_dev:
             _sources_and_loads(sm, comp, p, terms, N, used)
         elif p is None and comp.kind in ("device", "load", "sensor", "controller") and st not in ("off",):
@@ -215,7 +222,42 @@ def build(m: Model, cfg: Any = None, measured: dict[str, float] | None = None, s
     for ld in sm.loads:
         lc = ctx.comp_by_id.get(ld.comp)
         if lc and setting(lc, sets) == "off": c.off.add(ld.element)
+    hint = "" if d.get("infer") else " (schemagen sim --infer assumes them from the wire list)"
+    if not sm.sources: sm.missing.append("no source: no battery or DC/DC part data (source: v_oc / v_out)" + hint)
+    if not sm.loads: sm.missing.append("no load: no load part data and no conductor with a current value")
     return sm
+
+
+def nominal_v(bus: str) -> float | None:
+    """Nominal voltage from a bus name such as "14 V" or "28VDC"."""
+    x = re.search(r"(\d+(?:\.\d+)?)\s*V", bus or "")
+    return float(x.group(1)) if x else None
+
+
+def _inferred_source(sm: SimModel, comp: Component, spec: dict[str, Any], terms: Any, N: Any) -> None:
+    """--infer: a battery or DC/DC without part data, matched by sim.sources; voltage from the spec or the bus names
+    of its conductors (the highest nominal voltage is the output). Every value is marked assumed."""
+    ctx, c, net = sm.ctx, sm.circuit, sm.ctx.net
+    ends = [(i, e, ctx.m.conductors[i]) for i, e in net.by_dev[comp.raw]]
+    gnd = terms(comp, ("ground",)) or [cd.end(e) for i, e, cd in ends if cd.kind == "GND"]
+    minus = N(net.node_of(gnd[0])) if gnd else REF
+    for g in gnd[1:]: c.merge(N(net.node_of(g)), minus)
+    volts = {i: nominal_v(cd.bus) for i, e, cd in ends if cd.kind != "GND"}
+    kind = str(spec.get("kind", "battery"))
+    v = spec.get("v_oc" if kind == "battery" else "v_out") or (nominal_v(comp.name) if kind == "battery" else None) \
+        or max((x for x in volts.values() if x), default=None)
+    if v is None: return
+    plus = [net.node(i, e) for i, e, cd in ends if cd.kind != "GND" and volts[i] in (None, float(v))]
+    if not plus: return
+    pn = N(plus[0])
+    for x in plus[1:]: c.merge(N(x), pn)
+    nm = f"src:{comp.id}"
+    r = float(spec.get("r_int" if kind == "battery" else "r_out", 0.01))
+    c.vsrc(nm, c._n(pn), c._n(minus), float(v), r, spec.get("i_limit"), f"component:{comp.id}")
+    sm.sources[nm] = comp.id
+    sm.assumptions.append(Assumption(f"{comp.id} {kind}", "assumed", f"inferred: {float(v):g} V behind {r:g} ohm"
+                                     + (f", limit {spec['i_limit']} A" if spec.get("i_limit") else "")
+                                     + ("" if gnd else ", returns through the reference (chassis)")))
 
 
 def _sources_and_loads(sm: SimModel, comp: Component, p: Part, terms: Any, N: Any, used: Any) -> None:

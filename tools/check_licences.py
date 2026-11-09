@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import re
+import shutil
 import subprocess
 import sys
 from importlib import metadata
@@ -56,7 +57,7 @@ def python_closure() -> tuple[dict[str, str], dict[str, str]]:
 def npm_licences() -> dict[str, str]:
     fe = ROOT / "frontend"
     if not (fe / "node_modules").exists(): return {}
-    r = subprocess.run(["npm", "ls", "--omit=dev", "--all", "--json"], cwd=fe, capture_output=True, text=True)
+    r = subprocess.run([shutil.which("npm") or "npm", "ls", "--omit=dev", "--all", "--json"], cwd=fe, capture_output=True, text=True)
     tree = json.loads(r.stdout or "{}")
     out: dict[str, str] = {}
 

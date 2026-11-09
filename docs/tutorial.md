@@ -126,11 +126,15 @@ error   gauge-protection   L04: 22 AWG is protected by CB-2 10 A; at most 5 A pe
 
 A 10 A breaker may not protect 22 AWG wire. Every number like this comes from a cited table in
 `schemagen/core/data/` and can be overridden per project (`tables:` in schemagen.yml). Use a 5 A breaker: change the
-device string in the two rows that name it.
+device string in the two rows that name it (find and replace in `wires.csv`, in any editor):
+
+<!-- edit: wires.csv -->
+```text
+CB-2 10 A  ->  CB-2 5 A
+```
 
 <!-- run -->
 ```bash
-sed -i.bak 's/CB-2 10 A/CB-2 5 A/' wires.csv && rm wires.csv.bak
 schemagen check .
 ```
 
@@ -183,9 +187,14 @@ The lamp gets power, but 10.5 m of 22 AWG wire there and back drops more than th
 the lamp circuit (both halves of the bulkhead pins, so the gauge does not change across the connector), check again,
 and run the scenario and the fault sweep:
 
+<!-- edit: wires.csv -->
+```text
+,14 V,22,  ->  ,14 V,20,
+,GND,22,  ->  ,GND,20,
+```
+
 <!-- run -->
 ```bash
-sed -i.bak 's/,14 V,22,/,14 V,20,/; s/,GND,22,/,GND,20,/' wires.csv && rm wires.csv.bak
 schemagen check .
 schemagen sim . --faults all
 ```

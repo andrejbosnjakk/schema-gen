@@ -1,21 +1,32 @@
-"""Interface drawings: one WireViz drawing per item (device, breaker, bus or splice) for the conductors no harness
-drawing reaches, so every conductor is in at least one rendered view. Items are picked greedily: the one with the
-most undrawn conductors first (devices before breakers before buses before splices on a tie)."""
+"""Interface drawings: one WireViz drawing per item (device, breaker or bus) that has a conductor no harness drawing
+reaches. An item's drawing shows every conductor on it (its grounds too, though the ground bus drawing has them as
+well); a conductor drawn more than once is labelled with the other drawings. Conductors still undrawn after that
+(splice to splice, harness to harness) go on splice drawings picked greedily, the one with the most first."""
 from __future__ import annotations
 
 import re
 from collections import defaultdict
 from typing import Any
 
+from ..core.classes import connector_size
 from .harness import Drawing, clean_func, pv, safe
 
 PRIORITY = {"device": 0, "breaker": 1, "bus": 2, "splice": 3}
 
 
 def pick_items(pr: Any, wires: list[dict[str, Any]]) -> list[tuple[str, list[dict[str, Any]]]]:
-    """[(item device string, its conductors)] covering every wire given (greedy set cover)."""
-    left = {w["_i"]: w for w in wires}
-    out = []
+    """[(item device string, its conductors)] covering every wire given: each item on one of them with all of its
+    conductors, then splices (greedy set cover) for the rest."""
+    on: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for w in pr.wires:
+        for d in dict.fromkeys((w["p1"], w["p2"])): on[d].append(w)
+    mine: dict[str, int] = defaultdict(int)
+    for w in wires:
+        for d in dict.fromkeys((w["p1"], w["p2"])):
+            if pr.role(d) not in ("harness", "splice"): mine[d] += 1
+    out = [(d, on[d]) for d in sorted(mine, key=lambda d: (-mine[d], PRIORITY.get(pr.role(d), 0), d))]
+    drawn = {w["_i"] for _, ws in out for w in ws}
+    left = {w["_i"]: w for w in wires if w["_i"] not in drawn}
     while left:
         cnt: dict[str, list[dict[str, Any]]] = defaultdict(list)
         for w in left.values():
@@ -36,10 +47,16 @@ def _pid(pr: Any, dev: str, c: str, p: str) -> str:
     return p
 
 
-def build_item(pr: Any, net: Any, cards: Any, dev: str, wires: list[dict[str, Any]]) -> Drawing:
-    """Drawing of one item with the given conductors: the item in the middle, each far item with its own bundle."""
-    code = pr.code(dev) or re.sub(r"\W+", "_", pr.strip(dev))[:24].strip("_")
+def _code(pr: Any, dev: str) -> str:
+    return pr.code(dev) or re.sub(r"\W+", "_", pr.strip(dev))[:24].strip("_")
+
+
+def build_item(pr: Any, net: Any, cards: Any, dev: str, wires: list[dict[str, Any]], also: dict[int, list[str]] | None = None) -> Drawing:
+    """Drawing of one item with the given conductors: the item in the middle, each far item with its own bundle.
+    `also`: conductor index -> the other drawings it is on (written after its label)."""
+    code = _code(pr, dev)
     name = f"IF-{code}"
+    also = also or {}
     simple = pr.role(dev) in ("splice", "bus")
     connectors: dict[str, Any] = {}
     me = code
@@ -52,6 +69,12 @@ def build_item(pr: Any, net: Any, cards: Any, dev: str, wires: list[dict[str, An
         if not simple:
             pid = _pid(pr, dev, w[f"p{e}c"], w[f"p{e}p"])
             mypins.setdefault(pid, cards.pin(pr.code(dev), w[f"p{e}c"], w[f"p{e}p"]) or clean_func(w["func"], 30) or clean_func(w["name"], 30))
+    if not simple:  # the real size when the name says it ("D-sub 25"): unused pins listed as spare
+        conns = {w[f"p{e}c"] for w, e, f, _ in ends}
+        for c in sorted(conns):
+            n = connector_size(c) or (connector_size(pr.device(dev)) if len(conns) == 1 else None)
+            for k in range(1, (n or 0) + 1): mypins.setdefault(_pid(pr, dev, c, str(k)), "spare")
+            if n: mypins = dict(sorted(mypins.items(), key=lambda kv: [int(x) if x.isdigit() else x for x in re.split(r"(\d+)", kv[0])]))
     connectors[me] = dict(style="simple", type=safe(f"{me}: {pr.device(dev)}")) if simple else \
         dict(type=safe(pr.device(dev)), pins=[pv(p) for p in mypins], pinlabels=[safe(v) for v in mypins.values()])
     des: dict[str, str] = {}
@@ -92,7 +115,8 @@ def build_item(pr: Any, net: Any, cards: Any, dev: str, wires: list[dict[str, An
         lst.sort(key=lambda t: t[0]["label"])
         cd = f"{me}-W{k:02d}"
         cab: dict[str, Any] = dict(category="bundle", colors=[t[0]["color"] for t in lst],
-                                   wirelabels=[t[0]["label"] + ("" if t[0]["gauge"] == "TBD" else f" · {t[0]['gauge'].split()[0]}") for t in lst])
+                                   wirelabels=[t[0]["label"] + ("" if t[0]["gauge"] == "TBD" else f" · {t[0]['gauge'].split()[0]}")
+                                               + _also([x for x in also.get(t[0]["_i"], []) if x != name]) for t in lst])
         gauges = {t[0]["gauge"] for t in lst}
         if len(gauges) == 1 and "TBD" not in gauges: cab["gauge"] = gauges.pop()
         if all(t[0]["kind"] == "CAN" for t in lst): cab.update(type="twisted pair", shield=True)
@@ -111,7 +135,16 @@ def build_item(pr: Any, net: Any, cards: Any, dev: str, wires: list[dict[str, An
     return Drawing(name, code, me, pr.device(dev), doc, snap, [], footnotes, "")
 
 
-def build_all(pr: Any, net: Any, cards: Any, covered: set[int]) -> list[Drawing]:
-    """Interface drawings for every conductor whose index is not in `covered`."""
-    left = [w for w in pr.wires if w["_i"] not in covered]
-    return [build_item(pr, net, cards, d, ws) for d, ws in pick_items(pr, left)]
+def _also(names: list[str]) -> str:
+    if not names: return ""
+    return f" (also on {', '.join(names[:2])}{f' +{len(names) - 2}' if len(names) > 2 else ''})"
+
+
+def build_all(pr: Any, net: Any, cards: Any, covered: dict[int, list[str]]) -> list[Drawing]:
+    """Interface drawings for every conductor whose index is not in `covered` (index -> the harness drawings it is on)."""
+    items = pick_items(pr, [w for w in pr.wires if w["_i"] not in covered])
+    also: dict[int, list[str]] = defaultdict(list)
+    for i, names in covered.items(): also[i] += names
+    for d, ws in items:
+        for w in ws: also[w["_i"]].append(f"IF-{_code(pr, d)}")
+    return [build_item(pr, net, cards, d, ws, also) for d, ws in items]

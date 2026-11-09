@@ -50,11 +50,14 @@ def draw(cfg_path, harnesses=(), all_=False, no_render=False, out=None, split=No
         sets.append((full, parts))
         print(f"{H}: {len(full.ends)} wires, drawings: {', '.join(d.harness for d in parts)}, {len(full.checks)} check finding(s)")
     if interfaces:
-        covered = {w["_i"] for d in rendered for w, *_ in d.ends}
+        covered: dict[int, list[str]] = {}
+        for d in rendered:
+            for w, *_ in d.ends: covered.setdefault(w["_i"], []).append(d.harness)
         ifs = interface.build_all(pr, net, cards, covered)
         for d in ifs:
             write_yaml(cfg.out / f"{d.harness}.yml", d.doc); rendered.append(d); sets.append((d, [d]))
-        if ifs: print(f"interface drawings: {len(ifs)} for {sum(len(d.ends) for d in ifs)} wires outside the harness drawings")
+        if ifs: print(f"interface drawings: {len(ifs)} for {len(pr.wires) - len(covered)} wires outside the harness drawings "
+                      f"(each item with all its wires)")
     if not no_render:
         render_many([cfg.out / f"{d.harness}.yml" for d in rendered], cfg.out)
         for d in rendered: add_footnotes(cfg.out / f"{d.harness}.html", d)

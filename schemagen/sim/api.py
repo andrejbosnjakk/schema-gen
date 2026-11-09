@@ -30,10 +30,11 @@ class OpPoint:
     relays: dict[str, bool]
     assumptions: list[Assumption]
     expectations: list[dict[str, Any]] = field(default_factory=list)
+    missing: list[str] = field(default_factory=list)  # what the circuit lacks to be simulated at all
 
     @property
     def ok(self) -> bool:
-        return self.converged and all(e["ok"] for e in self.expectations)
+        return self.converged and not self.missing and all(e["ok"] for e in self.expectations)
 
 
 def _summarise(sm: SimModel, r: Result, name: str, dt: float) -> OpPoint:
@@ -70,7 +71,7 @@ def _summarise(sm: SimModel, r: Result, name: str, dt: float) -> OpPoint:
                  off=s.name in c.off) for s in c.src]
     buses = [dict(id=b.id, voltage_V=r.v.get(sm.name((b.raw,)), 0.0)) for b in m.buses]
     return OpPoint(name, r.converged, r.message, r.iterations, r.residual, dt, r.v, cond, prot, loads, srcs, buses, r.relay_states,
-                   sm.assumptions)
+                   sm.assumptions, missing=list(sm.missing))
 
 
 def _drop(r: Result, node: str, adj: dict[str, list[str]], targets: set[str]) -> float:

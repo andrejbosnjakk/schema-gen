@@ -28,6 +28,17 @@ def classify(cid: str, bus: str, func: str, label: str, cfg: Any, explicit: str 
     return ("CAN" if k.startswith("CAN") else k), (k if k.startswith("CAN") else ""), colour
 
 
+_SIZE = re.compile(r"\bD-?sub[ -]?(\d+)\b|\bD[A-E]-?(\d+)\b|\b(\d+)[ -]?(?:pin|way|pole)s?\b", re.I)
+
+
+def connector_size(*texts: str) -> int | None:
+    """Pin count written in a connector or device name ("D-sub 25", "DB25", "DE-9", "12-pin", "4 way"), else None."""
+    for t in texts:
+        m = _SIZE.search(t or "")
+        if m: return int(next(g for g in m.groups() if g))
+    return None
+
+
 def gauge(a: Any) -> str:
     m = re.match(r"\s*(\d+)", str(a))
     return f"{m.group(1)} AWG" if m else "TBD"

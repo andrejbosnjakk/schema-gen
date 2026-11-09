@@ -83,12 +83,27 @@ def r_label_reused(ctx: Ctx) -> Iterator[tuple[str, list[str], str]]:
             "printed labels are never reused: assign a new label"
 
 
+@rule("readable-cell", "warning", "A readable-sheet cell could not be read")
+def r_readable_cell(ctx: Ctx) -> Iterator[tuple[str, list[str], str]]:
+    for c in ctx.m.conductors:
+        for u in (c.extra.get("readable") or {}).get("unparsed", []):
+            yield (f"{u['sheet']}, row {u['row']}, column '{u['column']}': cannot read '{u['text']}' as a connector / pin",
+                   [f"conductor:{c.id}"], "write it as in docs/readable.md, e.g. 'pin 3', 'X1.A', 'J2, pin 5', 'line side'")
+
+
 # ---------------------------------------------------------------- direction
 @rule("direction", "warning", "Conductor runs against the direction convention")
 def r_direction(ctx: Ctx) -> Iterator[tuple[str, list[str], str]]:
     for f in direction.analyse(ctx):
         yield f"{f.label} ({f.id}) runs against the convention: {f.reason}", [f"conductor:{f.id}"], \
             "run `schemagen fix direction` to swap its ends (the label stays)"
+
+
+@rule("direction-unknown", "info", "Signal wires whose direction cannot be told")
+def r_direction_unknown(ctx: Ctx) -> Iterator[tuple[str, list[str], str]]:
+    idx = direction.unknown(ctx)
+    if idx: yield f"{len(idx)} signal wire(s) have no known direction", [cref(ctx, i) for i in idx], \
+        "add pin types (signal_in / signal_out) to the part data, or direction.senders / receivers patterns"
 
 
 # ---------------------------------------------------------------- protection and contacts
@@ -208,18 +223,21 @@ def r_required(ctx: Ctx) -> Iterator[tuple[str, list[str], str]]:
 def r_can_term(ctx: Ctx) -> Iterator[tuple[str, list[str], str]]:
     need = int(tables.table("can", ctx.cfg)["terminators"])
     for b in ctx.can_buses:
-        if b.unknown and len(b.terminators) < need: continue  # reported by can-part-data
+        if b.unknown and not b.terminators: continue  # nothing known: an unknown node may be terminated inside (can-part-data)
         if len(b.terminators) != need:
+            inside = " (or give an internally terminated node a card with term: true)" if b.unknown else ""
             yield (f"CAN_{b.polarity} bus {b.net_id[4:]} has {len(b.terminators)} termination(s), expected {need}",
-                   [b.net_id] + [f"component:{ctx.comp[t[0]].id}" for t in b.terminators], "terminate the two ends of the bus, nothing in between")
+                   [b.net_id] + [f"component:{ctx.comp[t[0]].id}" for t in b.terminators], "terminate the two ends of the bus, nothing in between" + inside)
 
 
 @rule("can-part-data", "info", "CAN node without part data")
 def r_can_unknown(ctx: Ctx) -> Iterator[tuple[str, list[str], str]]:
     for b in ctx.can_buses:
-        if b.unknown:
-            yield (f"CAN_{b.polarity} bus {b.net_id[4:]}: no CAN pin data for {', '.join(b.unknown)}, so its terminations cannot be checked",
-                   [b.net_id] + [f"component:{u}" for u in b.unknown], "add a card with can_h/can_l pins (and term: true where terminated)")
+        if b.unknown or b.inferred_terms:
+            terms = f"; terminations taken from the name: {', '.join(b.inferred_terms)}" if b.inferred_terms else ""
+            yield (f"CAN_{b.polarity} bus {b.net_id[4:]}: no CAN pin data for {', '.join(b.unknown) or 'its terminations'}, "
+                   f"nodes inferred from their stub conductors{terms}",
+                   [b.net_id] + [f"component:{u}" for u in b.unknown + b.inferred_terms], "add a card with can_h/can_l pins (and term: true where terminated)")
 
 
 @rule("can-nodes", "warning", "CAN node count out of range")
@@ -232,11 +250,18 @@ def r_can_nodes(ctx: Ctx) -> Iterator[tuple[str, list[str], str]]:
                 "split the bus or add the missing nodes"
 
 
+def max_stub(t: dict[str, Any]) -> float:
+    """max_stub_m when the project sets it, else from the bit rate (the entry for the highest rate not above it)."""
+    if t.get("max_stub_m") is not None: return float(t["max_stub_m"])
+    br, by = float(t["bitrate_kbit"]), {float(k): float(v) for k, v in t["max_stub_m_by_bitrate"].items()}
+    return by[max([k for k in by if k <= br], default=min(by))]
+
+
 @rule("can-stub", "warning", "CAN stub too long")
 def r_can_stub(ctx: Ctx) -> Iterator[tuple[str, list[str], str]]:
     from collections import deque
     t = tables.table("can", ctx.cfg)
-    lim = float(t["max_stub_m"])
+    lim = max_stub(t)
     measured = getattr(ctx, "measured", None) or {}
     net = ctx.net
     for b in ctx.can_buses:
@@ -269,7 +294,8 @@ def r_can_stub(ctx: Ctx) -> Iterator[tuple[str, list[str], str]]:
                     q2.append(y)
             if tot is not None and tot > lim:
                 comp = ctx.comp[node[0]].id
-                yield f"CAN_{b.polarity} stub to {comp} is {tot:.2f} m, at most {lim:g} m ({t['source']})", [b.net_id, f"component:{comp}"], \
+                yield f"CAN_{b.polarity} stub to {comp} is {tot:.2f} m, at most {lim:g} m at {t['bitrate_kbit']:g} kbit/s ({t['stub_source']})", \
+                    [b.net_id, f"component:{comp}"], \
                     "move the splice closer to the node or run the bus through the node"
 
 

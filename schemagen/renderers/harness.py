@@ -12,6 +12,7 @@ import re
 from collections import defaultdict
 from dataclasses import dataclass, field
 
+from ..core.classes import connector_size
 from .checks import harness_checks
 
 PARTS = {"side": ("near", "far"), "function": ("power", "can", "signal")}
@@ -85,8 +86,7 @@ def build(pr, net, cards, H, lengths=None, part=None):
     pins, halves = defaultdict(lambda: {"near": [], "far": []}), {"near": set(), "far": set()}
     for w, e, f, sd in all_ends:
         halves[sd].add(w[f"p{e}c"]); pins[w[f"p{e}p"]][sd].append(w)
-    m = re.search(r"D-SUB (\d+)", raw)
-    npins = int(m.group(1)) if m else max([int(p) for p in pins if p.isdigit()] or [0])
+    npins = connector_size(raw, *halves["near"], *halves["far"]) or max([int(p) for p in pins if p.isdigit()] or [0])
     pinlist = [str(i) for i in range(1, npins + 1)] + sorted(p for p in pins if not p.isdigit())
     used_here = {w[f"p{e}p"] for w, e, f, sd in ends}
     plabels = []

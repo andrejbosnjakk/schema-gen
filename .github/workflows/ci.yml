@@ -2,15 +2,26 @@ name: ci
 on: [push, pull_request]
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python: ["3.12", "3.14"]
+    defaults:
+      run:
+        shell: bash
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
-      - run: sudo apt-get update && sudo apt-get install -y graphviz ngspice
+          python-version: ${{ matrix.python }}
+      - if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y graphviz ngspice
+      - if: runner.os == 'Windows'
+        run: choco install graphviz -y --no-progress
       - run: pip install -e ".[dev]"
       - run: ruff check schemagen tests benchmarks tools frontend/e2e
       - run: python -m mypy schemagen
@@ -20,26 +31,38 @@ jobs:
       - run: schemagen check examples/demo && schemagen sim examples/demo --faults all
       - uses: actions/upload-artifact@v4
         with:
-          name: demo-drawings
+          name: demo-drawings-${{ matrix.os }}-${{ matrix.python }}
           path: examples/demo/out/
 
   app:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python: ["3.12", "3.14"]
+    defaults:
+      run:
+        shell: bash
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: ${{ matrix.python }}
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-      - run: sudo apt-get update && sudo apt-get install -y graphviz
+      - if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y graphviz
+      - if: runner.os == 'Windows'
+        run: choco install graphviz -y --no-progress
       - run: pip install -e ".[dev]"
       - run: npm ci
         working-directory: frontend
       - run: npm run build
         working-directory: frontend
       - name: built assets are committed and up to date
+        if: runner.os == 'Linux'
         run: git diff --stat --exit-code schemagen/app/static
       - name: licences (Python and npm runtime dependencies)
         run: python tools/check_licences.py
@@ -52,18 +75,26 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: e2e-results
+          name: e2e-results-${{ matrix.os }}-${{ matrix.python }}
           path: |
             frontend/e2e-results/
             frontend/test-results/
 
   wheel:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python: ["3.12", "3.14"]
+    defaults:
+      run:
+        shell: bash
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: ${{ matrix.python }}
       - uses: actions/setup-node@v4
         with:
           node-version: "22"

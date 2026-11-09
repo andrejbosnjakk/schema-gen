@@ -182,9 +182,9 @@ def tiny_project(d, cards=CARDS):
             ("W5", "SP-1 splice", "", "", "LD", "P", "1", "14 V"), ("W6", "LD", "P", "2", "GNDB", "Stud", "", "GND"),
             ("W7", "GNDB", "Stud", "", "BAT", "-", "", "GND")]
     R = [dict(id=i, p1=a, p1c=ac, p1p=ap, p2=b, p2c=bc, p2p=bp, func="x", bus=bus, awg="10", length=1.0) for i, a, ac, ap, b, bc, bp, bus in rows]
-    (d / "wirelist" / "ss01_t.py").write_text(f"R = {R!r}\nP = {[dict(id='CB-M', rating=30), dict(id='CB-L', rating=5)]!r}\n")
-    for k, v in cards.items(): (d / "cards" / f"{k}.md").write_text(f"```yaml schemagen\n{yaml.safe_dump(v)}```\n")
-    (d / "schemagen.yml").write_text(yaml.safe_dump(dict(buses=["GNDB", "BB1"], breaker_prefixes=["CB-"], sim=dict(contact_resistance_by_awg={}))))
+    (d / "wirelist" / "ss01_t.py").write_text(f"R = {R!r}\nP = {[dict(id='CB-M', rating=30), dict(id='CB-L', rating=5)]!r}\n", encoding="utf-8")
+    for k, v in cards.items(): (d / "cards" / f"{k}.md").write_text(f"```yaml schemagen\n{yaml.safe_dump(v)}```\n", encoding="utf-8")
+    (d / "schemagen.yml").write_text(yaml.safe_dump(dict(buses=["GNDB", "BB1"], breaker_prefixes=["CB-"], sim=dict(contact_resistance_by_awg={}))), encoding="utf-8")
     return d
 
 
@@ -233,13 +233,13 @@ def test_kat_wire_survival(tmp_path):
 def test_scenario_expectations_and_cli_exit(tmp_path):
     d = tiny_project(tmp_path / "p")
     (d / "scenarios").mkdir()
-    (d / "scenarios" / "ok.yml").write_text(yaml.safe_dump(dict(scenario="ok", expect=dict(powered=["LD"], no_trip=True, max_drop_V={"LD": 0.2}))))
+    (d / "scenarios" / "ok.yml").write_text(yaml.safe_dump(dict(scenario="ok", expect=dict(powered=["LD"], no_trip=True, max_drop_V={"LD": 0.2}))), encoding="utf-8")
     assert main(["sim", str(d)]) == 0
-    (d / "scenarios" / "bad.yml").write_text(yaml.safe_dump(dict(scenario="bad", set={"CB-L": "open"}, expect=dict(powered=["LD"]))))
+    (d / "scenarios" / "bad.yml").write_text(yaml.safe_dump(dict(scenario="bad", set={"CB-L": "open"}, expect=dict(powered=["LD"]))), encoding="utf-8")
     assert main(["sim", str(d)]) == 1
-    (d / "scenarios" / "bad.yml").write_text(yaml.safe_dump(dict(scenario="short", faults=[{"short": "W5"}], expect=dict(no_trip=True))))
+    (d / "scenarios" / "bad.yml").write_text(yaml.safe_dump(dict(scenario="short", faults=[{"short": "W5"}], expect=dict(no_trip=True))), encoding="utf-8")
     assert main(["sim", str(d)]) == 1
-    rep = (d / "out" / "sim" / "report.html").read_text()
+    rep = (d / "out" / "sim" / "report.html").read_text(encoding="utf-8")
     assert "Assumptions" in rep and "short" in rep
 
 
@@ -261,7 +261,7 @@ def test_synthetic_scenarios_kirchhoff_and_newton(synth_projects):
         p = synth_projects / f"s{n}"
         L = load(p)
         for f in sorted((p / "scenarios").glob("*.yml")):
-            op = api.operating_point(L.model, L.cfg, yaml.safe_load(f.read_text()), measured_lengths(L.cfg))
+            op = api.operating_point(L.model, L.cfg, yaml.safe_load(f.read_text(encoding="utf-8")), measured_lengths(L.cfg))
             assert op.converged and op.iterations <= 50 and op.residual <= 1e-9, (n, f.name, op.message, op.residual)
             assert op.ok, [e for e in op.expectations if not e["ok"]]
             assert any(a.provenance == "measured" or "measured" in a.note for a in op.assumptions)
@@ -271,7 +271,7 @@ def test_synthetic_scenarios_kirchhoff_and_newton(synth_projects):
 def test_sim_speed(synth_projects):
     for n, lim in ((1000, 0.2), (5000, 2.0)):
         L = load(synth_projects / f"s{n}")
-        sc = yaml.safe_load((synth_projects / f"s{n}" / "scenarios" / "normal.yml").read_text())
+        sc = yaml.safe_load((synth_projects / f"s{n}" / "scenarios" / "normal.yml").read_text(encoding="utf-8"))
         api.operating_point(L.model, L.cfg, sc)  # warm caches (imports)
         t = time.perf_counter(); api.operating_point(L.model, L.cfg, sc, measured_lengths(L.cfg)); dt = time.perf_counter() - t
         assert dt <= lim, (n, dt)
@@ -311,3 +311,18 @@ def test_ngspice_cross_check():
         assert len(ref) >= 2
         for k, v in ref.items():
             if k in mine and abs(v) > 1e-6: assert abs(mine[k] - v) <= 0.005 * abs(v), (k, mine[k], v)
+
+
+def test_no_part_data_is_not_a_pass_and_infer_assumes_it(synth_projects, tmp_path, capsys):
+    d = tmp_path / "bare"
+    shutil.copytree(synth_projects / "s1000", d, ignore=shutil.ignore_patterns("out", "cards"))
+    assert main(["sim", str(d), "--faults", "all"]) == 2  # 0.5 printed "pass" with 0 nodes here
+    assert "cannot simulate this project:" in capsys.readouterr().out
+    L = load(d)
+    L.cfg.sim = {**L.cfg.sim, "infer": True}
+    op = api.operating_point(L.model, L.cfg)
+    assert op.converged and not op.missing and {s["component"] for s in op.sources} >= {"BAT"}
+    assert all(a.provenance == "assumed" for a in op.assumptions if "inferred" in a.note)
+    assert any(ld["powered"] for ld in op.loads)
+    assert len(api.fault_sweep(L.model, L.cfg).rows) > 0
+    assert main(["sim", str(d), "--infer"]) in (0, 1)  # simulated: pass or fail on the scenario expectations
