@@ -17,6 +17,8 @@ async function search(page: Page, q: string) {
 }
 
 async function row(page: Page, label: string) { return page.locator(`tr:has(th a:text-is("${label}"))`); }
+/** The row with its editors: only the selected row has them. */
+async function editRow(page: Page, label: string) { const r = await row(page, label); await r.getByRole("button", { name: `edit ${label}` }).click(); return r; }
 
 // ---------------------------------------------------------------- cold start first, while the machine is idle
 test("cold start to interactive on synthetic 5k", async ({ page }) => {
@@ -75,7 +77,7 @@ test("open object: a pin page shows links, issues and history", async ({ page })
 
 test("edit and save writes a change set; undo removes it", async ({ page, request }) => {
   await page.goto(DEMO);
-  const r = await row(page, "L04");
+  const r = await editRow(page, "L04");
   await r.getByLabel("gauge of L04").selectOption("18");
   await expect(page.getByRole("button", { name: "Save (1)" })).toBeEnabled();
   await page.getByRole("button", { name: /^Save/ }).click();
@@ -84,13 +86,48 @@ test("edit and save writes a change set; undo removes it", async ({ page, reques
   expect(ix.project.changes.length).toBe(1);
   expect(ix.conductors.find((c: { id: string }) => c.id === "PWR-ECU-A").gauge).toBe("18");
   await page.reload();
-  await expect((await row(page, "L04")).getByLabel("gauge of L04")).toHaveValue("18");
+  await expect((await editRow(page, "L04")).getByLabel("gauge of L04")).toHaveValue("18");
   // undo
   await page.getByRole("button", { name: "Undo last change set" }).click();
   await expect(page.getByRole("status").filter({ hasText: "undone" })).toBeVisible();
   await expect((await row(page, "L04")).getByLabel("gauge of L04")).toHaveValue("20");
   ix = await (await request.get(DEMO + "api/index")).json();
   expect(ix.project.changes.length).toBe(0);
+});
+
+test("workspace shell: rail, navigator, inspector, problems, Omnibar commands, hotkeys", async ({ page }) => {
+  await page.goto(DEMO);
+  await expect(page.getByRole("navigation", { name: "Views" }).getByRole("link")).toHaveCount(6);
+  await expect(page.getByRole("region", { name: "Problems" })).toBeVisible();
+  // plain text table: editors only on the selected row
+  await expect(page.locator("tr[data-id] select")).toHaveCount(0);
+  await (await row(page, "L09")).locator("td").nth(3).click();
+  await expect(page.locator("tr[data-id] select")).toHaveCount(3);
+  await expect(page.getByRole("complementary", { name: "Inspector" })).toContainText("L09");
+  // navigator: a component selects into the inspector
+  const nav = page.getByRole("complementary", { name: "Navigator" });
+  await nav.getByRole("button", { name: /^Devices/ }).click();
+  await nav.getByRole("button", { name: /ECU engine control unit/ }).click();
+  await expect(page.getByRole("complementary", { name: "Inspector" }).getByRole("heading", { level: 3 })).toContainText("ECU");
+  for (const theme of ["light", "dark"]) {  // the open navigator, the inspector and a row with its editors
+    await page.getByLabel("Theme").selectOption(theme);
+    const bad = (await new AxeBuilder({ page }).analyze()).violations.filter((v) => v.impact === "serious" || v.impact === "critical");
+    expect(bad.map((v) => `${v.id}: ${v.nodes.slice(0, 2).map((n) => n.target).join(" ")}`), `shell ${theme}`).toEqual([]);
+  }
+  await page.getByLabel("Theme").selectOption("light");
+  await page.setViewportSize({ width: 1440, height: 860 });
+  await page.getByTestId("wire-scroll").evaluate((e) => { e.scrollLeft = 0; });
+  await page.screenshot({ path: "e2e-results/shell.png" });
+  // Omnibar commands and hotkeys
+  const res = await search(page, "> issues");
+  await res.getByRole("option").first().click();
+  await expect(page).toHaveURL(/#\/issues$/);
+  await page.keyboard.press("Alt+1");
+  await expect(page).toHaveURL(/#\/table$/);
+  await page.keyboard.press("BracketRight");
+  await expect(page.getByRole("complementary", { name: "Inspector" })).toHaveCount(0);
+  await page.keyboard.press("BracketRight");
+  await expect(page.getByRole("complementary", { name: "Inspector" })).toBeVisible();
 });
 
 test("undo via the changes view", async ({ page, request }) => {
@@ -123,7 +160,7 @@ test("run a scenario", async ({ page }) => {
 test("open a drawing and click a wire label", async ({ page }) => {
   await page.goto(DEMO + "#/drawings");
   if (await page.getByText("No drawings yet").isVisible().catch(() => false)) await page.getByRole("button", { name: "Render drawings" }).click();
-  await page.getByLabel("Drawing").selectOption("X-BH");
+  await page.getByLabel("Drawing", { exact: true }).selectOption("X-BH");
   const wire = page.locator('[data-testid="drawing"] text.wire[data-id="PWR-ECU-C1"]').first();
   await expect(wire).toBeVisible({ timeout: 30_000 });
   await wire.click();

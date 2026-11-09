@@ -13,7 +13,8 @@ function loadHidden(): Set<string> {
 }
 
 export function WireTable() {
-  const { ix, d, net, highlight, setIndex, toast } = useApp();
+  const { ix, d, net, highlight, setIndex, toast, sel: selected, select } = useApp();
+  const cur = selected?.type === "conductor" ? selected.id : "";
   const [q, setQ] = useState("");
   const [edits, setEdits] = useState<Edit>({});
   const [busy, setBusy] = useState(false);
@@ -66,7 +67,8 @@ export function WireTable() {
       <button className="link" title={`${d.pinText(e)} (${pinId(e)}): highlight this net`} onClick={() => highlight(c.net)} data-pin={pinId(e)}>{d.pinText(e)}</button>
       {e[3] ? <span className="side">{e[3]}</span> : null}
     </td>);
-  const sel = (c: Conductor, f: string, list: string[], label: string) => (
+  const text = (c: Conductor, f: string) => <span className={edits[c.id]?.[f] !== undefined ? "dirty" : ""}>{val(c, f)}</span>;
+  const sel = (c: Conductor, f: string, list: string[], label: string) => c.id !== cur ? text(c, f) : (
     <select aria-label={`${label} of ${c.label}`} value={val(c, f)} onChange={(ev) => set(c, f, ev.target.value)} className={edits[c.id]?.[f] !== undefined ? "dirty" : ""}>
       {[...new Set(["", val(c, f), ...list])].map((x) => <option key={x} value={x}>{x || "—"}</option>)}
     </select>);
@@ -92,17 +94,20 @@ export function WireTable() {
               const c = rows[it.index];
               const iss = d.issuesByConductor.get(c.id) || [];
               return (
-                <tr key={c.id} className={netSet.has(c.i) ? "hl" : ""} data-id={c.id} style={{ height: 32 }}>
-                  <th scope="row"><a href={href("conductor", c.id)}>{c.label}</a></th>
-                  {show("name") ? <td><input aria-label={`name of ${c.label}`} title={val(c, "name")} value={val(c, "name")} onChange={(e) => set(c, "name", e.target.value)}
-                             className={edits[c.id]?.name !== undefined ? "dirty" : ""} /></td> : null}
+                <tr key={c.id} className={[netSet.has(c.i) ? "hl" : "", c.id === cur ? "selected" : ""].join(" ")} data-id={c.id} style={{ height: 32 }}
+                    aria-selected={c.id === cur} onClick={(e) => { if (!(e.target as HTMLElement).closest("a,button,input,select")) select({ type: "conductor", id: c.id }); }}>
+                  <th scope="row"><a href={href("conductor", c.id)}>{c.label}</a>
+                    {c.id !== cur ? <button className="edit" aria-label={`edit ${c.label}`} title="edit this row (or click the row)"
+                                            onClick={() => select({ type: "conductor", id: c.id })}>✎</button> : null}</th>
+                  {show("name") ? <td title={val(c, "name")}>{c.id !== cur ? text(c, "name") : <input aria-label={`name of ${c.label}`} value={val(c, "name")}
+                             onChange={(e) => set(c, "name", e.target.value)} className={edits[c.id]?.name !== undefined ? "dirty" : ""} />}</td> : null}
                   {show("from") ? pinCell(c, c.f) : null}{show("to") ? pinCell(c, c.t) : null}
                   {show("gauge") ? <td>{sel(c, "awg", ix.lists.gauge, "gauge")}</td> : null}
                   {show("colour") ? <td><span className="swatch" style={{ background: c.hex }} aria-hidden="true" /> {c.colour}</td> : null}
                   {show("class") ? <td>{sel(c, "cls", ix.lists["function class"], "function class")}<span className="muted"> {c.cls ? "" : c.kind}</span></td> : null}
                   {show("status") ? <td>{sel(c, "st", ix.lists.status, "status")}</td> : null}
-                  {show("length m") ? <td><input aria-label={`length of ${c.label}`} inputMode="decimal" value={val(c, "length")} size={5}
-                             onChange={(e) => set(c, "length", e.target.value)} className={edits[c.id]?.length !== undefined ? "dirty" : ""} /></td> : null}
+                  {show("length m") ? <td>{c.id !== cur ? text(c, "length") : <input aria-label={`length of ${c.label}`} inputMode="decimal" value={val(c, "length")} size={5}
+                             onChange={(e) => set(c, "length", e.target.value)} className={edits[c.id]?.length !== undefined ? "dirty" : ""} />}</td> : null}
                   {show("findings") ? <td>{iss.length ? <a href={href("conductor", c.id)} className={`badge ${c.sev}`} title={iss.map((i) => `${i.rule}: ${i.message}`).join("\n")}>
                     {iss.length} {c.sev}</a> : null}</td> : null}
                 </tr>);

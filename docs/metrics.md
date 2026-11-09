@@ -177,3 +177,17 @@ sheet (`synth --readable --wires 500`: 505 wires, 586 rows).
 | 6 | every conductor end on its item's interface drawing | 100 % | 100 % on the demo and 1000-wire synthetic project (test_every_conductor_in_a_drawing); repeats labelled "also on" | yes |
 | 7 | connector size from the name | real size, spares listed | D-sub 25 harness: 25 pins, 24 spare; D-sub 15 device J1: 15 pins, 12 spare | yes |
 | 8 | sim --infer finds sources on a readable sheet | ≥ 1 source | 3 of 3 (Battery, Starter battery, DC-DC converter); "Battery relay" not taken; a "24 V battery" gets 24 V from its name | yes |
+
+## 0.7 item 3: workspace shell
+
+Icon rail (views, panel toggles), navigator (components by kind, with a filter), canvas, inspector, problems panel;
+Omnibar (Ctrl K: objects, and commands after `>` or when empty); hotkeys (`?` lists them); light / dark / auto
+themes; a plain-text wire table with editors only on the selected row. Playwright (Chrome) on this laptop, mains power.
+
+| metric | target | measured | pass |
+|---|---|---|---|
+| e2e | all pass | 16 / 16, including the new shell test (rail, navigator, inspector, problems, Omnibar commands, hotkeys, editors only on the selected row) | yes |
+| axe serious / critical | 0 | 0 on 8 pages × 2 themes, and on the shell with the navigator open, a component in the inspector and a row being edited | yes |
+| interactive on synthetic 5k (cold start to a filtered table) | ≤ 2 s | 1.52 s (the e2e budget stays 3 s for CI runners) | yes |
+| bundle | ≤ 1.5 MB gzipped | 0.454 MB (8 files; Blueprint's icon paths are two lazy chunks of about 0.1 MB each) | yes |
+| any object from the Omnibar | ≤ 2 clicks | 2 for each of the 7 object types on synthetic 5k | yes |

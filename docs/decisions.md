@@ -283,3 +283,13 @@ One entry per open choice taken during the 0.2 → 0.5 work: context, choice, wh
   drawn for what is still undrawn. Items whose conductors all run through harness drawings get no drawing of their
   own (as before).
 - Why: a drawing that misses a device's ground is read as "no ground"; repeating costs a few drawings.
+
+## D39. The workspace shell
+- Choice: Blueprint 5 (`@blueprintjs/core`, Apache-2.0) for icons, buttons and hotkeys (`HotkeysProvider`,
+  `useHotkeys`; `?` shows the list), not for the tree or the Omnibar: the navigator is plain nested lists with
+  `aria-expanded` buttons, and the Omnibar is the existing Ctrl K palette with commands added (after `>`, or when the
+  box is empty) so its listbox / option roles and the two-click measurement stay as they were. The page keeps one h1
+  (the canvas); panels use h2 / h3. Panel visibility is kept per viewer in localStorage.
+- Hotkeys: Ctrl K Omnibar, Alt 1-6 views, `[` navigator, `]` inspector, Shift P problems, Shift T theme.
+- Why: Blueprint's Tree and Omnibar would bring their own ARIA patterns to re-check with axe for little gain; the
+  bundle stays at a third of its budget.
