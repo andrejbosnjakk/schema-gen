@@ -64,3 +64,29 @@ of the accent ring, for zoom-to-object), `.skeleton` (loading shimmer). `prefers
   black mark on a white tile only where a light icon fits better. The `.ico`, PNG sizes, window icon, installer
   icon and start-screen logo are all generated from that one SVG into `packaging/assets/` by
   `frontend/src/theme/make_icons.py`, and checked for legibility at 16 px.
+
+## Using the theme
+
+`import "./theme"` (from `src/`) loads Inter, `tokens.css`, `base.css` (element defaults, focus ring, scrollbars, motion
+classes) and `components.css`, and re-exports `KindIcon`, `Icon`, `Logo`. `Icon({name, size = 16})` names: import,
+export, play, sun, moon, plus, fit, zoom-in, zoom-out, close, chevron-down/up/left/right, help, alert, warning, check,
+info, search, x-circle, refresh, folder, file, grip. `node src/theme/contrast.mjs` checks the contrast of the colour
+tokens; `src/theme/Specimen.tsx` is the style sheet page (`/specimen.html` under `npx vite`, `?theme=dark`).
+
+## Component classes (`components.css`)
+
+| class | what |
+|---|---|
+| `.btn` | the default (secondary) button: 32 px, surface fill, strong border; `.btn-sm` 28 px |
+| `.btn-primary` | accent fill, one per area (Simulate, Apply) |
+| `.btn-ghost` | no border or fill until hover; toolbars; `aria-pressed="true"` shows it as on |
+| `.btn-danger` | red fill, destructive confirmations only |
+| `.btn-icon` | square icon-only button, combine with `.btn-ghost` / `.btn-sm`; give it an `aria-label` |
+| `.input` | text input, `select.input`, `textarea.input`; `aria-invalid="true"` turns the border red |
+| `.badge`, `.badge-ok`, `.badge-warn`, `.badge-err` | status pill with a dot; neutral without a modifier |
+| `.card` | flat bordered surface (diagram blocks, panel sections); no shadow |
+| `.dialog` | popup card with shadow; optional `header` / `section` / `footer` children |
+| `.menu`, `.menu-item` | dropdown / context menu; `aria-selected="true"` for the active item, `.menu-item-danger` |
+| `.kbd` | a key (`<span class="kbd">K</span>`) |
+| `.divider` | 1 px line; `.divider divider-v` vertical inside a flex row |
+| `.tooltip` | dark chip, absolutely positioned by the caller |
