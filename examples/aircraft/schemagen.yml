@@ -1,0 +1,10 @@
+# Kestrel E2 demonstrator: a fictional two-seat electric aircraft, the example project of schemagen 1.0.
+# The wire list is the readable sheet wires.xlsx (written by make_sheet.py). It has three deliberate mistakes: see README.md.
+source: {path: wires.xlsx, format: readable}
+cards: cards
+out: out
+readable:
+  sides: {motor side: far}       # the firewall connector's motor-bay half (cockpit side and wing side are defaults)
+# the HV stub is its own function class, drawn orange (the usual HV colour); LV is never orange
+bus_class: {"400 V": HV}
+colours: {HV: OG}

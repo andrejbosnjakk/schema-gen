@@ -14,7 +14,7 @@ import sys
 from importlib import metadata
 from pathlib import Path
 
-ALLOWED = re.compile(r"\b(MIT|BSD|Apache|ISC|PSF|Python Software Foundation|HPND|MIT-CMU|0BSD|Unlicense|CC0|Zlib|BlueOak)\b", re.I)
+ALLOWED = re.compile(r"\b(MIT|BSD|Apache|ISC|PSF|Python Software Foundation|HPND|MIT-CMU|0BSD|Unlicense|CC0|Zlib|BlueOak|OFL)\b", re.I)
 EXTERNAL = {"wireviz"}  # run as a command only
 ROOT = Path(__file__).resolve().parents[1]
 
