@@ -10,9 +10,6 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
-    "@blueprintjs/core": "^5.19.1",
-    "@blueprintjs/select": "^5.3.21",
-    "@dagrejs/dagre": "^1.1.8",
     "@tanstack/react-virtual": "^3.10.8",
     "@xyflow/react": "^12.12.1",
     "react": "^18.3.1",
