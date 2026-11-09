@@ -145,6 +145,13 @@ class Ctx:
                 seen.add(comp.id)
                 if d and d.type in ("can_h", "can_l"): b.nodes.append(comp.id)
                 else: b.unknown.append(comp.id)
+            for i in n.conductors:  # a termination jumper between two pins of one device ("CAN termination: jumper pin 28 to pin 45")
+                c = self.m.conductors[i]
+                if c.from_.device == c.to.device and re.search(r"terminat", f"{c.name} {c.func}", re.I):
+                    node = self.net.node(i, 1)
+                    comp = self.comp.get(c.from_.device)
+                    if comp and not any(t[0] == node[0] for t in b.terminators):
+                        b.terminators.append(node); b.inferred_terms.append(comp.id)
             out.append(b)
         return out
 

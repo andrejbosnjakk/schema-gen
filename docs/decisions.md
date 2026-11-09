@@ -293,3 +293,14 @@ One entry per open choice taken during the 0.2 → 0.5 work: context, choice, wh
 - Hotkeys: Ctrl K Omnibar, Alt 1-6 views, `[` navigator, `]` inspector, Shift P problems, Shift T theme.
 - Why: Blueprint's Tree and Omnibar would bring their own ARIA patterns to re-check with axe for little gain; the
   bundle stays at a third of its budget.
+
+## D40. Fewer false CAN and direction findings (real readable sheet)
+- CAN terminations: a T-piece (`T-piece`, `tee` in the name) is a splice, so a terminator after a chain of T-pieces is
+  on the bus the chain carries; a jumper between two pins of one device named like a termination ("CAN termination:
+  jumper pin 28 to pin 45") counts as that device's termination.
+- Direction: no direction for terminator leads (CAN stubs stay in bus order), loops (`direction.loops`: names with
+  loop / E-STOP; `direction.loop_devices`: every conductor on a net with an E-STOP), and jumpers on one device. A
+  return that reaches no ground bus or ground point and continues through a harness connector is not judged. When a
+  supply (or signal) net has loads (receivers) but no source (sender), only the conductors that reach a load are
+  judged: a feed from a bus to an untyped terminal has no known direction.
+- Why: each case was a false warning on the real sheet; the seeded fault corpus still finds every flipped conductor.

@@ -25,7 +25,7 @@ From and To hold plain names ("Breaker 'AVIONICS' 10 A", "Sling panel", "Firewal
 
 | kind | default pattern |
 |---|---|
-| splice | `\bsplice\b` |
+| splice | `\bsplice\b`, `\bT-?piece\b`, `\btee\b` (a T-piece joins its ports) |
 | bus | `\bbus\b`, `\bbus ?bar\b` |
 | breaker | `^breaker\b`, `\bcircuit breaker\b` |
 | fuse | `^fuse\b` |
@@ -49,12 +49,13 @@ A size written in a connector or device name ("Instrument panel connector X-IP (
 
 ## Connector / pin grammar
 
-Whitespace is collapsed and a trailing `(note)` is allowed and ignored ("terminal 87 (NO)", "positive terminal (M6)").
+Whitespace is collapsed, `−` (U+2212) and `–` read as `-`, and a trailing `(note)` is allowed and ignored ("terminal 87 (NO)", "positive terminal (M6)").
 The rest must be one of:
 
 | written | connector | pin |
 |---|---|---|
 | `pin P` | | P |
+| `pin P, description` (e.g. `pin 2, black lead`) | | P |
 | `terminal T` | | T |
 | `C.P` (e.g. `X1.A`) | C | P |
 | `C, pin P` (e.g. `J2, pin C3`, `cockpit side, pin 19`) | C | P |
@@ -64,7 +65,7 @@ The rest must be one of:
 | `positive terminal`, `negative terminal` | + / - | |
 | `line side`, `load side` | LINE / LOAD | |
 | `splice`, `stud` | Splice / Stud | |
-| `C, name` (e.g. `3, in`, `2, drop`, `Connector, V_in 5 V`) | C | name |
+| `C, name` (e.g. `3, in`, `2, drop`, `Connector, V_in 5 V`, `Coil connector, - / case`, `DC barrel 5.5×2.1, centre`) | C | name |
 | a name without a pin number (`line stud`, `fuse output`, `in`, `TNC`, `tip + ring`, `safety loop in`) | the name | |
 | (empty) | | |
 

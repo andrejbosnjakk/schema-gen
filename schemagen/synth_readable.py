@@ -163,6 +163,34 @@ def forms(s: Sheet) -> None:
     s.wire("Intercom audio", "Intercom box", "J1 (D-sub 15), pin 9", "Instrument panel connector X-IP (D-sub 25)", "cockpit side, pin 3",
            "signal", 0.1, 22)
     s.wire("Intercom audio", "Instrument panel connector X-IP (D-sub 25)", "nose side, pin 3", "Audio panel", "pin 7", "signal", 0.1, 22)
+    s.rows.append(["head", "Fuel shutoff"])  # Unicode minus, "C, - / case", "pin N, colour lead", barrel jacks
+    s.wire("Fuel shutoff relay coil", "Master switch", "pin 5", "Fuel shutoff relay", "coil +", "14 V", 0.2, 22)
+    s.wire("Fuel shutoff relay coil return", "Fuel shutoff relay", "coil − (black lead)", "Ground bus", "stud", "GND", 0.2, 22)
+    s.wire("Fuel shutoff relay feed", "Main bus", "stud", "Fuel shutoff relay", "terminal 30", "14 V", 2.0, 22)
+    s.wire("Fuel shutoff valve supply", "Fuel shutoff relay", "terminal 87 (NO)", "Fuel shutoff valve", "pin 1", "14 V", 2.0, 22)
+    s.wire("Fuel shutoff valve return", "Fuel shutoff valve", "Coil connector, − / case", "Ground bus", "stud", "GND", 2.0, 22)
+    s.wire("Strobe kit supply", "Fuse 'AUX' 5 A", "fuse output", "Strobe kit", "pin 1, red lead (kit fuse)", "14 V", 1.0, 22)
+    s.wire("Strobe kit return", "Strobe kit", "pin 2, black lead", "Ground bus", "stud", "GND", 1.0, 22)
+    s.wire("USB hub supply", "Fuse 'AUX' 5 A", "fuse output", "USB hub", "DC barrel 5.5×2.1, centre", "14 V", 1.0, 22)
+    s.wire("USB hub return", "USB hub", "DC barrel 5.5×2.1, sleeve", "Ground bus", "stud", "GND", 1.0, 22)
+    s.rows.append(["head", "Enable chain"])  # through an E-STOP and a relay: no direction (written against the supply on purpose)
+    s.wire("Enable chain", "Master switch", "pin 6", "E-STOP", "pin 1", "14 V", 0.2, 22)
+    s.wire("Enable chain", "Enable relay", "coil +", "E-STOP", "pin 2", "14 V", 0.2, 22)
+    s.wire("Enable relay coil return", "Enable relay", "coil -", "Ground bus", "stud", "GND", 0.2, 22)
+    s.rows.append(["head", "Cabin heater"])  # a return through a harness connector to a point not named as a ground
+    s.wire("Cabin heater supply", "Fuse 'AUX' 5 A", "fuse output", "Cabin heater", "pin 1", "14 V", 1.0, 22)
+    s.wire("Cabin heater return", "Cabin heater", "pin 2", "Cabin heater return splice", "splice", "GND", 1.0, 22)
+    s.wire("Cabin heater return", "Cabin heater return splice", "splice", "Rear cabin connector RCB9", "cabin side, pin 1", "GND", 1.0, 22)
+    s.wire("Cabin heater return", "Rear cabin connector RCB9", "back cabin side, pin 1", "Engine block return point", "stud", "GND", 1.0, 22)
+    s.rows.append(["head", "CAN2 bus"])  # T-pieces with an M12 terminator at the end, and termination jumpers on a device
+    for pol, (a, b) in (("H", (28, 45)), ("L", (29, 46))):
+        tp = [f"CAN2 {pol} T-piece {k}" for k in (1, 2, 3)]
+        s.wire(f"CAN termination: jumper pin {a} to pin {b}", "Motor controller", f"pin {a}", "Motor controller", f"pin {b}", "signal", 0.1, 22, 0.1)
+        s.wire(f"CAN2 {pol} trunk", "Motor controller", f"pin {a}", tp[0], "3, in", "signal", 0.1, 22, 0.4)
+        for k, (dev, pin) in enumerate((("Engine computer", f"X5, pin {a}"), ("Primary display", f"J4, pin {a}"), ("Air data computer", f"J5, pin {a}"))):
+            s.wire(f"CAN2 {pol} stub", tp[k], "2, drop", dev, pin, "signal", 0.1, 22, 0.3)
+            if k < 2: s.wire(f"CAN2 {pol} trunk", tp[k], "3, out", tp[k + 1], "3, in", "signal", 0.1, 22, 0.4)
+        s.wire(f"CAN2 {pol} terminator", "CAN2 terminator M12", f"pin {1 if pol == 'H' else 2}", tp[2], "3, out", "signal", 0.1, 22, 0.1)
     s.rows.append(["head", "Spare outlet"])  # values not known yet: text in the number columns
     s.wire("Spare outlet feed", "Main bus", "stud", "Fuse 'SPARE' 5 A", "in", "14 V", 3.0, 20)
     s.rows[-1][8], s.rows[-1][10], s.rows[-1][11] = "TBD", "TBD", "TBD"
@@ -176,7 +204,7 @@ def forms(s: Sheet) -> None:
         s.wire("Bus link", f"CAN1 {pol} splice front", "splice", f"CAN1 {pol} splice aft", "splice", "signal", 0.1, 22, 0.4)
         s.wire(f"Display CAN_{pol} stub", f"CAN1 {pol} splice front", "splice", "Primary display", f"J3, pin {p}", "signal", 0.1, 22, 0.4)
         s.wire(f"GCAN {pol} stub", f"CAN1 {pol} splice aft", "splice", "Air data computer", f"J2, pin {p}", "signal", 0.1, 22, 0.4)
-        s.wire(f"CAN1 {pol} end", f"CAN1 {pol} splice aft", "splice", "CAN terminator aft", f"pin {p}", "signal", 0.1, 22, 0.4)
+        s.wire(f"CAN1 {pol} end", "CAN terminator aft", f"pin {p}", f"CAN1 {pol} splice aft", "splice", "signal", 0.1, 22, 0.4)  # written from the resistor
         s.wire(f"CAN1 {pol} start", "CAN terminator front", f"pin {p}", f"CAN1 {pol} splice front", "splice", "signal", 0.1, 22, 0.4)
 
 

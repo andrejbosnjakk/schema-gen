@@ -5,11 +5,14 @@ Default convention (configurable under `direction:` in schemagen.yml):
 - return / ground: device -> where it returns (ground bus, else the ground pin of the supplying unit, else a splice);
 - one-way signals: sender -> receiver (signal_out -> signal_in; a switch -> the input it drives);
 - no defined direction: CAN in bus order from one terminator end (the end that agrees with most conductors, or
-  `direction.can_start`); bidirectional data from the controlling unit (part `controller: true`) outward.
+  `direction.can_start`; the leads to a terminator are not judged); bidirectional data from the controlling unit
+  (part `controller: true`) outward; loops (`direction.loops`: a conductor named like a loop or an E-STOP, and every
+  conductor on a net with an E-STOP device, `direction.loop_devices`) and a jumper between two pins of one device.
 
 Without pin types (no part data) the fallbacks come from `direction:` patterns (regex on the device code or name):
 - `bond`: bonds to structure have no direction (also conductors of class `bond`);
-- `ground_points`: where a return ends when its net has no ground bus (a stud, a ground terminal);
+- `ground_points`: where a return ends when its net has no ground bus (a stud, a ground terminal); a return that
+  reaches none and continues through a harness connector is not judged (its end is in another row);
 - `senders` / `receivers`: one-way signal ends; an entry is a device regex or {device, function} to also require a
   conductor at that end whose function text matches (a low-side lamp driver receives, a high-side one does not).
 Returns are judged by where the chain ends, never by the next hop (a splice).
@@ -50,7 +53,8 @@ def _bfs(starts: list[NodeKey], adj: dict[NodeKey, list[NodeKey]]) -> dict[NodeK
 
 
 DEFAULTS: dict[str, Any] = {"bond": [r"\bbond", "structure", "airframe"], "ground_points": [r"^GND", r"\bground\b", "earth"],
-                            "senders": [r"^SW-", "switch", "sensor", r"\bmic"], "receivers": [{"device": "driver", "function": r"low.?side"}]}
+                            "senders": [r"^SW-", "switch", "sensor", r"\bmic"], "receivers": [{"device": "driver", "function": r"low.?side"}],
+                            "loops": [r"\bloop\b", r"\be-?stop\b"], "loop_devices": [r"\be-?stop\b", r"emergency stop"]}
 
 
 def _pats(opts: dict[str, Any], key: str) -> list[tuple[re.Pattern[str], re.Pattern[str] | None]]:
@@ -84,6 +88,8 @@ def _judge_net(ctx: Ctx) -> tuple[list[Flip], list[int]]:
     net, conds = ctx.net, ctx.m.conductors
     bond, gpts = [p for p, _ in _pats(opts, "bond")], [p for p, _ in _pats(opts, "ground_points")]
     senders, receivers = _pats(opts, "senders"), _pats(opts, "receivers")
+    loops, loop_devs = [p for p, _ in _pats(opts, "loops")], [p for p, _ in _pats(opts, "loop_devices")]
+    hids = set(net.hcode.values())
 
     def match(raw: str, pats: list[re.Pattern[str]]) -> bool:
         c = ctx.comp.get(raw)
@@ -119,6 +125,10 @@ def _judge_net(ctx: Ctx) -> tuple[list[Flip], list[int]]:
         role: dict[NodeKey, str] = {node: net.role(node[0]) for node in n.nodes if len(node) == 1}
         away, why = True, ""
         starts: list[NodeKey] = []
+        ends_only = False  # judged from the loads or receivers only: a wire that reaches none of them has no known direction
+        free: set[int] = {i for i in n.conductors if conds[i].from_.device == conds[i].to.device  # a jumper on one device
+                          or any(p.search(f"{conds[i].name} {conds[i].func}") for p in loops)}
+        if any(len(x) == 3 and x[0] in ctx.comp and match(x[0], loop_devs) for x in n.nodes): free = set(n.conductors)  # an E-STOP chain
         if kind == "GND":
             buses: list[NodeKey] = [x for x, r in role.items() if r == "bus"]
             gp: list[NodeKey] = [x for x in n.nodes if len(x) == 3 and x[0] in ctx.comp and ctx.comp[x[0]].kind != "harness" and match(x[0], gpts)
@@ -128,7 +138,7 @@ def _judge_net(ctx: Ctx) -> tuple[list[Flip], list[int]]:
             if buses: starts, why = buses, "returns go device → ground bus"
             elif gp: starts, why = gp, "returns go device → where the chain ends (ground point)"
             elif sup: starts, why = sup, "returns go device → the supplying unit's ground pin"
-            else: starts, why = spl, "returns go device → splice"
+            elif not any(len(x) == 3 and x[1] == "pin" and x[0] in hids for x in n.nodes): starts, why = spl, "returns go device → splice"
             away = False
         elif kind == "CAN":
             ts = [x for x in term_nodes.get(n.id, []) if x in adj]
@@ -141,6 +151,7 @@ def _judge_net(ctx: Ctx) -> tuple[list[Flip], list[int]]:
                         return sum(1 for i in n.conductors if d.get(net.node(i, 1), -1) < d.get(net.node(i, 2), -1))
                     start = max(cands, key=score)
                 starts, why = [start], f"CAN in bus order from terminator {owner.get(start, start[0])}"
+                free |= {i for i in n.conductors if net.node(i, 1) in ts or net.node(i, 2) in ts}  # terminator leads
             else:
                 starts = [x for x in typed if _controller(ctx, x[0], controllers)]
                 why = "bidirectional bus from the controlling unit outward"
@@ -148,20 +159,21 @@ def _judge_net(ctx: Ctx) -> tuple[list[Flip], list[int]]:
             send = [x for x, ty in typed.items() if ty == "signal_out"]
             recv = [x for x, ty in typed.items() if ty == "signal_in"]
             if send: starts, why = send, "signals go sender → receiver"
-            elif recv: starts, why, away = recv, "signals go sender → receiver", False
+            elif recv: starts, why, away, ends_only = recv, "signals go sender → receiver", False, True
             else: starts, why = [x for x in typed if _controller(ctx, x[0], controllers)], "from the controlling unit outward"
         else:
             src = [x for x, ty in typed.items() if ty == "power_out"]
             snk = [x for x, ty in typed.items() if ty == "power_in"]
             if src: starts, why = src, "supply goes source → load"
-            else: starts, why, away = snk, "supply goes source → load", False
+            else: starts, why, away, ends_only = snk, "supply goes source → load", False, True
         dist = _bfs(starts, adj) if starts else {}
         for i in n.conductors:
-            if is_bond(i): continue
+            if is_bond(i) or i in free: continue
             da, db = dist.get(net.node(i, 1)), dist.get(net.node(i, 2))
             if da is None or db is None or da == db:
                 if conds[i].kind == "signal": unk.append(i)
                 continue
+            if ends_only and min(da, db) != 0: continue
             if (da > db) if away else (da < db):
                 out.append(Flip(i, conds[i].id, conds[i].label, why))
     return sorted(out, key=lambda f: f.index), sorted(unk)

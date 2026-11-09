@@ -21,7 +21,7 @@ HEAD = ["Label", "Name", "From", "From connector / pin", "To", "To connector / p
         "Length (m)", "Weight (g)"]
 FIELD = ["label", "name", "p1", "p1t", "p2", "p2t", "bus", "amps", "awg", "length", "weight_g"]
 # device kind from its name: first matching pattern wins (override: readable.kinds in schemagen.yml, or the Components tab)
-KINDS: dict[str, str] = {"splice": r"\bsplice\b", "bus": r"\bbus\b|\bbus ?bar\b", "breaker": r"^breaker\b|\bcircuit breaker\b",
+KINDS: dict[str, str] = {"splice": r"\bsplice\b|\bT-?piece\b|\btee\b","bus": r"\bbus\b|\bbus ?bar\b", "breaker": r"^breaker\b|\bcircuit breaker\b",
                          "fuse": r"^fuse\b", "harness": r"\bconnector\b", "relay": r"\brelay\b|\bcontactor\b", "switch": r"\bswitch\b"}
 # CAN conductors by name (override: readable.can); a conductor touching a splice whose name matches is CAN too
 CAN = r"^(CAN\d|GCAN)|CAN_[HL]\b"
@@ -36,6 +36,7 @@ _TOKEN = re.compile(r"^[\w+-]+$")
 COLOURS = "red|black|brown|yellow|white|blue|green|orange|grey|gray|violet|purple|pink"
 _FORMS: list[tuple[re.Pattern[str], Any]] = [
     (re.compile(r"^pin\s+([\w+-]+)$", re.I), lambda m: ("", m[1])),
+    (re.compile(r"^pin\s+([\w+-]+),\s*[^,]+$", re.I), lambda m: ("", m[1])),  # "pin 2, black lead": the rest describes it
     (re.compile(r"^terminal\s+([\w+-]+)$", re.I), lambda m: ("", m[1])),
     (re.compile(r"^([A-Za-z][\w-]*)\.([\w+-]+)$"), lambda m: (m[1], m[2])),
     (re.compile(r"^(.+?),\s*pin\s+([\w+-]+)$", re.I), lambda m: (m[1], m[2])),
@@ -46,7 +47,7 @@ _FORMS: list[tuple[re.Pattern[str], Any]] = [
     (re.compile(r"^(positive|negative)\s+terminal$", re.I), lambda m: ("+" if m[1].lower() == "positive" else "-", "")),
     (re.compile(r"^(load|line)\s+side$", re.I), lambda m: (m[1].upper(), "")),
     (re.compile(r"^(splice|stud)$", re.I), lambda m: (m[1].capitalize(), "")),
-    (re.compile(r"^([\w-]+),\s*([A-Za-z][\w .+/-]*)$"), lambda m: (m[1], m[2])),  # "3, in", "Connector, V_in 5 V"
+    (re.compile(r"^([^,]+?),\s*([A-Za-z+-][\w .+/-]*)$"), lambda m: (m[1], m[2])),  # "3, in", "Connector, V_in 5 V", "Coil connector, - / case"
     (re.compile(r"^$"), lambda m: ("", "")),
 ]
 # a cell without a pin number is a named terminal ("line stud", "fuse output", "TNC", "tip + ring", "loop in"), unless
@@ -58,7 +59,7 @@ _PLACEHOLDER = re.compile(r"^(tbd|tbc|tba|n/?a|none|unknown|spare|see\b.*|check\
 def parse_cp(cell: Any) -> tuple[str, str] | None:
     """Connector / pin text -> (connector, pin), or None when it does not follow the grammar. A trailing "(note)" is
     allowed and ignored here (it stays in the cell text); text without a pin number is a named terminal (name, "")."""
-    s = re.sub(r"\s+", " ", "" if cell is None else str(cell)).strip()
+    s = re.sub(r"\s+", " ", "" if cell is None else str(cell)).strip().replace("\u2212", "-").replace("\u2013", "-")  # − and – as -
     m = _NOTE.match(s)
     if m: s = m[1]
     for pat, out in _FORMS:
