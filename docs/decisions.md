@@ -304,3 +304,10 @@ One entry per open choice taken during the 0.2 → 0.5 work: context, choice, wh
   supply (or signal) net has loads (receivers) but no source (sender), only the conductors that reach a load are
   judged: a feed from a bus to an untyped terminal has no known direction.
 - Why: each case was a false warning on the real sheet; the seeded fault corpus still finds every flipped conductor.
+
+## D41. System canvas: React Flow and dagre
+- Choice: `@xyflow/react` and `@dagrejs/dagre` (both MIT; elkjs is EPL and was ruled out). Edges point from the lower
+  power rank to the higher one so dagre lays the system out left to right; the `tight-tree` ranker, because network
+  simplex took minutes on the synthetic 5k graph. The React Flow attribution stays visible.
+- Limits: the 5k main view has about 98 000 straight-line crossings (hub buses and harness connectors); grouping by
+  subsystem or zone is the next step if it is used at that size.

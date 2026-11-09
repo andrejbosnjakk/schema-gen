@@ -117,3 +117,30 @@ ul.navtree .more { padding: 2px 4px; font-size: 12px; }
 .grid td span.dirty { padding: 0 2px; }
 .search-btn { display: inline-flex; gap: 6px; align-items: center; min-width: 260px; color: var(--muted); }
 a.btn, a.btn:hover { color: var(--accent-fg); } /* over Blueprint's .bp5-dark a */
+/* restyle toward the references: grey canvas, white cards, plain text in the table (links show on hover) */
+:root { --canvas: #eef0f3; --card: #ffffff; --shadow: 0 1px 2px rgba(16,22,26,.12), 0 0 0 1px rgba(16,22,26,.08); }
+:root[data-theme="dark"] { --canvas: #101215; --card: #1d2026; --shadow: 0 0 0 1px #343944; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --canvas: #101215; --card: #1d2026; --shadow: 0 0 0 1px #343944; } }
+.canvas > main { background: var(--canvas); padding: 12px 16px; }
+.canvas > main > section, .canvas > main > article { background: var(--card); box-shadow: var(--shadow); border-radius: 4px; padding: 10px 14px; min-height: 100%; }
+.canvas > main > section.wiretable { height: 100%; min-height: 0; }
+.wiretable .scroll { border: 0; border-top: 1px solid var(--line); border-radius: 0; }
+.grid th a, .grid td.pin button.link { color: var(--fg); text-decoration: none; }
+.grid th a:hover, .grid td.pin button.link:hover, .grid th a:focus-visible, .grid td.pin button.link:focus-visible { color: var(--accent); text-decoration: underline; }
+.problems { background: var(--card); }
+.problems a { color: var(--fg); text-decoration: none; } .problems a:hover { color: var(--accent); text-decoration: underline; }
+.navigator, .inspector { background: var(--card); }
+/* system canvas */
+.graph { display: flex; flex-direction: column; height: 100%; }
+.flow { flex: 1; min-height: 420px; background: var(--canvas); border-radius: 4px; }
+.flow .react-flow { --xy-background-color: var(--canvas); --xy-node-background-color: var(--card); --xy-edge-stroke: #8f99a8;
+  --xy-minimap-background-color: var(--card); --xy-controls-button-background-color: var(--card); --xy-controls-button-color: var(--fg); }
+.fcard { width: 210px; height: 52px; background: var(--card); box-shadow: var(--shadow); border-radius: 3px; padding: 5px 9px; border-left: 3px solid #8f99a8; }
+.fcard-title { display: flex; gap: 6px; align-items: center; font-weight: 600; font-size: 13px; white-space: nowrap; overflow: hidden; }
+.fcard-title span { overflow: hidden; text-overflow: ellipsis; }
+.fcard-sub { color: var(--muted); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fcard.k-bus { border-left-color: #cd4246; } .fcard.k-breaker, .fcard.k-fuse { border-left-color: #c87619; }
+.fcard.k-harness { border-left-color: #2d72d2; } .fcard.k-battery, .fcard.k-dcdc { border-left-color: #238551; } .fcard.k-controller { border-left-color: #7961db; }
+.fcard.hl { outline: 3px solid #fbb360; }
+.fcard .react-flow__handle { width: 7px; height: 7px; background: var(--card); border: 1px solid #8f99a8; }
+.flow .react-flow__attribution { background: var(--card); } .flow .react-flow__attribution a { color: var(--fg); }

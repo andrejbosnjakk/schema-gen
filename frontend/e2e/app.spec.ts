@@ -130,6 +130,25 @@ test("workspace shell: rail, navigator, inspector, problems, Omnibar commands, h
   await expect(page.getByRole("complementary", { name: "Inspector" })).toBeVisible();
 });
 
+test("system canvas: dagre cards, click to inspect, layout metrics", async ({ page }) => {
+  const out: Record<string, unknown> = {};
+  for (const [url, name] of [[DEMO, "demo"], [BIG, "synth5k"]]) {
+    await page.goto(url + "#/graph");
+    const sec = page.locator("section.graph[data-crossings]");
+    await expect(sec).toBeVisible({ timeout: 30_000 });
+    out[name] = { nodes: Number(await sec.getAttribute("data-nodes")), layout_ms: Number(await sec.getAttribute("data-layout-ms")),
+                  crossings: Number(await sec.getAttribute("data-crossings")) };
+  }
+  record("system_canvas", out);
+  await page.goto(DEMO + "#/graph");
+  await page.locator(".react-flow__node", { hasText: "ECU engine control unit" }).click();
+  await expect(page.getByRole("complementary", { name: "Inspector" }).getByRole("heading", { level: 3 })).toContainText("ECU");
+  await page.setViewportSize({ width: 1440, height: 860 });
+  await page.getByLabel("Which components").selectOption("all");
+  await page.waitForTimeout(500);
+  await page.screenshot({ path: "e2e-results/system-canvas.png" });
+});
+
 test("undo via the changes view", async ({ page, request }) => {
   await request.post(DEMO + "api/edit", { data: { edits: [{ id: "PWR-OTS-C", field: "st", value: "Released" }] } });
   await page.goto(DEMO + "#/diff");

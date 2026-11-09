@@ -191,3 +191,18 @@ themes; a plain-text wire table with editors only on the selected row. Playwrigh
 | interactive on synthetic 5k (cold start to a filtered table) | ≤ 2 s | 1.52 s (the e2e budget stays 3 s for CI runners) | yes |
 | bundle | ≤ 1.5 MB gzipped | 0.454 MB (8 files; Blueprint's icon paths are two lazy chunks of about 0.1 MB each) | yes |
 | any object from the Omnibar | ≤ 2 clicks | 2 for each of the 7 object types on synthetic 5k | yes |
+
+## 0.7 item 4: system canvas
+
+React Flow (`@xyflow/react`, MIT) with dagre (`@dagrejs/dagre`, MIT; no elkjs) replaces cytoscape: white cards on a
+grey canvas, left to right in power order (sources, buses, breakers, harness connectors and switching, loads), a
+minimap, click to inspect, double-click to open. Playwright (Chrome), mains power.
+
+| metric | target | measured | pass |
+|---|---|---|---|
+| e2e | all pass | 17 / 17, with a canvas test (cards, click to the inspector) | yes |
+| axe serious / critical on the canvas | 0 | 0 in both themes (the React Flow attribution link restyled for contrast) | yes |
+| layout time, synthetic 5k (main items: 739 cards, 1419 links) | interactive | 211 ms (dagre `tight-tree` ranker; the default network simplex did not finish in 2 min) | yes |
+| layout time, every component of 5k (1912 cards, 3657 links) | interactive | 983 ms (node, same settings) | yes |
+| edge crossings (straight segments between card ports) | recorded | demo 1; synthetic 5k main 97 787: buses and harness connectors are hubs with hundreds of links. Not compared with the old force layout | measured |
+| bundle | ≤ 1.5 MB gzipped | 0.412 MB (cytoscape removed) | yes |
