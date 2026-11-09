@@ -322,3 +322,37 @@ One entry per open choice taken during the 0.2 → 0.5 work: context, choice, wh
   E desktop packaging), each in its own git worktree and branch `dev/1.0-<stream>`, merged by the lead into `dev/1.0`.
   The contracts come first: `docs/api.md` (A ↔ B), `docs/design-tokens.md` (C → B), `docs/tour.md` (B ↔ D).
 - Why: one clear path a new user can follow in ten minutes matters more than feature count.
+
+## D65. The 1.0 example: a fictional electric aircraft
+- Choice: `examples/aircraft`, the Kestrel E2 demonstrator, 121 wires in the readable layout, with a 14 V main and
+  essential bus, two 14 V batteries, a DC-DC converter from a 400 V pack stub, firewall and wing-root connectors, one
+  terminated CAN bus, avionics, lights, the motor controller's LV side and sensors. The HV side is a single stub (two
+  wires) so the example stays about LV wiring, which is what the rules and the simulation check.
+- Why: the tour and a first-time user need a project that looks like theirs (a sheet, not Python wire lists) and is
+  small enough to read in one screen; the demo vehicle stays for the 0.2 tests.
+
+## D66. Exactly three deliberate mistakes, everything else clean
+- Choice: an undersized wire (W045, 22 AWG on the 10 A landing-light breaker), an oversized breaker (CB-XPDR 15 A on a
+  1.5 A transponder, 20 AWG) and a bus with loads and no feed (the cabin bus). Any other finding was fixed in the data,
+  not the code; `check` leaves two `gauge-protection` errors and one info (antenna coax has no direction).
+- Today `gauge-protection` catches both 1 and 2 (the wire is lighter than the breaker allows); the 1.0 overlay tells
+  them apart (wire too small vs breaker oversized). No rule catches 3: the simulation shows the bus at 0 V but `sim`
+  still says pass; stream A's overlay flags it. The test pins the ids so the tour texts stay true.
+
+## D67. The example sheet is generated, and byte-reproducible
+- Choice: `examples/aircraft/make_sheet.py` writes `wires.xlsx` from rows in the script (openpyxl only); the zip entry
+  times and the document's modified time are fixed, so the same rows give the same bytes, and a test checks the
+  committed sheet against the script.
+- Why: a binary sheet in git is unreviewable; the script is the reviewable source, the xlsx is what users open.
+
+## D68. Example card data: only what the simulation needs
+- Choice: cards for sources (v_oc / v_out, r_int), a generic SPST card for every `SW-` switch, the battery contactor's
+  coil and contacts, constant-power loads with v_min for the avionics, motor controller and BMS, and CAN pin types
+  (terminations as `kind: terminator`). Lights, pump and cabin loads stay as currents from the sheet (assumed). Signal,
+  RF and sensor-supply rows have no current, so the simulation does not read sensors and antennas as loads.
+- Why: without switch and contactor cards the simulation sees open circuits; without the rest it still runs.
+
+## D69. Tour steps follow the example's findings
+- Choice: eight steps (diagram, a component card, its contents, Issues, Wires, Simulate, + Source, Import), each naming
+  the real finding it shows (W045, CB-XPDR, the 0 V cabin bus) instead of generic help; listed in docs/tour.md.
+- Why: a tour that points at a real mistake teaches what the tool is for in the first minute.
