@@ -1,0 +1,32 @@
+/* Design tokens (docs/design-tokens.md). Stream C owns the values; names are the contract.
+   Contrast is checked by `node src/theme/contrast.mjs`. Dark is designed, not inverted: greys step up in lightness
+   for elevation (canvas < bg < surface < surface-2), the accent and status colours are lifted, soft fills are tinted greys. */
+:root, :root[data-theme="light"] {
+  --font: "Inter Variable", Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --fs-xs: 11px; --fs-sm: 12px; --fs: 13px; --fs-md: 15px; --fs-lg: 18px; --fs-xl: 24px;
+  --fw: 400; --fw-med: 500; --fw-bold: 600; --lh: 1.45;
+  --s-half: 4px; --s1: 8px; --s2: 16px; --s3: 24px; --s4: 32px; --s6: 48px;
+  --control-h: 32px; --control-h-sm: 28px;
+  --radius: 6px; --radius-sm: 4px; --border-w: 1px;
+  --dur-fast: 150ms; --dur: 200ms; --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --z-panel: 10; --z-drawer: 20; --z-menu: 30; --z-dialog: 40; --z-toast: 50; --z-tour: 60;
+
+  --bg: #ffffff; --canvas: #f6f7f9; --surface: #ffffff; --surface-2: #f1f2f4;
+  --border: #e4e6ea; --border-strong: #cfd2d8;
+  --logo: #111418; --text: #15171c; --text-2: #575d68; --text-3: #8a8f99;
+  --accent: #2f5fd0; --accent-hover: #264fb3; --accent-soft: #ebf0fc; --on-accent: #ffffff;
+  --ok: #1d7a43; --warn: #a15c00; --err: #c8323c; --ok-soft: #e7f4ec; --warn-soft: #fcf0dc; --err-soft: #fcebec;
+  --focus: rgba(47, 95, 208, 0.45); --scrim: rgba(17, 19, 24, 0.28);
+  --shadow-pop: 0 12px 32px -4px rgba(17, 19, 24, 0.14), 0 2px 6px rgba(17, 19, 24, 0.06);
+  color-scheme: light;
+}
+:root[data-theme="dark"] {
+  --bg: #17191d; --canvas: #111316; --surface: #1d2025; --surface-2: #25282e;
+  --border: #2b2f36; --border-strong: #3b4049;
+  --logo: #ffffff; --text: #e7e9ec; --text-2: #a3a9b3; --text-3: #6c727d;
+  --accent: #6d8ff0; --accent-hover: #86a2f4; --accent-soft: #1f2a45; --on-accent: #0c1222;
+  --ok: #4fbf7a; --warn: #e0a243; --err: #f0707a; --ok-soft: #16281e; --warn-soft: #2e2415; --err-soft: #34191c;
+  --focus: rgba(109, 143, 240, 0.55); --scrim: rgba(5, 6, 8, 0.56);
+  --shadow-pop: 0 12px 32px -4px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.04);
+  color-scheme: dark;
+}

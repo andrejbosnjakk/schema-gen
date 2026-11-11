@@ -47,7 +47,8 @@ REAL_FORMS = ["red lead", "black lead", "brown lead (control)", "yellow lead (se
               "A1 (+) M8 stud (battery side)", "A2 (-) M8 stud", "in", "out", "output", "3, in", "3, out", "2, drop", "fuse output",
               "fuse holder lead", "lead to ground bus", "lead", "LV1 output (SurLok plug)", "Connector, GND", "Connector, V_in 5 V",
               "Connector, Signal", "TNC", "BNC", "QMA", "tip", "tip + ring", "sleeve", "loop in", "loop out", "safety loop in",
-              "coil - (black lead)"]
+              "coil - (black lead)", "coil − (black lead)", "Coil connector, − / case", "pin 2, black lead",
+              "pin 1, red lead (kit fuse)", "DC barrel 5.5×2.1, centre", "DC barrel 5.5×2.1, sleeve"]
 
 
 def test_real_forms_in_fixture_and_parse_rate(fixtures):
@@ -228,3 +229,27 @@ def test_sim_infer_finds_sources_by_name(fixtures, tmp_path):
     notes = {a.what: a.note for a in op.assumptions if "inferred" in a.note}
     assert any("battery" in k and "24 V" in v for k, v in notes.items()), notes
     assert any("dcdc" in k for k in notes), notes
+
+
+def test_can_terminations_t_pieces_and_jumpers(fixtures):
+    """An M12 terminator after three T-pieces counts for the bus the chain carries; a termination jumper between two
+    pins of one device counts as the other termination."""
+    L = load(fixtures / "clean")
+    ctx = Ctx(L.model, L.cfg)
+    can2 = [b for b in ctx.can_buses if any(lab_.startswith("CAN2") for lab_ in (L.model.conductors[i].name for i in b.conductors))]
+    assert len(can2) == 2 and all(len(b.terminators) == 2 for b in can2)
+    assert {c for b in can2 for c in b.inferred_terms} == {"MOTOR-CONTROLLER", "CAN2-TERMINATOR-M12"}
+    assert not [i for i in run_rules(L.model, L.cfg) if i.rule.startswith("can-") and i.severity == "error"]
+
+
+def test_direction_regressions_from_the_real_sheet(fixtures):
+    """No direction finding on: terminator leads written from the resistor, the E-STOP enable chain, loop wires,
+    a return through a harness connector to a point not named as a ground, a feed from a bus to an untyped relay."""
+    from schemagen.core import direction
+    L = load(fixtures / "clean")
+    ctx = Ctx(L.model, L.cfg)
+    names = ("CAN1 H end", "CAN1 L end", "CAN2 H terminator", "CAN2 L terminator", "Enable chain", "Safety loop", "Safety loop return",
+             "Cabin heater return", "Fuel shutoff relay feed")
+    idx = {i for i, c in enumerate(L.model.conductors) if c.name in names}
+    assert len(idx) >= 12
+    assert not idx & {f.index for f in direction.analyse(ctx)}

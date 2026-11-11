@@ -3,13 +3,14 @@ from __future__ import annotations
 
 import math
 import time
+from collections import Counter
 from dataclasses import dataclass, field
 from typing import Any
 
 from ..core import tables
 from ..core.context import Ctx
 from ..core.model import Model
-from .build import Assumption, SimModel, build, setting, upstream
+from .build import Assumption, SimModel, build, nominal_v, setting, upstream
 from .engine import REF, Linear, Result, SimError, trip_time
 
 
@@ -31,10 +32,12 @@ class OpPoint:
     assumptions: list[Assumption]
     expectations: list[dict[str, Any]] = field(default_factory=list)
     missing: list[str] = field(default_factory=list)  # what the circuit lacks to be simulated at all
+    unpowered: list[str] = field(default_factory=list)  # buses with loads that no source reaches
 
     @property
     def ok(self) -> bool:
-        return self.converged and not self.missing and all(e["ok"] for e in self.expectations)
+        """Never a pass while a bus with loads is unpowered, whatever the expectations say."""
+        return self.converged and not self.missing and not self.unpowered and all(e["ok"] for e in self.expectations)
 
 
 def _summarise(sm: SimModel, r: Result, name: str, dt: float) -> OpPoint:
@@ -60,18 +63,40 @@ def _summarise(sm: SimModel, r: Result, name: str, dt: float) -> OpPoint:
     for x in c.res:
         if x.name in c.off or x.kind in ("fault", "coil"): continue
         adj.setdefault(x.a, []).append(x.b); adj.setdefault(x.b, []).append(x.a)
+    island = _islands(c, adj)
+    fed = {island(s.p) for s in c.src if s.name not in c.off}
     targets = {sm.name((b.raw,)) for b in m.buses if b.function_class != "GND"} | {s.p for s in c.src if s.name not in c.off}
     for ld in sm.loads:
         off = ld.element in c.off
         v = r.v.get(ld.plus, 0.0) - r.v.get(ld.minus, 0.0)
         drop = _drop(r, c._n(ld.plus), adj, targets) - v if not off else 0.0
         loads.append(dict(component=ld.comp, voltage_V=v, current_A=abs(r.i.get(ld.element, 0.0)), v_min=ld.v_min, off=off,
-                          powered=(not off) and v >= max(ld.v_min, 0.5), drop_V=drop, provenance=ld.provenance))
+                          powered=(not off) and island(ld.plus) in fed and v >= max(ld.v_min, 0.5), drop_V=drop, provenance=ld.provenance))
     srcs = [dict(element=s.name, component=sm.sources.get(s.name, ""), current_A=r.i.get(s.name, 0.0), limited=s.name in r.limited,
                  off=s.name in c.off) for s in c.src]
-    buses = [dict(id=b.id, voltage_V=r.v.get(sm.name((b.raw,)), 0.0)) for b in m.buses]
+    loaded = Counter(island(ld.plus) for ld in sm.loads if ld.element not in c.off)
+    buses = []
+    for b in m.buses:
+        k, gnd = island(sm.name((b.raw,))), b.function_class == "GND"
+        on = gnd or k in fed
+        # an unfed bus floats: what it reads is the return drop seen through its loads (a few mV, often negative), so 0 V
+        buses.append(dict(id=b.id, voltage_V=r.v.get(sm.name((b.raw,)), 0.0) if on else 0.0, nominal_V=None if gnd else nominal_v(b.function_class),
+                          powered=on, loads=0 if gnd else loaded[k]))
     return OpPoint(name, r.converged, r.message, r.iterations, r.residual, dt, r.v, cond, prot, loads, srcs, buses, r.relay_states,
-                   sm.assumptions, missing=list(sm.missing))
+                   sm.assumptions, missing=list(sm.missing), unpowered=[b["id"] for b in buses if not b["powered"] and b["loads"]])
+
+
+def _islands(c: Any, adj: dict[str, list[str]]) -> Any:
+    """node -> island id: nodes joined by wires, closed breakers and contacts (not through loads or sources)."""
+    seen: dict[str, int] = {}
+    for start in adj:
+        if start in seen: continue
+        seen[start] = len(seen); todo = [start]
+        while todo:
+            n = todo.pop()
+            for y in adj[n]:
+                if y not in seen: seen[y] = seen[start]; todo.append(y)
+    return lambda n: seen.get(c._n(n), seen.get(n, f"alone:{c._n(n)}"))
 
 
 def _drop(r: Result, node: str, adj: dict[str, list[str]], targets: set[str]) -> float:

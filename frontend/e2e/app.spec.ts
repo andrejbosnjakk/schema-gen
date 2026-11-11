@@ -1,256 +1,223 @@
-import { test, expect, Page } from "@playwright/test";
+// The main screen against the in-memory mock server (src/mock). Built with `vite build --mode mock`.
 import AxeBuilder from "@axe-core/playwright";
-import { spawn } from "node:child_process";
-import { mkdirSync, writeFileSync, readFileSync, existsSync } from "node:fs";
+import { expect, test, type Page } from "@playwright/test";
 
-const DEMO = "http://127.0.0.1:8801/";
-const BIG = "http://127.0.0.1:8802/";
-const metrics: Record<string, unknown> = existsSync("e2e-results/metrics.json") ? JSON.parse(readFileSync("e2e-results/metrics.json", "utf8")) : {};
-const record = (k: string, v: unknown) => { metrics[k] = v; mkdirSync("e2e-results", { recursive: true }); writeFileSync("e2e-results/metrics.json", JSON.stringify(metrics, null, 1)); };
+const csv = (n: number) => "label,name,from,to,gauge,voltage,current\n" + Array.from({ length: n }, (_, i) =>
+  `W${i + 1},Wire ${i + 1},A${i} 1,B${i} 1,20 AWG,14 V,1`).join("\n");
+const sheet = (n: number) => ({ name: "sheet.csv", mimeType: "text/csv", buffer: Buffer.from(csv(n)) });
+const noSideScroll = (p: Page, sel: string) =>
+  p.evaluate((s) => { const e = document.querySelector(s)!; return e.scrollWidth <= e.clientWidth; }, sel);
+const serious = (r: { violations: { impact?: string | null }[] }) => r.violations.filter((v) => v.impact === "serious" || v.impact === "critical");
 
-async function search(page: Page, q: string) {
-  await page.getByRole("navigation", { name: "Views" }).waitFor();  // the project is loaded
-  await page.keyboard.press("Control+k");
-  const box = page.getByRole("dialog", { name: "Search every object" }).getByRole("searchbox");
-  await box.fill(q);
-  return page.getByRole("listbox", { name: "Results" });
+test("start screen: logo, example, drop zone, recent", async ({ page }) => {
+  await page.goto("/?mock=1");
+  await expect(page.getByRole("button", { name: "Open the example project" })).toBeVisible();
+  await expect(page.getByRole("button", { name: /Import your wire sheet/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Recent" })).toBeVisible();
+  await expect(page.locator(".sg-logo").first()).toBeVisible();
+  expect(await noSideScroll(page, "html")).toBe(true);
+});
+
+test("open the example: diagram, issues and wires appear together", async ({ page }) => {
+  await page.goto("/?mock=1");
+  await page.getByRole("button", { name: "Open the example project" }).click();
+  await expect(page.locator("[data-tour=diagram] .node-card").first()).toBeVisible();
+  await expect(page.getByRole("complementary", { name: /Issues/ })).toBeVisible();
+  await expect(page.locator(".issue").first()).toBeVisible();
+  await expect(page.locator("[role=row][data-id]").first()).toBeVisible();
+  await expect(page.locator(".topbar").getByText("Kestrel E2")).toBeVisible();
+  for (const b of ["Import", "Export", "Simulate"]) await expect(page.locator(".topbar").getByRole("button", { name: b })).toBeVisible();
+});
+
+test("import a CSV through the file chooser; import problems go to Issues", async ({ page }) => {
+  await page.goto("/?mock=1");
+  const chooser = page.waitForEvent("filechooser");
+  await page.getByRole("button", { name: /Import your wire sheet/ }).click();
+  (await chooser).setFiles(sheet(60));
+  await expect(page.locator("[data-tour=diagram] .node-card").first()).toBeVisible();
+  await expect(page.locator(".issue", { hasText: "pin cell could not be read" })).toBeVisible();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+});
+
+test("import of 500 wires: diagram and issues within 3 s", async ({ page }) => {
+  await page.goto("/?mock=1&open=1");
+  await expect(page.locator(".node-card").first()).toBeVisible();
+  const t0 = Date.now();
+  await page.locator("input[type=file]").setInputFiles(sheet(500));
+  await expect(page.locator(".issue", { hasText: "pin cell could not be read" })).toBeVisible({ timeout: 3000 });
+  await expect(page.locator(".node-card").first()).toBeVisible();
+  expect(Date.now() - t0).toBeLessThan(3000);
+});
+
+test("a sheet dragged over the window shows the overlay", async ({ page }) => {
+  await page.goto("/?mock=1&open=1");
+  await expect(page.locator(".node-card").first()).toBeVisible();
+  await page.evaluate(() => {
+    const dt = new DataTransfer(); dt.items.add(new File(["x"], "a.csv", { type: "text/csv" }));
+    window.dispatchEvent(new DragEvent("dragenter", { dataTransfer: dt, bubbles: true }));
+  });
+  await expect(page.getByText("Drop to import the wire sheet")).toBeVisible();
+});
+
+test("no horizontal scroll at 1366 px: document, wires drawer, issues", async ({ page }) => {
+  await page.goto("/?mock=1&open=1");
+  await expect(page.locator("[role=row][data-id]").first()).toBeVisible();
+  for (const sel of ["html", ".tbody", ".issues-body", ".topbar"]) expect(await noSideScroll(page, sel), sel).toBe(true);
+  expect(await page.locator(".tr.th > [role=columnheader]").count()).toBeLessThanOrEqual(7);
+});
+
+test("an issue click zooms to the object and pulses it", async ({ page }) => {
+  await page.goto("/?mock=1&open=1");
+  await expect(page.locator(".node-card").first()).toBeVisible();
+  const before = await page.locator(".react-flow__viewport").getAttribute("style");
+  await page.locator(".issue").first().click();
+  await expect(page.locator(".node-card.anim-pulse").first()).toBeVisible();
+  await expect.poll(() => page.locator(".react-flow__viewport").getAttribute("style")).not.toBe(before);
+});
+
+test("a wire row click highlights the edge and its two cards", async ({ page }) => {
+  await page.goto("/?mock=1&open=1");
+  await page.locator("[role=row][data-id]").nth(3).click();
+  await expect(page.locator(".node-card.hl")).toHaveCount(2);
+  await expect(page.locator(".bundle.hl")).toHaveCount(1);
+});
+
+test("a component click opens a minimal dialog", async ({ page }) => {
+  await page.goto("/?mock=1&open=1");
+  await page.locator(".node-card").first().click();
+  await expect(page.getByRole("dialog")).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+});
+
+test("theme toggle switches both ways", async ({ page }) => {
+  await page.goto("/?mock=1&open=1");
+  await page.getByRole("button", { name: /Switch to dark theme/ }).click();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+  await page.getByRole("button", { name: /Switch to light theme/ }).click();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+});
+
+test("a failed open shows a plain message with Retry, never a raw status", async ({ page }) => {
+  await page.goto("/?mock=1&fail=open");
+  await page.getByRole("button", { name: "Open the example project" }).click();
+  const toast = page.locator(".toast.err");
+  await expect(toast).toContainText("could not be opened");
+  await expect(toast).not.toContainText(/500|Failed to fetch/);
+  await toast.getByRole("button", { name: "Retry" }).click();
+  await expect(page.locator(".node-card").first()).toBeVisible();
+});
+
+test("the wire filter narrows the list", async ({ page }) => {
+  await page.goto("/?mock=1&open=1");
+  const rows = page.locator("[role=row][data-id]");
+  await expect(rows.first()).toBeVisible();
+  expect(await rows.count()).toBeGreaterThan(1);
+  await page.getByLabel("Filter wires").fill("W045");
+  await expect(rows).toHaveCount(1);
+});
+
+test("1,000 wires: the drawer toggles within a quarter second", async ({ page }) => {
+  await page.goto("/?mock=1&open=1&wires=1000");
+  await expect(page.locator(".node-card").first()).toBeVisible();
+  const ms = await page.evaluate(async () => {
+    const t = performance.now(); document.querySelector<HTMLButtonElement>(".drawer-handle")!.click();
+    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))); return performance.now() - t;
+  });
+  expect(ms).toBeLessThan(250);
+});
+
+for (const theme of ["light", "dark"]) {
+  test(`axe: no serious violations (${theme}, start and main)`, async ({ page }) => {
+    await page.goto("/?mock=1");
+    await page.evaluate((t) => { document.documentElement.dataset.theme = t; }, theme);
+    await page.waitForTimeout(500);  // let colour transitions finish
+    expect(serious(await new AxeBuilder({ page }).analyze()), "start").toEqual([]);
+    await page.getByRole("button", { name: "Open the example project" }).click();
+    await expect(page.locator(".node-card").first()).toBeVisible();
+    await page.evaluate((t) => { document.documentElement.dataset.theme = t; }, theme);
+    await page.waitForTimeout(500);  // let colour transitions finish
+    expect(serious(await new AxeBuilder({ page }).analyze()), "main").toEqual([]);
+  });
 }
 
-async function row(page: Page, label: string) { return page.locator(`tr:has(th a:text-is("${label}"))`); }
-/** The row with its editors: only the selected row has them. */
-async function editRow(page: Page, label: string) { const r = await row(page, label); await r.getByRole("button", { name: `edit ${label}` }).click(); return r; }
+// ---- the polish pass: readable diagram, calmer edges, compact drawer ----
+const zoomOf = (p: Page) => p.evaluate(() => new DOMMatrix(getComputedStyle(document.querySelector(".react-flow__viewport")!).transform).a);
 
-// ---------------------------------------------------------------- cold start first, while the machine is idle
-test("cold start to interactive on synthetic 5k", async ({ page }) => {
-  const ix = await (await page.request.get(BIG + "api/index")).json();
-  const t0 = Date.now();
-  const p = spawn(process.env.PYTHON || "python3", ["-m", "schemagen", "app", ix.project.root, "--no-browser", "--port", "8803"], { stdio: "ignore", cwd: ".." });
-  try {
-    for (;;) {
-      try { if ((await page.request.get("http://127.0.0.1:8803/api/health", { timeout: 1000 })).ok()) break; } catch { /* starting */ }
-      await new Promise((r) => setTimeout(r, 50));
+test("fit-to-screen at 1366x768 is readable: zoom at least 0.8, card names at least 11 px", async ({ page }) => {
+  await page.goto("/?mock=1&open=1");
+  await expect(page.locator(".node-card").first()).toBeVisible();
+  await page.waitForTimeout(600);
+  const z = await zoomOf(page);
+  const px = await page.evaluate((z) => parseFloat(getComputedStyle(document.querySelector(".card-name")!).fontSize) * z, z);
+  console.log(`mock fit zoom ${z.toFixed(2)}, card name ${px.toFixed(1)} px`);
+  expect(z).toBeGreaterThanOrEqual(0.8);
+  expect(px).toBeGreaterThanOrEqual(11);
+});
+
+test("edges rest at about 55 % opacity; hovering one emphasises it and dims the rest", async ({ page }) => {
+  await page.goto("/?mock=1&open=1");
+  await expect(page.locator(".bundle:not(.ground)").first()).toBeVisible();
+  expect(await page.locator(".bundle:not(.ground)").first().evaluate((e) => parseFloat(getComputedStyle(e).opacity))).toBeCloseTo(0.55, 1);
+  // a point on some edge that nothing else covers (cards sit above edges)
+  const pt = await page.evaluate(() => {
+    for (const el of document.querySelectorAll<SVGPathElement>(".bundle-hit")) {
+      const L = el.getTotalLength(), m = el.getScreenCTM()!;
+      for (let t = 0.05; t < 1; t += 0.05) {
+        const p = el.getPointAtLength(L * t), x = m.a * p.x + m.c * p.y + m.e, y = m.b * p.x + m.d * p.y + m.f;
+        if (document.elementFromPoint(x, y) === el) return { x, y, id: el.parentElement!.querySelector(".bundle")!.closest("[data-testid]")?.getAttribute("data-testid") ?? "", i: [...document.querySelectorAll(".bundle-hit")].indexOf(el) };
+      }
     }
-    await page.goto("http://127.0.0.1:8803/");
-    await expect(page.locator('tr[data-id] th a').first()).toBeVisible();
-    await page.getByLabel("Filter wires").fill("P0001");
-    await expect(page.locator("tr[data-id]").first()).toBeVisible();
-    const ms = Date.now() - t0;
-    record("cold_start_ms_5k", ms);
-    expect(ms).toBeLessThanOrEqual(3000);
-  } finally { p.kill(); }
+    return null;
+  });
+  expect(pt).not.toBeNull();
+  await page.mouse.move(pt!.x, pt!.y);
+  await page.waitForTimeout(300);
+  const ops = await page.locator(".bundle-g").evaluateAll((gs) => gs.map((g) => parseFloat(getComputedStyle(g.querySelector(".bundle")!).opacity)));
+  expect(ops[pt!.i]).toBeGreaterThan(0.9);
+  expect(ops.filter((o, i) => i !== pt!.i && o < 0.3).length).toBeGreaterThan(0);
 });
 
-// ---------------------------------------------------------------- the ten flows
-test("search finds a component and opens it", async ({ page }) => {
-  await page.goto(DEMO);
-  const res = await search(page, "ECU engine");
-  await expect(res.getByRole("option").first()).toContainText("ECU");
-  await page.keyboard.press("Enter");
-  await expect(page.getByRole("heading", { level: 1 })).toContainText("ECU engine control unit");
+test("dark theme: every edge and table dot has contrast of at least 3:1 with its surface", async ({ page }) => {
+  await page.goto("/?mock=1&open=1");
+  await expect(page.locator(".bundle").first()).toBeVisible();
+  await page.evaluate(() => { document.documentElement.dataset.theme = "dark"; });
+  await page.waitForTimeout(500);
+  const low = await page.evaluate(() => {
+    const rgb = (s: string) => (/(\d+)[ ,]+(\d+)[ ,]+(\d+)/.exec(s) ?? []).slice(1, 4).map(Number);
+    const lum = (c: number[]) => { const f = (v: number) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }; return 0.2126 * f(c[0]) + 0.7152 * f(c[1]) + 0.0722 * f(c[2]); };
+    const cr = (a: number[], b: number[]) => { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); };
+    const canvas = rgb(getComputedStyle(document.querySelector(".canvas")!).backgroundColor), bg = rgb(getComputedStyle(document.body).backgroundColor);
+    const out: string[] = [];
+    document.querySelectorAll(".bundle").forEach((e) => { const c = rgb(getComputedStyle(e).stroke); if (cr(c, canvas) < 3) out.push(`edge ${c}`); });
+    document.querySelectorAll(".tbody .swatch").forEach((e) => { const c = rgb(getComputedStyle(e).backgroundColor); if (cr(c, bg) < 3) out.push(`dot ${c}`); });
+    return out;
+  });
+  expect(low).toEqual([]);
 });
 
-test("display names from display.py show in the wire table and on object pages", async ({ page }) => {
-  await page.goto(DEMO + "#/table");
-  await page.getByLabel("Filter wires").fill("Cockpit display");
-  const pin = page.locator('[data-pin="DSP/CAN/H"]').first();
-  await expect(pin).toHaveText("Cockpit display (DSP) CAN H");
-  await expect(pin).toHaveAttribute("title", /DSP\/CAN\/H/);  // the code stays one hover away
-  await page.goto(DEMO + "#/object/component/DSP");
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Cockpit display (DSP)");
-  await page.goto(DEMO + "#/table");
-  await page.getByText("Columns", { exact: true }).click();
-  await page.getByRole("checkbox", { name: "colour" }).uncheck();
-  await expect(page.getByRole("columnheader", { name: "colour" })).toHaveCount(0);
-  await page.getByRole("checkbox", { name: "colour" }).check();
-});
-
-test("open object: a pin page shows links, issues and history", async ({ page }) => {
-  await page.goto(DEMO + "#/object/conductor/PWR-ECU-B");
-  await expect(page.getByRole("heading", { level: 1 })).toContainText("L09");
-  await page.getByRole("link", { name: "to ECU engine control unit J1 1" }).click();
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("ECU engine control unit J1 1");
-  await expect(page.getByRole("heading", { name: "Links" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Issues" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "History" })).toBeVisible();
-  await expect(page.getByText("VBAT")).toBeVisible();  // pin name from the ECU card
-});
-
-test("edit and save writes a change set; undo removes it", async ({ page, request }) => {
-  await page.goto(DEMO);
-  const r = await editRow(page, "L04");
-  await r.getByLabel("gauge of L04").selectOption("18");
-  await expect(page.getByRole("button", { name: "Save (1)" })).toBeEnabled();
-  await page.getByRole("button", { name: /^Save/ }).click();
-  await expect(page.getByRole("status").filter({ hasText: "saved 1 change" })).toBeVisible();
-  let ix = await (await request.get(DEMO + "api/index")).json();
-  expect(ix.project.changes.length).toBe(1);
-  expect(ix.conductors.find((c: { id: string }) => c.id === "PWR-ECU-A").gauge).toBe("18");
+test("the Wires drawer starts compact, resizes by its handle, and remembers the height", async ({ page }) => {
+  await page.goto("/?mock=1&open=1");
+  const wires = page.locator(".wires");
+  await expect(page.locator("[role=row][data-id]").first()).toBeVisible();
+  const h0 = (await wires.boundingBox())!.height;
+  expect(h0).toBeLessThanOrEqual(768 * 0.28);
+  const grip = page.getByRole("separator", { name: "Resize the wire list" });
+  const g = (await grip.boundingBox())!;
+  await page.mouse.move(g.x + g.width / 2, g.y + 4); await page.mouse.down(); await page.mouse.move(g.x + g.width / 2, g.y - 100, { steps: 5 }); await page.mouse.up();
+  const h1 = (await wires.boundingBox())!.height;
+  expect(h1).toBeGreaterThan(h0 + 80);
   await page.reload();
-  await expect((await editRow(page, "L04")).getByLabel("gauge of L04")).toHaveValue("18");
-  // undo
-  await page.getByRole("button", { name: "Undo last change set" }).click();
-  await expect(page.getByRole("status").filter({ hasText: "undone" })).toBeVisible();
-  await expect((await row(page, "L04")).getByLabel("gauge of L04")).toHaveValue("20");
-  ix = await (await request.get(DEMO + "api/index")).json();
-  expect(ix.project.changes.length).toBe(0);
+  await expect(page.locator("[role=row][data-id]").first()).toBeVisible();
+  expect(Math.abs((await wires.boundingBox())!.height - h1)).toBeLessThan(2);
+  await grip.focus(); await page.keyboard.press("ArrowDown");
+  expect((await wires.boundingBox())!.height).toBeLessThan(h1);
+  for (const sel of ["html", ".tbody"]) expect(await noSideScroll(page, sel), sel).toBe(true);
 });
 
-test("workspace shell: rail, navigator, inspector, problems, Omnibar commands, hotkeys", async ({ page }) => {
-  await page.goto(DEMO);
-  await expect(page.getByRole("navigation", { name: "Views" }).getByRole("link")).toHaveCount(6);
-  await expect(page.getByRole("region", { name: "Problems" })).toBeVisible();
-  // plain text table: editors only on the selected row
-  await expect(page.locator("tr[data-id] select")).toHaveCount(0);
-  await (await row(page, "L09")).locator("td").nth(3).click();
-  await expect(page.locator("tr[data-id] select")).toHaveCount(3);
-  await expect(page.getByRole("complementary", { name: "Inspector" })).toContainText("L09");
-  // navigator: a component selects into the inspector
-  const nav = page.getByRole("complementary", { name: "Navigator" });
-  await nav.getByRole("button", { name: /^Devices/ }).click();
-  await nav.getByRole("button", { name: /ECU engine control unit/ }).click();
-  await expect(page.getByRole("complementary", { name: "Inspector" }).getByRole("heading", { level: 3 })).toContainText("ECU");
-  for (const theme of ["light", "dark"]) {  // the open navigator, the inspector and a row with its editors
-    await page.getByLabel("Theme").selectOption(theme);
-    const bad = (await new AxeBuilder({ page }).analyze()).violations.filter((v) => v.impact === "serious" || v.impact === "critical");
-    expect(bad.map((v) => `${v.id}: ${v.nodes.slice(0, 2).map((n) => n.target).join(" ")}`), `shell ${theme}`).toEqual([]);
-  }
-  await page.getByLabel("Theme").selectOption("light");
-  await page.setViewportSize({ width: 1440, height: 860 });
-  await page.getByTestId("wire-scroll").evaluate((e) => { e.scrollLeft = 0; });
-  await page.screenshot({ path: "e2e-results/shell.png" });
-  // Omnibar commands and hotkeys
-  const res = await search(page, "> issues");
-  await res.getByRole("option").first().click();
-  await expect(page).toHaveURL(/#\/issues$/);
-  await page.keyboard.press("Alt+1");
-  await expect(page).toHaveURL(/#\/table$/);
-  await page.keyboard.press("BracketRight");
-  await expect(page.getByRole("complementary", { name: "Inspector" })).toHaveCount(0);
-  await page.keyboard.press("BracketRight");
-  await expect(page.getByRole("complementary", { name: "Inspector" })).toBeVisible();
-});
-
-test("undo via the changes view", async ({ page, request }) => {
-  await request.post(DEMO + "api/edit", { data: { edits: [{ id: "PWR-OTS-C", field: "st", value: "Released" }] } });
-  await page.goto(DEMO + "#/diff");
-  await expect(page.getByText("edit 1 field(s) in the app")).toBeVisible();
-  await page.getByRole("button", { name: "Undo last change set" }).click();
-  await expect(page.getByText("Stored change sets 0")).toBeVisible();
-});
-
-test("net highlight: a pin lights up its whole net in the table", async ({ page }) => {
-  await page.goto(DEMO);
-  await page.locator('[data-pin="ECU/J1/2"]').first().click();
-  await expect(page.getByRole("status").filter({ hasText: "highlighted" })).toBeVisible();
-  for (const l of ["L03", "L11", "L12"]) await expect(await row(page, l)).toHaveClass(/hl/);
-  await expect(await row(page, "L05")).not.toHaveClass(/hl/);
-});
-
-test("run a scenario", async ({ page }) => {
-  await page.goto(DEMO + "#/sim");
-  await page.getByLabel("Scenario").selectOption("normal.yml");
-  await page.getByRole("button", { name: "Run scenario" }).click();
-  await expect(page.getByTestId("sim-status")).toContainText("PASS");
-  await expect(page.getByText("ECU: ").first()).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Assumptions" })).toBeVisible();
-  await page.getByRole("button", { name: "Fault sweep" }).click();
-  await expect(page.getByTestId("sweep")).toBeVisible();
-});
-
-test("open a drawing and click a wire label", async ({ page }) => {
-  await page.goto(DEMO + "#/drawings");
-  if (await page.getByText("No drawings yet").isVisible().catch(() => false)) await page.getByRole("button", { name: "Render drawings" }).click();
-  await page.getByLabel("Drawing", { exact: true }).selectOption("X-BH");
-  const wire = page.locator('[data-testid="drawing"] text.wire[data-id="PWR-ECU-C1"]').first();
-  await expect(wire).toBeVisible({ timeout: 30_000 });
-  await wire.click();
-  await expect(page.locator('[data-testid="drawing"] text.wire.hl').first()).toBeVisible();
-  await expect(page.getByRole("status").filter({ hasText: "highlighted" })).toBeVisible();
-});
-
-test("fix direction: preview, then apply as a change set", async ({ page, request }) => {
-  await page.goto(DEMO + "#/diff");
-  await page.getByRole("button", { name: "Preview fix" }).click();
-  const pv = page.getByTestId("fix-preview");
-  await expect(pv).toContainText("L03");
-  await expect(pv).toContainText("returns go device");
-  await pv.getByRole("button", { name: "Apply as a change set" }).click();
-  await expect(page.getByRole("status").filter({ hasText: "direction fixed on 1" })).toBeVisible();
-  const ix = await (await request.get(DEMO + "api/index")).json();
-  expect(ix.issues.filter((i: { rule: string }) => i.rule === "direction").length).toBe(0);
-  await request.post(DEMO + "api/undo");
-});
-
-test("diff view against the git revision", async ({ page, request }) => {
-  await request.post(DEMO + "api/edit", { data: { edits: [{ id: "PWR-ECU-A", field: "awg", value: "18" }] } });
-  await page.goto(DEMO + "#/diff");
-  await page.getByRole("button", { name: "Show diff" }).click();
-  await expect(page.getByTestId("diff-text")).toContainText("~ conductor PWR-ECU-A gauge: '20' -> '18'");
-  await request.post(DEMO + "api/undo");
-});
-
-test("issues board filters by severity and rule", async ({ page }) => {
-  await page.goto(DEMO + "#/issues");
-  const t = page.getByTestId("issues-table");
-  await page.getByRole("button", { name: /^warning/ }).click();
-  await expect(t.locator("tbody tr").first()).toContainText("warning");
-  for (const r of await t.locator("tbody tr").all()) await expect(r).not.toContainText("info");
-  await page.getByRole("button", { name: /^all/ }).click();
-  await page.getByLabel("Rule").selectOption("open-item");
-  await expect(t.locator("tbody tr")).toHaveCount(1);
-  await expect(t).toContainText("O-01");
-});
-
-// ---------------------------------------------------------------- metrics
-test("every object type is reachable in two clicks from search", async ({ page }) => {
-  const ix = await (await page.request.get(BIG + "api/index")).json();
-  const c = ix.conductors[100];
-  const cases: [string, string, RegExp][] = [
-    [c.label, "conductor", new RegExp(c.label)],
-    [`pin ${c.t[0]} ${c.t[1]} ${c.t[2]}`, "pin", new RegExp(c.t[0])],
-    ["BB1 14 V", "component", /BB1/],
-    [ix.connectors[0].id, "connector", new RegExp(ix.connectors[0].id)],
-    [`harness ${ix.harnesses[0].id}`, "harness", /harness/],
-    [`net ${ix.nets[0].name}`, "net", /net/],
-    ["part SV-ECU-8", "part", /SV-ECU-8/],
-  ];
-  await page.goto(BIG);
-  const clicks: Record<string, number> = {};
-  for (const [q, type, title] of cases) {
-    const res = await search(page, q);                                       // click 1: open search (Ctrl K)
-    await res.getByRole("option").filter({ has: page.locator(`.tag.${type}`) }).first().click();  // click 2: the result
-    await expect(page.getByRole("heading", { level: 1 })).toContainText(title);
-    clicks[type] = 2;
-  }
-  record("clicks_from_search", clicks);
-});
-
-test("net highlight within 100 ms on synthetic 5k", async ({ page }) => {
-  await page.goto(BIG);
-  await expect(page.locator('tr[data-id]').first()).toBeVisible();
-  const times: number[] = [];
-  for (const k of [0, 1, 2, 3, 4]) {
-    await page.locator("[data-pin]").nth(k * 2).click();
-    await page.waitForFunction(() => document.body.dataset.highlightMs !== undefined);
-    times.push(Number(await page.evaluate(() => document.body.dataset.highlightMs)));
-    await page.evaluate(() => { delete document.body.dataset.highlightMs; });
-  }
-  record("net_highlight_ms_5k", times);
-  expect(Math.max(...times)).toBeLessThanOrEqual(100);
-});
-
-test("accessibility: no serious or critical axe violations on the main pages", async ({ page }) => {
-  const out: Record<string, number> = {};
-  for (const h of ["#/table", "#/object/conductor/PWR-ECU-A", "#/object/pin/ECU%2FJ1%2F1", "#/issues", "#/graph", "#/sim", "#/diff", "#/drawings"]) {
-    await page.goto(DEMO + h);
-    await page.waitForTimeout(500);
-    for (const theme of ["light", "dark"]) {
-      await page.getByLabel("Theme").selectOption(theme);
-      const r = await new AxeBuilder({ page }).exclude(".svgbox").exclude(".cy").analyze();
-      const bad = r.violations.filter((v) => v.impact === "serious" || v.impact === "critical");
-      out[`${h} ${theme}`] = bad.length;
-      expect(bad.map((v) => `${v.id}: ${v.nodes.slice(0, 2).map((n) => n.target).join(" ")}`), `${h} ${theme}`).toEqual([]);
-    }
-  }
-  record("axe_serious_critical", out);
+test("a drawer height that cannot be stored still works (no localStorage)", async ({ page }) => {
+  await page.addInitScript(() => { Object.defineProperty(window, "localStorage", { get() { throw new Error("blocked"); } }); });
+  await page.goto("/?mock=1&open=1");
+  await expect(page.locator("[role=row][data-id]").first()).toBeVisible();
+  expect((await page.locator(".wires").boundingBox())!.height).toBeLessThanOrEqual(768 * 0.28);
 });

@@ -12,7 +12,7 @@ from pydantic import ValidationError
 from ..importers.records import Problem, Record, clean_extra, listof, number, sources, text
 from .classes import classify, connector_size
 from .config import Config
-from .model import (Bus, Component, Conductor, Connector, ConnectorHalf, Decision, Harness, LabelEntry, LabelLedger, Model,
+from .model import (KINDS, Bus, Component, Conductor, Connector, ConnectorHalf, Decision, Harness, LabelEntry, LabelLedger, Model,
                     OpenItem, Part, ProtectiveDevice, Relay, Splice, Switch, Terminal, Zone)
 
 CONDUCTOR_KEYS = {"id", "label", "name", "p1", "p1c", "p1p", "p1side", "p2", "p2c", "p2p", "p2side", "func", "bus", "cls", "awg",
@@ -167,14 +167,16 @@ class Builder:
     def build(self) -> Model:
         kinds: dict[str, str] = {}
         conductors = [c for c in (self.conductor(r, kinds) for r in self.inp.rows) if c]
-        for raw in kinds: kinds[raw] = self.kind(raw)
+        over = {text(r.data.get("device")): r for r in self.inp.components if text(r.data.get("device"))}
+        for raw in kinds:
+            k = text(over[raw].data.get("kind")).lower() if raw in over else ""
+            kinds[raw] = k if k in KINDS and k != "harness" and self.kind(raw) != "harness" else self.kind(raw)  # Components sheet kind wins
         connectors = self.sides(conductors, kinds)
         # components
         zones_of: dict[str, Counter[str]] = defaultdict(Counter)
         for c in conductors:
             for e in (1, 2):
                 if c.zone: zones_of[c.end(e).device][c.zone] += 1
-        over = {text(r.data.get("device")): r for r in self.inp.components if text(r.data.get("device"))}
         comps: dict[str, Component] = {}
         for raw in kinds:
             cid = code(raw) or raw

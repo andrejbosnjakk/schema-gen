@@ -11,7 +11,7 @@
     schemagen diff <A> <B> [--project DIR] [--format text|json|html] [-o FILE]   (A, B: folders or git revisions)
     schemagen changes <project> [--undo]
     schemagen sim <project> [scenario.yml ...] [--faults all] [--infer]
-    schemagen app <project> [--port 8765]
+    schemagen app [<project>] [--port 8765]
     schemagen palette <project> [--json] | schema [-o schemas] | synth --wires N --seed S -o DIR
 """
 import argparse, sys
@@ -72,7 +72,7 @@ def main(argv=None):
     sm.add_argument("--faults", choices=["all"], help="short every node to ground"); sm.add_argument("-o", "--output", help="report folder")
     sm.add_argument("--infer", action="store_true", help="assume sources (sim.sources) and loads (conductor current) missing from part data")
     a_ = sub.add_parser("app", help="the local app (browser UI)")
-    a_.add_argument("config"); a_.add_argument("--port", type=int, default=8765); a_.add_argument("--host", default="127.0.0.1")
+    a_.add_argument("config", nargs="?", help="project (default: the start screen)"); a_.add_argument("--port", type=int, default=8765); a_.add_argument("--host", default="127.0.0.1")
     a_.add_argument("--no-browser", action="store_true")
     p = sub.add_parser("palette", help="print the wire palette (function class -> colour)")
     p.add_argument("config"); p.add_argument("--json", action="store_true")
@@ -85,7 +85,14 @@ def main(argv=None):
     sc.add_argument("-o", "--output", default="schemas")
     a = ap.parse_args(argv)
     from . import commands
-    if a.cmd == "draw": draw(a.config, a.harness, a.all, a.no_render, split=a.split, interfaces=not a.no_interfaces)
+    if a.cmd == "draw":
+        from ..renderers.wireviz import RenderError
+        try: draw(a.config, a.harness, a.all, a.no_render, split=a.split, interfaces=not a.no_interfaces)
+        except RenderError as e:
+            if e.detail and e.code != "graphviz-missing": print(e.detail.rstrip(), file=sys.stderr)
+            print(f"error: {e.message}" + (" Install it from graphviz.org (or set SCHEMAGEN_DOT), or use --no-render." if e.code == "graphviz-missing" else ""),
+                  file=sys.stderr)
+            return 1
     elif a.cmd == "check": return commands.check(a)
     elif a.cmd == "fix": return commands.fix(a)
     elif a.cmd == "export" and a.readable:

@@ -1,159 +1,231 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { Button, HotkeysProvider, Icon, IconName, useHotkeys } from "@blueprintjs/core";
-import { api, Derived, Index } from "./data";
-import { WireTable } from "./views/WireTable";
-import { ObjectPage } from "./views/ObjectPage";
-import { Issues } from "./views/Issues";
-import { Graph } from "./views/Graph";
-import { Drawings } from "./views/Drawings";
-import { Sim } from "./views/Sim";
-import { DiffView } from "./views/Diff";
-import { Search } from "./views/Search";
-import { Navigator } from "./views/Navigator";
-import { Inspector } from "./views/Inspector";
-import { Problems } from "./views/Problems";
+// The app: a start screen when no project is open, else the main screen (diagram, issues, wires).
+import { useCallback, useEffect, useRef, useState } from "react";
+import { act, canRetry, get, post, say, upload } from "./api";
+import { CardDialog } from "./cards";
+import { Diagram, Legend, type Focus } from "./diagram/Diagram";
+import { Issues, SkeletonRows, Wires } from "./panels";
+import { SimSummary } from "./simulate";
+import { classVoltage, SourceDialog } from "./source";
+import { Logo } from "./theme/icons";
+import { startTour, Tour } from "./tour";
+import type { CardTarget, ExportResult, Issue, Node, Overlay, Session, SimGroup, Wire, Workspace } from "./types";
+import { Glyph, MenuButton, Toasts, type Toast } from "./ui";
 
-export interface Sel { type: string; id: string }
-interface Ctx {
-  ix: Index; d: Derived; net: string; highlight: (net: string) => void;
-  setIndex: (ix: Index) => void; toast: (m: string) => void; sel: Sel | null; select: (s: Sel | null) => void;
-}
-const C = createContext<Ctx | null>(null);
-export const useApp = () => useContext(C)!;
-
-export const NAV: [string, string, IconName][] = [["table", "Wires", "th"], ["issues", "Issues", "warning-sign"], ["graph", "System graph", "graph"],
-  ["drawings", "Drawings", "media"], ["sim", "Simulation", "lightning"], ["diff", "Changes & diff", "history"]];
-const PANELS = "schemagen.panels";
-type Panels = { nav: boolean; insp: boolean; prob: boolean };
-
-function useHash(): string {
-  const [h, setH] = useState(location.hash || "#/table");
-  useEffect(() => { const f = () => setH(location.hash || "#/table"); addEventListener("hashchange", f); return () => removeEventListener("hashchange", f); }, []);
-  return h;
-}
-
-function loadPanels(): Panels {
-  try { return { nav: true, insp: true, prob: true, ...JSON.parse(localStorage.getItem(PANELS) || "{}") }; } catch { return { nav: true, insp: true, prob: true }; }
-}
-
-function useDark(theme: string): boolean {
-  const q = typeof matchMedia === "function" ? matchMedia("(prefers-color-scheme: dark)") : null;
-  const [sys, setSys] = useState(!!q?.matches);
-  useEffect(() => { if (!q) return; const f = () => setSys(q.matches); q.addEventListener("change", f); return () => q.removeEventListener("change", f); }, [q]);
-  return theme === "dark" || (theme === "auto" && sys);
-}
+type Theme = "light" | "dark";
+const SHEET = /\.(xlsx|csv)$/i;
 
 export function App() {
-  return <HotkeysProvider><Shell /></HotkeysProvider>;
+  const [session, setSession] = useState<Session | null>(null);
+  const [fatal, setFatal] = useState<string | null>(null);
+  const [ws, setWs] = useState<Workspace | null>(null);
+  const [busy, setBusy] = useState(false);                     // opening a project or importing
+  const [importing, setImporting] = useState<{ name: string; p: number } | null>(null);
+  const [theme, setTheme] = useState<Theme>("light");
+  const [toasts, setToasts] = useState<Toast[]>([]);
+  const [issuesOpen, setIssuesOpen] = useState(true);
+  const [wiresOpen, setWiresOpen] = useState(true);
+  const [selWire, setSelWire] = useState<string | null>(null);
+  const [focus, setFocus] = useState<Focus | null>(null);
+  const [card, setCard] = useState<CardTarget | null>(null);
+  const [simulating, setSimulating] = useState(false);
+  const [sim, setSim] = useState<{ o: Overlay; stale: boolean } | null>(null);   // the simulation drawn on the diagram; stale after any edit
+  const [simOpen, setSimOpen] = useState(true);                   // the summary panel: open after Simulate, a chip while a source is placed
+  const [pick, setPick] = useState(false), [srcAt, setSrcAt] = useState<Node | null>(null);   // "+ Source": choosing the attach point, then the dialog
+  const picker = useRef<HTMLInputElement>(null);
+
+  const toast = useCallback((t: Omit<Toast, "id">) => {
+    const id = Date.now() + Math.random();
+    setToasts((l) => [...l.slice(-2), { ...t, id }]);
+    if (!t.action) setTimeout(() => setToasts((l) => l.filter((x) => x.id !== id)), 5000);
+  }, []);
+  const fail = useCallback((e: unknown, retry?: () => void) =>
+    toast({ tone: "err", text: say(e), action: retry && canRetry(e) ? { label: "Retry", run: retry } : undefined }), [toast]);
+
+  const applyTheme = (t: Theme) => { setTheme(t); document.documentElement.dataset.theme = t; };
+  const show = (w: Workspace) => { setWs(w); setSelWire(null); setFocus(null); setIssuesOpen(true); setWiresOpen(true); setSim(null); setCard(null); setPick(false); setSrcAt(null); };
+  /** An edit came back as a Workspace: swap it in without touching the view, and the simulation no longer matches it. */
+  const edited = useCallback((w: Workspace) => { setWs(w); setSim((s) => s && { ...s, stale: true }); }, []);
+
+  const loadSession = useCallback(() => {
+    setFatal(null);
+    get<Session>("/api/session").then((s) => {
+      setSession(s); applyTheme(s.theme === "dark" ? "dark" : "light");
+      if (s.project) { setBusy(true); get<Workspace>("/api/workspace").then(show, (e) => fail(e, loadSession)).finally(() => setBusy(false)); }
+    }, (e) => setFatal(say(e)));
+  }, [fail]);
+  useEffect(loadSession, [loadSession]);
+
+  const open = useCallback((body: { path?: string; example?: boolean }) => {
+    setBusy(true);
+    post<Workspace>("/api/open", body).then((w) => {
+      show(w);
+      if (body.example) { act("example-open"); if (session && !session.tour_done) setTimeout(startTour, 400); }
+    }, (e) => fail(e, () => open(body))).finally(() => setBusy(false));
+  }, [fail, session]);
+
+  const importFile = useCallback((f: File) => {
+    if (!SHEET.test(f.name)) { toast({ tone: "err", text: `${f.name} is not a wire sheet. Import an .xlsx or .csv file.` }); return; }
+    act("import-start");
+    setBusy(true); setImporting({ name: f.name, p: 0 });
+    upload<Workspace>("/api/import", f, (p) => setImporting({ name: f.name, p })).then((w) => { show(w); act("import-done"); },
+      (e) => fail(e, () => importFile(f))).finally(() => { setBusy(false); setImporting(null); });
+  }, [fail, toast]);
+
+  // a sheet dropped anywhere on the window imports it
+  const [dragging, setDragging] = useState(false);
+  useEffect(() => {
+    let depth = 0;
+    const files = (e: DragEvent) => !!e.dataTransfer && [...e.dataTransfer.types].includes("Files");
+    const enter = (e: DragEvent) => { if (files(e)) { depth++; setDragging(true); } };
+    const leave = (e: DragEvent) => { if (files(e) && --depth <= 0) { depth = 0; setDragging(false); } };
+    const over = (e: DragEvent) => { if (files(e)) e.preventDefault(); };
+    const drop = (e: DragEvent) => { if (!files(e)) return; e.preventDefault(); depth = 0; setDragging(false); const f = e.dataTransfer!.files[0]; if (f) importFile(f); };
+    window.addEventListener("dragenter", enter); window.addEventListener("dragleave", leave);
+    window.addEventListener("dragover", over); window.addEventListener("drop", drop);
+    return () => { window.removeEventListener("dragenter", enter); window.removeEventListener("dragleave", leave); window.removeEventListener("dragover", over); window.removeEventListener("drop", drop); };
+  }, [importFile]);
+
+  const toggleTheme = () => { const t = theme === "light" ? "dark" : "light"; applyTheme(t); post("/api/settings", { theme: t }).catch(() => { /* kept for this session */ }); };
+
+  const simulate = () => {
+    setSimulating(true);
+    post<Overlay>("/api/simulate").then((o) => { setSim({ o, stale: false }); setSimOpen(true); act("simulate-done"); },
+      (e) => fail(e, simulate)).finally(() => setSimulating(false));
+  };
+  const clearSim = () => { setSim(null); act("simulate-clear"); };
+  const exportAs = (kind: string, what: string) => {
+    toast({ tone: "info", text: `Exporting ${what.toLowerCase()}…` });
+    post<ExportResult>("/api/export", { kind }).then((r) => toast({ tone: "ok", text: `${what}: ${r.files.length} ${r.files.length === 1 ? "file" : "files"} saved.`,
+      action: { label: "Show folder", run: () => { post("/api/reveal", { path: r.folder }).catch((e) => fail(e)); } } }), (e) => fail(e, () => exportAs(kind, what)));
+  };
+
+  /** Zoom to and pulse the objects a list of typed refs ("component:ID", "conductor:ID", "pin:ID/C/P") names. */
+  const focusOn = (objects: string[]) => {
+    const ids: string[] = [];
+    let wire: string | undefined;
+    for (const o of objects) {
+      const t = o.slice(0, o.indexOf(":")), id = o.slice(o.indexOf(":") + 1);
+      if (t === "component") ids.push(id);
+      else if (t === "pin") ids.push(id.split("/")[0]);
+      else if (t === "conductor") { const w = ws?.conductors.find((c) => c.id === id); if (w) { ids.push(w.a, w.b); wire ??= w.id; } }
+    }
+    setSelWire(wire ?? null);
+    setFocus({ ids, wire, nonce: Date.now() });
+  };
+  const pickIssue = (i: Issue) => { focusOn(i.objects); act("issue-click"); };
+  const pickGroup = (g: SimGroup) => focusOn(g.objects);
+  const openWire = useCallback((id: string) => { setSelWire(id); setCard((c) => { if (!c) act("card-open"); return { type: "wire", id }; }); }, []);
+  const pickWire = (w: Wire) => { setSelWire(w.id); setFocus({ ids: [w.a, w.b], wire: w.id, nonce: Date.now() }); act("wire-click"); openWire(w.id); };
+  const openCard = useCallback((n: Node) => {
+    if (pick) { setPick(false); setSrcAt(n); return; }
+    setCard({ type: "component", id: n.id }); act("card-open");
+  }, [pick]);
+  const closeCard = useCallback(() => { setCard(null); act("card-close"); }, []);
+  const saved = useCallback((w: Workspace, what: string) => { edited(w); setCard(null); act("card-close"); toast({ tone: "ok", text: what.startsWith("Removed") ? `${what}.` : `Saved ${what}.` }); }, [edited, toast]);
+  const sourceAdded = useCallback((w: Workspace) => { edited(w); setSrcAt(null); act("source-added"); }, [edited]);
+  const picking = pick || srcAt !== null;  // the tour steps aside while a source is being placed (docs/tour.md)
+  useEffect(() => { if (picking) setSimOpen(false); }, [picking]);
+  useEffect(() => { act(picking ? "source-pick" : "source-pick-end"); }, [picking]);
+  useEffect(() => {
+    if (!pick) return;
+    const key = (e: KeyboardEvent) => { if (e.key === "Escape") setPick(false); };
+    document.addEventListener("keydown", key);
+    return () => document.removeEventListener("keydown", key);
+  }, [pick]);
+
+  const filePicker = <input ref={picker} type="file" accept=".xlsx,.csv" hidden onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ""; if (f) importFile(f); }} />;
+  const overlays = <>
+    {dragging && <div className="drop-overlay" aria-hidden="true"><div className="drop-card anim-pop"><Glyph name="upload" size={24} /><strong>Drop to import the wire sheet</strong><span>.xlsx or .csv</span></div></div>}
+    {importing && <ImportBar name={importing.name} p={importing.p} />}
+    <Toasts list={toasts} close={(id) => setToasts((l) => l.filter((t) => t.id !== id))} />
+    <Tour />
+  </>;
+
+  if (fatal) return <div className="fatal" role="alert"><Logo size={32} /><p>{fatal}</p><button className="btn btn-primary" onClick={loadSession}>Try again</button></div>;
+  if (!session) return <div className="start" aria-busy="true"><div className="start-col"><div className="skeleton" style={{ height: 40, width: 40 }} /><SkeletonRows n={4} tall /></div></div>;
+
+  if (!ws && !busy) return <>
+    <Start session={session} onExample={() => open({ example: true })} onRecent={(path) => open({ path })} onPick={() => picker.current?.click()} />
+    {filePicker}{overlays}
+  </>;
+
+  const counts = ws ? { error: ws.issues.filter((i) => i.severity === "error").length, all: ws.issues.length } : null;
+  return <div className="main">
+    <header className="topbar">
+      <div className="brand"><Logo size={20} /><h1 className="project" title={ws?.project.root}>{ws ? ws.project.name : <span className="skeleton" style={{ width: 160, height: 14, display: "inline-block" }} />}</h1></div>
+      <div className="actions">
+        <button className="btn" data-tour="import" onClick={() => picker.current?.click()}><Glyph name="upload" />Import</button>
+        <MenuButton label="Export" tour="export" items={[
+          { label: "Harness drawings", hint: "SVG, needs Graphviz", run: () => exportAs("drawings", "Harness drawings") },
+          { label: "Pinout", hint: "XLSX and HTML", run: () => exportAs("pinout", "Pinout") },
+          { label: "Fault sweep", hint: "HTML report", run: () => exportAs("faults", "Fault sweep") },
+          { label: "Wire list", hint: "XLSX", run: () => exportAs("wirelist", "Wire list") }]} />
+        <button className="btn btn-primary" data-tour="simulate" onClick={simulate} disabled={!ws || simulating} aria-busy={simulating}>
+          <Glyph name="play" />{simulating ? "Simulating…" : "Simulate"}</button>
+        {sim && <SimSummary o={sim.o} stale={sim.stale} open={simOpen} onOpen={setSimOpen} onGroup={pickGroup} onClear={clearSim} />}
+        <span className="sep" aria-hidden="true" />
+        <button className="btn btn-ghost btn-icon" onClick={toggleTheme} aria-label={theme === "light" ? "Switch to dark theme" : "Switch to light theme"} title={theme === "light" ? "Dark theme" : "Light theme"}>
+          <Glyph name={theme === "light" ? "moon" : "sun"} /></button>
+        <MenuButton label="Help" icon="help" iconOnly tour="help" items={[{ label: "Replay the tour", run: startTour }]} />
+      </div>
+    </header>
+    <div className="body">
+      {issuesOpen && <Issues issues={ws?.issues ?? null} loading={busy} onPick={pickIssue} onClose={() => setIssuesOpen(false)} />}
+      <main className="canvas" aria-busy={busy}>
+        {!issuesOpen && counts && <button className="issues-chip" onClick={() => setIssuesOpen(true)} data-tour="issues">
+          {counts.error > 0 && <span className="dot error" aria-hidden="true" />}Issues <span className="count">{counts.all}</span></button>}
+        {ws && !busy ? <Diagram ws={ws} focus={focus} selWire={selWire} onCard={openCard} onWire={(id) => { if (!pick) openWire(id); }} overlay={sim} picking={pick} /> : <DiagramSkeleton />}
+        {ws && !busy && <div className="canvas-tools">
+          <button className="btn" data-tour="add-source" aria-pressed={pick} onClick={() => setPick((p) => !p)}><Glyph name="plus" />Source</button></div>}
+        {pick && <div className="pick-hint anim-pop" role="status"><Glyph name="plus" size={14} />Click a bus or component to attach the source<span className="kbd">Esc</span></div>}
+      </main>
+    </div>
+    <Wires wires={ws?.conductors ?? null} legend={ws && !busy && <Legend palette={ws.palette} used={ws.edges.flatMap((e) => e.cls)} />} open={wiresOpen} loading={busy} sel={selWire} onPick={pickWire}
+           onToggle={() => setWiresOpen((o) => { if (!o) act("wires-open"); return !o; })} />
+    {card && ws && <CardDialog target={card} ws={ws} stale={!!sim?.stale} onClose={closeCard} onSwitch={setCard} onSaved={saved} onError={fail} />}
+    {srcAt && ws && <SourceDialog at={srcAt} volt={classVoltage(ws, srcAt.id)} onClose={() => setSrcAt(null)} onSaved={sourceAdded} onError={fail} />}
+    {filePicker}{overlays}
+  </div>;
 }
 
-function Shell() {
-  const [ix, setIx] = useState<Index | null>(null);
-  const [err, setErr] = useState("");
-  const [net, setNet] = useState("");
-  const [msg, setMsg] = useState("");
-  const [sel, select] = useState<Sel | null>(null);
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [panels, setPanels] = useState<Panels>(loadPanels);
-  const [theme, setTheme] = useState<string>(() => { try { return localStorage.getItem("sg-theme") || "auto"; } catch { return "auto"; } });
-  const dark = useDark(theme);
-  const hash = useHash();
-
-  useEffect(() => { api<Index>("/api/index").then(setIx).catch((e) => setErr(String(e))); }, []);
-  useEffect(() => {
-    document.documentElement.dataset.theme = theme;
-    document.body.classList.toggle("bp5-dark", dark);
-    try { localStorage.setItem("sg-theme", theme); } catch { /* storage blocked */ }
-  }, [theme, dark]);
-  const toggle = useCallback((k: keyof Panels) => setPanels((p) => {
-    const n = { ...p, [k]: !p[k] };
-    try { localStorage.setItem(PANELS, JSON.stringify(n)); } catch { /* storage blocked: lasts for this page */ }
-    return n;
-  }), []);
-  const cycleTheme = useCallback(() => setTheme((t) => (t === "auto" ? "light" : t === "light" ? "dark" : "auto")), []);
-  const hotkeys = useMemo(() => [
-    { combo: "mod+k", global: true, allowInInput: true, label: "Open the Omnibar", preventDefault: true, onKeyDown: () => setSearchOpen(true) },
-    ...NAV.map(([k, t], i) => ({ combo: `alt+${i + 1}`, global: true, label: `Go to ${t}`, onKeyDown: () => { location.hash = `#/${k}`; } })),
-    { combo: "[", global: true, label: "Show or hide the navigator", onKeyDown: () => toggle("nav") },
-    { combo: "]", global: true, label: "Show or hide the inspector", onKeyDown: () => toggle("insp") },
-    { combo: "shift+p", global: true, label: "Show or hide the problems panel", onKeyDown: () => toggle("prob") },
-    { combo: "shift+t", global: true, label: "Next theme (auto, light, dark)", onKeyDown: cycleTheme },
-  ], [toggle, cycleTheme]);
-  const { handleKeyDown, handleKeyUp } = useHotkeys(hotkeys);
-  useEffect(() => {
-    addEventListener("keydown", handleKeyDown as unknown as EventListener); addEventListener("keyup", handleKeyUp as unknown as EventListener);
-    return () => { removeEventListener("keydown", handleKeyDown as unknown as EventListener); removeEventListener("keyup", handleKeyUp as unknown as EventListener); };
-  }, [handleKeyDown, handleKeyUp]);
-  const d = useMemo(() => (ix ? new Derived(ix) : null), [ix]);
-  const highlight = useCallback((n: string) => {
-    const t0 = performance.now();
-    setNet((cur) => (cur === n ? "" : n));
-    // two frames: the highlight is painted when the second one runs
-    requestAnimationFrame(() => requestAnimationFrame(() => {
-      const ms = performance.now() - t0;
-      (window as unknown as { __lastHighlightMs: number }).__lastHighlightMs = ms;
-      document.body.dataset.highlightMs = ms.toFixed(1);
-    }));
-  }, []);
-  const toast = useCallback((m: string) => { setMsg(m); setTimeout(() => setMsg(""), 4000); }, []);
-  const commands = useMemo(() => [
-    ...NAV.map(([k, t]) => ({ title: `Go to ${t}`, run: () => { location.hash = `#/${k}`; } })),
-    { title: "Show or hide the navigator", run: () => toggle("nav") },
-    { title: "Show or hide the inspector", run: () => toggle("insp") },
-    { title: "Show or hide the problems panel", run: () => toggle("prob") },
-    { title: "Theme: next (auto, light, dark)", run: cycleTheme },
-  ], [toggle, cycleTheme]);
-
-  if (err) return <main className="center"><h1>schemagen</h1><p role="alert">Could not load the project: {err}</p></main>;
-  if (!ix || !d) return <main className="center" aria-busy="true"><p>Loading project…</p></main>;
-  const [, view, ...rest] = hash.slice(1).split("/");
-  let body;
-  if (view === "object") body = <ObjectPage type={rest[0]} id={decodeURIComponent(rest.slice(1).join("/"))} />;
-  else if (view === "issues") body = <Issues />;
-  else if (view === "graph") body = <Graph />;
-  else if (view === "drawings") body = <Drawings />;
-  else if (view === "sim") body = <Sim />;
-  else if (view === "diff") body = <DiffView />;
-  else body = <WireTable />;
-  const errors = ix.issues.filter((i) => i.severity === "error").length;
-  const cls = ["shell", panels.nav ? "" : "no-nav", panels.insp ? "" : "no-insp"].join(" ");
-  return (
-    <C.Provider value={{ ix, d, net, highlight, setIndex: setIx, toast, sel, select }}>
-      <div className={cls}>
-        <header className="top">
-          <a className="brand" href="#/table">schemagen</a>
-          <span className="proj" title={ix.project.root}>{ix.project.name}</span>
-          <button className="search-btn" onClick={() => setSearchOpen(true)} aria-label="Omnibar: search and commands (Ctrl+K)">
-            <Icon icon="search" size={14} /> Search or run a command <kbd>Ctrl K</kbd></button>
-          <label className="theme">Theme{" "}
-            <select value={theme} onChange={(e) => setTheme(e.target.value)} aria-label="Theme">
-              <option value="auto">auto</option><option value="light">light</option><option value="dark">dark</option>
-            </select>
-          </label>
-        </header>
-        <nav className="rail" aria-label="Views">
-          {NAV.map(([k, t, icon], i) => (
-            <a key={k} href={`#/${k}`} aria-label={t} title={`${t} (Alt+${i + 1})`}
-               aria-current={view === k || (!view && k === "table") ? "page" : undefined}>
-              <Icon icon={icon} size={18} />
-              {k === "issues" && errors ? <span className="badge error">{errors}</span> : null}
-            </a>))}
-          <span className="grow" />
-          <Button minimal icon="list-detail-view" aria-label="Show or hide the navigator ([)" aria-pressed={panels.nav} onClick={() => toggle("nav")} />
-          <Button minimal icon="panel-stats" aria-label="Show or hide the inspector (])" aria-pressed={panels.insp} onClick={() => toggle("insp")} />
-          <Button minimal icon="console" aria-label="Show or hide the problems panel (Shift+P)" aria-pressed={panels.prob} onClick={() => toggle("prob")} />
-        </nav>
-        {panels.nav ? <Navigator /> : null}
-        <div className="canvas">
-          {net ? <div className="netbar" role="status">Net <a href={`#/object/net/${encodeURIComponent(net)}`}>{d.netById.get(net)?.name || net}</a> highlighted
-            ({d.netById.get(net)?.c.length} wires) <button onClick={() => highlight(net)}>clear</button></div> : null}
-          <main id="main">{body}</main>
-          {panels.prob ? <Problems /> : null}
-        </div>
-        {panels.insp ? <Inspector /> : null}
+function Start({ session, onExample, onRecent, onPick }: { session: Session; onExample: () => void; onRecent: (p: string) => void; onPick: () => void }) {
+  return <div className="start">
+    <div className="start-col">
+      <Logo size={40} />
+      <h1>schemagen</h1>
+      <p className="lede">Drop your wire sheet to see the whole system as one diagram, and what is wrong with it.</p>
+      <button className="btn btn-primary btn-lg" onClick={onExample}>Open the example project</button>
+      <div className="or" aria-hidden="true"><span>or</span></div>
+      <div className="dropzone" onClick={onPick} role="button" tabIndex={0} aria-label="Import your wire sheet (.xlsx or .csv)"
+           onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onPick(); } }}>
+        <Glyph name="upload" size={20} />
+        <strong>Import your wire sheet</strong>
+        <span>Drop an .xlsx or .csv file here, or <u>choose a file</u></span>
       </div>
-      {searchOpen ? <Search onClose={() => setSearchOpen(false)} commands={commands} /> : null}
-      {msg ? <div className="toast" role="status">{msg}</div> : null}
-    </C.Provider>
-  );
+      {session.recent.length > 0 && <section className="recent" aria-labelledby="recent-h">
+        <h2 id="recent-h">Recent</h2>
+        <ul>{session.recent.map((r) => <li key={r.path}><button onClick={() => onRecent(r.path)} title={r.path}>
+          <Glyph name="file" /><span className="r-name">{r.name}</span><span className="r-path">{r.path}</span><span className="r-date">{ago(r.opened)}</span>
+        </button></li>)}</ul>
+      </section>}
+    </div>
+  </div>;
+}
+
+function ImportBar({ name, p }: { name: string; p: number }) {
+  const done = p >= 1;
+  return <div className="importbar anim-pop" role="status" aria-label={`Importing ${name}`}>
+    <span className="ib-text">{done ? "Reading" : "Uploading"} <strong>{name}</strong></span>
+    <span className={`bar${done ? " indeterminate" : ""}`}><span style={{ width: done ? undefined : `${Math.round(p * 100)}%` }} /></span>
+  </div>;
+}
+
+function DiagramSkeleton() {
+  return <div className="diagram-skel" aria-hidden="true">{[3, 4, 3, 2, 5].map((n, c) =>
+    <div key={c} className="skel-col">{Array.from({ length: n }, (_, i) => <div key={i} className="skeleton skel-card" />)}</div>)}</div>;
+}
+
+function ago(iso: string) {
+  const d = new Date(iso), days = Math.round((Date.now() - d.getTime()) / 864e5);
+  return days <= 0 ? "Today" : days === 1 ? "Yesterday" : days < 7 ? `${days} days ago` : d.toLocaleDateString(undefined, { day: "numeric", month: "short" });
 }

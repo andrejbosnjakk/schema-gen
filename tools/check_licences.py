@@ -14,7 +14,7 @@ import sys
 from importlib import metadata
 from pathlib import Path
 
-ALLOWED = re.compile(r"\b(MIT|BSD|Apache|ISC|PSF|Python Software Foundation|HPND|MIT-CMU|0BSD|Unlicense|CC0|Zlib|BlueOak)\b", re.I)
+ALLOWED = re.compile(r"\b(MIT|BSD|Apache|ISC|PSF|Python Software Foundation|HPND|MIT-CMU|0BSD|Unlicense|CC0|Zlib|BlueOak|OFL)\b", re.I)
 EXTERNAL = {"wireviz"}  # run as a command only
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -63,9 +63,9 @@ def npm_licences() -> dict[str, str]:
 
     def walk(deps: dict) -> None:
         for name, d in (deps or {}).items():
-            if name not in out:
-                pj = fe / "node_modules" / name / "package.json"
-                lic = json.loads(pj.read_text()).get("license", "UNKNOWN") if pj.exists() else "UNKNOWN"
+            pj = fe / "node_modules" / name / "package.json"
+            if name not in out and pj.exists():  # an optional peer that is not installed is not in the bundle
+                lic = json.loads(pj.read_text(encoding="utf-8")).get("license", "UNKNOWN")
                 out[name] = lic if isinstance(lic, str) else str(lic)
             walk(d.get("dependencies", {}))  # a "deduped" entry has no children; the full one does
     walk(tree.get("dependencies", {}))

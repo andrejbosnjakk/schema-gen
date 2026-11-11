@@ -4,13 +4,13 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "schema-gen"  # the import package and the command stay `schemagen` (that PyPI name is taken)
-version = "0.6.0"
+version = "1.0.0"
 description = "Wiring design from one source of truth: harness drawings, tables, pinouts, checks, test sheets and a DC simulation."
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.10"
 # wireviz (GPL-3.0) is only ever run as a separate command, never imported
-dependencies = ["wireviz==0.4.1", "pyyaml>=6", "pydantic>=2.5", "openpyxl>=3.1", "numpy>=1.24", "scipy>=1.10", "fastapi>=0.110", "uvicorn>=0.29"]
+dependencies = ["wireviz==0.4.1", "pyyaml>=6", "pydantic>=2.5", "openpyxl>=3.1", "numpy>=1.24", "scipy>=1.10", "fastapi>=0.110", "uvicorn>=0.29", "python-multipart>=0.0.9"]
 
 [project.optional-dependencies]
 xlsx = []  # openpyxl is a core dependency since 0.3; kept so `schema-gen[xlsx]` still installs

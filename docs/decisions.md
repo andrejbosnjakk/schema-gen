@@ -293,3 +293,388 @@ One entry per open choice taken during the 0.2 → 0.5 work: context, choice, wh
 - Hotkeys: Ctrl K Omnibar, Alt 1-6 views, `[` navigator, `]` inspector, Shift P problems, Shift T theme.
 - Why: Blueprint's Tree and Omnibar would bring their own ARIA patterns to re-check with axe for little gain; the
   bundle stays at a third of its budget.
+
+## D40. Fewer false CAN and direction findings (real readable sheet)
+- CAN terminations: a T-piece (`T-piece`, `tee` in the name) is a splice, so a terminator after a chain of T-pieces is
+  on the bus the chain carries; a jumper between two pins of one device named like a termination ("CAN termination:
+  jumper pin 28 to pin 45") counts as that device's termination.
+- Direction: no direction for terminator leads (CAN stubs stay in bus order), loops (`direction.loops`: names with
+  loop / E-STOP; `direction.loop_devices`: every conductor on a net with an E-STOP), and jumpers on one device. A
+  return that reaches no ground bus or ground point and continues through a harness connector is not judged. When a
+  supply (or signal) net has loads (receivers) but no source (sender), only the conductors that reach a load are
+  judged: a feed from a bus to an untyped terminal has no known direction.
+- Why: each case was a false warning on the real sheet; the seeded fault corpus still finds every flipped conductor.
+
+## D41. System canvas: React Flow and dagre
+- Choice: `@xyflow/react` and `@dagrejs/dagre` (both MIT; elkjs is EPL and was ruled out). Edges point from the lower
+  power rank to the higher one so dagre lays the system out left to right; the `tight-tree` ranker, because network
+  simplex took minutes on the synthetic 5k graph. The React Flow attribution stays visible.
+- Limits: the 5k main view has about 98 000 straight-line crossings (hub buses and harness connectors); grouping by
+  subsystem or zone is the next step if it is used at that size.
+
+## D42. 1.0: one screen, one idea
+- Context: the owner's first real use of the 0.7 app: it felt overloaded and sloppy, drawings failed with a 500, the
+  simulation said "pass" with unpowered 14 V buses, the wire table scrolled sideways.
+- Choice: the engine stays; the UI is rebuilt around "drop your wire sheet → see the whole system as one diagram →
+  see what is wrong → press Simulate". Drawings, simulation, diff and revisions are no longer views: harness drawings,
+  pinout and the fault sweep are Export options. The shell, navigator, Omnibar commands and hotkeys leave the default UI.
+- Work is split into five streams (A engine and API, B main screen, C design system, D example project and tour,
+  E desktop packaging), each in its own git worktree and branch `dev/1.0-<stream>`, merged by the lead into `dev/1.0`.
+  The contracts come first: `docs/api.md` (A ↔ B), `docs/design-tokens.md` (C → B), `docs/tour.md` (B ↔ D).
+- Why: one clear path a new user can follow in ten minutes matters more than feature count.
+
+## D43a. The logo is black and white (owner's decision)
+- Choice: the logo is the owner's bolt mark (`logo_bolt.svg`: a lightning bolt drawn as one wire between two round pin
+  nodes), used as given, strictly black and white: near-black `#111418` on light backgrounds, white on dark. The app
+  icon is the white mark on a near-black rounded tile (the black mark on a white tile only where a light icon fits
+  better). Every icon (.ico, PNG sizes, window, installer, start screen) is generated from that one SVG. The rest of
+  the UI keeps its accent colour.
+
+## D60. Design tokens: one accent, cool neutrals, designed dark
+- Choice: accent blue `#2f5fd0` (dark `#6d8ff0` with near-black text on it); neutrals are a slightly cool grey ramp
+  (light: `--canvas #f6f7f9` under white surfaces; dark: elevation by lightness, `--canvas #111316` < `--bg #17191d` <
+  `--surface #1d2025` < `--surface-2 #25282e`). Status colours are darker in light (`#1d7a43`, `#a15c00`, `#c8323c`) so
+  they work as text on their soft fills, lifted in dark. Only popups and menus have a shadow.
+- Check: `node frontend/src/theme/contrast.mjs` verifies `--text` / `--text-2` ≥ 4.5:1 on every background, the accent
+  and on-accent ≥ 4.5:1, and status ≥ 3:1 on soft fills and surfaces, in both themes.
+
+## D61. Inter, bundled
+- Choice: `@fontsource-variable/inter` (OFL-1.1), imported by `src/theme/index.ts`; Vite bundles the woff2 files, so no
+  font is fetched from the network. `tools/check_licences.py` now allows `OFL` (a font licence that permits bundling
+  and redistribution with software). Base 13 px, `cv05` on (a tailed lowercase l, so wire ids like l1 / I1 / 11 read
+  apart).
+
+## D62. Base styles, motion and component classes
+- Choice: `base.css` (element defaults, one `:focus-visible` ring, thin token-coloured scrollbars, motion classes) and
+  `components.css` (`.btn`, `.input`, `.badge`, `.card`, `.dialog`, `.menu`, `.kbd`, `.divider`, `.tooltip`) so screens
+  share one look without a component library. Motion animates transform and opacity only (no layout jumps),
+  150-200 ms ease-out; `prefers-reduced-motion` turns animations and transitions off.
+
+## D63. Icons are hand-drawn
+- Choice: 18 component-kind icons (`KindIcon`) and 25 UI icons (`Icon`), 16 x 16, 1.5 px round strokes in
+  `currentColor`, written as SVG paths in `icons.tsx`; no icon library. Electrical kinds follow IEC symbols where one
+  fits at 16 px (breaker: switch with a cross, lamp: circle with a cross, motor: M in a circle, ground, fuse).
+
+## D64. Logo and app icons from one SVG
+- Choice: `Logo` inlines `logo.svg` (`?raw`) so the mark's `currentColor` follows `--logo` (D43a). `make_icons.py`
+  (dev-only, Pillow) reads the polyline, stroke and pin circles from that SVG and draws the white mark on a `#111418`
+  rounded tile: `packaging/assets/icon.ico` (16-256) and `icon-16/32/48/256/512.png`, supersampled 8x.
+- At 16 and 24 px the wire is drawn 1.45x and 1.25x thicker and the mark fills 80 % of the tile (72 % from 32 px): at
+  the original weight the 16 px wire is about one pixel and blurs; thickened it reads as the bolt.
+
+## D65. The 1.0 example: a fictional electric aircraft
+- Choice: `examples/aircraft`, the Kestrel E2 demonstrator, 121 wires in the readable layout, with a 14 V main and
+  essential bus, two 14 V batteries, a DC-DC converter from a 400 V pack stub, firewall and wing-root connectors, one
+  terminated CAN bus, avionics, lights, the motor controller's LV side and sensors. The HV side is a single stub (two
+  wires) so the example stays about LV wiring, which is what the rules and the simulation check.
+- Why: the tour and a first-time user need a project that looks like theirs (a sheet, not Python wire lists) and is
+  small enough to read in one screen; the demo vehicle stays for the 0.2 tests.
+
+## D66. Exactly three deliberate mistakes, everything else clean
+- Choice: an undersized wire (W045, 22 AWG on the 10 A landing-light breaker), an oversized breaker (CB-XPDR 15 A on a
+  1.5 A transponder, 20 AWG) and a bus with loads and no feed (the cabin bus). Any other finding was fixed in the data,
+  not the code; `check` leaves two `gauge-protection` errors and one info (antenna coax has no direction).
+- Today `gauge-protection` catches both 1 and 2 (the wire is lighter than the breaker allows); the 1.0 overlay tells
+  them apart (wire too small vs breaker oversized). No rule catches 3: the simulation shows the bus at 0 V but `sim`
+  still says pass; stream A's overlay flags it. The test pins the ids so the tour texts stay true.
+
+## D67. The example sheet is generated, and byte-reproducible
+- Choice: `examples/aircraft/make_sheet.py` writes `wires.xlsx` from rows in the script (openpyxl only); the zip entry
+  times and the document's modified time are fixed, so the same rows give the same bytes, and a test checks the
+  committed sheet against the script.
+- Why: a binary sheet in git is unreviewable; the script is the reviewable source, the xlsx is what users open.
+
+## D68. Example card data: only what the simulation needs
+- Choice: cards for sources (v_oc / v_out, r_int), a generic SPST card for every `SW-` switch, the battery contactor's
+  coil and contacts, constant-power loads with v_min for the avionics, motor controller and BMS, and CAN pin types
+  (terminations as `kind: terminator`). Lights, pump and cabin loads stay as currents from the sheet (assumed). Signal,
+  RF and sensor-supply rows have no current, so the simulation does not read sensors and antennas as loads.
+- Why: without switch and contactor cards the simulation sees open circuits; without the rest it still runs.
+
+## D69. Tour steps follow the example's findings
+- Choice: eight steps (diagram, a component card, its contents, Issues, Wires, Simulate, + Source, Import), each naming
+  the real finding it shows (W045, CB-XPDR, the 0 V cabin bus) instead of generic help; listed in docs/tour.md.
+- Why: a tour that points at a real mistake teaches what the tool is for in the first minute.
+
+## D70. Desktop app: pywebview window around the local server
+- Choice: `schemagen/desktop.py` starts uvicorn on a free 127.0.0.1 port in a thread, waits for `/api/health`, opens a
+  pywebview window titled "schemagen" (maximised, minimum 1280 × 720, black-and-white bolt icon), and stops the server
+  when the window closes. pywebview (BSD-3-Clause) uses the WebView2 runtime that ships with Windows 10/11, so nothing
+  else is installed and no browser tab opens. Logs go to `%LOCALAPPDATA%\schemagen\logs\schemagen.log`
+  (`SCHEMAGEN_HOME` overrides the folder); a startup failure is a native error dialog that names the log.
+- Without a project argument it uses the server's start screen when `create_app(None)` is accepted; until then it
+  copies the bundled example to `%LOCALAPPDATA%\schemagen\projects\Example aircraft` and opens that copy. It sets
+  `SCHEMAGEN_EXAMPLE` to the bundled example. Web storage persists in `%LOCALAPPDATA%\schemagen\webview`.
+- Why: the owner's users are not programmers: double-click, a window, no terminal, no Python or Node.
+
+## D71. PyInstaller onedir, Python 3.14
+- Choice: one onedir bundle (`packaging/schemagen.spec`), windowed, no UPX. Onefile would unpack about 130 MB to %TEMP%
+  on every start (seconds, and antivirus scans each time); onedir starts in about 2 s and the installer compresses it
+  anyway (132 MB on disk, 42 MB installer). Built with Python 3.14 (pythonnet 3.2 and cffi have 3.14 wheels).
+- Bundled: `schemagen/app/static`, `schemagen/core/data`, `schemagen/templates`, `examples/aircraft` (else
+  `examples/demo`), `packaging/assets/icon*`. Excluded: `wireviz`, the `graphviz` Python package and Pillow (only
+  WireViz needs them), tkinter, test tools, and pywebview's non-Windows back ends.
+- `packaging/third_party.py` writes `THIRD_PARTY.txt` from what PyInstaller actually bundled (its TOC files), with the
+  licence texts, and fails the build on a non-permissive package or on WireViz.
+
+## D72. No Graphviz or WireViz in the installer
+- WireViz is GPL-3.0: schemagen only runs it as a command and it never ships in the bundle. Graphviz is EPL-1.0, a weak copyleft
+  licence, not on the permissive list for anything that ships; its Windows build also carries LGPL libraries (cairo,
+  pango, glib). Shipping unmodified binaries would be legal with a source offer, but it fails the permissive-only rule,
+  and it would not help: without WireViz there is nothing to call `dot`.
+- Behaviour in the installed app: the main diagram, checks, simulation, pinout, wire list and fault sweep need neither.
+  Harness drawings run the `wireviz` command if it is on PATH (a user who installs Graphviz and `pip install
+  wireviz==0.4.1`); otherwise the export answers `graphviz-missing` with a plain sentence. No runtime download.
+
+## D73. Per-user Inno Setup installer
+- Choice: `packaging/installer.iss`: no admin (`PrivilegesRequired=lowest`), installs into
+  `%LOCALAPPDATA%\Programs\schemagen`, Start-menu entry and a desktop shortcut (checked by default), MIT licence page,
+  `LICENSE.txt` and `THIRD_PARTY.txt` in the install folder, uninstaller in Apps & features. An upgrade deletes the old
+  `_internal` first. User data lives in `%LOCALAPPDATA%\schemagen` and survives uninstall.
+- Why: a university or company laptop often has no admin rights; Inno Setup is free and scriptable on CI.
+
+## D74. One build command and a CI installer
+- `packaging/build.ps1`: frontend (if npm), the build venv `packaging/.venv` (pinned pywebview and PyInstaller in
+  `packaging/requirements.txt`), PyInstaller, the notices, then Inno Setup if `iscc` is found →
+  `packaging/dist/schemagen-setup-<version>.exe`. `packaging/smoke.ps1` starts the built exe with a fresh
+  `SCHEMAGEN_HOME`, checks `/api/health` and the "schemagen" window, closes it and checks the server stopped.
+- `.github/workflows/installer.yml` runs both on `windows-latest` for pushes to `dev/1.0*` and tags `v*`, and uploads the
+  installer as an artifact. The installer is not code-signed yet: SmartScreen shows "unknown publisher" on first run.
+## D43. Drawings fail loudly and clean up
+- Choice: Graphviz `dot` is found on PATH, `SCHEMAGEN_DOT` or the usual install folders; a missing one is the plain
+  `graphviz-missing` error, WireViz's own stderr is surfaced on a failed render, and `.tmp` files are always removed.
+- Why: a silent empty drawing folder looked like a bug in the tool.
+
+## D44. Never a pass while a bus with loads is unpowered
+- Choice: the simulation walks from sources through wires, breakers and closed contacts; a bus with loads that no source
+  reaches reads 0 V and the run is not a pass. Not a `check` rule: the demo has a fed-from-nowhere bus on purpose, and
+  D66 pins the example's findings; the overlay and `sim` carry it.
+- Why: a floating return drop (about 14 V) made an unfed bus look healthy.
+
+## D45. One definition of a source
+- Choice: `Ctx.is_source` (battery or DC/DC by kind, part data, else the `sim.sources` names minus `sim.not_sources`:
+  battery management systems, chargers, sensors) is used by the workspace rank and the simulation.
+- Why: the rank and the simulation disagreed about what a source is.
+
+## D46. Errors are one shape, causes go to a log
+- Choice: every non-2xx answer is `{error: {code, message, retry}}`; global handlers turn any exception into `internal`
+  and write the traceback to `<user data>/logs/schemagen.log` (rotating, 1 MB x 3). The user data root is
+  `SCHEMAGEN_HOME`, else `%LOCALAPPDATA%\schemagen`, else `~/.local/state/schemagen`.
+- Why: the frontend shows a sentence and a Retry button; a traceback helps nobody there.
+
+## D47. The app may start with no project
+- Choice: `schemagen app` without a project serves the start screen; settings (tour, theme, recent) live in
+  `settings.json` under the user data root; the example is copied once to `projects/Example aircraft` and the copy is
+  opened (located by `SCHEMAGEN_EXAMPLE`, `sys._MEIPASS`, then the repository); an uploaded sheet gets its own project
+  folder. `python-multipart` (Apache-2.0) reads the upload.
+- Why: the install folder is read-only, and edits are change sets in the project folder.
+
+## D48. The overlay says why, in one line, per object
+- Choice: `sim/overlay.py` judges wires against the protection table (too small for its breaker or current: error;
+  3 or more gauges heavier than needed: warn), breakers (too big for the wire: error; over the rating: error; trips;
+  80 % loading: warn) and buses (no source: error). W045, CB-XPDR and the cabin bus come out as three different texts.
+- Why: `gauge-protection` reports one finding for two different mistakes; the fix differs.
+
+## D49. Sources added in the app are change sets
+- Choice: `POST /api/sources` and `DELETE /api/sources/{id}` write `add-source` / `delete-source` ops; the simulation
+  reads them with the project's own sources, and they show as rank-0 components. Positions are view state in
+  `<project>/layout.json`, not a change set. Export writes under `<project>/out/`.
+- Why: a what-if source survives a reload, is undoable, and never rewrites the input sheet.
+## D50. Start screen: one choice, no project list as the headline
+- Choice: with no project open the screen shows the logo, "Open the example project" (the only primary button), a drop zone
+  ("Import your wire sheet", .xlsx or .csv, click or drop) and the recent projects below, quiet.
+- Why: a new user has two paths, the example or their own sheet; recent projects are for people who came back.
+
+## D51. A sheet can be dropped anywhere
+- Choice: dragging a file over the window shows a full-window overlay; dropping imports it, from the start screen or the
+  main screen. A short bar (uploading, then reading) shows progress; diagram, wire list and Issues replace their
+  skeletons at once, with no extra clicks.
+- Why: the owner's workflow is "drop the sheet and look". Import problems (unreadable cells, skipped rows) are Issues
+  from the server, never a modal; only a file that cannot be imported at all is a message with Retry.
+
+## D52. The top bar holds six things
+- Choice: logo, project name, Import, Export (Harness drawings, Pinout, Fault sweep, Wire list), Simulate (primary),
+  light/dark toggle, a help menu with "Replay the tour". Nothing else, no hotkeys.
+- Why: everything else is reachable by clicking an object; fewer controls means fewer decisions.
+
+## D53. One fetch wrapper, plain errors
+- Choice: `src/api.ts` is the only place that calls the server. GETs retry three times with backoff when the error says
+  `retry`; errors are read from `{"error": {code, message, retry}}`; the UI shows the message and, if retryable, a Retry
+  button. "500" and "Failed to fetch" never reach a person. The same module can route to an in-memory server (`src/mock`)
+  for the e2e tests and development (`?mock=1`).
+- Why: the 0.7 app showed raw status codes; and a mock lets the screens be built and tested before the engine API exists.
+
+## D54. The block diagram: bundles, not wires
+- Choice: one React Flow canvas. A component is a card (icon, short name, kind and pin count, status dot, full name in the
+  title attribute). All wires between the same two components are one bundle, coloured by class, labelled "3 × 14 V".
+  Nodes and edges are memoised and only visible elements render, so 1,000 wires pan smoothly.
+- Why: a drawing with one line per wire is unreadable at this size; bundles keep it a diagram of the system.
+
+## D55. Edge labels never overlap
+- Choice: a collision pass places each bundle's label on the first free spot of its curve (largest bundles first, cards
+  count as obstacles) and hides it when none is free; labels are also hidden below 55 % zoom and shown on hover or when
+  the bundle is highlighted.
+- Why: overlapping labels were the most visible sloppiness in the 0.7 canvas.
+
+## D56. Layout: power flow left to right, zones as blocks
+- Choice: `diagram/layout.ts` places cards in columns by `Node.rank` (sources left, loads right), each zone as a soft
+  background block with a label, blocks stacked and wrapped to fit a wide screen, cards ordered by barycentre to reduce
+  crossings. It does not use dagre (not a dependency any more): zones and a screen-shaped aspect ratio were the
+  requirements dagre does not give. Dragged positions are saved with a debounced `POST /api/positions` and win over the
+  automatic layout when restored.
+- Why: the zone structure is what the owner reads; a general graph layout loses it.
+
+## D57. Issues: sentences, grouped, clickable
+- Choice: the left Issues panel groups findings by severity with counts, each as a plain sentence (title, then the
+  message in two lines at most). A click zooms the diagram to the object (animated) and pulses it with `.anim-pulse`.
+  The panel collapses to a chip.
+
+## D58. The Wires drawer fits 1366 px
+- Choice: bottom drawer, collapsible, at most seven columns (label, name, from, to, gauge, voltage, current) in a grid
+  that wraps text instead of scrolling sideways, virtualised with `@tanstack/react-virtual`, with a filter box. A row
+  click highlights its bundle and the two cards (and zooms to them).
+- Why: the 0.7 table scrolled sideways; a wire list is something you scan.
+
+## D59. Feel and acceptance
+- Choice: 13 px Inter, 8 px grid, 1 px borders, 6 px radius, shadows only on popups, skeletons instead of blank areas,
+  150 to 200 ms transforms and opacity only. The theme comes only from `src/theme` (tokens and component classes); small
+  text uses `--text-2` because `--text-3` fails 4.5:1 on dark. Playwright e2e (with axe, no serious violations), at
+  1366x768 and 1920x1080 in both themes, are the acceptance tests for steps 1 to 3.
+
+## D75. The overlay counts root causes and judges wires against their protector
+- Choice: `summary.problems` is the number of `summary.groups`, one per root cause: a wire and the breaker it does not
+  fit are one group (W045 with CB-LANDING-LT), loads unpowered only because their bus has no source fold into that
+  bus's group (their items stay `error`, "no supply: Cabin bus has no source"), a trip is its own group. The text is
+  "N problems, M trips" plus ", K unpowered bus(es)" only when K > 0; the unpowered bus is also one of the N problems.
+  "Far heavier than needed" (warn only) means: a protected wire whose gauge two steps thinner is still allowed for its
+  breaker or fuse by `protection.yml`; an unprotected wire is compared with its current times `heavy_margin`
+  (`core/data/sim.yml`, 25, a design default: no standard gives it, and a feeder is sized for drop and faults).
+  `oversize_steps` is gone.
+- Why: the aircraft example has three mistakes and said "20 problems"; 10 AWG on a 30 A breaker is correct, a wire is
+  sized for its protection, not its load. Supersedes the wire-warn rule in D48.
+## D76. The diagram is packed to the screen, not stacked in one band
+- Choice: `diagram/layout.ts` builds one block per zone (power-flow columns by rank, a short rank sharing the column before
+  it, tall columns wrapped), then packs the blocks (skyline, sources and protection first) and searches the row limit per
+  block, the strip width and the packing order for the largest fit-to-screen zoom on the canvas size at load. Cards are
+  one line (204 x 30 px, icon, name, status dot as a corner badge); kind and pin count moved to the tooltip. Fit zoom on the
+  real example at 1366x768 (Issues open, drawer at its default): 0.37 before, 0.86 after; card names 11.2 px on screen.
+  The zoom buttons get their own 64 px gutter in fitView so they never cover a card.
+- Why: a very wide band made the fit zoom about 0.4 and the text unreadable; names at 13 px need 0.85 or more to reach 11 px.
+  Measured in e2e (mock and real) by reading the React Flow viewport transform.
+
+## D77. Calmer edges
+- Choice: orthogonal routes with rounded corners (one vertical run in the channel before the target), 55 % opacity at rest
+  (GND 40 %), hovering an edge or a card emphasises its bundles and dims the rest, a selected wire does the same. Labels
+  stay collision-free (cards and zone names are obstacles) and are hidden below zoom 0.9. Wire colours are drawn by
+  `diagram/colour.ts`: the palette colour toned toward the text colour and pulled further until it has 3:1 contrast with its
+  surface, so black GND is grey on the dark canvas and yellow is olive on the light one. The table dots and the legend use
+  the same function (against the drawer surface).
+- Why: beziers over 80 bundles were a hairball; black wires vanished in dark.
+
+## D78. The Wires drawer is compact, resizable and remembered
+- Choice: default height is the header and about four rows, at most 28 % of the window (200 px at 768); a grip on its top
+  edge resizes it (pointer drag, or arrow keys); the height is kept per viewer in `localStorage` (try/catch, the default when
+  storage is blocked). The colour legend moved into the drawer header so it never covers the diagram.
+- Why: the drawer took a third of the height and left too little for the diagram.
+
+## D79. Tested against the real server
+- Choice: Playwright has two projects: `mock` (in-memory server, built with `--mode mock`; its example is now the real
+  example's `/api/workspace`) and `real` (`python -m schemagen app --port 8799 --no-browser`, empty `SCHEMAGEN_HOME`,
+  serving the build in `schemagen/app/static`, so run `npm run build` first). `real` covers start, open the example, readable
+  fit, reload, axe, imports (synth sheet, the example workbook, a broken file) and a failing request. The screenshots in
+  `docs/screens` come from real servers started per run (`e2e/server.ts`).
+- Server findings: a broken workbook answers "could not be read as a spreadsheet (BadZipFile)" (the exception class leaks
+  into the message); an imported project is named after the file stem ("wires").
+
+## D90. The tour uses driver.js, driven by our own step engine
+driver.js (MIT, pinned 1.11.0) does the spotlight and popover placement; the step order, the "advance on the action" logic and
+the footer (counter, Skip tour, Next/Done) are ours (`frontend/src/tour/index.tsx`), so the library's own buttons, keyboard
+control and overlay clicks are switched off. It is only called through `highlight()`, one step at a time. Cost: about +13 kB gzip JS, +1 kB gzip CSS.
+
+## D91. A step advances when the app announces the action, and Next always works
+Each step lists the `schemagen:action` names it waits for; on one it moves on after 450 ms so the result is seen. Next and
+Skip tour stay available, so nobody is stuck if an action is impossible. The last step ends with Done (or `import-start`).
+
+## D92. Steps with a missing target are skipped, never broken
+Targets are checked when a step is about to show. The step count ("3 of 7") is taken at the start from the targets that exist,
+so a missing `data-tour="add-source"` shortens the tour. The card step waits up to about a second for the dialog to render and is skipped if it never opened.
+A step may adapt its wording to the screen: the Wires drawer starts open, so the step then asks for a click on a row (`wire-click`) and spotlights the drawer.
+
+## D93. The popover is styled with the design tokens only
+`.driver-popover.sg-tour` (`tour.css`) copies the `.dialog` look: surface, border, radius, `--shadow-pop`, Inter, accent primary button, a muted step counter.
+The dimming is `--scrim`, so light and dark are both designed. With `prefers-reduced-motion` driver.js animation is off and the view fit does not wait for its animation.
+
+## D94. Seen means finished or skipped
+Done, Skip tour and the last-step action all send `POST /api/settings {tour_done: true}`; a failure is ignored, so the tour
+may show again next launch. Replay from the help menu works at any time and records the same.
+
+## D80. One dialog, one card at a time
+- Choice: clicking a component, a wire row or an edge opens one centred `.dialog` (`data-tour="card"`) over the scrim, with a 200 ms
+  pop. Clicking a pin's wire or its other end inside it swaps the object in the same dialog (no close and reopen, so no flash and
+  focus stays). `Dialog` traps Tab, closes on Esc or a scrim click, and returns focus to what had it; the card's title and
+  footer are portalled into the dialog's header and footer so they can change with the object.
+- Why: Linear-style calm: nothing jumps, and the keyboard never escapes the card.
+
+## D81. Card data comes from the card endpoints, the form edits a few fields
+- Choice: the card loads `/api/card/component|wire/{id}` (skeleton while loading, plain message with Retry on failure). Component:
+  name, kind (a select, not harness) and rating for breakers and fuses; wire: label, name, gauge, current, notes. Only changed fields
+  are posted. Save closes the card with a short toast; the returned Workspace replaces the old one without touching the view.
+- Why: the contract's edit endpoints take partial bodies, and a closed card after Save shows the diagram change at once.
+
+## D82. A Workspace swap keeps the view
+- Choice: the diagram is keyed by project root and lays out once; a later Workspace (an edit, a source) keeps every card position,
+  zoom and pan. A card that appears is placed beside what it is wired to, and the view pans to it only when it would be off screen.
+- Why: "update in place, no flash". Before, every new Workspace re-ran the layout.
+
+## D83. A bundle click opens its wire
+- Choice: an edge with one wire opens that wire's card; a bundle of several shows a small menu of its wires first. Ignored while
+  picking a source.
+- Why: the diagram shows bundles, the card is per wire; the menu keeps it one click for the common single wire.
+
+## D84. The simulation is drawn on the cards
+- Choice: bus cards get a voltage badge (red when unpowered or below 90 % of nominal), breaker cards a loading bar (ok below 80 %,
+  amber from 80 %, red from 100 % or tripping), error or warn items a red or amber ring, error or warn conductors a red or amber
+  tint on their bundle. Colours are status tokens only.
+- Why: the picture answers "which part is the problem" before any text is read.
+
+## D85. Summary with groups, Clear, and stale marking
+- Choice: a small panel slides in at the top of the canvas with `summary.text` and one clickable line per group (zoom and pulse, as an
+  Issue click). Any edit (card save, source add or remove) marks the result out of date: dimmed overlay and "Results are out of
+  date, simulate again". Simulate replaces it; Clear removes it. Opening another project drops it.
+- Why: a stale number that looks fresh is worse than none.
+
+## D86. A card shows the simulation's reason as its status line
+- Choice: when the server's card carries `sim`, it is the first line under the title (red, amber or neutral), marked "(out of date)"
+  when the overlay is stale.
+- Why: the reason sentence already exists; the card is where people look next.
+
+## D87. + Source is a pick, then a small dialog
+- Choice: the toolbar button enters pick mode (hint chip, crosshair, Esc cancels); clicking any card opens the dialog (type, voltage
+  defaulting to the attach point's most common wire voltage, internal resistance for a battery or current limit otherwise, optional
+  capacity and name). `POST /api/sources` returns the Workspace; the source is a rank 0 card with an edge to its attach point.
+- Why: the attach point is what a person is looking at, so ask for it on the diagram, not in a form.
+
+## D88. A source's card is built from the Workspace and can be removed
+- Choice: `/api/card/component` does not know app sources, so their card shows the stored values and a Remove source button
+  (`DELETE /api/sources/{id}`). No success toast on adding: the new card and the "out of date" mark are the feedback.
+- Why: a source is not in the wire sheet; no extra endpoint was needed.
+
+## D89. Tests and the tour
+- Choice: cards, simulate, stale and + Source are one set of flows (`e2e/cards.shared.ts`) run on the mock and on a real server of
+  its own (so edits never leak into other specs); on the real example a battery on the Cabin bus makes the cabin problem disappear.
+  Footer buttons of the card are "Cancel" so "Close" names only the header's X (the tour test looks for it). While the tour
+  spotlights + Source its overlay covers the diagram, so a source cannot be picked during that step (the tour spec presses Next).
+- Why: found while merging the tour; the pick needs the tour to let clicks through, which is the tour's call.
+
+## D95. Adding or removing a card pins every position; the Simulate summary is a chip
+- Choice: when the set of cards changes (a source added or removed), the diagram posts every card's current position to
+  `/api/positions` (removed ids as null). Positions are view state, so the packing is never recomputed around the new node on
+  reload: no zone or card moves, and the new card stays where it appeared beside its attach point. The first load is unchanged
+  (packed layout, nothing stored until a drag or an edit).
+- Choice: the Simulate summary is a chip in the top bar next to Simulate ("3 problems", error dot, chevron, "(out of date)" when
+  stale) with Clear beside it; its list drops down over the canvas only while open. Open right after Simulate, collapsed while
+  + Source is placed, opened again by the next Simulate. Collapsed, nothing of it is on the canvas, so no card can be covered
+  (e2e checks `elementFromPoint` on every card centre at 1366x768). Fit padding stays as it was: a canvas toolbar strip cost
+  fit zoom (0.81, card text 10.6 px, under the readability test).
+- Why: a reload that rearranges the diagram breaks the no-jumps rule; a panel over the diagram hid the bus a source had to attach to.
+- Alternative not taken: a packing order keyed only by zone id and size. It still moves blocks when the attach zone grows.

@@ -1,0 +1,88 @@
+/* Popup cards (step 4), the simulation on the diagram (step 5) and + Source (step 6). Design tokens only. */
+
+/* ---- dialogs and cards ---- */
+.scrim { animation: sg-fade var(--dur-fast) var(--ease) both; }
+@keyframes sg-fade { from { opacity: 0; } to { opacity: 1; } }
+.dialog.anim-pop { transform-origin: center; animation-duration: var(--dur); }
+.card-dialog, .source-dialog { display: flex; flex-direction: column; width: min(560px, calc(100vw - 2 * var(--s2))); max-height: calc(100vh - 2 * var(--s2)); }
+.source-dialog { width: min(440px, calc(100vw - 2 * var(--s2))); }
+.card-dialog > header, .card-dialog > footer, .source-dialog > header, .source-dialog > footer { flex: none; }
+.card-dialog > section, .source-dialog > section { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; display: flex; flex-direction: column; gap: 12px; }
+.card-dialog > section { min-height: 220px; }
+.dialog > header h2 { font-size: var(--fs-md); font-weight: var(--fw-bold); display: flex; align-items: center; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.dialog > footer:empty { display: none; }
+.spacer { flex: 1; }
+.kind-chip { display: inline-flex; align-items: center; gap: 6px; }
+.card-kind { margin: 0; }
+.swatch-lg { width: 12px; height: 12px; margin-right: 8px; border-radius: 3px; }
+.card-skel { display: flex; flex-direction: column; gap: var(--s2); }
+.card-failed { display: flex; flex-direction: column; align-items: flex-start; gap: var(--s1); color: var(--text-2); }
+.card-status { display: flex; align-items: flex-start; gap: var(--s1); margin: 0; padding: 8px 10px; border-radius: var(--radius); background: var(--surface-2); color: var(--text); line-height: 1.4; }
+.card-status .dot { margin-top: 5px; }
+.card-status.error { background: var(--err-soft); } .card-status.warn { background: var(--warn-soft); } .card-status.ok { background: var(--ok-soft); }
+.card-status.stale { background: var(--surface-2); color: var(--text-2); }
+.card-issues { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; max-height: 120px; overflow-y: auto; }
+.card-issues li { display: flex; gap: var(--s1); align-items: flex-start; line-height: 1.4; }
+.card-issues .dot { margin-top: 5px; }
+.fields { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.field > span { color: var(--text-2); font-size: var(--fs-sm); font-weight: var(--fw-med); }
+.field.wide, .field:has(textarea) { grid-column: 1 / -1; }
+.note { margin: 0; font-size: var(--fs-sm); }
+.link { display: inline; min-width: 0; padding: 0; border: 0; background: none; color: var(--accent); text-align: left; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.link:hover { text-decoration: underline; }
+.pins { border: var(--border-w) solid var(--border); border-radius: var(--radius); max-height: min(240px, 32vh); overflow-y: auto; overflow-x: hidden; flex: none; }
+.conn h3 { position: sticky; top: 0; padding: 5px 10px; background: var(--surface-2); color: var(--text-2); font-size: var(--fs-xs); font-weight: var(--fw-med); text-transform: uppercase; letter-spacing: 0.06em; }
+.pin { display: grid; grid-template-columns: 34px 64px minmax(0, 1fr) 62px minmax(0, 1.2fr); column-gap: var(--s1); align-items: baseline; padding: 5px 10px; border-top: var(--border-w) solid var(--border); }
+.pin > * { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pin-no, .pin-gauge { font-variant-numeric: tabular-nums; color: var(--text-2); }
+.meta { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 16px; margin: 0; }
+.meta > div { min-width: 0; } .meta dt { color: var(--text-2); font-size: var(--fs-sm); } .meta dd { margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.card-ends { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; margin: 0; }
+
+/* ---- the simulation on the diagram ---- */
+.node-card.ring-error { box-shadow: 0 0 0 2px var(--err); }
+.node-card.ring-warn { box-shadow: 0 0 0 2px var(--warn); }
+.v-badge { flex: none; height: 18px; padding: 0 6px; border-radius: 9px; background: var(--surface-2); color: var(--text-2); font-size: var(--fs-xs); font-weight: var(--fw-med); line-height: 18px; font-variant-numeric: tabular-nums; }
+.v-badge.low { background: var(--err-soft); color: var(--err); }
+.load-bar { position: absolute; left: 8px; right: 8px; bottom: 3px; height: 3px; border-radius: 2px; background: var(--surface-2); overflow: hidden; }
+.load-bar > span { display: block; height: 100%; border-radius: 2px; background: var(--ok); }
+.load-bar.near > span { background: var(--warn); } .load-bar.over > span { background: var(--err); }
+.bundle.sim-error { stroke: var(--err); opacity: 0.9; } .bundle.sim-warn { stroke: var(--warn); opacity: 0.8; }
+.flow.stale .v-badge, .flow.stale .load-bar { opacity: 0.4; }
+.flow.stale .node-card.ring-error { box-shadow: 0 0 0 2px color-mix(in srgb, var(--err) 35%, transparent); }
+.flow.stale .node-card.ring-warn { box-shadow: 0 0 0 2px color-mix(in srgb, var(--warn) 35%, transparent); }
+.flow.stale .bundle.sim-error, .flow.stale .bundle.sim-warn { opacity: 0.3; }
+.sim-summary { position: relative; background: var(--surface); border: var(--border-w) solid var(--border); border-radius: var(--radius); }
+.sim-panel { position: absolute; top: calc(100% + 4px); right: 0; z-index: var(--z-panel); width: min(380px, calc(100vw - 32px)); background: var(--surface);
+             border: var(--border-w) solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow-pop, 0 4px 16px rgb(0 0 0 / 0.15)); }
+.sim-panel.anim-slide { animation: sg-drop var(--dur) var(--ease) both; }
+@keyframes sg-drop { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
+.sim-summary > header { display: flex; align-items: center; gap: var(--s1); padding: 2px 2px 2px 10px; }
+.sim-toggle { display: flex; align-items: center; gap: var(--s1); padding: 2px 0; border: 0; background: none; color: var(--text); font: inherit; cursor: pointer; }
+.sim-toggle > svg { flex: none; color: var(--text-2); }
+.sim-chip { white-space: nowrap; }
+.sim-text { margin: 0; padding: 8px 12px 4px; font-weight: var(--fw-bold); }
+.sim-summary.stale .sim-chip, .sim-summary.stale .sim-text { color: var(--text-2); }
+.sim-stale { margin: 0; padding: 0 12px 6px; color: var(--warn); font-size: var(--fs-sm); }
+.sim-summary ul { list-style: none; margin: 0; padding: 4px; max-height: 148px; overflow-y: auto; border-top: var(--border-w) solid var(--border); }
+.sim-group { display: flex; align-items: flex-start; gap: var(--s1); width: 100%; padding: 5px 8px; border: 0; border-radius: var(--radius-sm); background: none; color: var(--text); text-align: left; line-height: 1.4; cursor: pointer; }
+.sim-group:hover { background: var(--surface-2); }
+.sim-group:disabled { cursor: default; }
+.sim-group .dot { margin-top: 5px; }
+
+/* ---- + Source and the wires of a bundle ---- */
+.canvas-tools { position: absolute; top: var(--s2); right: var(--s2); z-index: var(--z-panel); display: flex; gap: var(--s1); }
+.canvas-tools .btn { background: var(--surface); }
+.canvas-tools .btn[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+.pick-hint { position: absolute; bottom: var(--s2); left: 0; right: 0; margin-inline: auto; width: max-content; max-width: calc(100% - 140px); z-index: var(--z-panel); display: flex; align-items: center; gap: var(--s1);
+             padding: 6px 8px 6px 12px; background: var(--surface); border: var(--border-w) solid var(--accent); border-radius: var(--radius); }
+.pick-hint > svg { color: var(--accent); }
+.flow.picking .node-card, .flow.picking .react-flow__pane { cursor: crosshair; }
+.bundle-hit { cursor: pointer; }
+.edge-menu { position: fixed; z-index: var(--z-menu); width: 280px; max-height: 260px; overflow-y: auto; }
+.edge-menu .menu-item { justify-content: flex-start; }
+.edge-menu-name { margin-left: auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+
+@media (prefers-reduced-motion: reduce) { .scrim, .sim-panel.anim-slide { animation: none; } }
+.issue-more { display: block; }
