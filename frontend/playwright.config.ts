@@ -20,7 +20,7 @@ export default defineConfig({
   use: { browserName: "chromium", viewport: { width: 1366, height: 768 },
          launchOptions: { ...(exe ? { executablePath: exe } : {}), args: ["--disable-background-networking", "--disable-component-update", "--no-pings"] } },
   projects: smoke ? [{ name: "smoke", testMatch: "smoke.spec.ts" }] : [
-    { name: "mock", testMatch: ["app.spec.ts", "cards.spec.ts"], use: { baseURL: "http://127.0.0.1:5199/" } },
+    { name: "mock", testMatch: ["app.spec.ts", "cards.spec.ts", "fixes.spec.ts", "route.spec.ts"], use: { baseURL: "http://127.0.0.1:5199/" } },
     { name: "real", testMatch: ["real.spec.ts", "screens.spec.ts", "cards.real.spec.ts", "tour.spec.ts", "screens456.spec.ts", "layout.spec.ts"], use: { baseURL: "http://127.0.0.1:8799/" } },
   ],
   webServer: smoke ? [] : [

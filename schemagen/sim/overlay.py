@@ -11,6 +11,7 @@ from typing import Any
 
 from ..core import tables
 from ..core.context import Ctx
+from ..core.fit import device_name, gauge_fit
 from ..core.model import Model
 from .api import operating_point
 
@@ -41,46 +42,44 @@ def overlay(m: Model, cfg: Any, sources: list[dict[str, Any]] | None = None, mea
     pds = {p.id: p for p in m.protective_devices}
     cur = {c["id"]: c["current_A"] for c in op.conductors}
     feeder: dict[int, Any] = {}
+    def cname(cid: str) -> str:
+        c = ctx.comp_by_id.get(cid)
+        return (c.name if c and c.name else cid)
     for pid, idx in ctx.protected_by.items():
         pd = pds.get(pid)
-        rating = pd.rating_a if pd else None
         for i in idx:
             feeder[i] = pd
-            awg, c = conds[i].awg, conds[i]
-            lim = tables.max_rating(awg, pd.kind if pd else "breaker", cfg) if awg is not None else None
-            if rating and lim and rating > lim:
-                kind = pd.kind if pd else "breaker"
-                # the wire carries more than its gauge may: the wire is too small; it carries less: the breaker is too big
-                title = f"{c.label} is too small for {pid}" if cur.get(c.id, 0.0) > lim else f"{pid} is too big for {c.label}"
-                put(f"conductor:{c.id}", "error", f"{awg} AWG is too small for {rating:g} A {kind} {pid} (max {lim:g} A)", f"component:{pid}", title)
-                put(f"component:{pid}", "error", f"{rating:g} A is too big for {awg} AWG wire {c.label} (max {lim:g} A)", f"component:{pid}", title)
-    margin = float(d.get("heavy_margin", 2.0))
+            c = conds[i]
+            f = gauge_fit(c, pd, cname(pid), cfg) if pd else None
+            if f:  # the same sentence as the check rule gauge-protection
+                put(f"conductor:{c.id}", "error", f.detail, f"component:{pid}", f.title)
+                put(f"component:{pid}", "error", f.detail, f"component:{pid}", f.title)
     for i, c in enumerate(conds):
         a, awg = cur.get(c.id, 0.0), c.awg
         if awg is None: continue
         lim = tables.max_rating(awg, "breaker", cfg)
         pd = feeder.get(i)
         if lim and a > lim:
-            put(f"conductor:{c.id}", "error", f"{a:.1f} A is more than {awg} AWG may carry ({lim:g} A)", f"component:{pd.id}" if pd else None, f"{c.label} is too small for {pd.id}" if pd else "")
+            why = f"{c.label} carries {a:.1f} A, more than {awg} AWG may carry ({lim:g} A)"
+            put(f"conductor:{c.id}", "error", why, f"component:{pd.id}" if pd else None, why if pd else "")
             continue
-        prot = bool(pd and pd.rating_a)
-        gauges = _table(pd.kind if prot else "breaker", cfg)
+        if not (pd and pd.rating_a): continue
+        gauges = _table(pd.kind, cfg)
         order = [g for g, _ in gauges]
-        if (a < 0.05 and not prot) or awg not in order: continue
+        if awg not in order: continue
         have = order.index(awg)
-        # a wire is sized for its protector (two gauges thinner still allowed for it), else for its current with a margin
-        need = pd.rating_a if prot else a * margin
-        if have >= 2 and gauges[have - 2][1] >= need:
-            k = next(j for j, (_, mx) in enumerate(gauges) if mx >= need)
-            put(f"conductor:{c.id}", "warn", f"{awg} AWG carries {a:.2f} A{f' behind {pd.rating_a:g} A {pd.id}' if prot else ''}; {gauges[k][0]} AWG would do")
+        # a wire is far heavier than needed when the gauge two steps thinner is still allowed for its protector
+        if have >= 2 and gauges[have - 2][1] >= pd.rating_a:
+            k = next(j for j, (_, mx) in enumerate(gauges) if mx >= pd.rating_a)
+            put(f"conductor:{c.id}", "warn", f"{c.label} is {awg} AWG and carries {a:.2f} A behind the {device_name(pd, cname(pd.id))}; {gauges[k][0]} AWG would do")
     warn = float(d.get("breaker_warn_loading", 0.8))
     for p in op.protective:
         key, ld, r = f"component:{p['id']}", p["loading"], p["rating_A"]
         if p["trips"]:
-            put(key, "error", f"trips: {p['current_A']:.1f} A through its {r:g} A rating" + (f" (in {p['trip_s']:.2g} s)" if p["trip_s"] else ""),
-                f"trip:{p['id']}", f"{p['id']} trips")
-        elif ld is not None and ld > 1: put(key, "error", f"undersized: {p['current_A']:.1f} A is above its {r:g} A rating", key, f"{p['id']} is undersized")
-        elif ld is not None and ld >= warn: put(key, "warn", f"{p['current_A']:.1f} A is {100 * ld:.0f} % of its {r:g} A rating", key, f"{p['id']} is nearly full")
+            put(key, "error", f"{cname(p['id'])} trips: {p['current_A']:.1f} A through its {r:g} A rating" + (f" (in {p['trip_s']:.2g} s)" if p["trip_s"] else ""),
+                f"trip:{p['id']}", f"{cname(p['id'])} trips")
+        elif ld is not None and ld > 1: put(key, "error", f"{cname(p['id'])} is undersized: {p['current_A']:.1f} A is above its {r:g} A rating", key, f"{cname(p['id'])} is undersized")
+        elif ld is not None and ld >= warn: put(key, "warn", f"{cname(p['id'])} carries {p['current_A']:.1f} A, {100 * ld:.0f} % of its {r:g} A rating", key, f"{cname(p['id'])} is nearly full")
     unfed = set(op.unpowered)
     bus_of = {b.id: b for b in m.buses}
     def bname(bid: str) -> str: return bus_of[bid].raw[len(bid):].strip() or bid  # "Cabin bus" from "BB-CABIN-BUS Cabin bus"
@@ -99,12 +98,13 @@ def overlay(m: Model, cfg: Any, sources: list[dict[str, Any]] | None = None, mea
         if ld["off"] or ld["powered"]: continue
         v, vmin = ld["voltage_V"], ld["v_min"]
         key, bid = f"component:{ld['component']}", on_bus.get(ld["component"])
-        if bid and v < 0.5: put(key, "error", f"no supply: {bname(bid)} has no source", f"component:{bid}", f"{bname(bid)} has no source")
-        else: put(key, "error", "no supply: no source reaches it" if v < 0.5 else f"{v:.2f} V is below its minimum {vmin:g} V")
+        who = cname(ld["component"])
+        if bid and v < 0.5: put(key, "error", f"{who} has no supply: {bname(bid)} has no source", f"component:{bid}", f"{bname(bid)} has no power source")
+        else: put(key, "error", f"{who} has no supply: no source reaches it" if v < 0.5 else f"{who} gets {v:.2f} V, below its minimum {vmin:g} V")
     for b in op.buses:
         if b["id"] in unfed:
-            put(f"component:{b['id']}", "error", f"no source reaches this bus ({b['loads']} load{'s' * (b['loads'] != 1)} on it)", f"component:{b['id']}",
-                f"{bname(b['id'])} has no source")
+            put(f"component:{b['id']}", "error", f"No source reaches {bname(b['id'])} ({b['loads']} load{'s' * (b['loads'] != 1)} on it)", f"component:{b['id']}",
+                f"{bname(b['id'])} has no power source")
     errors = sum(x["status"] == "error" for x in items.values())
     trips = sum(p["trips"] for p in op.protective)
     problems = len(groups)

@@ -377,6 +377,7 @@ One entry per open choice taken during the 0.2 → 0.5 work: context, choice, wh
 - Today `gauge-protection` catches both 1 and 2 (the wire is lighter than the breaker allows); the 1.0 overlay tells
   them apart (wire too small vs breaker oversized). No rule catches 3: the simulation shows the bus at 0 V but `sim`
   still says pass; stream A's overlay flags it. The test pins the ids so the tour texts stay true.
+- Update (D97): still three mistakes; the `no-power-source` rule now reports the third in `check` and the app's Issues too.
 
 ## D67. The example sheet is generated, and byte-reproducible
 - Choice: `examples/aircraft/make_sheet.py` writes `wires.xlsx` from rows in the script (openpyxl only); the zip entry
@@ -678,3 +679,82 @@ may show again next launch. Replay from the help menu works at any time and reco
   fit zoom (0.81, card text 10.6 px, under the readability test).
 - Why: a reload that rearranges the diagram breaks the no-jumps rule; a panel over the diagram hid the bus a source had to attach to.
 - Alternative not taken: a packing order keyed only by zone id and size. It still moves blocks when the attach zone grows.
+
+## D96. A sheet without part data behaves as "everything switched on" in Simulate
+- Root cause: with `sim.infer` the batteries are inferred by name (`sim.sources`), but a switch or relay with no part data
+  produced no circuit element at all, so the master switch, the battery contactor and every panel switch were open and no
+  source reached any bus (every bus 0 V, "3 unpowered buses"). The shipped example only worked because its cards describe those
+  parts. A second bug hid behind it: an inferred battery was also modelled as a load of its own conductors' `current` field.
+- Choice: in the app's Simulate (infer on) a switch or relay without part data is a closed contact between its two power terminals
+  (not coil, not ground); with another number of terminals it stays open, and the assumption says so. Part data and scenario states
+  win. Every such assumption is listed in `Overlay.assumptions` ("Battery contactor (relay): no part data, so it is taken as
+  closed"). An inferred source gets no load from its own current fields. The CLI's default (infer off) is unchanged.
+- Choice: `Workspace.components[].kind` (and the card's `kind`) report "battery" / "dcdc" for components `Ctx.is_source` treats as
+  sources (part data or the `sim.sources` name match); the model's own kinds are not changed (`workspace.kind_of`).
+- Not changed: an inferred DC/DC takes the highest nominal voltage of its wires (D45), so on the example it is a 400 V source on the
+  HV stub, not a 14 V one; it does not feed the main bus. Harmless there, but a guessed rule that a user may want to override.
+
+## D97. A bus with loads and no source is a check rule
+- Choice: `no-power-source` (core/rules.py) walks `core/net.py` connectivity from every source (battery, DC/DC, regulated output,
+  sources added in the app) with breakers, fuses, switches and relays closed (they stay out of the union-find: the rule joins
+  their terminals itself), and reports each bus with loads that is never reached: error, "Cabin bus has no power source", message
+  naming the loads, object the bus. With no recognisable source at all it reports one warning, "No power source found", instead.
+  It only speaks when a bus has loads. `run_rules(..., sources=)` takes the app's sources; the server passes them.
+- Why: D66 left this out because it changed the findings pinned on `examples/demo`. The demo's 24 V bus (BB24) feeds only the
+  generator field and no wire brings power into it, so the finding is true and is now in the expected output (`check` on the demo
+  exits 1). The aircraft example's three deliberate mistakes are still three, now all three in `check` and the app's Issues.
+- An `Issue` has an optional `title` (and a rule may set the severity of one finding); the app shows it instead of the rule's title.
+
+## D98. One sentence for a wire that does not fit its protective device
+- Choice: `core/fit.py` decides, from the sheet only: the wire's listed current above what its gauge may carry behind that device
+  (FAA AC 43.13-1B Table 11-3) means "W045 is too thin for the 10 A LANDING LT breaker", else "The 15 A XPDR breaker is too big for
+  wire W058 (20 AWG, max 7.5 A)". The `gauge-protection` rule and the Simulate overlay both use it; the standard is in the message,
+  not the title. Overlay lines now name their subject ("Cabin fan has no supply: ...").
+- Why: the overlay flipped its framing for one wire with the simulated current, and the check said "gauge too light" for a fault
+  that is really an oversized breaker.
+
+## D99. No guessed "far heavier" threshold
+- Choice: the `heavy_margin` test for wires without a protective device is removed (and its data key). It had no standard behind it
+  and almost never fired. The breaker-based check (two gauges thinner would still be allowed for the protector) stays.
+
+## D100. A file with no wires is not a project
+- Choice: `/api/import` answers `import-failed` (`retry: false`) when no conductor results, removes the folder it made and does
+  not add it to recent. The unreadable-file message no longer ends in two full stops.
+
+## D101. Drawings need two tools, and fail cleanly
+- Choice: `/api/health` has `drawings: {available, message}` (Graphviz `dot` and `wireviz` both found). The drawings export checks
+  both before writing, says "Harness drawings need Graphviz and WireViz, two free programs that are not part of schemagen..." (no
+  pip, `retry: false`; the pip hint stays in the log and the CLI), and renders into a temporary folder that is moved into `out/` only
+  when everything rendered, so a failure leaves nothing behind.
+
+## D102. The checklist export
+- Choice: the per-component export is "Wiring checklist" (project name and date), one table per component with Connected and
+  Continuity tick boxes, A4 portrait print CSS (repeating header, heading kept with its table, no external resources); the XLSX has
+  the same columns (it keeps its Initials column). The app writes `checklist.html` and `checklist.xlsx`; the CLI `pinout` command
+  and its file names are unchanged. Far ends are still traced to reachable terminals, never to a splice.
+
+## D103. Card rows and rating edits
+- Choice: card pin rows add `pin_name` and `wire_name`; `other` is display text without codes; a pin with no number shows the
+  sheet's text in `pin`. A rating edit renames the component in the same change set when its name holds the old rating as "<old> A".
+
+## D104. Small session additions
+- Choice: `POST /api/close`, `POST /api/recent/remove {path}`; `/api/session` leaves out recent projects whose folder is gone.
+  `tests/conftest.py` points `SCHEMAGEN_HOME` at a temporary folder for every test so the real settings are never written.
+
+## D105. Review fixes on the screen: nothing added
+- Choice: the fixes after the 1.0 product review add no control. A Wires row click only shows the wire (its label is the link to
+  its card); Esc, a click on empty canvas or the same issue again clear a selection; toasts sit at the bottom right and expire
+  (an error with Retry stays); cards open to read (issues, then the pin table with Pin, Wire, Name, Gauge, Goes to) and an Edit
+  button reveals the fields; the logo leads back to the start screen; Recent shows name and date. The tour stays at 8 steps:
+  Simulate and + Source are two-phase steps that wait for Next on the result, and every step closes a card left open.
+- Why: the review found the tour stuck from step 5 on, a selection that could not be cleared, and toasts over the Export menu.
+- Also: plain wording for `side-guessed`, `can-part-data` and `direction-unknown`.
+
+## D106. Direction for 1.1 (owner, 2026-11-11)
+- Choice: the main diagram becomes a map: one line per component pair with a wire count, columns in power-flow order, the circuit
+  of a component lit on hover, no per-wire labels. Exact wiring is a drawing inside the card of a component or of a line, with one
+  "Save as PDF". The app renders that drawing itself: Graphviz and WireViz go, and with them the harness-drawings export (its cut
+  list and continuity list move into the checklist export first).
+- Not in 1.1: selecting several components, "this circuit / this subsystem" presets, folding breakers into one card.
+- Constraint: the drawings must be good enough to rewire the aircraft from, and full-harness and whole-system exports follow
+  later, so the drawing takes its scope (component, connection, harness, subsystem) as an input from the start.

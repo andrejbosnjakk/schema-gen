@@ -120,7 +120,7 @@ schemagen check .
 It finds one error and exits with status 1:
 
 ```
-error   gauge-protection   L04: 22 AWG is protected by CB-2 10 A; at most 5 A per FAA AC 43.13-1B, Table 11-3 ...
+error   gauge-protection   The 10 A CB-2 breaker is above the 5 A that L04 (22 AWG) may be protected with. Limit per FAA AC 43.13-1B, Table 11-3 ...
         fix: use a breaker of 5 A or less, or a heavier gauge
 ```
 

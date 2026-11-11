@@ -1,5 +1,5 @@
 """1.0 example project (examples/aircraft): a fictional electric aircraft whose readable sheet has exactly three
-deliberate mistakes (examples/aircraft/README.md)."""
+deliberate mistakes (examples/aircraft/README.md), all three shown by `check` (the app's Issues) as well as by Simulate."""
 import shutil
 from collections import Counter
 from pathlib import Path
@@ -54,12 +54,21 @@ def test_exactly_the_deliberate_mistakes(issues):
     assert sorted(bad) == [
         ("gauge-protection", ["conductor:W045", "protective:CB-LANDING-LT"]),  # 1: 22 AWG under a 10 A breaker (6 A landing light)
         ("gauge-protection", ["conductor:W058", "protective:CB-XPDR"]),        # 2: 15 A breaker on a 1.5 A transponder, 20 AWG
+        ("no-power-source", ["component:BB-CABIN-BUS"]),                       # 3: no feed into the cabin bus
     ]
+    titles = {i.rule: i.title for i in issues if i.rule == "no-power-source"}
+    assert titles == {"no-power-source": "Cabin bus has no power source"}
+    msg = next(i.message for i in issues if i.rule == "no-power-source")
+    assert all(x in msg for x in ("Cabin fan", "Cabin light", "USB charger"))
+    thin = next(i for i in issues if i.objects[0] == "conductor:W045")
+    big = next(i for i in issues if i.objects[0] == "conductor:W058")
+    assert thin.title == "W045 is too thin for the 10 A LANDING LT breaker" and "FAA AC 43.13-1B" in thin.message
+    assert big.title == "The 15 A XPDR breaker is too big for wire W058 (20 AWG, max 7.5 A)" and "FAA AC 43.13-1B" in big.message
 
 
 def test_unpowered_cabin_bus():
-    """Mistake 3: no source or feed reaches the cabin bus, so its three loads see no voltage. No `check` rule finds
-    this yet; the simulation shows it."""
+    """Mistake 3: no source or feed reaches the cabin bus, so its three loads see no voltage (`check` reports it too:
+    the no-power-source rule)."""
     L = load(AIRCRAFT)
     op = api.operating_point(L.model, L.cfg)
     v = {b["id"]: b["voltage_V"] for b in op.buses}

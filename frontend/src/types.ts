@@ -3,6 +3,7 @@
 export type Sev = "" | "error" | "warning" | "info";
 export interface ProjectInfo { name: string; root: string; version: string; warnings: string[] }
 export interface Recent { name: string; path: string; opened: string }
+export interface Health { ready: boolean; version: string; drawings?: { available: boolean; message: string } }
 export interface Session { project: ProjectInfo | null; recent: Recent[]; tour_done: boolean; theme: "light" | "dark" }
 
 export interface Node { id: string; name: string; kind: string; zone: string; subsystem: string; pins: number; rank: number; sev: Sev }
@@ -29,7 +30,7 @@ export interface Overlay {
 }
 export interface ExportResult { folder: string; files: string[] }
 
-export interface Pin { pin: string; wire: string; wire_label: string; name: string; other: string; gauge: string }
+export interface Pin { pin: string; wire: string; wire_label: string; name: string; other: string; gauge: string; pin_name?: string; wire_name?: string }
 export interface ComponentCard {
   id: string; name: string; kind: string; location: string; rating_A: number | null;
   connectors: { id: string; pins: Pin[] }[]; issues: Issue[]; sim?: OverlayItem;

@@ -31,13 +31,14 @@ def body(code: str, message: str, retry: bool = False) -> JSONResponse:
 def convert(e: BaseException, where: str = "") -> AppError:
     """Any exception as an AppError; the cause goes to the log."""
     from ..importers.records import ModelError
-    from ..renderers.wireviz import RenderError
+    from ..renderers.wireviz import DRAWINGS_MISSING, RenderError
     lg = userdata.log()
     if isinstance(e, AppError):
         if e.detail: lg.warning("%s %s: %s\n%s", where, e.code, e.message, e.detail)
         return e
     if isinstance(e, RenderError):
         lg.warning("%s %s: %s\n%s", where, e.code, e.message, e.detail)
+        if e.code == "graphviz-missing": return AppError(e.code, DRAWINGS_MISSING)  # the pip hint stays in the log
         return AppError(e.code, e.message, retry=e.code == "render-failed")
     if isinstance(e, ModelError):
         lg.warning("%s project input problems:\n%s", where, e)

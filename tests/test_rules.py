@@ -50,8 +50,10 @@ def findings(L, model=None, measured=None):
 def test_demo_findings_are_all_true():
     L = load(DEMO)
     got = sorted((i.rule, i.objects[0]) for i in findings(L))
-    # the demo's one open item: the generator field pin is not decided yet
-    assert got == [("open-item", "open_item:O-01"), ("open-status", "conductor:PWR-GEN-N"), ("pin-tbd", "conductor:PWR-GEN-N")]
+    # the demo's one open item (the generator field pin is not decided yet) and its 24 V bus, which only feeds the generator field:
+    # no wire brings power into it, so the no-power-source rule is right
+    assert got == [("no-power-source", "component:BB24"), ("open-item", "open_item:O-01"), ("open-status", "conductor:PWR-GEN-N"),
+                   ("pin-tbd", "conductor:PWR-GEN-N")]
 
 
 def test_clean_synthetic_1k_has_only_its_open_item(s1k):
@@ -230,7 +232,7 @@ def test_can_checked_without_cards(tmp_path):
     assert nodes(L) == nodes(Lf) and nodes(L)  # terminators are not nodes; nodes come from their stubs
     found = run_rules(L.model, L.cfg)
     assert not [i for i in found if i.rule in ("can-terminators", "can-nodes")]  # both ends inferred as terminations
-    assert any("terminations taken from the name" in i.message for i in found if i.rule == "can-part-data")
+    assert any("terminators were recognised by name" in i.message for i in found if i.rule == "can-part-data")
     tr = next(c.raw for c in L.model.components if c.id.startswith("TR-"))
     m = L.rebuild([r for r in L.records if tr not in (r.data.get("p1"), r.data.get("p2"))])  # cut one terminator off
     assert [i for i in run_rules(m, L.cfg) if i.rule == "can-terminators"]
@@ -338,7 +340,7 @@ def test_fix_direction_cli_writes_changeset_and_diff(tmp_path):
 # ---------------------------------------------------------------- check command formats
 def test_check_formats_and_exit_code(tmp_path, s600):
     out = tmp_path / "c.sarif"
-    assert main(["check", str(DEMO), "--format", "sarif", "-o", str(out)]) == 0
+    assert main(["check", str(DEMO), "--format", "sarif", "-o", str(out)]) == 1  # the demo's unfed 24 V bus is an error
     s = json.loads(out.read_text(encoding="utf-8"))
     assert s["version"] == "2.1.0" and s["runs"][0]["results"]
     r = next(x for x in s["runs"][0]["results"] if x["ruleId"] == "pin-tbd")
@@ -518,3 +520,70 @@ def test_rules_fast_on_5k(tmp_path):
     t = time.perf_counter(); run_rules(L.model, L.cfg, measured=measured_lengths(L.cfg))
     assert time.perf_counter() - t < 3.0
     assert sys.version_info >= (3, 10)
+
+
+# ---------------------------------------------------------------- power feed and the gauge/protector sentence
+HEAD = ["Label", "Name", "From", "From connector / pin", "To", "To connector / pin", "Voltage", "Current (A)", "Gauge", "Length (m)", "Weight (g)"]
+
+
+def _sheet(tmp_path, rows):
+    """A tiny readable project: rows are (name, from, from pin, to, to pin, volts, amps, awg)."""
+    from openpyxl import Workbook
+    wb = Workbook(); ws = wb.active; ws.append(HEAD)
+    for n, r in enumerate(rows, 1): ws.append([f"W{n:03d}", r[0], r[1], r[2], r[3], r[4], r[5], r[6], r[7], 0.5, None])
+    d = tmp_path / "tiny"; d.mkdir()
+    wb.save(d / "w.xlsx")
+    (d / "schemagen.yml").write_text("source: {path: w.xlsx, format: readable}\n", encoding="utf-8")
+    return d
+
+
+BATTERY = [("Battery feed", "Main battery", "positive terminal", "Breaker 'MAIN' 30 A", "line side", "14 V", 5, 12),
+           ("Main feed", "Breaker 'MAIN' 30 A", "load side", "Main bus", "stud", "14 V", 5, 12)]
+LOAD = ("Light feed", "Main bus", "stud", "Light", "positive terminal", "14 V", 2, 18)
+
+
+def test_no_power_source_rule_names_bus_and_loads(tmp_path):
+    L = load(_sheet(tmp_path, BATTERY + [LOAD, ("Fan feed", "Cabin bus", "stud", "Fan", "positive terminal", "14 V", 1, 18)]))
+    got = [i for i in findings(L) if i.rule == "no-power-source"]
+    assert len(got) == 1 and got[0].severity == "error" and got[0].title == "Cabin bus has no power source"
+    assert got[0].objects == ["component:BB-CABIN-BUS"]
+    assert "Fan" in got[0].message
+
+
+def test_no_power_source_passes_through_breakers_switches_and_relays(tmp_path):
+    rows = BATTERY + [("To switch", "Main bus", "stud", "Switch 'LT'", "pin 1", "14 V", 2, 18),
+                      ("From switch", "Switch 'LT'", "pin 2", "Light bus", "stud", "14 V", 2, 18),
+                      ("Fan feed", "Light bus", "stud", "Fan", "positive terminal", "14 V", 1, 18)]
+    assert not [i for i in findings(load(_sheet(tmp_path, rows))) if i.rule == "no-power-source"]
+
+
+def test_no_source_at_all_is_one_warning(tmp_path):
+    rows = [("Light feed", "Main bus", "stud", "Light", "positive terminal", "14 V", 2, 18),
+            ("Fan feed", "Cabin bus", "stud", "Fan", "positive terminal", "14 V", 1, 18)]
+    got = [i for i in findings(load(_sheet(tmp_path, rows))) if i.rule == "no-power-source"]
+    assert len(got) == 1 and got[0].severity == "warning" and got[0].title == "No power source found" and got[0].objects == []
+    assert got[0].message == ("schemagen could not tell which component is the battery or supply. Add one with + Source, "
+                              "or name it in the sheet (for example 'Main battery').")
+
+
+def test_app_source_counts_as_a_source(tmp_path):
+    L = load(_sheet(tmp_path, [LOAD]))
+    assert [i.rule for i in run_rules(L.model, L.cfg) if i.rule == "no-power-source"] == ["no-power-source"]
+    srcs = [dict(id="SRC-1", attach="BB-MAIN-BUS", type="battery", nominal_V=14)]
+    assert not [i for i in run_rules(L.model, L.cfg, sources=srcs) if i.rule == "no-power-source"]
+
+
+def test_gauge_fit_framing_comes_from_the_sheet(tmp_path):
+    from schemagen.core.fit import gauge_fit
+    L = load(_sheet(tmp_path, BATTERY + [("Light feed", "Main bus", "stud", "Breaker 'LT' 10 A", "line side", "14 V", 6, 22),
+                                         ("Light run", "Breaker 'LT' 10 A", "load side", "Light", "positive terminal", "14 V", 6, 22),
+                                         ("Fan feed", "Main bus", "stud", "Breaker 'XPDR' 15 A", "line side", "14 V", 1.5, 20),
+                                         ("Fan run", "Breaker 'XPDR' 15 A", "load side", "Fan", "positive terminal", "14 V", 1.5, 20)]))
+    titles = {i.title for i in findings(L) if i.rule == "gauge-protection"}
+    assert titles == {"W003 is too thin for the 10 A LT breaker", "The 15 A XPDR breaker is too big for wire W006 (20 AWG, max 7.5 A)"} or \
+        any("too thin" in t for t in titles) and any("too big" in t for t in titles)
+    pd = next(p for p in L.model.protective_devices if p.id.endswith("LT"))
+    wire = next(c for c in L.model.conductors if c.label == "W004")
+    assert gauge_fit(wire, pd, "Breaker 'LT' 10 A").too_small
+    wire.current_a = None  # no listed current: the breaker is too big for the wire
+    assert not gauge_fit(wire, pd).too_small and gauge_fit(wire, pd).title.startswith("The 10 A")

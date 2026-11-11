@@ -7,12 +7,12 @@ import { KindIcon } from "../theme/icons";
 import { act, post } from "../api";
 import { voltText, type CardSim, useSim } from "../simulate";
 import type { Node, Overlay, Workspace } from "../types";
-import { at, CH, CW, layout, placeLabels, regions, rounded, route } from "./layout";
+import { at, CH, CW, layout, placeBeside, placeLabels, regions, rounded, route } from "./layout";
 import { drawn, useTheme } from "./colour";
 import { Glyph } from "../ui";
 
 type CardData = { n: Node; hl?: boolean; pulse?: boolean; first?: boolean; sim?: CardSim };
-const FIT = { top: "12px", left: "12px", bottom: "12px", right: "64px" } as const;  // room for the zoom buttons on the right
+const FIT = { top: "28px", left: "12px", bottom: "4px", right: "64px" } as const;  // room for + Source (top right) and the zoom buttons (right)
 const NEAR = 0.9;  // below this zoom bundle labels are hidden (they would be unreadable)
 type ZoneData = { name: string; w: number; h: number };
 type EdgeData = { label: string; n: number; colour: string; ground: boolean; t: number | null; hl?: boolean; dim?: boolean; sim?: "warn" | "error"; pick?: (id: string, x: number, y: number) => void };
@@ -62,9 +62,9 @@ function ZoomFlag({ host }: { host: React.RefObject<HTMLDivElement> }) {
 }
 
 export interface Focus { ids: string[]; wire?: string; nonce: number }
-interface Props { ws: Workspace; focus: Focus | null; selWire: string | null; onCard: (n: Node) => void; onWire: (id: string) => void; overlay: { o: Overlay; stale: boolean } | null; picking: boolean }
+interface Props { ws: Workspace; focus: Focus | null; selWire: string | null; onCard: (n: Node) => void; onWire: (id: string) => void; onClear: () => void; overlay: { o: Overlay; stale: boolean } | null; picking: boolean }
 
-function Flow({ ws, focus, selWire, onCard, onWire, overlay, picking }: Props) {
+function Flow({ ws, focus, selWire, onCard, onWire, onClear, overlay, picking }: Props) {
   const rf = useReactFlow();
   const host = useRef<HTMLDivElement>(null);
   const theme = useTheme();
@@ -84,12 +84,9 @@ function Flow({ ws, focus, selWire, onCard, onWire, overlay, picking }: Props) {
     for (const n of ws.components) {
       const old = pos.get(n.id);
       if (old) { q.set(n.id, old); continue; }
-      const e = ws.edges.find((x) => x.a === n.id || x.b === n.id), nb = e && pos.get(e.a === n.id ? e.b : e.a);
-      const free = (x: number, y: number) => ![...q.values(), ...pos.values()].some((o) => Math.abs(o.x - x) < CW + 8 && Math.abs(o.y - y) < CH + 8);
-      const [bx, by] = [nb?.x ?? 0, nb?.y ?? 0], spots: [number, number][] = [];   // the free spot nearest to what it is wired to
-      for (const dx of [-1, 1, -2, 2]) for (let k = -8; k <= 8; k++) spots.push([bx + dx * (CW + 40), by + k * (CH + 12)]);
-      const d = (t: [number, number]) => (t[0] - bx) ** 2 + (t[1] - by) ** 2, best = spots.filter(([x, y]) => free(x, y)).sort((u, v) => d(u) - d(v))[0] ?? [bx - CW - 80, by + 20 * (CH + 12)];
-      q.set(n.id, { x: best[0], y: best[1] });
+      const e = ws.edges.find((x) => x.a === n.id || x.b === n.id), other = e && (e.a === n.id ? e.b : e.a), nb = other ? q.get(other) ?? pos.get(other) : undefined;
+      const all = new Map([...pos, ...q]), own = ws.zones.find((z) => z.members.includes(other ?? ""))?.id;
+      q.set(n.id, placeBeside(nb ?? { x: 0, y: 0 }, own, all, ws.edges, regions(ws.zones, all)));
     }
     setPos(q);
   }
@@ -195,9 +192,9 @@ function Flow({ ws, focus, selWire, onCard, onWire, overlay, picking }: Props) {
   const moved = useRef(0);
 
   return (
-    <div className={`flow${picking ? " picking" : ""}${overlay?.stale ? " stale" : ""}`} ref={host} data-tour="diagram" role="region" aria-label="System diagram: components left to right in power order">
+    <div className={`flow${picking ? " picking" : ""}${overlay?.stale ? " stale" : ""}`} ref={host} data-tour="diagram" role="region" aria-label="System diagram">
       <ReactFlow nodes={nodes} edges={edges} nodeTypes={NODE_TYPES} edgeTypes={EDGE_TYPES} onNodesChange={onChange as never}
-        onNodeDragStop={onDragStop} onNodeMouseEnter={(_, n) => { if (n.type === "card") setHoverNode(n.id); }} onNodeMouseLeave={() => setHoverNode(null)} onNodeClick={(_, n) => { if (n.type === "card") onCard((n.data as CardData).n); }}
+        onNodeDragStop={onDragStop} onNodeMouseEnter={(_, n) => { if (n.type === "card") setHoverNode(n.id); }} onNodeMouseLeave={() => setHoverNode(null)} onNodeClick={(_, n) => { if (n.type === "card") onCard((n.data as CardData).n); else onClear(); }} onPaneClick={onClear}
         onMoveEnd={(e) => { if (e && Date.now() - moved.current > 400) { moved.current = Date.now(); act("zoom"); } }}
         fitView fitViewOptions={{ padding: FIT }} minZoom={0.05} maxZoom={2} onlyRenderVisibleElements nodesConnectable={false}
         elementsSelectable={false} zoomOnDoubleClick={false} proOptions={{ hideAttribution: false }}>

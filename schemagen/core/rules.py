@@ -18,8 +18,10 @@ from dataclasses import dataclass
 from typing import Any
 
 from . import direction, tables
-from .context import Ctx, dsub_size, harness_pins
+from .context import POWER_CLASSES_EXCLUDED, Ctx, dsub_size, harness_pins
+from .fit import gauge_fit
 from .model import Issue, Model, Severity
+from .net import NodeKey
 
 
 @dataclass
@@ -27,14 +29,14 @@ class Rule:
     id: str
     severity: Severity
     title: str
-    fn: Callable[[Ctx], Iterator[tuple[str, list[str], str]]]  # yields (message, objects, fix)
+    fn: Callable[[Ctx], Iterator[tuple[Any, ...]]]  # yields (message, objects, fix[, title[, severity]])
 
 
 RULES: dict[str, Rule] = {}
 
 
-def rule(rid: str, severity: Severity, title: str) -> Callable[[Callable[[Ctx], Iterator[tuple[str, list[str], str]]]], Any]:
-    def deco(fn: Callable[[Ctx], Iterator[tuple[str, list[str], str]]]) -> Any:
+def rule(rid: str, severity: Severity, title: str) -> Callable[[Callable[[Ctx], Iterator[tuple[Any, ...]]]], Any]:
+    def deco(fn: Callable[[Ctx], Iterator[tuple[Any, ...]]]) -> Any:
         RULES[rid] = Rule(rid, severity, title, fn)
         return fn
     return deco
@@ -99,33 +101,25 @@ def r_direction(ctx: Ctx) -> Iterator[tuple[str, list[str], str]]:
             "run `schemagen fix direction` to swap its ends (the label stays)"
 
 
-@rule("direction-unknown", "info", "Signal wires whose direction cannot be told")
+@rule("direction-unknown", "info", "Signal wires with no clear direction")
 def r_direction_unknown(ctx: Ctx) -> Iterator[tuple[str, list[str], str]]:
     idx = direction.unknown(ctx)
-    if idx: yield f"{len(idx)} signal wire(s) have no known direction", [cref(ctx, i) for i in idx], \
+    if idx: yield f"{len(idx)} signal wire(s): the sheet does not say which end sends, so their from/to order is not checked", [cref(ctx, i) for i in idx], \
         "add pin types (signal_in / signal_out) to the part data, or direction.senders / receivers patterns"
 
 
 # ---------------------------------------------------------------- protection and contacts
-@rule("gauge-protection", "error", "Wire gauge too light for its protective device")
-def r_gauge_prot(ctx: Ctx) -> Iterator[tuple[str, list[str], str]]:
+@rule("gauge-protection", "error", "Wire gauge does not fit its protective device")
+def r_gauge_prot(ctx: Ctx) -> Iterator[tuple[str, list[str], str, str]]:
     pds = {p.id: p for p in ctx.m.protective_devices}
-    src = tables.table("protection", ctx.cfg)["source"]
     for pid, idx in ctx.protected_by.items():
         pd = pds.get(pid)
         if not pd or pd.rating_a is None: continue
         for i in idx:
-            c = ctx.m.conductors[i]
-            if c.awg is None: continue
-            mx = tables.max_rating(c.awg, pd.kind, ctx.cfg)
-            note = ""
-            if mx is None:  # lighter than every gauge in the table: hold it to the lightest one
-                light = tables.lightest(pd.kind, ctx.cfg)
-                if light is None or c.awg <= light[0]: continue
-                mx, note = light[1], f" (lighter than the lightest tabled gauge, {light[0]} AWG)"
-            if pd.rating_a > mx:
-                yield (f"{c.label}: {c.awg} AWG is protected by {pid} {pd.rating_a:g} A; at most {mx:g} A per {src}{note}",
-                       [cref(ctx, i), f"protective:{pid}"], f"use a {pd.kind} of {mx:g} A or less, or a heavier gauge")
+            f = gauge_fit(ctx.m.conductors[i], pd, ctx.comp_by_id[pid].name if pid in ctx.comp_by_id else "", ctx.cfg)
+            if f:
+                yield (f"{f.detail}. Limit per {f.source}{' (' + f.note + ')' if f.note else ''}.",
+                       [cref(ctx, i), f"protective:{pid}"], f.fix, f.title)
 
 
 def _ends(ctx: Ctx) -> Iterator[tuple[int, int]]:
@@ -230,13 +224,13 @@ def r_can_term(ctx: Ctx) -> Iterator[tuple[str, list[str], str]]:
                    [b.net_id] + [f"component:{ctx.comp[t[0]].id}" for t in b.terminators], "terminate the two ends of the bus, nothing in between" + inside)
 
 
-@rule("can-part-data", "info", "CAN node without part data")
+@rule("can-part-data", "info", "CAN bus checked from the wire list only")
 def r_can_unknown(ctx: Ctx) -> Iterator[tuple[str, list[str], str]]:
     for b in ctx.can_buses:
         if b.unknown or b.inferred_terms:
-            terms = f"; terminations taken from the name: {', '.join(b.inferred_terms)}" if b.inferred_terms else ""
-            yield (f"CAN_{b.polarity} bus {b.net_id[4:]}: no CAN pin data for {', '.join(b.unknown) or 'its terminations'}, "
-                   f"nodes inferred from their stub conductors{terms}",
+            terms = f", and the terminators were recognised by name ({', '.join(b.inferred_terms)})" if b.inferred_terms else ""
+            yield (f"CAN {b.polarity} line {b.net_id[4:]}: the pins of {', '.join(b.unknown) or 'its terminators'} are not described, "
+                   f"so the devices on the bus were worked out from the wires{terms}. The termination and node-count checks are less certain",
                    [b.net_id] + [f"component:{u}" for u in b.unknown + b.inferred_terms], "add a card with can_h/can_l pins (and term: true where terminated)")
 
 
@@ -331,12 +325,12 @@ def r_half_naming(ctx: Ctx) -> Iterator[tuple[str, list[str], str]]:
                     "use one name per half (or fix the sides in schemagen.yml)"
 
 
-@rule("side-guessed", "warning", "Connector-half side guessed")
+@rule("side-guessed", "warning", "Not sure which half of a connector this is")
 def r_side_guessed(ctx: Ctx) -> Iterator[tuple[str, list[str], str]]:
     for con in ctx.m.connectors:
         for h in con.halves:
             if h.guessed:
-                yield f"{con.id}: side of '{h.name}' guessed as {h.side}", [f"connector:{con.id}"], \
+                yield f"{con.id}: '{h.name}' was taken as the {h.side} half. If that is wrong, the two halves are swapped in the pin tables", [f"connector:{con.id}"], \
                     f"add sides: {{{con.id}: {{'{h.name}': near|far}}}} to schemagen.yml"
 
 
@@ -392,19 +386,95 @@ def r_gauge_tbd(ctx: Ctx) -> Iterator[tuple[str, list[str], str]]:
         if c.awg is None: yield f"{c.label}: gauge '{c.gauge or 'empty'}'", [cref(ctx, i)], "set the gauge (AWG)"
 
 
+# ---------------------------------------------------------------- power feed
+def _fed(ctx: Ctx, app_sources: list[dict[str, Any]]) -> tuple[set[NodeKey], bool]:
+    """(nodes a source can reach with every breaker, fuse, switch and relay closed, whether any source exists). Sources:
+    batteries and DC/DC converters by kind, part data or name (sim.sources), regulated outputs, and sources added in the app."""
+    from .model import Terminal
+    net, conds = ctx.net, ctx.m.conductors
+    by_dev: dict[str, list[Terminal]] = defaultdict(list)
+    for dev, con, pin in ctx.by_terminal: by_dev[dev].append(Terminal(device=dev, connector=con, pin=pin))
+    power = lambda i: conds[i].kind not in POWER_CLASSES_EXCLUDED  # noqa: E731
+    live = lambda t: ctx.pin_type(t) != "ground" and t.connector.strip().lower() != "coil" and any(power(i) for i, _ in ctx.by_terminal[t.key()])  # noqa: E731
+    adj: dict[NodeKey, set[NodeKey]] = defaultdict(set)
+    for i, c in enumerate(conds):
+        if power(i): a, b = net.node(i, 1), net.node(i, 2); adj[a].add(b); adj[b].add(a)
+    start: list[NodeKey] = []
+    for comp in ctx.m.components:
+        ts = [t for t in by_dev.get(comp.raw, []) if live(t)]
+        p = ctx.part_of(comp.raw)
+        if comp.kind in ("breaker", "fuse") or (comp.kind in ("switch", "relay") and not (p and p.contacts)):  # closed: all live terminals joined
+            ns = [net.node_of(t) for t in ts]
+            for n in ns: adj[n].update(ns)
+        elif comp.kind in ("switch", "relay"):
+            for t in ts:
+                for q in ctx.contact_peers(t): adj[net.node_of(t)].add(net.node_of(q)); adj[net.node_of(q)].add(net.node_of(t))
+        elif ctx.is_source(comp) or (p and p.supply_out): start += [net.node_of(t) for t in ts]
+    for s in app_sources:
+        comp = ctx.comp_by_id.get(str(s.get("attach", "")))
+        if comp: start += [(comp.raw,)] if comp.kind in ("bus", "splice") else [net.node_of(t) for t in by_dev.get(comp.raw, []) if live(t)]
+    seen, todo = set(start), list(start)
+    while todo:
+        for y in adj[todo.pop()]:
+            if y not in seen: seen.add(y); todo.append(y)
+    return seen, bool(start)
+
+
+def _loads_on(ctx: Ctx, bus: str) -> list[str]:
+    """Display names of the loads fed through a bus (through splices, harness pins, breakers line to load, switches, relays)."""
+    net, conds = ctx.net, ctx.m.conductors
+    out: dict[str, str] = {}
+    todo, seen = [(i, 3 - e) for i, e in net.at[(bus,)]], set()
+    while todo:
+        i, far = todo.pop()
+        if (i, far) in seen or conds[i].kind in POWER_CLASSES_EXCLUDED: continue
+        seen.add((i, far))
+        t = conds[i].end(far)
+        comp = ctx.comp.get(t.device)
+        role = net.role(t.device)
+        if role == "bus": continue
+        if role == "breaker":
+            if ctx.pin_type(t) == "power_out": continue  # the load side is upstream of the bus
+            todo += net.next_hop(i, far)
+        elif role == "device" and comp and comp.kind in ("switch", "relay"):
+            for j, k in net.by_dev[t.device]:
+                if (j, k) != (i, far) and ctx.pin_type(conds[j].end(k)) != "ground" and conds[j].end(k).connector.strip().lower() != "coil": todo.append((j, 3 - k))
+        elif role == "device" and comp and not ctx.is_source(comp): out.setdefault(comp.id, comp.name or comp.id)
+        elif role != "device": todo += net.next_hop(i, far)
+    return sorted(out.values())
+
+
+@rule("no-power-source", "error", "A bus has loads but no power source reaches it")
+def r_no_source(ctx: Ctx) -> Iterator[tuple[str, list[str], str, str, str]]:
+    fed, any_source = _fed(ctx, getattr(ctx, "app_sources", []))
+    loaded = [(b, ld) for b in ctx.m.buses if b.function_class not in POWER_CLASSES_EXCLUDED and (ld := _loads_on(ctx, b.raw))]
+    if not loaded: return
+    if not any_source:
+        yield ("schemagen could not tell which component is the battery or supply. Add one with + Source, or name it in the sheet (for example 'Main battery').",
+               [], "add a source in the app (+ Source), or name the battery or supply in the sheet", "No power source found", "warning")
+        return
+    for b, ld in loaded:
+        if (b.raw,) in fed: continue
+        name = ctx.comp_by_id[b.id].name if b.id in ctx.comp_by_id and ctx.comp_by_id[b.id].name else b.id
+        shown = ", ".join(ld[:6]) + (f" and {len(ld) - 6} more" if len(ld) > 6 else "")
+        yield (f"No source reaches {name}, with every breaker, fuse, switch and relay closed. Loads on it: {shown}.", [f"component:{b.id}"],
+               "check the feed into the bus (a missing wire or breaker), or add a source with + Source", f"{name} has no power source", "error")
+
+
 # ---------------------------------------------------------------- engine
 def run_rules(model: Model, cfg: Any = None, only: list[str] | None = None, measured: dict[str, float] | None = None,
-              ctx: Ctx | None = None) -> list[Issue]:
-    """All enabled rules; severity overrides and `off` come from schemagen.yml `rules:`."""
+              ctx: Ctx | None = None, sources: list[dict[str, Any]] | None = None) -> list[Issue]:
+    """All enabled rules; severity overrides and `off` come from schemagen.yml `rules:`. `sources`: the sources added in the app."""
     ctx = ctx or Ctx(model, cfg)
     ctx.measured = measured or {}  # type: ignore[attr-defined]
+    ctx.app_sources = sources or []  # type: ignore[attr-defined]
     conf: dict[str, Any] = (getattr(cfg, "rules", None) or {}) if cfg else {}
     out: list[Issue] = []
     for rid, r in RULES.items():
         if only and rid not in only: continue
-        sev = conf.get(rid, r.severity)
-        if sev in ("off", False): continue
-        for msg, objs, fix in r.fn(ctx):
-            out.append(Issue(rule=rid, severity=sev, message=msg, objects=objs, fix=fix))
+        if conf.get(rid) in ("off", False): continue
+        for msg, objs, fix, *more in r.fn(ctx):  # more: [title, severity of this finding]
+            sev = conf.get(rid) or (more[1] if len(more) > 1 else r.severity)
+            out.append(Issue(rule=rid, severity=sev, message=msg, objects=objs, fix=fix, title=more[0] if more else ""))
     order = {"error": 0, "warning": 1, "info": 2}
     return sorted(out, key=lambda x: (order[x.severity], x.rule, x.message))

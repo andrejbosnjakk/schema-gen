@@ -184,7 +184,11 @@ export function install(q: URLSearchParams) {
   const ok = (json: unknown, ms = 120) => new Promise<{ status: number; json: unknown }>((res) => setTimeout(() => res({ status: 200, json }), ms));
   const err = (status: number, code: string, message: string, retry = false) => ok({ error: { code, message, retry } }).then((r) => ({ ...r, status }));
   useMock(async (method, path, body) => {
+    if (path === "/api/health") return ok({ ready: true, version: "1.0.0", graphviz: { found: !q.has("nodrawings"), version: "", message: "" },
+      drawings: q.has("nodrawings") ? { available: false, message: "Harness drawings need Graphviz and WireViz, which are not part of schemagen." } : { available: true, message: "" } }, 10);
     if (path === "/api/session") return ok({ ...session, project: ws?.project ?? null });
+    if (path === "/api/close") { ws = null; overlay = null; return ok({ ok: true }, 20); }
+    if (path === "/api/recent/remove") { session.recent = session.recent.filter((r) => r.path !== (body as { path: string }).path); return ok({ ok: true }, 20); }
     if (path === "/api/settings") { Object.assign(session, body); return ok({ ok: true }, 20); }
     if (path === "/api/open") {
       if (failOpen) { failOpen = false; return err(503, "internal", "The project could not be opened just now. Please try again.", true); }
@@ -194,6 +198,7 @@ export function install(q: URLSearchParams) {
       const f = body as File;
       if (!/\.(xlsx|csv)$/i.test(f.name)) return err(400, "import-failed", "Only .xlsx and .csv wire sheets can be imported.");
       const rows = /\.csv$/i.test(f.name) ? (await f.text()).split(/\r?\n/).filter((l) => l.trim()).length - 1 : Math.round(f.size / 80);
+      if (rows < 1) return err(400, "import-failed", "This file has no wires. Check that it is a wire sheet with one wire per row.");
       ws = build(Math.max(20, rows), f.name.replace(/\.[^.]+$/, ""), [{ k: 0, rule: "readable-cell", severity: "warning",
         title: "Row 14: the pin cell could not be read", message: "“pin 3/4?” is not a pin; the wire is kept without a pin.", fix: "", objects: [] }]);
       return ok(ws, 200 + rows * 0.5);
@@ -213,11 +218,11 @@ export function install(q: URLSearchParams) {
       }
       const n = ws.components.find((x) => x.id === id);
       if (!n) return err(404, "not-found", `There is no component ${id}.`);
-      const pins = ws.conductors.filter((w) => w.a === id || w.b === id).map((w, i) => ({ pin: String(i + 1), wire: w.id, wire_label: w.label, name: w.name, gauge: w.gauge,
-        other: w.a === id ? w.to : w.from }));
+      const pins = ws.conductors.filter((w) => w.a === id || w.b === id).map((w, i) => ({ pin: q.has("nopins") ? "" : String(i + 1), pin_name: q.has("nopins") || i % 3 ? "" : w.cls === "GND" ? "Return" : "Supply", wire: w.id, wire_label: w.label,
+        wire_name: w.name, name: w.name, gauge: w.gauge, other: w.a === id ? w.to : w.from }));
       const sim = overlay?.items[`component:${id}`];
       return ok({ id, name: n.name, kind: n.kind, location: n.zone, rating_A: /(\d+(?:\.\d+)?) A/.exec(n.name) && /breaker|fuse/.test(n.kind) ? Number(/(\d+(?:\.\d+)?) A/.exec(n.name)![1]) : null,
-        connectors: pins.length ? [{ id: "J1", pins }] : [], issues: ws.issues.filter((i) => i.objects.some((o) => o === `component:${id}` || o === `protective:${id}` || o.startsWith(`pin:${id}/`))), ...(sim ? { sim } : {}) }, 200);
+        connectors: pins.length > 12 ? [{ id: "Firewall side", pins: pins.slice(0, Math.ceil(pins.length / 2)) }, { id: "Cabin side", pins: pins.slice(Math.ceil(pins.length / 2)) }] : pins.length ? [{ id: "J1", pins }] : [], issues: ws.issues.filter((i) => i.objects.some((o) => o === `component:${id}` || o === `protective:${id}` || o.startsWith(`pin:${id}/`))), ...(sim ? { sim } : {}) }, 200);
     }
     const edit = /^\/api\/(component|wire)\/(.+)$/.exec(path);
     if (edit && method === "POST" && ws) {

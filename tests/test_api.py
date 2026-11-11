@@ -155,10 +155,9 @@ def test_overlay_tells_the_three_mistakes_apart(ac):
     c, _ = ac
     o = c.post("/api/simulate", json={}).json()
     it = o["items"]
-    assert it["conductor:W045"]["status"] == "error" and "too small" in it["conductor:W045"]["reason"]
-    assert "10 A" in it["conductor:W045"]["reason"]
-    assert it["component:CB-XPDR"]["status"] == "error" and "too big" in it["component:CB-XPDR"]["reason"]
-    assert it["component:BB-CABIN-BUS"]["status"] == "error" and "no source" in it["component:BB-CABIN-BUS"]["reason"]
+    assert it["conductor:W045"]["status"] == "error" and "W045" in it["conductor:W045"]["reason"] and "10 A LANDING LT breaker" in it["conductor:W045"]["reason"]
+    assert it["component:CB-XPDR"]["status"] == "error" and "15 A XPDR breaker is above" in it["component:CB-XPDR"]["reason"]
+    assert it["component:BB-CABIN-BUS"]["status"] == "error" and "no source" in it["component:BB-CABIN-BUS"]["reason"].lower()
     assert o["ok"] is False and o["summary"]["unpowered"] >= 1 and o["summary"]["text"]
     cabin = next(b for b in o["buses"] if b["id"] == "BB-CABIN-BUS")
     assert cabin["powered"] is False and cabin["voltage_V"] < 0.5
@@ -181,7 +180,7 @@ def test_source_powers_the_cabin_bus(ac):
 # ---------------------------------------------------------------- export
 def test_export_files(ac):
     c, d = ac
-    for kind, name in (("pinout", "pinout.xlsx"), ("wirelist", "wirelist.xlsx")):
+    for kind, name in (("pinout", "checklist.xlsx"), ("pinout", "checklist.html"), ("wirelist", "wirelist.xlsx")):
         r = c.post("/api/export", json={"kind": kind}).json()
         assert name in r["files"] and (d / "out" / name).is_file() and r["folder"] == str(d / "out")
     r = c.post("/api/export", json={"kind": "faults"}).json()

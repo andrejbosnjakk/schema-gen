@@ -4,6 +4,7 @@ the far end by display name. A conductor appears once under each of its two ends
 XLSX (print-ready, with empty check columns) and HTML."""
 from __future__ import annotations
 
+import datetime as _dt
 import html
 import re
 from collections import defaultdict
@@ -87,7 +88,7 @@ def blocks(m: Model, ctx: Ctx | None = None) -> list[dict[str, Any]]:
 
 COLS = [("connector", "connector / half", 16), ("pin", "pin", 6), ("name", "pin name", 16), ("label", "wire label", 10),
         ("wire", "wire name", 26), ("gauge", "gauge", 7), ("colour", "colour", 8), ("far", "far end", 52)]
-CHECKS = [("connected", 10), ("continuity", 10), ("initials", 9)]
+CHECKS = [("Connected", 10), ("Continuity", 10), ("initials", 9)]
 
 
 def write_xlsx(m: Model, path: Path, ctx: Ctx | None = None, page_breaks: bool = False) -> None:
@@ -121,17 +122,32 @@ def write_xlsx(m: Model, path: Path, ctx: Ctx | None = None, page_breaks: bool =
     wb.save(path)
 
 
-def write_html(m: Model, path: Path, ctx: Ctx | None = None) -> None:
+CSS = ("@page{size:A4 portrait;margin:12mm 10mm}"
+       "*{box-sizing:border-box}body{font:8pt/1.25 Arial,Helvetica,sans-serif;color:#000;background:#fff;margin:0}"
+       "h1{font-size:13pt;margin:0 0 1mm}p.sub{margin:0 0 5mm;font-size:9pt}"
+       "section{margin:0 0 5mm}h2{font-size:10pt;margin:0 0 1mm;break-after:avoid;page-break-after:avoid}h2 small{font-weight:normal}"
+       "table{border-collapse:collapse;width:100%;table-layout:fixed;break-before:avoid;page-break-before:avoid}"
+       "thead{display:table-header-group}tr{break-inside:avoid;page-break-inside:avoid}"
+       "td,th{border:1px solid #000;padding:1mm 1.5mm;text-align:left;vertical-align:top;overflow-wrap:anywhere}"
+       "th{font-weight:bold}td.tick,th.tick{width:17mm;text-align:center}"
+       "span.box{display:inline-block;width:3.5mm;height:3.5mm;border:1px solid #000;vertical-align:middle}tr.spare td{font-style:italic}"
+       "@media screen{body{margin:8mm}}")
+WIDTHS = {"connector": 11, "pin": 5, "name": 11, "label": 7, "wire": 15, "gauge": 5, "colour": 6, "far": 28}
+
+
+def write_html(m: Model, path: Path, ctx: Ctx | None = None, project: str = "") -> None:
+    """The wiring checklist a technician takes to the aircraft: one table per component, two tick boxes per row, set up to
+    print on A4 portrait (header repeats on each page, a heading stays with its table). No external resources."""
     e = html.escape
-    head = "<tr>" + "".join(f"<th>{h}</th>" for _, h, _ in COLS) + "</tr>"
+    cols = "".join(f"<col style=\"width:{WIDTHS[k]}%\">" for k, _, _ in COLS) + "<col style=\"width:17mm\"><col style=\"width:17mm\">"
+    head = ("<thead><tr>" + "".join(f"<th>{e(h)}</th>" for _, h, _ in COLS) + "<th class=\"tick\">Connected</th><th class=\"tick\">Continuity</th></tr></thead>")
     parts = []
     for b in blocks(m, ctx):
-        rows = "".join(f"<tr class=\"{'spare' if not r['id'] else ''}\">" + "".join(f"<td>{e(str(r[k]))}</td>" for k, _, _ in COLS)
-                       + ("<td>spare</td>" if not r["id"] else "<td></td>") + "</tr>" for r in b["rows"])
+        rows = "".join(f"<tr{' class=\"spare\"' if not r['id'] else ''}>"
+                       + "".join(f"<td>{e('spare' if k == 'wire' and not r['id'] else str(r[k]))}</td>" for k, _, _ in COLS)
+                       + "<td class=\"tick\"><span class=\"box\"></span></td>" * 2 + "</tr>" for r in b["rows"])
         parts.append(f"<section id=\"{e(b['id'])}\"><h2>{e(b['title'] or b['id'])} <small>{e(b['id'])}</small></h2>"
-                     f"<table>{head.replace('</tr>', '<th></th></tr>')}{rows}</table></section>")
-    css = ("body{font:14px system-ui,sans-serif;margin:16px;color:#111;background:#fff}table{border-collapse:collapse;margin-bottom:8px}"
-           "td,th{border:1px solid #bbb;padding:2px 6px;text-align:left}th{background:#eee}tr.spare td{color:#777}"
-           "@media (prefers-color-scheme: dark){body{background:#111;color:#eee}th{background:#333}td,th{border-color:#555}}")
-    path.write_text(f"<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><title>Pinout</title><style>{css}</style></head>"
-                    f"<body><h1>Pinout</h1>{''.join(parts)}</body></html>", encoding="utf-8")
+                     f"<table><colgroup>{cols}</colgroup>{head}<tbody>{rows}</tbody></table></section>")
+    sub = " · ".join(x for x in (project, _dt.date.today().isoformat()) if x)
+    path.write_text(f"<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><title>Wiring checklist</title><style>{CSS}</style></head>"
+                    f"<body><h1>Wiring checklist</h1><p class=\"sub\">{e(sub)}</p>{''.join(parts)}</body></html>", encoding="utf-8")

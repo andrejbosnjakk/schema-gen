@@ -147,7 +147,7 @@ const zoomOf = (p: Page) => p.evaluate(() => new DOMMatrix(getComputedStyle(docu
 test("fit-to-screen at 1366x768 is readable: zoom at least 0.8, card names at least 11 px", async ({ page }) => {
   await page.goto("/?mock=1&open=1");
   await expect(page.locator(".node-card").first()).toBeVisible();
-  await page.waitForTimeout(600);
+  await page.waitForTimeout(2500);
   const z = await zoomOf(page);
   const px = await page.evaluate((z) => parseFloat(getComputedStyle(document.querySelector(".card-name")!).fontSize) * z, z);
   console.log(`mock fit zoom ${z.toFixed(2)}, card name ${px.toFixed(1)} px`);

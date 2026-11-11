@@ -7,6 +7,7 @@ Edits are stored as change sets in <project>/changes/ (git-friendly; undo remove
 """
 from __future__ import annotations
 
+import re
 import subprocess
 import threading
 import webbrowser
@@ -75,14 +76,14 @@ class State:
         self.m = L.model
         self.ctx = Ctx(self.m, self.cfg)
         self.measured = measured_lengths(self.cfg)
-        self.issues = run_rules(self.m, self.cfg, measured=self.measured, ctx=self.ctx)
+        self.sources = ch.app_sources(ch.load_all(self.cfg.root))
+        self.issues = run_rules(self.m, self.cfg, measured=self.measured, ctx=self.ctx, sources=self.sources)
         self.nets = self.ctx.net.nets()
         self.net_of = {i: n.id for n in self.nets for i in n.conductors}
         self._index: dict[str, Any] | None = None
         self._json = None
         self._graph: dict[str, Any] | None = None
         self._history: dict[str, list[dict[str, str]]] = {}
-        self.sources = ch.app_sources(ch.load_all(self.cfg.root))
         self._ws: dict[str, Any] | None = None
         self.overlay: dict[str, Any] | None = None
 
@@ -270,7 +271,7 @@ class State:
 SEV = {"error": 0, "warning": 1, "info": 2}
 WIRE_FIELDS = {"label": "label", "name": "name", "gauge": "awg", "current": "amps", "notes": "notes"}
 SOURCE_TYPES = ("battery", "dcdc", "bench")
-OPEN_PATHS = ("/api/health", "/api/session", "/api/settings", "/api/open", "/api/import")
+OPEN_PATHS = ("/api/health", "/api/session", "/api/settings", "/api/open", "/api/import", "/api/close", "/api/recent/remove")
 
 
 class Session:
@@ -284,12 +285,14 @@ class Session:
         self.st.wait()
         return self.st
 
-    def start(self, path: str | Path, background: bool = False) -> State:
+    def start(self, path: str | Path, background: bool = False, need_wires: str = "") -> State:
         p = Path(path).expanduser()
         if p.is_file() and p.suffix.lower() in (".yml", ".yaml"): p = p.parent
         if not (p / "schemagen.yml").is_file(): raise AppError("not-found", f"There is no schemagen.yml in {p}.")
         st = State(p, background)
         if not background: st.wait()
+        if need_wires and not st.m.conductors:  # a file that is not a wire sheet: nothing opens, nothing is remembered
+            raise AppError("import-failed", f"{need_wires} has no wires schemagen can read. A wire sheet needs at least the columns Label, From and To.")
         self.st = st
         userdata.add_recent(st.cfg.root.name, st.cfg.root)
         return st
@@ -347,7 +350,8 @@ def create_app(project: str | Path | None = None, background: bool = False) -> F
     # ---------------------------------------------------------------- 1.0: session and projects
     @app.get("/api/health")
     def health() -> dict[str, Any]:
-        return dict(ready=S.st is None or S.st.ready.is_set(), version=__version__, graphviz=app.state.graphviz,
+        from ..renderers.wireviz import drawings
+        return dict(ready=S.st is None or S.st.ready.is_set(), version=__version__, graphviz=app.state.graphviz, drawings=drawings(),
                     error=S.st.error if S.st else "")
 
     def info(st: State) -> dict[str, Any]:
@@ -389,8 +393,8 @@ def create_app(project: str | Path | None = None, background: bool = False) -> F
 
         def do() -> dict[str, Any]:
             try: folder = userdata.new_import(name, data)
-            except ValueError as e: raise AppError("import-failed", f"{e}.") from None
-            try: return ws.workspace(S.start(folder))
+            except ValueError as e: raise AppError("import-failed", str(e)) from None
+            try: return ws.workspace(S.start(folder, need_wires=name))
             except BaseException:
                 import shutil
                 shutil.rmtree(folder, ignore_errors=True)
@@ -400,6 +404,18 @@ def create_app(project: str | Path | None = None, background: bool = False) -> F
         except BaseException as e:  # noqa: BLE001
             a = convert(e, f"import {name}")
             raise AppError("import-failed", f"{name} could not be read: {a.message}" if a.code == "internal" else a.message) from None
+
+    @app.post("/api/close")
+    def close() -> dict[str, Any]:
+        S.st = None  # the start screen shows again
+        return dict(ok=True)
+
+    @app.post("/api/recent/remove")
+    def recent_remove(body: dict[str, Any] = Body(...)) -> dict[str, Any]:  # noqa: B008
+        b = _keys(body, {"path"})
+        if not isinstance(b.get("path"), str): raise AppError("bad-request", "Give the path of the recent entry to remove.")
+        userdata.remove_recent(b["path"])
+        return dict(ok=True)
 
     @app.get("/api/workspace")
     def workspace() -> dict[str, Any]:
@@ -439,7 +455,15 @@ def create_app(project: str | Path | None = None, background: bool = False) -> F
         if "rating_A" in b:
             r = _num(b["rating_A"], "rating_A")
             if kind not in ("breaker", "fuse"): raise AppError("bad-request", f"{cid} is not a breaker or fuse, so it has no rating.")
-            if r != (pd.rating_a if pd else None): ops.append(ch.Op(op="component", id=cid, field="rating_A", old=pd.rating_a if pd else None, new=r))
+            if r != (pd.rating_a if pd else None):
+                ops.append(ch.Op(op="component", id=cid, field="rating_A", old=pd.rating_a if pd else None, new=r))
+                if pd and pd.rating_a and r:  # the sheet keeps the rating in the name ("Breaker 'XPDR' 15 A"): rename in the same change set
+                    named = next((o for o in ops if o.field == "name"), None)
+                    base = named.new if named else c.name
+                    renamed = re.sub(rf"(?<![\d.]){re.escape(f'{pd.rating_a:g}')}(\s*)A(?![A-Za-z])", lambda m: f"{r:g}{m[1]}A", base)
+                    if renamed != base:
+                        if named: named.new = renamed
+                        else: ops.append(ch.Op(op="component", id=cid, field="name", old=c.name, new=renamed, row={"device": c.raw}))
         if ops: st.save(ch.new_set(f"edit {cid} in the app", ops, author="app", slug="app-component"))
         return ws.workspace(st)
 
@@ -508,16 +532,26 @@ def create_app(project: str | Path | None = None, background: bool = False) -> F
         b = _keys(body, {"kind"})
         kind, out = b.get("kind"), st.cfg.out
         import contextlib, io
+        if kind not in ("drawings", "pinout", "faults", "wirelist"): raise AppError("bad-request", "kind must be drawings, pinout, faults or wirelist.")
+        if kind == "drawings":
+            from ..renderers.wireviz import DRAWINGS_MISSING, drawings
+            if not drawings()["available"]: raise AppError("graphviz-missing", DRAWINGS_MISSING)  # before anything is written
+            from ..cli.draw import draw
+            import shutil, tempfile
+            stage = Path(tempfile.mkdtemp(prefix="schemagen-drawings-"))  # rendered aside: a failed render leaves nothing in out/
+            try:
+                with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()): draw(st.cfg.root, all_=True, out=stage)
+                files = sorted(str(p.relative_to(stage)).replace("\\", "/") for p in stage.rglob("*") if p.is_file())
+                for f in files:
+                    (out / f).parent.mkdir(parents=True, exist_ok=True)
+                    shutil.move(str(stage / f), str(out / f))
+            finally: shutil.rmtree(stage, ignore_errors=True)
+            return dict(folder=str(out), files=files)
         before = {p: p.stat().st_mtime for p in out.rglob("*") if p.is_file()} if out.exists() else {}
         out.mkdir(parents=True, exist_ok=True)
-        if kind == "drawings":
-            from ..renderers.wireviz import GRAPHVIZ_MISSING, find_dot
-            if not find_dot(): raise AppError("graphviz-missing", GRAPHVIZ_MISSING)
-            from ..cli.draw import draw
-            with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()): draw(st.cfg.root, all_=True)
-        elif kind == "pinout":
+        if kind == "pinout":
             from ..exporters import pinout as po
-            po.write_xlsx(st.m, out / "pinout.xlsx", st.ctx); po.write_html(st.m, out / "pinout.html", st.ctx)
+            po.write_xlsx(st.m, out / "checklist.xlsx", st.ctx); po.write_html(st.m, out / "checklist.html", st.ctx, st.cfg.root.name)
         elif kind == "faults":
             from ..sim import report
             report.run(st.cfg.root, faults=True, out=out / "faults", infer=True)
@@ -525,7 +559,6 @@ def create_app(project: str | Path | None = None, background: bool = False) -> F
             from ..exporters.views import wirelist_xlsx
             from ..renderers.project import Project
             wirelist_xlsx(Project(st.cfg), out / "wirelist.xlsx")
-        else: raise AppError("bad-request", "kind must be drawings, pinout, faults or wirelist.")
         files = sorted(str(p.relative_to(out)).replace("\\", "/") for p in out.rglob("*") if p.is_file() and before.get(p) != p.stat().st_mtime)
         return dict(folder=str(out), files=files)
 
