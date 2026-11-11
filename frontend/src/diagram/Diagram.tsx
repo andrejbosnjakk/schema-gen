@@ -16,7 +16,7 @@ type EdgeData = { label: string; n: number; colour: string; ground: boolean; t: 
 const Card = memo(({ data }: NodeProps<RFNode<CardData>>) => {
   const { n } = data;
   return (
-    <div className={`card${data.hl ? " hl" : ""}${data.pulse ? " anim-pulse" : ""}`} title={`${n.name} (${n.id})`} data-tour-node={n.id} data-tour={data.first ? "node" : undefined}>
+    <div className={`card node-card${data.hl ? " hl" : ""}${data.pulse ? " anim-pulse" : ""}`} title={`${n.name} (${n.id})`} data-tour-node={n.id} data-tour={data.first ? "node" : undefined}>
       <Handle type="target" position={Position.Left} isConnectable={false} className="port" />
       <span className="card-icon"><KindIcon kind={n.kind} /></span>
       <span className="card-text">
@@ -136,9 +136,9 @@ function Flow({ ws, focus, selWire, onCard }: Props) {
       </ReactFlow>
       <Legend palette={ws.palette} used={ws.edges.flatMap((e) => e.cls)} />
       <div className="zoom-controls" role="group" aria-label="Zoom">
-        <button className="icon-btn" onClick={() => rf.zoomIn({ duration: 200 })} aria-label="Zoom in" title="Zoom in"><Glyph name="plus" /></button>
-        <button className="icon-btn" onClick={() => rf.zoomOut({ duration: 200 })} aria-label="Zoom out" title="Zoom out"><Glyph name="minus" /></button>
-        <button className="icon-btn" data-tour="fit" onClick={() => { rf.fitView({ duration: 450, padding: 0.06 }); act("zoom"); }} aria-label="Fit to screen" title="Fit to screen"><Glyph name="fit" /></button>
+        <button className="btn btn-ghost btn-icon" onClick={() => rf.zoomIn({ duration: 200 })} aria-label="Zoom in" title="Zoom in"><Glyph name="plus" /></button>
+        <button className="btn btn-ghost btn-icon" onClick={() => rf.zoomOut({ duration: 200 })} aria-label="Zoom out" title="Zoom out"><Glyph name="minus" /></button>
+        <button className="btn btn-ghost btn-icon" data-tour="fit" onClick={() => { rf.fitView({ duration: 450, padding: 0.06 }); act("zoom"); }} aria-label="Fit to screen" title="Fit to screen"><Glyph name="fit" /></button>
       </div>
     </div>);
 }

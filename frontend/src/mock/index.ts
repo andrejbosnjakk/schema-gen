@@ -2,6 +2,7 @@
 //   ?mock=1             start screen          &open=1     start with the example open
 //   &wires=1000         a bigger example      &fail=open  /api/open fails once (retry flow)
 import { useMock } from "../api";
+import aircraft from "./aircraft.json";
 import type { Edge, Issue, Node, Overlay, Session, Wire, Workspace } from "../types";
 
 const PALETTE: Record<string, string> = { "14 V": "#ff0000", "GND": "#000000", "CAN_H": "#00ff00", "CAN_L": "#00ff00",
@@ -151,10 +152,11 @@ const OVERLAY: Overlay = { ok: false, summary: { problems: 3, trips: 0, unpowere
 /** Route the app's calls to the in-memory server. */
 export function install(q: URLSearchParams) {
   const big = Number(q.get("wires")) || 120;
-  let ws: Workspace | null = q.has("open") ? build(big, "Example aircraft") : null;
+  const example = () => (q.has("wires") ? build(big, "Kestrel E2") : structuredClone(aircraft) as Workspace);
+  let ws: Workspace | null = q.has("open") ? example() : null;
   let failOpen = q.get("fail") === "open";
   const session: Session = { project: ws?.project ?? null, tour_done: true, theme: "light", recent: [
-    { name: "Example aircraft", path: "C:\\Users\\you\\AppData\\Local\\schemagen\\projects\\Example aircraft", opened: "2026-11-06T09:12:00" },
+    { name: "Kestrel E2", path: "examples/aircraft", opened: "2026-11-06T09:12:00" },
     { name: "Glider avionics retrofit", path: "C:\\Users\\you\\Documents\\wiring\\glider-avionics", opened: "2026-10-28T16:40:00" }] };
   const ok = (json: unknown, ms = 120) => new Promise<{ status: number; json: unknown }>((res) => setTimeout(() => res({ status: 200, json }), ms));
   const err = (status: number, code: string, message: string, retry = false) => ok({ error: { code, message, retry } }).then((r) => ({ ...r, status }));
@@ -163,7 +165,7 @@ export function install(q: URLSearchParams) {
     if (path === "/api/settings") { Object.assign(session, body); return ok({ ok: true }, 20); }
     if (path === "/api/open") {
       if (failOpen) { failOpen = false; return err(503, "internal", "The project could not be opened just now. Please try again.", true); }
-      ws = build(big, (body as { path?: string }).path?.split("\\").pop() || "Example aircraft"); return ok(ws, 350);
+      ws = example(); return ok(ws, 350);
     }
     if (path === "/api/import") {
       const f = body as File;
@@ -179,5 +181,5 @@ export function install(q: URLSearchParams) {
     if (path === "/api/export") return ok({ folder: `${ws?.project.root}\\out`, files: ["X-WING.svg", "X-TAIL.svg"] }, 400);
     if (path === "/api/reveal") return ok({ ok: true });
     return err(404, "not-found", `Nothing at ${method} ${path}.`);
-  });
+  }, q.has("slow") ? 500 : 40);
 }

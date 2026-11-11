@@ -5,9 +5,9 @@ export class ApiError extends Error {
 }
 
 type Handler = (method: string, path: string, body: unknown) => Promise<{ status: number; json: unknown }>;
-let mock: Handler | null = null;
+let mock: Handler | null = null, mockStep = 40;
 /** Route every call to an in-memory server (the e2e and dev mock, `?mock=1`). */
-export function useMock(h: Handler) { mock = h; }
+export function useMock(h: Handler, step = 40) { mock = h; mockStep = step; }
 
 const OFFLINE = "schemagen is not answering. It may have been closed, or it is still starting.";
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -52,7 +52,7 @@ export function upload<T>(path: string, file: File, onProgress: (f: number) => v
   if (mock) {
     const m = mock;
     return (async () => {
-      for (let f = 0.2; f <= 1; f += 0.2) { onProgress(f); await sleep(40); }
+      for (let f = 0.2; f <= 1.01; f += 0.2) { onProgress(Math.min(f, 1)); await sleep(mockStep); }
       const r = await m("POST", path, file);
       if (r.status >= 400) throw toError(r.status, r.json);
       return r.json as T;

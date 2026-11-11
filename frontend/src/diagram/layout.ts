@@ -4,9 +4,9 @@
 // Plus the edge curve and the label pass.
 import type { Edge, Node, Zone } from "../types";
 
-export const CW = 184, CH = 44;            // card size (fixed: the edge geometry depends on it)
-const GX = 112, GSUB = 20, GY = 12;        // gap between rank columns, between wrapped sub-columns, between rows
-const HEAD = 30, PAD = 16, GB = 28, GBX = 120;  // block label room, block padding, gap between stacked blocks, between block columns
+export const CW = 200, CH = 48;            // card size (fixed: the edge geometry depends on it)
+const GX = 84, GSUB = 20, GY = 12;        // gap between rank columns, between wrapped sub-columns, between rows
+const HEAD = 30, PAD = 16, GB = 28, GBX = 72;  // block label room, block padding, gap between stacked blocks, between block columns
 export type XY = { x: number; y: number };
 
 interface Block { members: string[]; groups: string[][]; key: number; w: number; h: number; x: number; y: number }

@@ -39,12 +39,12 @@ export function MenuButton({ label, icon, items, tour, align = "right", iconOnly
   }, [open]);
   return (
     <div className="menu-wrap" ref={box}>
-      <button className={iconOnly ? "icon-btn" : "btn"} aria-haspopup="menu" aria-expanded={open} aria-controls={id} data-tour={tour}
+      <button className={iconOnly ? "btn btn-ghost btn-icon" : "btn"} aria-haspopup="menu" aria-expanded={open} aria-controls={id} data-tour={tour}
               onClick={() => setOpen((o) => !o)} aria-label={iconOnly ? label : undefined} title={iconOnly ? label : undefined}>
         {icon && <Glyph name={icon} />}{!iconOnly && <>{label}<Glyph name="down" size={14} /></>}
       </button>
       {open && <div className={`menu anim-pop ${align}`} role="menu" id={id} aria-label={label}>
-        {items.map((it) => <button key={it.label} role="menuitem" onClick={() => { setOpen(false); it.run(); }}>
+        {items.map((it) => <button key={it.label} role="menuitem" className="menu-item" onClick={() => { setOpen(false); it.run(); }}>
           <span>{it.label}</span>{it.hint && <span className="menu-hint">{it.hint}</span>}</button>)}
       </div>}
     </div>);
@@ -55,8 +55,8 @@ export function Toasts({ list, close }: { list: Toast[]; close: (id: number) => 
   return <div className="toasts" role="status" aria-live="polite">
     {list.map((t) => <div key={t.id} className={`toast anim-pop ${t.tone}`}>
       <span className="toast-text">{t.text}</span>
-      {t.action && <button className="btn sm" onClick={() => { close(t.id); t.action!.run(); }}>{t.action.label}</button>}
-      <button className="icon-btn sm" onClick={() => close(t.id)} aria-label="Dismiss"><Glyph name="x" size={14} /></button>
+      {t.action && <button className="btn btn-sm" onClick={() => { close(t.id); t.action!.run(); }}>{t.action.label}</button>}
+      <button className="btn btn-ghost btn-icon btn-sm" onClick={() => close(t.id)} aria-label="Dismiss"><Glyph name="x" size={14} /></button>
     </div>)}
   </div>;
 }
@@ -73,8 +73,8 @@ export function Dialog({ title, onClose, children, tour }: { title: ReactNode; o
   }, [onClose]);
   return <div className="scrim" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
     <div className="dialog anim-pop" role="dialog" aria-modal="true" aria-labelledby={id} data-tour={tour}>
-      <header><h2 id={id}>{title}</h2><button ref={close} className="icon-btn" onClick={onClose} aria-label="Close"><Glyph name="x" /></button></header>
-      {children}
+      <header><h2 id={id}>{title}</h2><button ref={close} className="btn btn-ghost btn-icon btn-sm" onClick={onClose} aria-label="Close"><Glyph name="x" /></button></header>
+      <section>{children}</section>
     </div>
   </div>;
 }

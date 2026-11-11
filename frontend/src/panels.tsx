@@ -11,7 +11,7 @@ export function Issues({ issues, loading, onPick, onClose }: { issues: Issue[] |
     <aside className="issues anim-panel" data-tour="issues" aria-labelledby="issues-h">
       <header className="panel-head">
         <h2 id="issues-h">Issues {issues && <span className="count">{issues.length}</span>}</h2>
-        <button className="icon-btn sm" onClick={onClose} aria-label="Hide issues" title="Hide issues"><Glyph name="left" /></button>
+        <button className="btn btn-ghost btn-icon btn-sm" onClick={onClose} aria-label="Hide issues" title="Hide issues"><Glyph name="left" /></button>
       </header>
       <div className="issues-body">
         {loading || !issues ? <SkeletonRows n={6} tall /> : issues.length === 0 ? <p className="empty">Nothing to report. Every rule passed.</p> :

@@ -115,7 +115,7 @@ export function App() {
     <Tour />
   </>;
 
-  if (fatal) return <div className="fatal" role="alert"><Logo size={32} /><p>{fatal}</p><button className="btn primary" onClick={loadSession}>Try again</button></div>;
+  if (fatal) return <div className="fatal" role="alert"><Logo size={32} /><p>{fatal}</p><button className="btn btn-primary" onClick={loadSession}>Try again</button></div>;
   if (!session) return <div className="start" aria-busy="true"><div className="start-col"><div className="skeleton" style={{ height: 40, width: 40 }} /><SkeletonRows n={4} tall /></div></div>;
 
   if (!ws && !busy) return <>
@@ -134,10 +134,10 @@ export function App() {
           { label: "Pinout", hint: "XLSX and HTML", run: () => exportAs("pinout", "Pinout") },
           { label: "Fault sweep", hint: "HTML report", run: () => exportAs("faults", "Fault sweep") },
           { label: "Wire list", hint: "XLSX", run: () => exportAs("wirelist", "Wire list") }]} />
-        <button className="btn primary" data-tour="simulate" onClick={simulate} disabled={!ws || simulating} aria-busy={simulating}>
+        <button className="btn btn-primary" data-tour="simulate" onClick={simulate} disabled={!ws || simulating} aria-busy={simulating}>
           <Glyph name="play" />{simulating ? "Simulating…" : "Simulate"}</button>
         <span className="sep" aria-hidden="true" />
-        <button className="icon-btn" onClick={toggleTheme} aria-label={theme === "light" ? "Switch to dark theme" : "Switch to light theme"} title={theme === "light" ? "Dark theme" : "Light theme"}>
+        <button className="btn btn-ghost btn-icon" onClick={toggleTheme} aria-label={theme === "light" ? "Switch to dark theme" : "Switch to light theme"} title={theme === "light" ? "Dark theme" : "Light theme"}>
           <Glyph name={theme === "light" ? "moon" : "sun"} /></button>
         <MenuButton label="Help" icon="help" iconOnly tour="help" items={[{ label: "Replay the tour", run: startTour }]} />
       </div>
@@ -164,7 +164,7 @@ function Start({ session, onExample, onRecent, onPick }: { session: Session; onE
       <Logo size={40} />
       <h1>schemagen</h1>
       <p className="lede">Drop your wire sheet to see the whole system as one diagram, and what is wrong with it.</p>
-      <button className="btn primary lg" onClick={onExample} autoFocus>Open the example project</button>
+      <button className="btn btn-primary btn-lg" onClick={onExample}>Open the example project</button>
       <div className="or" aria-hidden="true"><span>or</span></div>
       <div className="dropzone" onClick={onPick} role="button" tabIndex={0} aria-label="Import your wire sheet (.xlsx or .csv)"
            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onPick(); } }}>
