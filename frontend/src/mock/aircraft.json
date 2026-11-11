@@ -1,0 +1,4239 @@
+{
+"project": {
+"name": "Kestrel E2",
+"root": "examples/aircraft",
+"version": "0.6.0",
+"warnings": []
+},
+"components": [
+{
+"id": "AIRFRAME-GROUND-STUD",
+"name": "Airframe ground stud",
+"kind": "device",
+"zone": "Power generation and storage",
+"subsystem": "Power generation and storage",
+"pins": 1,
+"rank": 4,
+"sev": ""
+},
+{
+"id": "BACKUP-BATTERY",
+"name": "Backup battery",
+"kind": "battery",
+"zone": "Power generation and storage",
+"subsystem": "Power generation and storage",
+"pins": 2,
+"rank": 0,
+"sev": ""
+},
+{
+"id": "BATTERY-MANAGEMENT-SYSTEM",
+"name": "Battery management system",
+"kind": "controller",
+"zone": "Propulsion control",
+"subsystem": "Propulsion control",
+"pins": 4,
+"rank": 4,
+"sev": ""
+},
+{
+"id": "BB-CABIN-BUS",
+"name": "Cabin bus",
+"kind": "bus",
+"zone": "Power generation and storage",
+"subsystem": "Power generation and storage",
+"pins": 1,
+"rank": 2,
+"sev": ""
+},
+{
+"id": "BB-ESSENTIAL-BUS",
+"name": "Essential bus",
+"kind": "bus",
+"zone": "Power generation and storage",
+"subsystem": "Power generation and storage",
+"pins": 1,
+"rank": 2,
+"sev": ""
+},
+{
+"id": "BB-GROUND-BUS",
+"name": "Ground bus",
+"kind": "bus",
+"zone": "Power generation and storage",
+"subsystem": "Power generation and storage",
+"pins": 1,
+"rank": 2,
+"sev": ""
+},
+{
+"id": "BB-MAIN-BUS",
+"name": "Main bus",
+"kind": "bus",
+"zone": "Power generation and storage",
+"subsystem": "Power generation and storage",
+"pins": 1,
+"rank": 2,
+"sev": ""
+},
+{
+"id": "CABIN-FAN",
+"name": "Cabin fan",
+"kind": "device",
+"zone": "Cabin",
+"subsystem": "Cabin",
+"pins": 2,
+"rank": 4,
+"sev": ""
+},
+{
+"id": "CABIN-LIGHT",
+"name": "Cabin light",
+"kind": "device",
+"zone": "Cabin",
+"subsystem": "Cabin",
+"pins": 2,
+"rank": 4,
+"sev": ""
+},
+{
+"id": "CAN-TERMINATOR-MOTOR-BAY",
+"name": "CAN terminator motor bay",
+"kind": "terminator",
+"zone": "CAN bus",
+"subsystem": "CAN bus",
+"pins": 2,
+"rank": 4,
+"sev": ""
+},
+{
+"id": "CAN-TERMINATOR-PANEL",
+"name": "CAN terminator panel",
+"kind": "terminator",
+"zone": "CAN bus",
+"subsystem": "CAN bus",
+"pins": 2,
+"rank": 4,
+"sev": ""
+},
+{
+"id": "CB-BACKUP",
+"name": "Breaker 'BACKUP' 15 A",
+"kind": "breaker",
+"zone": "Power generation and storage",
+"subsystem": "Power generation and storage",
+"pins": 2,
+"rank": 1,
+"sev": ""
+},
+{
+"id": "CB-BATTERY",
+"name": "Breaker 'BATTERY' 30 A",
+"kind": "breaker",
+"zone": "Power generation and storage",
+"subsystem": "Power generation and storage",
+"pins": 2,
+"rank": 1,
+"sev": ""
+},
+{
+"id": "CB-BMS",
+"name": "Breaker 'BMS' 3 A",
+"kind": "breaker",
+"zone": "Propulsion control",
+"subsystem": "Propulsion control",
+"pins": 2,
+"rank": 1,
+"sev": ""
+},
+{
+"id": "CB-CABIN-FAN",
+"name": "Breaker 'CABIN FAN' 5 A",
+"kind": "breaker",
+"zone": "Cabin",
+"subsystem": "Cabin",
+"pins": 2,
+"rank": 1,
+"sev": ""
+},
+{
+"id": "CB-CABIN-LT",
+"name": "Breaker 'CABIN LT' 3 A",
+"kind": "breaker",
+"zone": "Cabin",
+"subsystem": "Cabin",
+"pins": 2,
+"rank": 1,
+"sev": ""
+},
+{
+"id": "CB-COM",
+"name": "Breaker 'COM' 7.5 A",
+"kind": "breaker",
+"zone": "Avionics",
+"subsystem": "Avionics",
+"pins": 2,
+"rank": 1,
+"sev": ""
+},
+{
+"id": "CB-COOLANT-PUMP",
+"name": "Breaker 'COOLANT PUMP' 7.5 A",
+"kind": "breaker",
+"zone": "Propulsion control",
+"subsystem": "Propulsion control",
+"pins": 2,
+"rank": 1,
+"sev": ""
+},
+{
+"id": "CB-DCDC",
+"name": "Breaker 'DCDC' 30 A",
+"kind": "breaker",
+"zone": "Power generation and storage",
+"subsystem": "Power generation and storage",
+"pins": 2,
+"rank": 1,
+"sev": ""
+},
+{
+"id": "CB-EFIS",
+"name": "Breaker 'EFIS' 5 A",
+"kind": "breaker",
+"zone": "Avionics",
+"subsystem": "Avionics",
+"pins": 2,
+"rank": 1,
+"sev": ""
+},
+{
+"id": "CB-ESS-FEED",
+"name": "Breaker 'ESS FEED' 20 A",
+"kind": "breaker",
+"zone": "Power generation and storage",
+"subsystem": "Power generation and storage",
+"pins": 2,
+"rank": 1,
+"sev": ""
+},
+{
+"id": "CB-GPS",
+"name": "Breaker 'GPS' 3 A",
+"kind": "breaker",
+"zone": "Avionics",
+"subsystem": "Avionics",
+"pins": 2,
+"rank": 1,
+"sev": ""
+},
+{
+"id": "CB-LANDING-LT",
+"name": "Breaker 'LANDING LT' 10 A",
+"kind": "breaker",
+"zone": "Exterior lighting",
+"subsystem": "Exterior lighting",
+"pins": 2,
+"rank": 1,
+"sev": "error"
+},
+{
+"id": "CB-MCU",
+"name": "Breaker 'MCU' 5 A",
+"kind": "breaker",
+"zone": "Propulsion control",
+"subsystem": "Propulsion control",
+"pins": 2,
+"rank": 1,
+"sev": ""
+},
+{
+"id": "CB-NAV-LT",
+"name": "Breaker 'NAV LT' 5 A",
+"kind": "breaker",
+"zone": "Exterior lighting",
+"subsystem": "Exterior lighting",
+"pins": 2,
+"rank": 1,
+"sev": ""
+},
+{
+"id": "CB-STROBE",
+"name": "Breaker 'STROBE' 5 A",
+"kind": "breaker",
+"zone": "Exterior lighting",
+"subsystem": "Exterior lighting",
+"pins": 2,
+"rank": 1,
+"sev": ""
+},
+{
+"id": "CB-USB",
+"name": "Breaker 'USB' 5 A",
+"kind": "breaker",
+"zone": "Cabin",
+"subsystem": "Cabin",
+"pins": 2,
+"rank": 1,
+"sev": ""
+},
+{
+"id": "CB-XPDR",
+"name": "Breaker 'XPDR' 15 A",
+"kind": "breaker",
+"zone": "Avionics",
+"subsystem": "Avionics",
+"pins": 2,
+"rank": 1,
+"sev": "error"
+},
+{
+"id": "COM-ANTENNA",
+"name": "Com antenna",
+"kind": "device",
+"zone": "Avionics",
+"subsystem": "Avionics",
+"pins": 1,
+"rank": 4,
+"sev": "info"
+},
+{
+"id": "COM-RADIO",
+"name": "Com radio",
+"kind": "device",
+"zone": "Avionics",
+"subsystem": "Avionics",
+"pins": 3,
+"rank": 4,
+"sev": ""
+},
+{
+"id": "COOLANT-PUMP",
+"name": "Coolant pump",
+"kind": "device",
+"zone": "Propulsion control",
+"subsystem": "Propulsion control",
+"pins": 2,
+"rank": 4,
+"sev": ""
+},
+{
+"id": "COOLANT-TEMPERATURE-SENSOR",
+"name": "Coolant temperature sensor",
+"kind": "device",
+"zone": "Propulsion control",
+"subsystem": "Propulsion control",
+"pins": 2,
+"rank": 4,
+"sev": ""
+},
+{
+"id": "DC-DC-CONVERTER",
+"name": "DC-DC converter",
+"kind": "dcdc",
+"zone": "Power generation and storage",
+"subsystem": "Power generation and storage",
+"pins": 4,
+"rank": 0,
+"sev": ""
+},
+{
+"id": "EFIS",
+"name": "EFIS",
+"kind": "device",
+"zone": "Avionics",
+"subsystem": "Avionics",
+"pins": 8,
+"rank": 4,
+"sev": ""
+},
+{
+"id": "FU-MASTER",
+"name": "Fuse 'MASTER' 3 A",
+"kind": "fuse",
+"zone": "Power generation and storage",
+"subsystem": "Power generation and storage",
+"pins": 2,
+"rank": 1,
+"sev": ""
+},
+{
+"id": "GPS-ANTENNA",
+"name": "GPS antenna",
+"kind": "device",
+"zone": "Avionics",
+"subsystem": "Avionics",
+"pins": 1,
+"rank": 4,
+"sev": "info"
+},
+{
+"id": "GPS-RECEIVER",
+"name": "GPS receiver",
+"kind": "device",
+"zone": "Avionics",
+"subsystem": "Avionics",
+"pins": 4,
+"rank": 4,
+"sev": ""
+},
+{
+"id": "HV-BATTERY-PACK",
+"name": "HV battery pack",
+"kind": "battery",
+"zone": "High voltage (stub)",
+"subsystem": "High voltage (stub)",
+"pins": 2,
+"rank": 0,
+"sev": ""
+},
+{
+"id": "K-BATTERY-CONTACTOR",
+"name": "Battery contactor",
+"kind": "relay",
+"zone": "Power generation and storage",
+"subsystem": "Power generation and storage",
+"pins": 4,
+"rank": 1,
+"sev": ""
+},
+{
+"id": "LANDING-LIGHT",
+"name": "Landing light",
+"kind": "device",
+"zone": "Exterior lighting",
+"subsystem": "Exterior lighting",
+"pins": 2,
+"rank": 4,
+"sev": ""
+},
+{
+"id": "MAIN-BATTERY",
+"name": "Main battery",
+"kind": "battery",
+"zone": "Power generation and storage",
+"subsystem": "Power generation and storage",
+"pins": 2,
+"rank": 0,
+"sev": ""
+},
+{
+"id": "MOTOR-CONTROLLER",
+"name": "Motor controller",
+"kind": "controller",
+"zone": "Propulsion control",
+"subsystem": "Propulsion control",
+"pins": 12,
+"rank": 4,
+"sev": ""
+},
+{
+"id": "MOTOR-TEMPERATURE-SENSOR",
+"name": "Motor temperature sensor",
+"kind": "device",
+"zone": "Propulsion control",
+"subsystem": "Propulsion control",
+"pins": 2,
+"rank": 4,
+"sev": ""
+},
+{
+"id": "NAV-LIGHT-LEFT",
+"name": "Nav light left",
+"kind": "device",
+"zone": "Exterior lighting",
+"subsystem": "Exterior lighting",
+"pins": 2,
+"rank": 4,
+"sev": ""
+},
+{
+"id": "NAV-LIGHT-RIGHT",
+"name": "Nav light right",
+"kind": "device",
+"zone": "Exterior lighting",
+"subsystem": "Exterior lighting",
+"pins": 2,
+"rank": 4,
+"sev": ""
+},
+{
+"id": "OAT-PROBE",
+"name": "OAT probe",
+"kind": "device",
+"zone": "Avionics",
+"subsystem": "Avionics",
+"pins": 2,
+"rank": 4,
+"sev": ""
+},
+{
+"id": "STROBE-LIGHT-LEFT",
+"name": "Strobe light left",
+"kind": "device",
+"zone": "Exterior lighting",
+"subsystem": "Exterior lighting",
+"pins": 2,
+"rank": 4,
+"sev": ""
+},
+{
+"id": "STROBE-LIGHT-RIGHT",
+"name": "Strobe light right",
+"kind": "device",
+"zone": "Exterior lighting",
+"subsystem": "Exterior lighting",
+"pins": 2,
+"rank": 4,
+"sev": ""
+},
+{
+"id": "SW-AVIONICS-MASTER",
+"name": "Switch 'AVIONICS MASTER'",
+"kind": "switch",
+"zone": "Power generation and storage",
+"subsystem": "Power generation and storage",
+"pins": 2,
+"rank": 1,
+"sev": ""
+},
+{
+"id": "SW-BACKUP",
+"name": "Switch 'BACKUP'",
+"kind": "switch",
+"zone": "Power generation and storage",
+"subsystem": "Power generation and storage",
+"pins": 2,
+"rank": 1,
+"sev": ""
+},
+{
+"id": "SW-LANDING-LT",
+"name": "Switch 'LANDING LT'",
+"kind": "switch",
+"zone": "Exterior lighting",
+"subsystem": "Exterior lighting",
+"pins": 2,
+"rank": 1,
+"sev": ""
+},
+{
+"id": "SW-MASTER",
+"name": "Switch 'MASTER'",
+"kind": "switch",
+"zone": "Power generation and storage",
+"subsystem": "Power generation and storage",
+"pins": 2,
+"rank": 1,
+"sev": ""
+},
+{
+"id": "SW-MOTOR-ENABLE",
+"name": "Switch 'MOTOR ENABLE'",
+"kind": "switch",
+"zone": "Propulsion control",
+"subsystem": "Propulsion control",
+"pins": 2,
+"rank": 1,
+"sev": ""
+},
+{
+"id": "SW-NAV-LT",
+"name": "Switch 'NAV LT'",
+"kind": "switch",
+"zone": "Exterior lighting",
+"subsystem": "Exterior lighting",
+"pins": 2,
+"rank": 1,
+"sev": ""
+},
+{
+"id": "SW-STROBE",
+"name": "Switch 'STROBE'",
+"kind": "switch",
+"zone": "Exterior lighting",
+"subsystem": "Exterior lighting",
+"pins": 2,
+"rank": 1,
+"sev": ""
+},
+{
+"id": "THROTTLE-POSITION-SENSOR",
+"name": "Throttle position sensor",
+"kind": "device",
+"zone": "Propulsion control",
+"subsystem": "Propulsion control",
+"pins": 3,
+"rank": 4,
+"sev": ""
+},
+{
+"id": "TRANSPONDER",
+"name": "Transponder",
+"kind": "device",
+"zone": "Avionics",
+"subsystem": "Avionics",
+"pins": 4,
+"rank": 4,
+"sev": ""
+},
+{
+"id": "TRANSPONDER-ANTENNA",
+"name": "Transponder antenna",
+"kind": "device",
+"zone": "Avionics",
+"subsystem": "Avionics",
+"pins": 1,
+"rank": 4,
+"sev": "info"
+},
+{
+"id": "USB-CHARGER",
+"name": "USB charger",
+"kind": "device",
+"zone": "Cabin",
+"subsystem": "Cabin",
+"pins": 2,
+"rank": 4,
+"sev": ""
+},
+{
+"id": "X-FW",
+"name": "Firewall connector X-FW",
+"kind": "harness",
+"zone": "",
+"subsystem": "",
+"pins": 28,
+"rank": 3,
+"sev": ""
+},
+{
+"id": "X-WR",
+"name": "Wing root connector X-WR",
+"kind": "harness",
+"zone": "",
+"subsystem": "",
+"pins": 16,
+"rank": 3,
+"sev": ""
+}
+],
+"edges": [
+{
+"id": "DC-DC-CONVERTER~HV-BATTERY-PACK",
+"a": "DC-DC-CONVERTER",
+"b": "HV-BATTERY-PACK",
+"wires": [
+"W001",
+"W002"
+],
+"cls": [
+"HV"
+],
+"label": "2 × HV"
+},
+{
+"id": "DC-DC-CONVERTER~X-FW",
+"a": "DC-DC-CONVERTER",
+"b": "X-FW",
+"wires": [
+"W003",
+"W006"
+],
+"cls": [
+"14 V",
+"GND"
+],
+"label": "2 wires"
+},
+{
+"id": "CB-DCDC~X-FW",
+"a": "CB-DCDC",
+"b": "X-FW",
+"wires": [
+"W004"
+],
+"cls": [
+"14 V"
+],
+"label": "1 × 14 V"
+},
+{
+"id": "CB-DCDC~BB-MAIN-BUS",
+"a": "CB-DCDC",
+"b": "BB-MAIN-BUS",
+"wires": [
+"W005"
+],
+"cls": [
+"14 V"
+],
+"label": "1 × 14 V"
+},
+{
+"id": "BB-GROUND-BUS~X-FW",
+"a": "BB-GROUND-BUS",
+"b": "X-FW",
+"wires": [
+"W007",
+"W075",
+"W091",
+"W096"
+],
+"cls": [
+"GND"
+],
+"label": "4 × GND"
+},
+{
+"id": "MAIN-BATTERY~K-BATTERY-CONTACTOR",
+"a": "MAIN-BATTERY",
+"b": "K-BATTERY-CONTACTOR",
+"wires": [
+"W008"
+],
+"cls": [
+"14 V"
+],
+"label": "1 × 14 V"
+},
+{
+"id": "CB-BATTERY~K-BATTERY-CONTACTOR",
+"a": "CB-BATTERY",
+"b": "K-BATTERY-CONTACTOR",
+"wires": [
+"W009"
+],
+"cls": [
+"14 V"
+],
+"label": "1 × 14 V"
+},
+{
+"id": "CB-BATTERY~BB-MAIN-BUS",
+"a": "CB-BATTERY",
+"b": "BB-MAIN-BUS",
+"wires": [
+"W010"
+],
+"cls": [
+"14 V"
+],
+"label": "1 × 14 V"
+},
+{
+"id": "MAIN-BATTERY~BB-GROUND-BUS",
+"a": "MAIN-BATTERY",
+"b": "BB-GROUND-BUS",
+"wires": [
+"W011"
+],
+"cls": [
+"GND"
+],
+"label": "1 × GND"
+},
+{
+"id": "MAIN-BATTERY~FU-MASTER",
+"a": "MAIN-BATTERY",
+"b": "FU-MASTER",
+"wires": [
+"W012"
+],
+"cls": [
+"14 V"
+],
+"label": "1 × 14 V"
+},
+{
+"id": "FU-MASTER~SW-MASTER",
+"a": "FU-MASTER",
+"b": "SW-MASTER",
+"wires": [
+"W013"
+],
+"cls": [
+"14 V"
+],
+"label": "1 × 14 V"
+},
+{
+"id": "K-BATTERY-CONTACTOR~SW-MASTER",
+"a": "K-BATTERY-CONTACTOR",
+"b": "SW-MASTER",
+"wires": [
+"W014"
+],
+"cls": [
+"14 V"
+],
+"label": "1 × 14 V"
+},
+{
+"id": "K-BATTERY-CONTACTOR~BB-GROUND-BUS",
+"a": "K-BATTERY-CONTACTOR",
+"b": "BB-GROUND-BUS",
+"wires": [
+"W015"
+],
+"cls": [
+"GND"
+],
+"label": "1 × GND"
+},
+{
+"id": "CB-ESS-FEED~BB-MAIN-BUS",
+"a": "CB-ESS-FEED",
+"b": "BB-MAIN-BUS",
+"wires": [
+"W016"
+],
+"cls": [
+"14 V"
+],
+"label": "1 × 14 V"
+},
+{
+"id": "CB-ESS-FEED~SW-AVIONICS-MASTER",
+"a": "CB-ESS-FEED",
+"b": "SW-AVIONICS-MASTER",
+"wires": [
+"W017"
+],
+"cls": [
+"14 V"
+],
+"label": "1 × 14 V"
+},
+{
+"id": "SW-AVIONICS-MASTER~BB-ESSENTIAL-BUS",
+"a": "SW-AVIONICS-MASTER",
+"b": "BB-ESSENTIAL-BUS",
+"wires": [
+"W018"
+],
+"cls": [
+"14 V"
+],
+"label": "1 × 14 V"
+},
+{
+"id": "BACKUP-BATTERY~CB-BACKUP",
+"a": "BACKUP-BATTERY",
+"b": "CB-BACKUP",
+"wires": [
+"W019"
+],
+"cls": [
+"14 V"
+],
+"label": "1 × 14 V"
+},
+{
+"id": "CB-BACKUP~SW-BACKUP",
+"a": "CB-BACKUP",
+"b": "SW-BACKUP",
+"wires": [
+"W020"
+],
+"cls": [
+"14 V"
+],
+"label": "1 × 14 V"
+},
+{
+"id": "SW-BACKUP~BB-ESSENTIAL-BUS",
+"a": "SW-BACKUP",
+"b": "BB-ESSENTIAL-BUS",
+"wires": [
+"W021"
+],
+"cls": [
+"14 V"
+],
+"label": "1 × 14 V"
+},
+{
+"id": "BACKUP-BATTERY~BB-GROUND-BUS",
+"a": "BACKUP-BATTERY",
+"b": "BB-GROUND-BUS",
+"wires": [
+"W022"
+],
+"cls": [
+"GND"
+],
+"label": "1 × GND"
+},
+{
+"id": "BB-GROUND-BUS~AIRFRAME-GROUND-STUD",
+"a": "BB-GROUND-BUS",
+"b": "AIRFRAME-GROUND-STUD",
+"wires": [
+"W023"
+],
+"cls": [
+"GND"
+],
+"label": "1 × GND"
+},
+{
+"id": "CB-NAV-LT~BB-MAIN-BUS",
+"a": "CB-NAV-LT",
+"b": "BB-MAIN-BUS",
+"wires": [
+"W024"
+],
+"cls": [
+"14 V"
+],
+"label": "1 × 14 V"
+},
+{
+"id": "CB-NAV-LT~SW-NAV-LT",
+"a": "CB-NAV-LT",
+"b": "SW-NAV-LT",
+"wires": [
+"W025"
+],
+"cls": [
+"14 V"
+],
+"label": "1 × 14 V"
+},
+{
+"id": "SW-NAV-LT~X-WR",
+"a": "SW-NAV-LT",
+"b": "X-WR",
+"wires": [
+"W026"
+],
+"cls": [
+"14 V"
+],
+"label": "1 × 14 V"
+},
+{
+"id": "X-WR~NAV-LIGHT-LEFT",
+"a": "X-WR",
+"b": "NAV-LIGHT-LEFT",
+"wires": [
+"W027",
+"W032"
+],
+"cls": [
+"14 V",
+"GND"
+],
+"label": "2 wires"
+},
+{
+"id": "NAV-LIGHT-LEFT~NAV-LIGHT-RIGHT",
+"a": "NAV-LIGHT-LEFT",
+"b": "NAV-LIGHT-RIGHT",
+"wires": [
+"W028",
+"W029",
+"W030",
+"W031"
+],
+"cls": [
+"14 V",
+"GND"
+],
+"label": "4 wires"
+},
+{
+"id": "BB-GROUND-BUS~X-WR",
+"a": "BB-GROUND-BUS",
+"b": "X-WR",
+"wires": [
+"W033",
+"W043",
+"W049"
+],
+"cls": [
+"GND"
+],
+"label": "3 × GND"
+},
+{
+"id": "CB-STROBE~BB-MAIN-BUS",
+"a": "CB-STROBE",
+"b": "BB-MAIN-BUS",
+"wires": [
+"W034"
+],
+"cls": [
+"14 V"
+],
+"label": "1 × 14 V"
+},
+{
+"id": "CB-STROBE~SW-STROBE",
+"a": "CB-STROBE",
+"b": "SW-STROBE",
+"wires": [
+"W035"
+],
+"cls": [
+"14 V"
+],
+"label": "1 × 14 V"
+},
+{
+"id": "SW-STROBE~X-WR",
+"a": "SW-STROBE",
+"b": "X-WR",
+"wires": [
+"W036"
+],
+"cls": [
+"14 V"
+],
+"label": "1 × 14 V"
+},
+{
+"id": "X-WR~STROBE-LIGHT-LEFT",
+"a": "X-WR",
+"b": "STROBE-LIGHT-LEFT",
+"wires": [
+"W037",
+"W042"
+],
+"cls": [
+"14 V",
+"GND"
+],
+"label": "2 wires"
+},
+{
+"id": "STROBE-LIGHT-LEFT~STROBE-LIGHT-RIGHT",
+"a": "STROBE-LIGHT-LEFT",
+"b": "STROBE-LIGHT-RIGHT",
+"wires": [
+"W038",
+"W039",
+"W040",
+"W041"
+],
+"cls": [
+"14 V",
+"GND"
+],
+"label": "4 wires"
+},
+{
+"id": "CB-LANDING-LT~BB-MAIN-BUS",
+"a": "CB-LANDING-LT",
+"b": "BB-MAIN-BUS",
+"wires": [
+"W044"
+],
+"cls": [
+"14 V"
+],
+"label": "1 × 14 V"
+},
+{
+"id": "CB-LANDING-LT~SW-LANDING-LT",
+"a": "CB-LANDING-LT",
+"b": "SW-LANDING-LT",
+"wires": [
+"W045"
+],
+"cls": [
+"14 V"
+],
+"label": "1 × 14 V"
+},
+{
+"id": "SW-LANDING-LT~X-WR",
+"a": "SW-LANDING-LT",
+"b": "X-WR",
+"wires": [
+"W046"
+],
+"cls": [
+"14 V"
+],
+"label": "1 × 14 V"
+},
+{
+"id": "X-WR~LANDING-LIGHT",
+"a": "X-WR",
+"b": "LANDING-LIGHT",
+"wires": [
+"W047",
+"W048"
+],
+"cls": [
+"14 V",
+"GND"
+],
+"label": "2 wires"
+},
+{
+"id": "CB-EFIS~BB-ESSENTIAL-BUS",
+"a": "CB-EFIS",
+"b": "BB-ESSENTIAL-BUS",
+"wires": [
+"W050"
+],
+"cls": [
+"14 V"
+],
+"label": "1 × 14 V"
+},
+{
+"id": "CB-EFIS~EFIS",
+"a": "CB-EFIS",
+"b": "EFIS",
+"wires": [
+"W051"
+],
+"cls": [
+"14 V"
+],
+"label": "1 × 14 V"
+},
+{
+"id": "BB-GROUND-BUS~EFIS",
+"a": "BB-GROUND-BUS",
+"b": "EFIS",
+"wires": [
+"W052"
+],
+"cls": [
+"GND"
+],
+"label": "1 × GND"
+},
+{
+"id": "CB-COM~BB-ESSENTIAL-BUS",
+"a": "CB-COM",
+"b": "BB-ESSENTIAL-BUS",
+"wires": [
+"W053"
+],
+"cls": [
+"14 V"
+],
+"label": "1 × 14 V"
+},
+{
+"id": "CB-COM~COM-RADIO",
+"a": "CB-COM",
+"b": "COM-RADIO",
+"wires": [
+"W054"
+],
+"cls": [
+"14 V"
+],
+"label": "1 × 14 V"
+},
+{
+"id": "BB-GROUND-BUS~COM-RADIO",
+"a": "BB-GROUND-BUS",
+"b": "COM-RADIO",
+"wires": [
+"W055"
+],
+"cls": [
+"GND"
+],
+"label": "1 × GND"
+},
+{
+"id": "COM-ANTENNA~COM-RADIO",
+"a": "COM-ANTENNA",
+"b": "COM-RADIO",
+"wires": [
+"W056"
+],
+"cls": [
+"signal"
+],
+"label": "1 × signal"
+},
+{
+"id": "CB-XPDR~BB-ESSENTIAL-BUS",
+"a": "CB-XPDR",
+"b": "BB-ESSENTIAL-BUS",
+"wires": [
+"W057"
+],
+"cls": [
+"14 V"
+],
+"label": "1 × 14 V"
+},
+{
+"id": "CB-XPDR~TRANSPONDER",
+"a": "CB-XPDR",
+"b": "TRANSPONDER",
+"wires": [
+"W058"
+],
+"cls": [
+"14 V"
+],
+"label": "1 × 14 V"
+},
+{
+"id": "BB-GROUND-BUS~TRANSPONDER",
+"a": "BB-GROUND-BUS",
+"b": "TRANSPONDER",
+"wires": [
+"W059"
+],
+"cls": [
+"GND"
+],
+"label": "1 × GND"
+},
+{
+"id": "TRANSPONDER~TRANSPONDER-ANTENNA",
+"a": "TRANSPONDER",
+"b": "TRANSPONDER-ANTENNA",
+"wires": [
+"W060"
+],
+"cls": [
+"signal"
+],
+"label": "1 × signal"
+},
+{
+"id": "EFIS~TRANSPONDER",
+"a": "EFIS",
+"b": "TRANSPONDER",
+"wires": [
+"W061"
+],
+"cls": [
+"signal"
+],
+"label": "1 × signal"
+},
+{
+"id": "CB-GPS~BB-ESSENTIAL-BUS",
+"a": "CB-GPS",
+"b": "BB-ESSENTIAL-BUS",
+"wires": [
+"W062"
+],
+"cls": [
+"14 V"
+],
+"label": "1 × 14 V"
+},
+{
+"id": "CB-GPS~GPS-RECEIVER",
+"a": "CB-GPS",
+"b": "GPS-RECEIVER",
+"wires": [
+"W063"
+],
+"cls": [
+"14 V"
+],
+"label": "1 × 14 V"
+},
+{
+"id": "BB-GROUND-BUS~GPS-RECEIVER",
+"a": "BB-GROUND-BUS",
+"b": "GPS-RECEIVER",
+"wires": [
+"W064"
+],
+"cls": [
+"GND"
+],
+"label": "1 × GND"
+},
+{
+"id": "GPS-ANTENNA~GPS-RECEIVER",
+"a": "GPS-ANTENNA",
+"b": "GPS-RECEIVER",
+"wires": [
+"W065"
+],
+"cls": [
+"signal"
+],
+"label": "1 × signal"
+},
+{
+"id": "EFIS~GPS-RECEIVER",
+"a": "EFIS",
+"b": "GPS-RECEIVER",
+"wires": [
+"W066"
+],
+"cls": [
+"signal"
+],
+"label": "1 × signal"
+},
+{
+"id": "X-WR~OAT-PROBE",
+"a": "X-WR",
+"b": "OAT-PROBE",
+"wires": [
+"W067",
+"W069"
+],
+"cls": [
+"signal"
+],
+"label": "2 × signal"
+},
+{
+"id": "X-WR~EFIS",
+"a": "X-WR",
+"b": "EFIS",
+"wires": [
+"W068",
+"W070"
+],
+"cls": [
+"signal"
+],
+"label": "2 × signal"
+},
+{
+"id": "CB-MCU~BB-MAIN-BUS",
+"a": "CB-MCU",
+"b": "BB-MAIN-BUS",
+"wires": [
+"W071"
+],
+"cls": [
+"14 V"
+],
+"label": "1 × 14 V"
+},
+{
+"id": "CB-MCU~X-FW",
+"a": "CB-MCU",
+"b": "X-FW",
+"wires": [
+"W072"
+],
+"cls": [
+"14 V"
+],
+"label": "1 × 14 V"
+},
+{
+"id": "X-FW~MOTOR-CONTROLLER",
+"a": "X-FW",
+"b": "MOTOR-CONTROLLER",
+"wires": [
+"W073",
+"W074",
+"W078",
+"W079",
+"W082",
+"W084"
+],
+"cls": [
+"14 V",
+"GND",
+"5 V",
+"signal"
+],
+"label": "6 wires"
+},
+{
+"id": "CB-MCU~SW-MOTOR-ENABLE",
+"a": "CB-MCU",
+"b": "SW-MOTOR-ENABLE",
+"wires": [
+"W076"
+],
+"cls": [
+"14 V"
+],
+"label": "1 × 14 V"
+},
+{
+"id": "SW-MOTOR-ENABLE~X-FW",
+"a": "SW-MOTOR-ENABLE",
+"b": "X-FW",
+"wires": [
+"W077"
+],
+"cls": [
+"14 V"
+],
+"label": "1 × 14 V"
+},
+{
+"id": "X-FW~THROTTLE-POSITION-SENSOR",
+"a": "X-FW",
+"b": "THROTTLE-POSITION-SENSOR",
+"wires": [
+"W080",
+"W081",
+"W083"
+],
+"cls": [
+"5 V",
+"signal"
+],
+"label": "3 wires"
+},
+{
+"id": "MOTOR-CONTROLLER~MOTOR-TEMPERATURE-SENSOR",
+"a": "MOTOR-CONTROLLER",
+"b": "MOTOR-TEMPERATURE-SENSOR",
+"wires": [
+"W085",
+"W086"
+],
+"cls": [
+"signal"
+],
+"label": "2 × signal"
+},
+{
+"id": "CB-BMS~BB-MAIN-BUS",
+"a": "CB-BMS",
+"b": "BB-MAIN-BUS",
+"wires": [
+"W087"
+],
+"cls": [
+"14 V"
+],
+"label": "1 × 14 V"
+},
+{
+"id": "CB-BMS~X-FW",
+"a": "CB-BMS",
+"b": "X-FW",
+"wires": [
+"W088"
+],
+"cls": [
+"14 V"
+],
+"label": "1 × 14 V"
+},
+{
+"id": "X-FW~BATTERY-MANAGEMENT-SYSTEM",
+"a": "X-FW",
+"b": "BATTERY-MANAGEMENT-SYSTEM",
+"wires": [
+"W089",
+"W090",
+"W102",
+"W109"
+],
+"cls": [
+"14 V",
+"GND",
+"CAN_H",
+"CAN_L"
+],
+"label": "4 wires"
+},
+{
+"id": "CB-COOLANT-PUMP~BB-MAIN-BUS",
+"a": "CB-COOLANT-PUMP",
+"b": "BB-MAIN-BUS",
+"wires": [
+"W092"
+],
+"cls": [
+"14 V"
+],
+"label": "1 × 14 V"
+},
+{
+"id": "CB-COOLANT-PUMP~X-FW",
+"a": "CB-COOLANT-PUMP",
+"b": "X-FW",
+"wires": [
+"W093"
+],
+"cls": [
+"14 V"
+],
+"label": "1 × 14 V"
+},
+{
+"id": "X-FW~COOLANT-PUMP",
+"a": "X-FW",
+"b": "COOLANT-PUMP",
+"wires": [
+"W094",
+"W095"
+],
+"cls": [
+"14 V",
+"GND"
+],
+"label": "2 wires"
+},
+{
+"id": "COOLANT-TEMPERATURE-SENSOR~MOTOR-CONTROLLER",
+"a": "COOLANT-TEMPERATURE-SENSOR",
+"b": "MOTOR-CONTROLLER",
+"wires": [
+"W097",
+"W098"
+],
+"cls": [
+"signal"
+],
+"label": "2 × signal"
+},
+{
+"id": "CAN-TERMINATOR-PANEL~EFIS",
+"a": "CAN-TERMINATOR-PANEL",
+"b": "EFIS",
+"wires": [
+"W099",
+"W100",
+"W106",
+"W107"
+],
+"cls": [
+"CAN_H",
+"CAN_L"
+],
+"label": "4 × CAN"
+},
+{
+"id": "X-FW~CAN-TERMINATOR-PANEL",
+"a": "X-FW",
+"b": "CAN-TERMINATOR-PANEL",
+"wires": [
+"W101",
+"W108"
+],
+"cls": [
+"CAN_H",
+"CAN_L"
+],
+"label": "2 × CAN"
+},
+{
+"id": "BATTERY-MANAGEMENT-SYSTEM~MOTOR-CONTROLLER",
+"a": "BATTERY-MANAGEMENT-SYSTEM",
+"b": "MOTOR-CONTROLLER",
+"wires": [
+"W103",
+"W110"
+],
+"cls": [
+"CAN_H",
+"CAN_L"
+],
+"label": "2 × CAN"
+},
+{
+"id": "BATTERY-MANAGEMENT-SYSTEM~CAN-TERMINATOR-MOTOR-BAY",
+"a": "BATTERY-MANAGEMENT-SYSTEM",
+"b": "CAN-TERMINATOR-MOTOR-BAY",
+"wires": [
+"W104",
+"W105",
+"W111",
+"W112"
+],
+"cls": [
+"CAN_H",
+"CAN_L"
+],
+"label": "4 × CAN"
+},
+{
+"id": "CB-CABIN-LT~BB-CABIN-BUS",
+"a": "CB-CABIN-LT",
+"b": "BB-CABIN-BUS",
+"wires": [
+"W113"
+],
+"cls": [
+"14 V"
+],
+"label": "1 × 14 V"
+},
+{
+"id": "CB-CABIN-LT~CABIN-LIGHT",
+"a": "CB-CABIN-LT",
+"b": "CABIN-LIGHT",
+"wires": [
+"W114"
+],
+"cls": [
+"14 V"
+],
+"label": "1 × 14 V"
+},
+{
+"id": "BB-GROUND-BUS~CABIN-LIGHT",
+"a": "BB-GROUND-BUS",
+"b": "CABIN-LIGHT",
+"wires": [
+"W115"
+],
+"cls": [
+"GND"
+],
+"label": "1 × GND"
+},
+{
+"id": "CB-USB~BB-CABIN-BUS",
+"a": "CB-USB",
+"b": "BB-CABIN-BUS",
+"wires": [
+"W116"
+],
+"cls": [
+"14 V"
+],
+"label": "1 × 14 V"
+},
+{
+"id": "CB-USB~USB-CHARGER",
+"a": "CB-USB",
+"b": "USB-CHARGER",
+"wires": [
+"W117"
+],
+"cls": [
+"14 V"
+],
+"label": "1 × 14 V"
+},
+{
+"id": "BB-GROUND-BUS~USB-CHARGER",
+"a": "BB-GROUND-BUS",
+"b": "USB-CHARGER",
+"wires": [
+"W118"
+],
+"cls": [
+"GND"
+],
+"label": "1 × GND"
+},
+{
+"id": "CB-CABIN-FAN~BB-CABIN-BUS",
+"a": "CB-CABIN-FAN",
+"b": "BB-CABIN-BUS",
+"wires": [
+"W119"
+],
+"cls": [
+"14 V"
+],
+"label": "1 × 14 V"
+},
+{
+"id": "CB-CABIN-FAN~CABIN-FAN",
+"a": "CB-CABIN-FAN",
+"b": "CABIN-FAN",
+"wires": [
+"W120"
+],
+"cls": [
+"14 V"
+],
+"label": "1 × 14 V"
+},
+{
+"id": "BB-GROUND-BUS~CABIN-FAN",
+"a": "BB-GROUND-BUS",
+"b": "CABIN-FAN",
+"wires": [
+"W121"
+],
+"cls": [
+"GND"
+],
+"label": "1 × GND"
+}
+],
+"conductors": [
+{
+"id": "W001",
+"label": "W001",
+"name": "DC-DC HV supply",
+"from": "HV battery pack (HV-BATTERY-PACK) +",
+"to": "DC-DC converter (DC-DC-CONVERTER) HV 1",
+"a": "HV-BATTERY-PACK",
+"b": "DC-DC-CONVERTER",
+"gauge": "14 AWG",
+"voltage": "400 V",
+"current": 1.6,
+"cls": "HV",
+"hex": "#ff8000",
+"length": 0.8,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W002",
+"label": "W002",
+"name": "DC-DC HV return",
+"from": "DC-DC converter (DC-DC-CONVERTER) HV 2",
+"to": "HV battery pack (HV-BATTERY-PACK) -",
+"a": "DC-DC-CONVERTER",
+"b": "HV-BATTERY-PACK",
+"gauge": "14 AWG",
+"voltage": "400 V",
+"current": 1.6,
+"cls": "HV",
+"hex": "#ff8000",
+"length": 0.8,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W003",
+"label": "W003",
+"name": "DC-DC output",
+"from": "DC-DC converter (DC-DC-CONVERTER) LV 1",
+"to": "Firewall connector X-FW motor side 1",
+"a": "DC-DC-CONVERTER",
+"b": "X-FW",
+"gauge": "10 AWG",
+"voltage": "14 V",
+"current": 30.0,
+"cls": "14 V",
+"hex": "#ff0000",
+"length": 0.6,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W004",
+"label": "W004",
+"name": "DC-DC output",
+"from": "Firewall connector X-FW cockpit side 1",
+"to": "Breaker 'DCDC' 30 A (CB-DCDC) LINE",
+"a": "X-FW",
+"b": "CB-DCDC",
+"gauge": "10 AWG",
+"voltage": "14 V",
+"current": 30.0,
+"cls": "14 V",
+"hex": "#ff0000",
+"length": 0.9,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W005",
+"label": "W005",
+"name": "DC-DC output to main bus",
+"from": "Breaker 'DCDC' 30 A (CB-DCDC) LOAD",
+"to": "Main bus (BB-MAIN-BUS) Stud",
+"a": "CB-DCDC",
+"b": "BB-MAIN-BUS",
+"gauge": "10 AWG",
+"voltage": "14 V",
+"current": 30.0,
+"cls": "14 V",
+"hex": "#ff0000",
+"length": 0.2,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W006",
+"label": "W006",
+"name": "DC-DC return",
+"from": "DC-DC converter (DC-DC-CONVERTER) LV 2",
+"to": "Firewall connector X-FW motor side 2",
+"a": "DC-DC-CONVERTER",
+"b": "X-FW",
+"gauge": "10 AWG",
+"voltage": "GND",
+"current": 30.0,
+"cls": "GND",
+"hex": "#000000",
+"length": 0.6,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W007",
+"label": "W007",
+"name": "DC-DC return",
+"from": "Firewall connector X-FW cockpit side 2",
+"to": "Ground bus (BB-GROUND-BUS) Stud",
+"a": "X-FW",
+"b": "BB-GROUND-BUS",
+"gauge": "10 AWG",
+"voltage": "GND",
+"current": 30.0,
+"cls": "GND",
+"hex": "#000000",
+"length": 0.9,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W008",
+"label": "W008",
+"name": "Main battery feed",
+"from": "Main battery (MAIN-BATTERY) +",
+"to": "Battery contactor (K-BATTERY-CONTACTOR) 30",
+"a": "MAIN-BATTERY",
+"b": "K-BATTERY-CONTACTOR",
+"gauge": "10 AWG",
+"voltage": "14 V",
+"current": 30.0,
+"cls": "14 V",
+"hex": "#ff0000",
+"length": 0.4,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W009",
+"label": "W009",
+"name": "Main battery to breaker",
+"from": "Battery contactor (K-BATTERY-CONTACTOR) 87",
+"to": "Breaker 'BATTERY' 30 A (CB-BATTERY) LINE",
+"a": "K-BATTERY-CONTACTOR",
+"b": "CB-BATTERY",
+"gauge": "10 AWG",
+"voltage": "14 V",
+"current": 30.0,
+"cls": "14 V",
+"hex": "#ff0000",
+"length": 0.6,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W010",
+"label": "W010",
+"name": "Main battery to main bus",
+"from": "Breaker 'BATTERY' 30 A (CB-BATTERY) LOAD",
+"to": "Main bus (BB-MAIN-BUS) Stud",
+"a": "CB-BATTERY",
+"b": "BB-MAIN-BUS",
+"gauge": "10 AWG",
+"voltage": "14 V",
+"current": 30.0,
+"cls": "14 V",
+"hex": "#ff0000",
+"length": 0.2,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W011",
+"label": "W011",
+"name": "Main battery return",
+"from": "Main battery (MAIN-BATTERY) -",
+"to": "Ground bus (BB-GROUND-BUS) Stud",
+"a": "MAIN-BATTERY",
+"b": "BB-GROUND-BUS",
+"gauge": "10 AWG",
+"voltage": "GND",
+"current": 30.0,
+"cls": "GND",
+"hex": "#000000",
+"length": 0.5,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W012",
+"label": "W012",
+"name": "Master fuse feed",
+"from": "Main battery (MAIN-BATTERY) +",
+"to": "Fuse 'MASTER' 3 A (FU-MASTER) in",
+"a": "MAIN-BATTERY",
+"b": "FU-MASTER",
+"gauge": "22 AWG",
+"voltage": "14 V",
+"current": 0.3,
+"cls": "14 V",
+"hex": "#ff0000",
+"length": 0.3,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W013",
+"label": "W013",
+"name": "Master switch feed",
+"from": "Fuse 'MASTER' 3 A (FU-MASTER) fuse output",
+"to": "Switch 'MASTER' (SW-MASTER) 1",
+"a": "FU-MASTER",
+"b": "SW-MASTER",
+"gauge": "22 AWG",
+"voltage": "14 V",
+"current": 0.3,
+"cls": "14 V",
+"hex": "#ff0000",
+"length": 1.2,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W014",
+"label": "W014",
+"name": "Battery contactor coil",
+"from": "Switch 'MASTER' (SW-MASTER) 2",
+"to": "Battery contactor (K-BATTERY-CONTACTOR) coil +",
+"a": "SW-MASTER",
+"b": "K-BATTERY-CONTACTOR",
+"gauge": "22 AWG",
+"voltage": "14 V",
+"current": 0.3,
+"cls": "14 V",
+"hex": "#ff0000",
+"length": 1.2,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W015",
+"label": "W015",
+"name": "Battery contactor coil return",
+"from": "Battery contactor (K-BATTERY-CONTACTOR) coil -",
+"to": "Ground bus (BB-GROUND-BUS) Stud",
+"a": "K-BATTERY-CONTACTOR",
+"b": "BB-GROUND-BUS",
+"gauge": "22 AWG",
+"voltage": "GND",
+"current": 0.3,
+"cls": "GND",
+"hex": "#000000",
+"length": 0.5,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W016",
+"label": "W016",
+"name": "Essential bus breaker feed",
+"from": "Main bus (BB-MAIN-BUS) Stud",
+"to": "Breaker 'ESS FEED' 20 A (CB-ESS-FEED) LINE",
+"a": "BB-MAIN-BUS",
+"b": "CB-ESS-FEED",
+"gauge": "14 AWG",
+"voltage": "14 V",
+"current": 12.0,
+"cls": "14 V",
+"hex": "#ff0000",
+"length": 0.3,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W017",
+"label": "W017",
+"name": "Avionics master feed",
+"from": "Breaker 'ESS FEED' 20 A (CB-ESS-FEED) LOAD",
+"to": "Switch 'AVIONICS MASTER' (SW-AVIONICS-MASTER) 1",
+"a": "CB-ESS-FEED",
+"b": "SW-AVIONICS-MASTER",
+"gauge": "14 AWG",
+"voltage": "14 V",
+"current": 12.0,
+"cls": "14 V",
+"hex": "#ff0000",
+"length": 0.4,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W018",
+"label": "W018",
+"name": "Essential bus feed",
+"from": "Switch 'AVIONICS MASTER' (SW-AVIONICS-MASTER) 2",
+"to": "Essential bus (BB-ESSENTIAL-BUS) Stud",
+"a": "SW-AVIONICS-MASTER",
+"b": "BB-ESSENTIAL-BUS",
+"gauge": "14 AWG",
+"voltage": "14 V",
+"current": 12.0,
+"cls": "14 V",
+"hex": "#ff0000",
+"length": 0.4,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W019",
+"label": "W019",
+"name": "Backup battery feed",
+"from": "Backup battery (BACKUP-BATTERY) +",
+"to": "Breaker 'BACKUP' 15 A (CB-BACKUP) LINE",
+"a": "BACKUP-BATTERY",
+"b": "CB-BACKUP",
+"gauge": "16 AWG",
+"voltage": "14 V",
+"current": 8.0,
+"cls": "14 V",
+"hex": "#ff0000",
+"length": 0.8,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W020",
+"label": "W020",
+"name": "Backup switch feed",
+"from": "Breaker 'BACKUP' 15 A (CB-BACKUP) LOAD",
+"to": "Switch 'BACKUP' (SW-BACKUP) 1",
+"a": "CB-BACKUP",
+"b": "SW-BACKUP",
+"gauge": "16 AWG",
+"voltage": "14 V",
+"current": 8.0,
+"cls": "14 V",
+"hex": "#ff0000",
+"length": 0.4,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W021",
+"label": "W021",
+"name": "Backup to essential bus",
+"from": "Switch 'BACKUP' (SW-BACKUP) 2",
+"to": "Essential bus (BB-ESSENTIAL-BUS) Stud",
+"a": "SW-BACKUP",
+"b": "BB-ESSENTIAL-BUS",
+"gauge": "16 AWG",
+"voltage": "14 V",
+"current": 8.0,
+"cls": "14 V",
+"hex": "#ff0000",
+"length": 0.4,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W022",
+"label": "W022",
+"name": "Backup battery return",
+"from": "Backup battery (BACKUP-BATTERY) -",
+"to": "Ground bus (BB-GROUND-BUS) Stud",
+"a": "BACKUP-BATTERY",
+"b": "BB-GROUND-BUS",
+"gauge": "16 AWG",
+"voltage": "GND",
+"current": 8.0,
+"cls": "GND",
+"hex": "#000000",
+"length": 0.8,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W023",
+"label": "W023",
+"name": "Ground bus bond",
+"from": "Ground bus (BB-GROUND-BUS) Stud",
+"to": "Airframe ground stud (AIRFRAME-GROUND-STUD) Stud",
+"a": "BB-GROUND-BUS",
+"b": "AIRFRAME-GROUND-STUD",
+"gauge": "10 AWG",
+"voltage": "GND",
+"current": 30.0,
+"cls": "GND",
+"hex": "#000000",
+"length": 0.3,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W024",
+"label": "W024",
+"name": "Nav light breaker feed",
+"from": "Main bus (BB-MAIN-BUS) Stud",
+"to": "Breaker 'NAV LT' 5 A (CB-NAV-LT) LINE",
+"a": "BB-MAIN-BUS",
+"b": "CB-NAV-LT",
+"gauge": "22 AWG",
+"voltage": "14 V",
+"current": 2.0,
+"cls": "14 V",
+"hex": "#ff0000",
+"length": 0.3,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W025",
+"label": "W025",
+"name": "Nav light switch feed",
+"from": "Breaker 'NAV LT' 5 A (CB-NAV-LT) LOAD",
+"to": "Switch 'NAV LT' (SW-NAV-LT) 1",
+"a": "CB-NAV-LT",
+"b": "SW-NAV-LT",
+"gauge": "22 AWG",
+"voltage": "14 V",
+"current": 2.0,
+"cls": "14 V",
+"hex": "#ff0000",
+"length": 0.4,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W026",
+"label": "W026",
+"name": "Nav light supply",
+"from": "Switch 'NAV LT' (SW-NAV-LT) 2",
+"to": "Wing root connector X-WR cockpit side 1",
+"a": "SW-NAV-LT",
+"b": "X-WR",
+"gauge": "22 AWG",
+"voltage": "14 V",
+"current": 2.0,
+"cls": "14 V",
+"hex": "#ff0000",
+"length": 1.6,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W027",
+"label": "W027",
+"name": "Nav light supply",
+"from": "Wing root connector X-WR wing side 1",
+"to": "Nav light supply splice (SP-NAV-LIGHT-SUPPLY-SPLICE) Splice",
+"a": "X-WR",
+"b": "NAV-LIGHT-LEFT",
+"gauge": "22 AWG",
+"voltage": "14 V",
+"current": 2.0,
+"cls": "14 V",
+"hex": "#ff0000",
+"length": 0.5,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W028",
+"label": "W028",
+"name": "Nav light left supply",
+"from": "Nav light supply splice (SP-NAV-LIGHT-SUPPLY-SPLICE) Splice",
+"to": "Nav light left (NAV-LIGHT-LEFT) 1",
+"a": "NAV-LIGHT-RIGHT",
+"b": "NAV-LIGHT-LEFT",
+"gauge": "22 AWG",
+"voltage": "14 V",
+"current": 1.0,
+"cls": "14 V",
+"hex": "#ff0000",
+"length": 4.6,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W029",
+"label": "W029",
+"name": "Nav light right supply",
+"from": "Nav light supply splice (SP-NAV-LIGHT-SUPPLY-SPLICE) Splice",
+"to": "Nav light right (NAV-LIGHT-RIGHT) 1",
+"a": "NAV-LIGHT-LEFT",
+"b": "NAV-LIGHT-RIGHT",
+"gauge": "22 AWG",
+"voltage": "14 V",
+"current": 1.0,
+"cls": "14 V",
+"hex": "#ff0000",
+"length": 4.6,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W030",
+"label": "W030",
+"name": "Nav light left return",
+"from": "Nav light left (NAV-LIGHT-LEFT) 2",
+"to": "Nav light return splice (SP-NAV-LIGHT-RETURN-SPLICE) Splice",
+"a": "NAV-LIGHT-LEFT",
+"b": "NAV-LIGHT-RIGHT",
+"gauge": "22 AWG",
+"voltage": "GND",
+"current": 1.0,
+"cls": "GND",
+"hex": "#000000",
+"length": 4.6,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W031",
+"label": "W031",
+"name": "Nav light right return",
+"from": "Nav light right (NAV-LIGHT-RIGHT) 2",
+"to": "Nav light return splice (SP-NAV-LIGHT-RETURN-SPLICE) Splice",
+"a": "NAV-LIGHT-RIGHT",
+"b": "NAV-LIGHT-LEFT",
+"gauge": "22 AWG",
+"voltage": "GND",
+"current": 1.0,
+"cls": "GND",
+"hex": "#000000",
+"length": 4.6,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W032",
+"label": "W032",
+"name": "Nav light return",
+"from": "Nav light return splice (SP-NAV-LIGHT-RETURN-SPLICE) Splice",
+"to": "Wing root connector X-WR wing side 2",
+"a": "NAV-LIGHT-LEFT",
+"b": "X-WR",
+"gauge": "22 AWG",
+"voltage": "GND",
+"current": 2.0,
+"cls": "GND",
+"hex": "#000000",
+"length": 0.5,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W033",
+"label": "W033",
+"name": "Nav light return",
+"from": "Wing root connector X-WR cockpit side 2",
+"to": "Ground bus (BB-GROUND-BUS) Stud",
+"a": "X-WR",
+"b": "BB-GROUND-BUS",
+"gauge": "22 AWG",
+"voltage": "GND",
+"current": 2.0,
+"cls": "GND",
+"hex": "#000000",
+"length": 1.6,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W034",
+"label": "W034",
+"name": "Strobe light breaker feed",
+"from": "Main bus (BB-MAIN-BUS) Stud",
+"to": "Breaker 'STROBE' 5 A (CB-STROBE) LINE",
+"a": "BB-MAIN-BUS",
+"b": "CB-STROBE",
+"gauge": "22 AWG",
+"voltage": "14 V",
+"current": 3.0,
+"cls": "14 V",
+"hex": "#ff0000",
+"length": 0.3,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W035",
+"label": "W035",
+"name": "Strobe light switch feed",
+"from": "Breaker 'STROBE' 5 A (CB-STROBE) LOAD",
+"to": "Switch 'STROBE' (SW-STROBE) 1",
+"a": "CB-STROBE",
+"b": "SW-STROBE",
+"gauge": "22 AWG",
+"voltage": "14 V",
+"current": 3.0,
+"cls": "14 V",
+"hex": "#ff0000",
+"length": 0.4,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W036",
+"label": "W036",
+"name": "Strobe light supply",
+"from": "Switch 'STROBE' (SW-STROBE) 2",
+"to": "Wing root connector X-WR cockpit side 3",
+"a": "SW-STROBE",
+"b": "X-WR",
+"gauge": "22 AWG",
+"voltage": "14 V",
+"current": 3.0,
+"cls": "14 V",
+"hex": "#ff0000",
+"length": 1.6,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W037",
+"label": "W037",
+"name": "Strobe light supply",
+"from": "Wing root connector X-WR wing side 3",
+"to": "Strobe light supply splice (SP-STROBE-LIGHT-SUPPLY-SPLICE) Splice",
+"a": "X-WR",
+"b": "STROBE-LIGHT-LEFT",
+"gauge": "22 AWG",
+"voltage": "14 V",
+"current": 3.0,
+"cls": "14 V",
+"hex": "#ff0000",
+"length": 0.5,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W038",
+"label": "W038",
+"name": "Strobe light left supply",
+"from": "Strobe light supply splice (SP-STROBE-LIGHT-SUPPLY-SPLICE) Splice",
+"to": "Strobe light left (STROBE-LIGHT-LEFT) 1",
+"a": "STROBE-LIGHT-RIGHT",
+"b": "STROBE-LIGHT-LEFT",
+"gauge": "22 AWG",
+"voltage": "14 V",
+"current": 1.5,
+"cls": "14 V",
+"hex": "#ff0000",
+"length": 4.6,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W039",
+"label": "W039",
+"name": "Strobe light right supply",
+"from": "Strobe light supply splice (SP-STROBE-LIGHT-SUPPLY-SPLICE) Splice",
+"to": "Strobe light right (STROBE-LIGHT-RIGHT) 1",
+"a": "STROBE-LIGHT-LEFT",
+"b": "STROBE-LIGHT-RIGHT",
+"gauge": "22 AWG",
+"voltage": "14 V",
+"current": 1.5,
+"cls": "14 V",
+"hex": "#ff0000",
+"length": 4.6,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W040",
+"label": "W040",
+"name": "Strobe light left return",
+"from": "Strobe light left (STROBE-LIGHT-LEFT) 2",
+"to": "Strobe light return splice (SP-STROBE-LIGHT-RETURN-SPLICE) Splice",
+"a": "STROBE-LIGHT-LEFT",
+"b": "STROBE-LIGHT-RIGHT",
+"gauge": "22 AWG",
+"voltage": "GND",
+"current": 1.5,
+"cls": "GND",
+"hex": "#000000",
+"length": 4.6,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W041",
+"label": "W041",
+"name": "Strobe light right return",
+"from": "Strobe light right (STROBE-LIGHT-RIGHT) 2",
+"to": "Strobe light return splice (SP-STROBE-LIGHT-RETURN-SPLICE) Splice",
+"a": "STROBE-LIGHT-RIGHT",
+"b": "STROBE-LIGHT-LEFT",
+"gauge": "22 AWG",
+"voltage": "GND",
+"current": 1.5,
+"cls": "GND",
+"hex": "#000000",
+"length": 4.6,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W042",
+"label": "W042",
+"name": "Strobe light return",
+"from": "Strobe light return splice (SP-STROBE-LIGHT-RETURN-SPLICE) Splice",
+"to": "Wing root connector X-WR wing side 4",
+"a": "STROBE-LIGHT-LEFT",
+"b": "X-WR",
+"gauge": "22 AWG",
+"voltage": "GND",
+"current": 3.0,
+"cls": "GND",
+"hex": "#000000",
+"length": 0.5,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W043",
+"label": "W043",
+"name": "Strobe light return",
+"from": "Wing root connector X-WR cockpit side 4",
+"to": "Ground bus (BB-GROUND-BUS) Stud",
+"a": "X-WR",
+"b": "BB-GROUND-BUS",
+"gauge": "22 AWG",
+"voltage": "GND",
+"current": 3.0,
+"cls": "GND",
+"hex": "#000000",
+"length": 1.6,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W044",
+"label": "W044",
+"name": "Landing light breaker feed",
+"from": "Main bus (BB-MAIN-BUS) Stud",
+"to": "Breaker 'LANDING LT' 10 A (CB-LANDING-LT) LINE",
+"a": "BB-MAIN-BUS",
+"b": "CB-LANDING-LT",
+"gauge": "18 AWG",
+"voltage": "14 V",
+"current": 6.0,
+"cls": "14 V",
+"hex": "#ff0000",
+"length": 0.3,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W045",
+"label": "W045",
+"name": "Landing light switch feed",
+"from": "Breaker 'LANDING LT' 10 A (CB-LANDING-LT) LOAD",
+"to": "Switch 'LANDING LT' (SW-LANDING-LT) 1",
+"a": "CB-LANDING-LT",
+"b": "SW-LANDING-LT",
+"gauge": "22 AWG",
+"voltage": "14 V",
+"current": 6.0,
+"cls": "14 V",
+"hex": "#ff0000",
+"length": 0.4,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": "error"
+},
+{
+"id": "W046",
+"label": "W046",
+"name": "Landing light supply",
+"from": "Switch 'LANDING LT' (SW-LANDING-LT) 2",
+"to": "Wing root connector X-WR cockpit side 5",
+"a": "SW-LANDING-LT",
+"b": "X-WR",
+"gauge": "18 AWG",
+"voltage": "14 V",
+"current": 6.0,
+"cls": "14 V",
+"hex": "#ff0000",
+"length": 1.6,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W047",
+"label": "W047",
+"name": "Landing light supply",
+"from": "Wing root connector X-WR wing side 5",
+"to": "Landing light (LANDING-LIGHT) 1",
+"a": "X-WR",
+"b": "LANDING-LIGHT",
+"gauge": "18 AWG",
+"voltage": "14 V",
+"current": 6.0,
+"cls": "14 V",
+"hex": "#ff0000",
+"length": 2.4,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W048",
+"label": "W048",
+"name": "Landing light return",
+"from": "Landing light (LANDING-LIGHT) 2",
+"to": "Wing root connector X-WR wing side 6",
+"a": "LANDING-LIGHT",
+"b": "X-WR",
+"gauge": "18 AWG",
+"voltage": "GND",
+"current": 6.0,
+"cls": "GND",
+"hex": "#000000",
+"length": 2.4,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W049",
+"label": "W049",
+"name": "Landing light return",
+"from": "Wing root connector X-WR cockpit side 6",
+"to": "Ground bus (BB-GROUND-BUS) Stud",
+"a": "X-WR",
+"b": "BB-GROUND-BUS",
+"gauge": "18 AWG",
+"voltage": "GND",
+"current": 6.0,
+"cls": "GND",
+"hex": "#000000",
+"length": 1.6,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W050",
+"label": "W050",
+"name": "EFIS breaker feed",
+"from": "Essential bus (BB-ESSENTIAL-BUS) Stud",
+"to": "Breaker 'EFIS' 5 A (CB-EFIS) LINE",
+"a": "BB-ESSENTIAL-BUS",
+"b": "CB-EFIS",
+"gauge": "20 AWG",
+"voltage": "14 V",
+"current": 2.5,
+"cls": "14 V",
+"hex": "#ff0000",
+"length": 0.3,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W051",
+"label": "W051",
+"name": "EFIS supply",
+"from": "Breaker 'EFIS' 5 A (CB-EFIS) LOAD",
+"to": "EFIS J1 1",
+"a": "CB-EFIS",
+"b": "EFIS",
+"gauge": "20 AWG",
+"voltage": "14 V",
+"current": 2.5,
+"cls": "14 V",
+"hex": "#ff0000",
+"length": 0.6,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W052",
+"label": "W052",
+"name": "EFIS return",
+"from": "EFIS J1 2",
+"to": "Ground bus (BB-GROUND-BUS) Stud",
+"a": "EFIS",
+"b": "BB-GROUND-BUS",
+"gauge": "20 AWG",
+"voltage": "GND",
+"current": 2.5,
+"cls": "GND",
+"hex": "#000000",
+"length": 0.8,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W053",
+"label": "W053",
+"name": "Com radio breaker feed",
+"from": "Essential bus (BB-ESSENTIAL-BUS) Stud",
+"to": "Breaker 'COM' 7.5 A (CB-COM) LINE",
+"a": "BB-ESSENTIAL-BUS",
+"b": "CB-COM",
+"gauge": "20 AWG",
+"voltage": "14 V",
+"current": 4.0,
+"cls": "14 V",
+"hex": "#ff0000",
+"length": 0.3,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W054",
+"label": "W054",
+"name": "Com radio supply",
+"from": "Breaker 'COM' 7.5 A (CB-COM) LOAD",
+"to": "Com radio (COM-RADIO) J1 1",
+"a": "CB-COM",
+"b": "COM-RADIO",
+"gauge": "20 AWG",
+"voltage": "14 V",
+"current": 4.0,
+"cls": "14 V",
+"hex": "#ff0000",
+"length": 0.6,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W055",
+"label": "W055",
+"name": "Com radio return",
+"from": "Com radio (COM-RADIO) J1 2",
+"to": "Ground bus (BB-GROUND-BUS) Stud",
+"a": "COM-RADIO",
+"b": "BB-GROUND-BUS",
+"gauge": "20 AWG",
+"voltage": "GND",
+"current": 4.0,
+"cls": "GND",
+"hex": "#000000",
+"length": 0.8,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W056",
+"label": "W056",
+"name": "Com antenna coax",
+"from": "Com antenna (COM-ANTENNA) BNC",
+"to": "Com radio (COM-RADIO) J2 RF",
+"a": "COM-ANTENNA",
+"b": "COM-RADIO",
+"gauge": "22 AWG",
+"voltage": "RF",
+"current": null,
+"cls": "signal",
+"hex": "#0066ff",
+"length": 2.8,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": "info"
+},
+{
+"id": "W057",
+"label": "W057",
+"name": "Transponder breaker feed",
+"from": "Essential bus (BB-ESSENTIAL-BUS) Stud",
+"to": "Breaker 'XPDR' 15 A (CB-XPDR) LINE",
+"a": "BB-ESSENTIAL-BUS",
+"b": "CB-XPDR",
+"gauge": "20 AWG",
+"voltage": "14 V",
+"current": 1.5,
+"cls": "14 V",
+"hex": "#ff0000",
+"length": 0.3,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W058",
+"label": "W058",
+"name": "Transponder supply",
+"from": "Breaker 'XPDR' 15 A (CB-XPDR) LOAD",
+"to": "Transponder (TRANSPONDER) J1 1",
+"a": "CB-XPDR",
+"b": "TRANSPONDER",
+"gauge": "20 AWG",
+"voltage": "14 V",
+"current": 1.5,
+"cls": "14 V",
+"hex": "#ff0000",
+"length": 0.6,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": "error"
+},
+{
+"id": "W059",
+"label": "W059",
+"name": "Transponder return",
+"from": "Transponder (TRANSPONDER) J1 2",
+"to": "Ground bus (BB-GROUND-BUS) Stud",
+"a": "TRANSPONDER",
+"b": "BB-GROUND-BUS",
+"gauge": "20 AWG",
+"voltage": "GND",
+"current": 1.5,
+"cls": "GND",
+"hex": "#000000",
+"length": 0.8,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W060",
+"label": "W060",
+"name": "Transponder antenna coax",
+"from": "Transponder antenna (TRANSPONDER-ANTENNA) BNC",
+"to": "Transponder (TRANSPONDER) J2 RF",
+"a": "TRANSPONDER-ANTENNA",
+"b": "TRANSPONDER",
+"gauge": "22 AWG",
+"voltage": "RF",
+"current": null,
+"cls": "signal",
+"hex": "#0066ff",
+"length": 1.9,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": "info"
+},
+{
+"id": "W061",
+"label": "W061",
+"name": "Altitude data",
+"from": "EFIS J2 3",
+"to": "Transponder (TRANSPONDER) J1 5",
+"a": "EFIS",
+"b": "TRANSPONDER",
+"gauge": "22 AWG",
+"voltage": "signal",
+"current": null,
+"cls": "signal",
+"hex": "#0066ff",
+"length": 0.5,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W062",
+"label": "W062",
+"name": "GPS breaker feed",
+"from": "Essential bus (BB-ESSENTIAL-BUS) Stud",
+"to": "Breaker 'GPS' 3 A (CB-GPS) LINE",
+"a": "BB-ESSENTIAL-BUS",
+"b": "CB-GPS",
+"gauge": "22 AWG",
+"voltage": "14 V",
+"current": 0.8,
+"cls": "14 V",
+"hex": "#ff0000",
+"length": 0.3,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W063",
+"label": "W063",
+"name": "GPS supply",
+"from": "Breaker 'GPS' 3 A (CB-GPS) LOAD",
+"to": "GPS receiver (GPS-RECEIVER) J1 1",
+"a": "CB-GPS",
+"b": "GPS-RECEIVER",
+"gauge": "22 AWG",
+"voltage": "14 V",
+"current": 0.8,
+"cls": "14 V",
+"hex": "#ff0000",
+"length": 0.6,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W064",
+"label": "W064",
+"name": "GPS return",
+"from": "GPS receiver (GPS-RECEIVER) J1 2",
+"to": "Ground bus (BB-GROUND-BUS) Stud",
+"a": "GPS-RECEIVER",
+"b": "BB-GROUND-BUS",
+"gauge": "22 AWG",
+"voltage": "GND",
+"current": 0.8,
+"cls": "GND",
+"hex": "#000000",
+"length": 0.8,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W065",
+"label": "W065",
+"name": "GPS antenna coax",
+"from": "GPS antenna (GPS-ANTENNA) TNC",
+"to": "GPS receiver (GPS-RECEIVER) J2 RF",
+"a": "GPS-ANTENNA",
+"b": "GPS-RECEIVER",
+"gauge": "22 AWG",
+"voltage": "RF",
+"current": null,
+"cls": "signal",
+"hex": "#0066ff",
+"length": 1.4,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": "info"
+},
+{
+"id": "W066",
+"label": "W066",
+"name": "GPS position data",
+"from": "GPS receiver (GPS-RECEIVER) J1 4",
+"to": "EFIS J2 4",
+"a": "GPS-RECEIVER",
+"b": "EFIS",
+"gauge": "22 AWG",
+"voltage": "signal",
+"current": null,
+"cls": "signal",
+"hex": "#0066ff",
+"length": 0.5,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W067",
+"label": "W067",
+"name": "OAT signal",
+"from": "OAT probe (OAT-PROBE) 1",
+"to": "Wing root connector X-WR wing side 7",
+"a": "OAT-PROBE",
+"b": "X-WR",
+"gauge": "22 AWG",
+"voltage": "signal",
+"current": null,
+"cls": "signal",
+"hex": "#0066ff",
+"length": 1.2,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W068",
+"label": "W068",
+"name": "OAT signal",
+"from": "Wing root connector X-WR cockpit side 7",
+"to": "EFIS J2 7",
+"a": "X-WR",
+"b": "EFIS",
+"gauge": "22 AWG",
+"voltage": "signal",
+"current": null,
+"cls": "signal",
+"hex": "#0066ff",
+"length": 1.4,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W069",
+"label": "W069",
+"name": "OAT reference",
+"from": "OAT probe (OAT-PROBE) 2",
+"to": "Wing root connector X-WR wing side 8",
+"a": "OAT-PROBE",
+"b": "X-WR",
+"gauge": "22 AWG",
+"voltage": "signal",
+"current": null,
+"cls": "signal",
+"hex": "#0066ff",
+"length": 1.2,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W070",
+"label": "W070",
+"name": "OAT reference",
+"from": "Wing root connector X-WR cockpit side 8",
+"to": "EFIS J2 8",
+"a": "X-WR",
+"b": "EFIS",
+"gauge": "22 AWG",
+"voltage": "signal",
+"current": null,
+"cls": "signal",
+"hex": "#0066ff",
+"length": 1.4,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W071",
+"label": "W071",
+"name": "Motor controller breaker feed",
+"from": "Main bus (BB-MAIN-BUS) Stud",
+"to": "Breaker 'MCU' 5 A (CB-MCU) LINE",
+"a": "BB-MAIN-BUS",
+"b": "CB-MCU",
+"gauge": "20 AWG",
+"voltage": "14 V",
+"current": 2.0,
+"cls": "14 V",
+"hex": "#ff0000",
+"length": 0.3,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W072",
+"label": "W072",
+"name": "Motor controller supply",
+"from": "Breaker 'MCU' 5 A (CB-MCU) LOAD",
+"to": "Firewall connector X-FW cockpit side 3",
+"a": "CB-MCU",
+"b": "X-FW",
+"gauge": "20 AWG",
+"voltage": "14 V",
+"current": 2.0,
+"cls": "14 V",
+"hex": "#ff0000",
+"length": 1.1,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W073",
+"label": "W073",
+"name": "Motor controller supply",
+"from": "Firewall connector X-FW motor side 3",
+"to": "Motor controller (MOTOR-CONTROLLER) J1 1",
+"a": "X-FW",
+"b": "MOTOR-CONTROLLER",
+"gauge": "20 AWG",
+"voltage": "14 V",
+"current": 2.0,
+"cls": "14 V",
+"hex": "#ff0000",
+"length": 0.7,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W074",
+"label": "W074",
+"name": "Motor controller return",
+"from": "Motor controller (MOTOR-CONTROLLER) J1 2",
+"to": "Firewall connector X-FW motor side 4",
+"a": "MOTOR-CONTROLLER",
+"b": "X-FW",
+"gauge": "20 AWG",
+"voltage": "GND",
+"current": 2.0,
+"cls": "GND",
+"hex": "#000000",
+"length": 0.7,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W075",
+"label": "W075",
+"name": "Motor controller return",
+"from": "Firewall connector X-FW cockpit side 4",
+"to": "Ground bus (BB-GROUND-BUS) Stud",
+"a": "X-FW",
+"b": "BB-GROUND-BUS",
+"gauge": "20 AWG",
+"voltage": "GND",
+"current": 2.0,
+"cls": "GND",
+"hex": "#000000",
+"length": 1.1,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W076",
+"label": "W076",
+"name": "Motor enable switch feed",
+"from": "Breaker 'MCU' 5 A (CB-MCU) LOAD",
+"to": "Switch 'MOTOR ENABLE' (SW-MOTOR-ENABLE) 1",
+"a": "CB-MCU",
+"b": "SW-MOTOR-ENABLE",
+"gauge": "22 AWG",
+"voltage": "14 V",
+"current": 0.1,
+"cls": "14 V",
+"hex": "#ff0000",
+"length": 0.4,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W077",
+"label": "W077",
+"name": "Motor enable",
+"from": "Switch 'MOTOR ENABLE' (SW-MOTOR-ENABLE) 2",
+"to": "Firewall connector X-FW cockpit side 5",
+"a": "SW-MOTOR-ENABLE",
+"b": "X-FW",
+"gauge": "22 AWG",
+"voltage": "14 V",
+"current": 0.1,
+"cls": "14 V",
+"hex": "#ff0000",
+"length": 1.1,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W078",
+"label": "W078",
+"name": "Motor enable",
+"from": "Firewall connector X-FW motor side 5",
+"to": "Motor controller (MOTOR-CONTROLLER) J1 3",
+"a": "X-FW",
+"b": "MOTOR-CONTROLLER",
+"gauge": "22 AWG",
+"voltage": "14 V",
+"current": 0.1,
+"cls": "14 V",
+"hex": "#ff0000",
+"length": 0.7,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W079",
+"label": "W079",
+"name": "Throttle sensor supply",
+"from": "Motor controller (MOTOR-CONTROLLER) J2 1",
+"to": "Firewall connector X-FW motor side 6",
+"a": "MOTOR-CONTROLLER",
+"b": "X-FW",
+"gauge": "22 AWG",
+"voltage": "5 V",
+"current": null,
+"cls": "5 V",
+"hex": "#8000ff",
+"length": 0.7,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W080",
+"label": "W080",
+"name": "Throttle sensor supply",
+"from": "Firewall connector X-FW cockpit side 6",
+"to": "Throttle position sensor (THROTTLE-POSITION-SENSOR) 1",
+"a": "X-FW",
+"b": "THROTTLE-POSITION-SENSOR",
+"gauge": "22 AWG",
+"voltage": "5 V",
+"current": null,
+"cls": "5 V",
+"hex": "#8000ff",
+"length": 1.0,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W081",
+"label": "W081",
+"name": "Throttle position",
+"from": "Throttle position sensor (THROTTLE-POSITION-SENSOR) 2",
+"to": "Firewall connector X-FW cockpit side 7",
+"a": "THROTTLE-POSITION-SENSOR",
+"b": "X-FW",
+"gauge": "22 AWG",
+"voltage": "signal",
+"current": null,
+"cls": "signal",
+"hex": "#0066ff",
+"length": 1.0,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W082",
+"label": "W082",
+"name": "Throttle position",
+"from": "Firewall connector X-FW motor side 7",
+"to": "Motor controller (MOTOR-CONTROLLER) J2 2",
+"a": "X-FW",
+"b": "MOTOR-CONTROLLER",
+"gauge": "22 AWG",
+"voltage": "signal",
+"current": null,
+"cls": "signal",
+"hex": "#0066ff",
+"length": 0.7,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W083",
+"label": "W083",
+"name": "Throttle sensor reference",
+"from": "Throttle position sensor (THROTTLE-POSITION-SENSOR) 3",
+"to": "Firewall connector X-FW cockpit side 8",
+"a": "THROTTLE-POSITION-SENSOR",
+"b": "X-FW",
+"gauge": "22 AWG",
+"voltage": "signal",
+"current": null,
+"cls": "signal",
+"hex": "#0066ff",
+"length": 1.0,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W084",
+"label": "W084",
+"name": "Throttle sensor reference",
+"from": "Firewall connector X-FW motor side 8",
+"to": "Motor controller (MOTOR-CONTROLLER) J2 3",
+"a": "X-FW",
+"b": "MOTOR-CONTROLLER",
+"gauge": "22 AWG",
+"voltage": "signal",
+"current": null,
+"cls": "signal",
+"hex": "#0066ff",
+"length": 0.7,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W085",
+"label": "W085",
+"name": "Motor temperature",
+"from": "Motor temperature sensor (MOTOR-TEMPERATURE-SENSOR) lead 1",
+"to": "Motor controller (MOTOR-CONTROLLER) J2 4",
+"a": "MOTOR-TEMPERATURE-SENSOR",
+"b": "MOTOR-CONTROLLER",
+"gauge": "22 AWG",
+"voltage": "signal",
+"current": null,
+"cls": "signal",
+"hex": "#0066ff",
+"length": 0.9,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W086",
+"label": "W086",
+"name": "Motor temperature reference",
+"from": "Motor temperature sensor (MOTOR-TEMPERATURE-SENSOR) lead 2",
+"to": "Motor controller (MOTOR-CONTROLLER) J2 5",
+"a": "MOTOR-TEMPERATURE-SENSOR",
+"b": "MOTOR-CONTROLLER",
+"gauge": "22 AWG",
+"voltage": "signal",
+"current": null,
+"cls": "signal",
+"hex": "#0066ff",
+"length": 0.9,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W087",
+"label": "W087",
+"name": "BMS breaker feed",
+"from": "Main bus (BB-MAIN-BUS) Stud",
+"to": "Breaker 'BMS' 3 A (CB-BMS) LINE",
+"a": "BB-MAIN-BUS",
+"b": "CB-BMS",
+"gauge": "22 AWG",
+"voltage": "14 V",
+"current": 0.5,
+"cls": "14 V",
+"hex": "#ff0000",
+"length": 0.3,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W088",
+"label": "W088",
+"name": "BMS supply",
+"from": "Breaker 'BMS' 3 A (CB-BMS) LOAD",
+"to": "Firewall connector X-FW cockpit side 9",
+"a": "CB-BMS",
+"b": "X-FW",
+"gauge": "22 AWG",
+"voltage": "14 V",
+"current": 0.5,
+"cls": "14 V",
+"hex": "#ff0000",
+"length": 1.1,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W089",
+"label": "W089",
+"name": "BMS supply",
+"from": "Firewall connector X-FW motor side 9",
+"to": "Battery management system (BATTERY-MANAGEMENT-SYSTEM) J1 1",
+"a": "X-FW",
+"b": "BATTERY-MANAGEMENT-SYSTEM",
+"gauge": "22 AWG",
+"voltage": "14 V",
+"current": 0.5,
+"cls": "14 V",
+"hex": "#ff0000",
+"length": 0.8,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W090",
+"label": "W090",
+"name": "BMS return",
+"from": "Battery management system (BATTERY-MANAGEMENT-SYSTEM) J1 2",
+"to": "Firewall connector X-FW motor side 10",
+"a": "BATTERY-MANAGEMENT-SYSTEM",
+"b": "X-FW",
+"gauge": "22 AWG",
+"voltage": "GND",
+"current": 0.5,
+"cls": "GND",
+"hex": "#000000",
+"length": 0.8,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W091",
+"label": "W091",
+"name": "BMS return",
+"from": "Firewall connector X-FW cockpit side 10",
+"to": "Ground bus (BB-GROUND-BUS) Stud",
+"a": "X-FW",
+"b": "BB-GROUND-BUS",
+"gauge": "22 AWG",
+"voltage": "GND",
+"current": 0.5,
+"cls": "GND",
+"hex": "#000000",
+"length": 1.1,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W092",
+"label": "W092",
+"name": "Coolant pump breaker feed",
+"from": "Main bus (BB-MAIN-BUS) Stud",
+"to": "Breaker 'COOLANT PUMP' 7.5 A (CB-COOLANT-PUMP) LINE",
+"a": "BB-MAIN-BUS",
+"b": "CB-COOLANT-PUMP",
+"gauge": "20 AWG",
+"voltage": "14 V",
+"current": 4.0,
+"cls": "14 V",
+"hex": "#ff0000",
+"length": 0.3,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W093",
+"label": "W093",
+"name": "Coolant pump supply",
+"from": "Breaker 'COOLANT PUMP' 7.5 A (CB-COOLANT-PUMP) LOAD",
+"to": "Firewall connector X-FW cockpit side 13",
+"a": "CB-COOLANT-PUMP",
+"b": "X-FW",
+"gauge": "20 AWG",
+"voltage": "14 V",
+"current": 4.0,
+"cls": "14 V",
+"hex": "#ff0000",
+"length": 1.1,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W094",
+"label": "W094",
+"name": "Coolant pump supply",
+"from": "Firewall connector X-FW motor side 13",
+"to": "Coolant pump (COOLANT-PUMP) 1",
+"a": "X-FW",
+"b": "COOLANT-PUMP",
+"gauge": "20 AWG",
+"voltage": "14 V",
+"current": 4.0,
+"cls": "14 V",
+"hex": "#ff0000",
+"length": 0.9,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W095",
+"label": "W095",
+"name": "Coolant pump return",
+"from": "Coolant pump (COOLANT-PUMP) 2",
+"to": "Firewall connector X-FW motor side 14",
+"a": "COOLANT-PUMP",
+"b": "X-FW",
+"gauge": "20 AWG",
+"voltage": "GND",
+"current": 4.0,
+"cls": "GND",
+"hex": "#000000",
+"length": 0.9,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W096",
+"label": "W096",
+"name": "Coolant pump return",
+"from": "Firewall connector X-FW cockpit side 14",
+"to": "Ground bus (BB-GROUND-BUS) Stud",
+"a": "X-FW",
+"b": "BB-GROUND-BUS",
+"gauge": "20 AWG",
+"voltage": "GND",
+"current": 4.0,
+"cls": "GND",
+"hex": "#000000",
+"length": 1.1,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W097",
+"label": "W097",
+"name": "Coolant temperature",
+"from": "Coolant temperature sensor (COOLANT-TEMPERATURE-SENSOR) lead 1",
+"to": "Motor controller (MOTOR-CONTROLLER) J2 6",
+"a": "COOLANT-TEMPERATURE-SENSOR",
+"b": "MOTOR-CONTROLLER",
+"gauge": "22 AWG",
+"voltage": "signal",
+"current": null,
+"cls": "signal",
+"hex": "#0066ff",
+"length": 0.6,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W098",
+"label": "W098",
+"name": "Coolant temperature reference",
+"from": "Coolant temperature sensor (COOLANT-TEMPERATURE-SENSOR) lead 2",
+"to": "Motor controller (MOTOR-CONTROLLER) J2 7",
+"a": "COOLANT-TEMPERATURE-SENSOR",
+"b": "MOTOR-CONTROLLER",
+"gauge": "22 AWG",
+"voltage": "signal",
+"current": null,
+"cls": "signal",
+"hex": "#0066ff",
+"length": 0.6,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W099",
+"label": "W099",
+"name": "CAN1 H start",
+"from": "CAN terminator panel (CAN-TERMINATOR-PANEL) 1",
+"to": "CAN1 H splice panel (SP-CAN1-H-SPLICE-PANEL) Splice",
+"a": "CAN-TERMINATOR-PANEL",
+"b": "EFIS",
+"gauge": "22 AWG",
+"voltage": "signal",
+"current": null,
+"cls": "CAN_H",
+"hex": "#00ff00",
+"length": 0.1,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W100",
+"label": "W100",
+"name": "CAN1 H EFIS stub",
+"from": "CAN1 H splice panel (SP-CAN1-H-SPLICE-PANEL) Splice",
+"to": "EFIS J1 7",
+"a": "CAN-TERMINATOR-PANEL",
+"b": "EFIS",
+"gauge": "22 AWG",
+"voltage": "signal",
+"current": null,
+"cls": "CAN_H",
+"hex": "#00ff00",
+"length": 0.3,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W101",
+"label": "W101",
+"name": "CAN1 H trunk",
+"from": "CAN1 H splice panel (SP-CAN1-H-SPLICE-PANEL) Splice",
+"to": "Firewall connector X-FW cockpit side 11",
+"a": "CAN-TERMINATOR-PANEL",
+"b": "X-FW",
+"gauge": "22 AWG",
+"voltage": "signal",
+"current": null,
+"cls": "CAN_H",
+"hex": "#00ff00",
+"length": 1.2,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W102",
+"label": "W102",
+"name": "CAN1 H trunk",
+"from": "Firewall connector X-FW motor side 11",
+"to": "CAN1 H splice motor bay (SP-CAN1-H-SPLICE-MOTOR-BAY) Splice",
+"a": "X-FW",
+"b": "BATTERY-MANAGEMENT-SYSTEM",
+"gauge": "22 AWG",
+"voltage": "signal",
+"current": null,
+"cls": "CAN_H",
+"hex": "#00ff00",
+"length": 0.5,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W103",
+"label": "W103",
+"name": "CAN1 H motor controller stub",
+"from": "CAN1 H splice motor bay (SP-CAN1-H-SPLICE-MOTOR-BAY) Splice",
+"to": "Motor controller (MOTOR-CONTROLLER) J1 7",
+"a": "BATTERY-MANAGEMENT-SYSTEM",
+"b": "MOTOR-CONTROLLER",
+"gauge": "22 AWG",
+"voltage": "signal",
+"current": null,
+"cls": "CAN_H",
+"hex": "#00ff00",
+"length": 0.3,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W104",
+"label": "W104",
+"name": "CAN1 H BMS stub",
+"from": "CAN1 H splice motor bay (SP-CAN1-H-SPLICE-MOTOR-BAY) Splice",
+"to": "Battery management system (BATTERY-MANAGEMENT-SYSTEM) J1 3",
+"a": "CAN-TERMINATOR-MOTOR-BAY",
+"b": "BATTERY-MANAGEMENT-SYSTEM",
+"gauge": "22 AWG",
+"voltage": "signal",
+"current": null,
+"cls": "CAN_H",
+"hex": "#00ff00",
+"length": 0.4,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W105",
+"label": "W105",
+"name": "CAN1 H end",
+"from": "CAN terminator motor bay (CAN-TERMINATOR-MOTOR-BAY) 1",
+"to": "CAN1 H splice motor bay (SP-CAN1-H-SPLICE-MOTOR-BAY) Splice",
+"a": "CAN-TERMINATOR-MOTOR-BAY",
+"b": "BATTERY-MANAGEMENT-SYSTEM",
+"gauge": "22 AWG",
+"voltage": "signal",
+"current": null,
+"cls": "CAN_H",
+"hex": "#00ff00",
+"length": 0.1,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W106",
+"label": "W106",
+"name": "CAN1 L start",
+"from": "CAN terminator panel (CAN-TERMINATOR-PANEL) 2",
+"to": "CAN1 L splice panel (SP-CAN1-L-SPLICE-PANEL) Splice",
+"a": "CAN-TERMINATOR-PANEL",
+"b": "EFIS",
+"gauge": "22 AWG",
+"voltage": "signal",
+"current": null,
+"cls": "CAN_L",
+"hex": "#00ff00",
+"length": 0.1,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W107",
+"label": "W107",
+"name": "CAN1 L EFIS stub",
+"from": "CAN1 L splice panel (SP-CAN1-L-SPLICE-PANEL) Splice",
+"to": "EFIS J1 8",
+"a": "CAN-TERMINATOR-PANEL",
+"b": "EFIS",
+"gauge": "22 AWG",
+"voltage": "signal",
+"current": null,
+"cls": "CAN_L",
+"hex": "#00ff00",
+"length": 0.3,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W108",
+"label": "W108",
+"name": "CAN1 L trunk",
+"from": "CAN1 L splice panel (SP-CAN1-L-SPLICE-PANEL) Splice",
+"to": "Firewall connector X-FW cockpit side 12",
+"a": "CAN-TERMINATOR-PANEL",
+"b": "X-FW",
+"gauge": "22 AWG",
+"voltage": "signal",
+"current": null,
+"cls": "CAN_L",
+"hex": "#00ff00",
+"length": 1.2,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W109",
+"label": "W109",
+"name": "CAN1 L trunk",
+"from": "Firewall connector X-FW motor side 12",
+"to": "CAN1 L splice motor bay (SP-CAN1-L-SPLICE-MOTOR-BAY) Splice",
+"a": "X-FW",
+"b": "BATTERY-MANAGEMENT-SYSTEM",
+"gauge": "22 AWG",
+"voltage": "signal",
+"current": null,
+"cls": "CAN_L",
+"hex": "#00ff00",
+"length": 0.5,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W110",
+"label": "W110",
+"name": "CAN1 L motor controller stub",
+"from": "CAN1 L splice motor bay (SP-CAN1-L-SPLICE-MOTOR-BAY) Splice",
+"to": "Motor controller (MOTOR-CONTROLLER) J1 8",
+"a": "BATTERY-MANAGEMENT-SYSTEM",
+"b": "MOTOR-CONTROLLER",
+"gauge": "22 AWG",
+"voltage": "signal",
+"current": null,
+"cls": "CAN_L",
+"hex": "#00ff00",
+"length": 0.3,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W111",
+"label": "W111",
+"name": "CAN1 L BMS stub",
+"from": "CAN1 L splice motor bay (SP-CAN1-L-SPLICE-MOTOR-BAY) Splice",
+"to": "Battery management system (BATTERY-MANAGEMENT-SYSTEM) J1 4",
+"a": "CAN-TERMINATOR-MOTOR-BAY",
+"b": "BATTERY-MANAGEMENT-SYSTEM",
+"gauge": "22 AWG",
+"voltage": "signal",
+"current": null,
+"cls": "CAN_L",
+"hex": "#00ff00",
+"length": 0.4,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W112",
+"label": "W112",
+"name": "CAN1 L end",
+"from": "CAN terminator motor bay (CAN-TERMINATOR-MOTOR-BAY) 2",
+"to": "CAN1 L splice motor bay (SP-CAN1-L-SPLICE-MOTOR-BAY) Splice",
+"a": "CAN-TERMINATOR-MOTOR-BAY",
+"b": "BATTERY-MANAGEMENT-SYSTEM",
+"gauge": "22 AWG",
+"voltage": "signal",
+"current": null,
+"cls": "CAN_L",
+"hex": "#00ff00",
+"length": 0.1,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W113",
+"label": "W113",
+"name": "Cabin light breaker feed",
+"from": "Cabin bus (BB-CABIN-BUS) Stud",
+"to": "Breaker 'CABIN LT' 3 A (CB-CABIN-LT) LINE",
+"a": "BB-CABIN-BUS",
+"b": "CB-CABIN-LT",
+"gauge": "22 AWG",
+"voltage": "14 V",
+"current": 1.0,
+"cls": "14 V",
+"hex": "#ff0000",
+"length": 0.3,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W114",
+"label": "W114",
+"name": "Cabin light supply",
+"from": "Breaker 'CABIN LT' 3 A (CB-CABIN-LT) LOAD",
+"to": "Cabin light (CABIN-LIGHT) 1",
+"a": "CB-CABIN-LT",
+"b": "CABIN-LIGHT",
+"gauge": "22 AWG",
+"voltage": "14 V",
+"current": 1.0,
+"cls": "14 V",
+"hex": "#ff0000",
+"length": 1.5,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W115",
+"label": "W115",
+"name": "Cabin light return",
+"from": "Cabin light (CABIN-LIGHT) 2",
+"to": "Ground bus (BB-GROUND-BUS) Stud",
+"a": "CABIN-LIGHT",
+"b": "BB-GROUND-BUS",
+"gauge": "22 AWG",
+"voltage": "GND",
+"current": 1.0,
+"cls": "GND",
+"hex": "#000000",
+"length": 1.7,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W116",
+"label": "W116",
+"name": "USB charger breaker feed",
+"from": "Cabin bus (BB-CABIN-BUS) Stud",
+"to": "Breaker 'USB' 5 A (CB-USB) LINE",
+"a": "BB-CABIN-BUS",
+"b": "CB-USB",
+"gauge": "22 AWG",
+"voltage": "14 V",
+"current": 3.0,
+"cls": "14 V",
+"hex": "#ff0000",
+"length": 0.3,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W117",
+"label": "W117",
+"name": "USB charger supply",
+"from": "Breaker 'USB' 5 A (CB-USB) LOAD",
+"to": "USB charger (USB-CHARGER) 1",
+"a": "CB-USB",
+"b": "USB-CHARGER",
+"gauge": "22 AWG",
+"voltage": "14 V",
+"current": 3.0,
+"cls": "14 V",
+"hex": "#ff0000",
+"length": 1.5,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W118",
+"label": "W118",
+"name": "USB charger return",
+"from": "USB charger (USB-CHARGER) 2",
+"to": "Ground bus (BB-GROUND-BUS) Stud",
+"a": "USB-CHARGER",
+"b": "BB-GROUND-BUS",
+"gauge": "22 AWG",
+"voltage": "GND",
+"current": 3.0,
+"cls": "GND",
+"hex": "#000000",
+"length": 1.7,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W119",
+"label": "W119",
+"name": "Cabin fan breaker feed",
+"from": "Cabin bus (BB-CABIN-BUS) Stud",
+"to": "Breaker 'CABIN FAN' 5 A (CB-CABIN-FAN) LINE",
+"a": "BB-CABIN-BUS",
+"b": "CB-CABIN-FAN",
+"gauge": "22 AWG",
+"voltage": "14 V",
+"current": 2.5,
+"cls": "14 V",
+"hex": "#ff0000",
+"length": 0.3,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W120",
+"label": "W120",
+"name": "Cabin fan supply",
+"from": "Breaker 'CABIN FAN' 5 A (CB-CABIN-FAN) LOAD",
+"to": "Cabin fan (CABIN-FAN) 1",
+"a": "CB-CABIN-FAN",
+"b": "CABIN-FAN",
+"gauge": "22 AWG",
+"voltage": "14 V",
+"current": 2.5,
+"cls": "14 V",
+"hex": "#ff0000",
+"length": 1.5,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+},
+{
+"id": "W121",
+"label": "W121",
+"name": "Cabin fan return",
+"from": "Cabin fan (CABIN-FAN) 2",
+"to": "Ground bus (BB-GROUND-BUS) Stud",
+"a": "CABIN-FAN",
+"b": "BB-GROUND-BUS",
+"gauge": "22 AWG",
+"voltage": "GND",
+"current": 2.5,
+"cls": "GND",
+"hex": "#000000",
+"length": 1.7,
+"harness": "",
+"protection": "",
+"status": "",
+"notes": "",
+"sev": ""
+}
+],
+"issues": [
+{
+"k": 0,
+"rule": "gauge-protection",
+"severity": "error",
+"title": "Landing light switch feed (W045) is too thin for its breaker",
+"message": "W045: 22 AWG is protected by CB-LANDING-LT 10 A; at most 5 A per FAA AC 43.13-1B, Table 11-3 (wire and circuit protector chart)",
+"fix": "use a breaker of 5 A or less, or a heavier gauge",
+"objects": [
+"conductor:W045",
+"protective:CB-LANDING-LT"
+]
+},
+{
+"k": 1,
+"rule": "gauge-protection",
+"severity": "error",
+"title": "Transponder supply (W058) is too thin for its breaker",
+"message": "W058: 20 AWG is protected by CB-XPDR 15 A; at most 7.5 A per FAA AC 43.13-1B, Table 11-3 (wire and circuit protector chart)",
+"fix": "use a breaker of 7.5 A or less, or a heavier gauge",
+"objects": [
+"conductor:W058",
+"protective:CB-XPDR"
+]
+},
+{
+"k": 2,
+"rule": "direction-unknown",
+"severity": "info",
+"title": "3 antenna cables have no known signal direction",
+"message": "An antenna and a radio have no one-way signal; nothing to fix.",
+"fix": "add pin types (signal_in / signal_out) to the part data, or direction.senders / receivers patterns",
+"objects": [
+"conductor:W056",
+"conductor:W060",
+"conductor:W065"
+]
+}
+],
+"zones": [
+{
+"id": "power-generation-and-storage",
+"name": "Power generation and storage",
+"members": [
+"AIRFRAME-GROUND-STUD",
+"BACKUP-BATTERY",
+"BB-CABIN-BUS",
+"BB-ESSENTIAL-BUS",
+"BB-GROUND-BUS",
+"BB-MAIN-BUS",
+"CB-BACKUP",
+"CB-BATTERY",
+"CB-DCDC",
+"CB-ESS-FEED",
+"DC-DC-CONVERTER",
+"FU-MASTER",
+"K-BATTERY-CONTACTOR",
+"MAIN-BATTERY",
+"SW-AVIONICS-MASTER",
+"SW-BACKUP",
+"SW-MASTER"
+]
+},
+{
+"id": "propulsion-control",
+"name": "Propulsion control",
+"members": [
+"BATTERY-MANAGEMENT-SYSTEM",
+"CB-BMS",
+"CB-COOLANT-PUMP",
+"CB-MCU",
+"COOLANT-PUMP",
+"COOLANT-TEMPERATURE-SENSOR",
+"MOTOR-CONTROLLER",
+"MOTOR-TEMPERATURE-SENSOR",
+"SW-MOTOR-ENABLE",
+"THROTTLE-POSITION-SENSOR"
+]
+},
+{
+"id": "cabin",
+"name": "Cabin",
+"members": [
+"CABIN-FAN",
+"CABIN-LIGHT",
+"CB-CABIN-FAN",
+"CB-CABIN-LT",
+"CB-USB",
+"USB-CHARGER"
+]
+},
+{
+"id": "can-bus",
+"name": "CAN bus",
+"members": [
+"CAN-TERMINATOR-MOTOR-BAY",
+"CAN-TERMINATOR-PANEL"
+]
+},
+{
+"id": "avionics",
+"name": "Avionics",
+"members": [
+"CB-COM",
+"CB-EFIS",
+"CB-GPS",
+"CB-XPDR",
+"COM-ANTENNA",
+"COM-RADIO",
+"EFIS",
+"GPS-ANTENNA",
+"GPS-RECEIVER",
+"OAT-PROBE",
+"TRANSPONDER",
+"TRANSPONDER-ANTENNA"
+]
+},
+{
+"id": "exterior-lighting",
+"name": "Exterior lighting",
+"members": [
+"CB-LANDING-LT",
+"CB-NAV-LT",
+"CB-STROBE",
+"LANDING-LIGHT",
+"NAV-LIGHT-LEFT",
+"NAV-LIGHT-RIGHT",
+"STROBE-LIGHT-LEFT",
+"STROBE-LIGHT-RIGHT",
+"SW-LANDING-LT",
+"SW-NAV-LT",
+"SW-STROBE"
+]
+},
+{
+"id": "high-voltage-stub-",
+"name": "High voltage (stub)",
+"members": [
+"HV-BATTERY-PACK"
+]
+}
+],
+"positions": {},
+"sources": [],
+"palette": {
+"14 V": "#ff0000",
+"24 V": "#ffff00",
+"5 V": "#8000ff",
+"GND": "#000000",
+"signal": "#0066ff",
+"CAN_H": "#00ff00",
+"CAN_L": "#00ff00",
+"HV": "#ff8000"
+}
+}

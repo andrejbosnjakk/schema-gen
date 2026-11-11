@@ -480,3 +480,63 @@ One entry per open choice taken during the 0.2 → 0.5 work: context, choice, wh
   reads them with the project's own sources, and they show as rank-0 components. Positions are view state in
   `<project>/layout.json`, not a change set. Export writes under `<project>/out/`.
 - Why: a what-if source survives a reload, is undoable, and never rewrites the input sheet.
+## D50. Start screen: one choice, no project list as the headline
+- Choice: with no project open the screen shows the logo, "Open the example project" (the only primary button), a drop zone
+  ("Import your wire sheet", .xlsx or .csv, click or drop) and the recent projects below, quiet.
+- Why: a new user has two paths, the example or their own sheet; recent projects are for people who came back.
+
+## D51. A sheet can be dropped anywhere
+- Choice: dragging a file over the window shows a full-window overlay; dropping imports it, from the start screen or the
+  main screen. A short bar (uploading, then reading) shows progress; diagram, wire list and Issues replace their
+  skeletons at once, with no extra clicks.
+- Why: the owner's workflow is "drop the sheet and look". Import problems (unreadable cells, skipped rows) are Issues
+  from the server, never a modal; only a file that cannot be imported at all is a message with Retry.
+
+## D52. The top bar holds six things
+- Choice: logo, project name, Import, Export (Harness drawings, Pinout, Fault sweep, Wire list), Simulate (primary),
+  light/dark toggle, a help menu with "Replay the tour". Nothing else, no hotkeys.
+- Why: everything else is reachable by clicking an object; fewer controls means fewer decisions.
+
+## D53. One fetch wrapper, plain errors
+- Choice: `src/api.ts` is the only place that calls the server. GETs retry three times with backoff when the error says
+  `retry`; errors are read from `{"error": {code, message, retry}}`; the UI shows the message and, if retryable, a Retry
+  button. "500" and "Failed to fetch" never reach a person. The same module can route to an in-memory server (`src/mock`)
+  for the e2e tests and development (`?mock=1`).
+- Why: the 0.7 app showed raw status codes; and a mock lets the screens be built and tested before the engine API exists.
+
+## D54. The block diagram: bundles, not wires
+- Choice: one React Flow canvas. A component is a card (icon, short name, kind and pin count, status dot, full name in the
+  title attribute). All wires between the same two components are one bundle, coloured by class, labelled "3 × 14 V".
+  Nodes and edges are memoised and only visible elements render, so 1,000 wires pan smoothly.
+- Why: a drawing with one line per wire is unreadable at this size; bundles keep it a diagram of the system.
+
+## D55. Edge labels never overlap
+- Choice: a collision pass places each bundle's label on the first free spot of its curve (largest bundles first, cards
+  count as obstacles) and hides it when none is free; labels are also hidden below 55 % zoom and shown on hover or when
+  the bundle is highlighted.
+- Why: overlapping labels were the most visible sloppiness in the 0.7 canvas.
+
+## D56. Layout: power flow left to right, zones as blocks
+- Choice: `diagram/layout.ts` places cards in columns by `Node.rank` (sources left, loads right), each zone as a soft
+  background block with a label, blocks stacked and wrapped to fit a wide screen, cards ordered by barycentre to reduce
+  crossings. It does not use dagre (not a dependency any more): zones and a screen-shaped aspect ratio were the
+  requirements dagre does not give. Dragged positions are saved with a debounced `POST /api/positions` and win over the
+  automatic layout when restored.
+- Why: the zone structure is what the owner reads; a general graph layout loses it.
+
+## D57. Issues: sentences, grouped, clickable
+- Choice: the left Issues panel groups findings by severity with counts, each as a plain sentence (title, then the
+  message in two lines at most). A click zooms the diagram to the object (animated) and pulses it with `.anim-pulse`.
+  The panel collapses to a chip.
+
+## D58. The Wires drawer fits 1366 px
+- Choice: bottom drawer, collapsible, at most seven columns (label, name, from, to, gauge, voltage, current) in a grid
+  that wraps text instead of scrolling sideways, virtualised with `@tanstack/react-virtual`, with a filter box. A row
+  click highlights its bundle and the two cards (and zooms to them).
+- Why: the 0.7 table scrolled sideways; a wire list is something you scan.
+
+## D59. Feel and acceptance
+- Choice: 13 px Inter, 8 px grid, 1 px borders, 6 px radius, shadows only on popups, skeletons instead of blank areas,
+  150 to 200 ms transforms and opacity only. The theme comes only from `src/theme` (tokens and component classes); small
+  text uses `--text-2` because `--text-3` fails 4.5:1 on dark. Playwright e2e (with axe, no serious violations), at
+  1366x768 and 1920x1080 in both themes, are the acceptance tests for steps 1 to 3.
