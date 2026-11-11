@@ -86,7 +86,8 @@ Runs the DC operating point with sources and loads inferred where part data is m
 ```ts
 interface Overlay {
   ok: boolean;                   // false while any bus that has loads is unpowered, or any error item exists
-  summary: {problems: number; trips: number; unpowered: number; text: string};  // text e.g. "3 problems, 0 trips"
+  summary: {problems: number; trips: number; unpowered: number; text: string;   // text e.g. "3 problems, 0 trips, 1 unpowered bus"
+            groups: {title: string; objects: string[]; status: "ok" | "warn" | "error"}[]};  // one per root cause; problems = groups.length
   buses: {id: string; voltage_V: number; nominal_V: number | null; powered: boolean}[];
   breakers: {id: string; current_A: number; rating_A: number | null; loading: number | null; trips: boolean}[];
   items: Record<string, OverlayItem>;   // key "component:ID" or "conductor:ID"; only objects with something to say
@@ -95,7 +96,12 @@ interface Overlay {
 interface OverlayItem { status: "ok" | "warn" | "error"; reason: string }  // reason: one line, e.g. "22 AWG is too small for 10 A breaker CB-AV (max 5 A)"
 ```
 
-Flags (status and reason): wire too small for its breaker or current (error); wire far heavier than needed (warn);
+Problems are counted as groups, one per root cause: a wire and the breaker it does not fit; a bus with no source together
+with the loads that lack supply only because of it ("no supply: Cabin bus has no source"); a trip. The text adds
+", K unpowered bus(es)" only when K > 0; an unpowered bus is also one of the problems.
+
+Flags (status and reason): wire too small for its breaker or current (error); wire far heavier than needed (warn: the gauge two
+steps thinner would still be allowed for its breaker, or for its current times `heavy_margin` when unprotected);
 breaker oversized for its wire (error) or undersized for its load (warn/error); component below its minimum voltage
 (error); breaker trips (error); bus with loads and no source (error).
 
