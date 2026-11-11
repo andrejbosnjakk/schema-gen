@@ -31,17 +31,23 @@ export function useSim(o: Overlay | null) {
 
 export const voltText = fmtV;
 
-export function SimSummary({ o, stale, onGroup, onClear }: { o: Overlay; stale: boolean; onGroup: (g: SimGroup) => void; onClear: () => void }) {
+/** The summary: a chip in the top bar next to Simulate (problem count, error dot, chevron, Clear); open, its list drops down over the canvas. */
+export function SimSummary({ o, stale, open, onOpen, onGroup, onClear }: { o: Overlay; stale: boolean; open: boolean; onOpen: (v: boolean) => void; onGroup: (g: SimGroup) => void; onClear: () => void }) {
   const groups = o.summary.groups ?? [];
-  return <section className={`sim-summary anim-slide${stale ? " stale" : ""}`} aria-label="Simulation results" data-tour="sim-summary">
+  const n = groups.length, chip = (o.ok ? "No problems" : n ? `${n} problem${n === 1 ? "" : "s"}` : "Problems found") + (stale ? " (out of date)" : "");
+  return <section className={`sim-summary${stale ? " stale" : ""}`} aria-label="Simulation results" data-tour="sim-summary">
     <header>
-      <span className={`dot ${o.ok ? "" : "error"}`} aria-hidden="true" />
-      <strong className="sim-text">{o.summary.text || (o.ok ? "No problems" : "Problems found")}</strong>
+      <button className="sim-toggle" aria-expanded={open} onClick={() => onOpen(!open)} title={open ? "Collapse the summary" : "Show the summary"}>
+        <span className={`dot ${o.ok ? "" : "error"}`} aria-hidden="true" /><strong className="sim-chip">{chip}</strong><Glyph name={open ? "up" : "down"} size={14} />
+      </button>
       <button className="btn btn-ghost btn-sm" onClick={onClear}><Glyph name="x" size={14} />Clear</button>
     </header>
-    {stale && <p className="sim-stale" role="status">Results are out of date, simulate again</p>}
-    {groups.length > 0 && <ul>{groups.map((g, i) => <li key={`${i}-${g.title}`}>
-      <button className="sim-group" onClick={() => onGroup(g)} disabled={!g.objects.length}>
-        <span className={`dot ${g.status === "error" ? "error" : g.status === "warn" ? "warning" : ""}`} aria-hidden="true" /><span>{g.title}</span></button></li>)}</ul>}
+    {open && <div className="sim-panel anim-slide">
+      <p className="sim-text">{o.summary.text || (o.ok ? "No problems" : "Problems found")}</p>
+      {stale && <p className="sim-stale" role="status">Results are out of date, simulate again</p>}
+      {groups.length > 0 && <ul>{groups.map((g, i) => <li key={`${i}-${g.title}`}>
+        <button className="sim-group" onClick={() => onGroup(g)} disabled={!g.objects.length}>
+          <span className={`dot ${g.status === "error" ? "error" : g.status === "warn" ? "warning" : ""}`} aria-hidden="true" /><span>{g.title}</span></button></li>)}</ul>}
+    </div>}
   </section>;
 }
