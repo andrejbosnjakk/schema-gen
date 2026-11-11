@@ -10,7 +10,9 @@ const fits = (p: Page, sel: string) => p.evaluate((s) => { const e = document.qu
 /** `open` shows the main screen with the example project; it is called at the start of every test. */
 export function cardTests(open: (p: Page) => Promise<void>, kind: string) {
   test.describe.configure({ mode: "serial" });
-  test.beforeEach(async ({ page }) => { await open(page); await expect(node(page, "CB-XPDR")).toBeVisible({ timeout: 20_000 }); await page.waitForTimeout(500); });
+  test.beforeEach(async ({ page }) => { await open(page); await expect(node(page, "CB-XPDR")).toBeVisible({ timeout: 20_000 });
+    for (let prev = "", i = 0; i < 20; i++) { const v = await viewport(page); if (v === prev && v !== "transform: translate(0px, 0px) scale(1);") break; prev = v ?? ""; await page.waitForTimeout(300); }   // fit-to-screen has settled
+  });
 
   test(`${kind}: a component card opens, edits and saves; the diagram updates in place`, async ({ page }) => {
     const events: string[] = [];

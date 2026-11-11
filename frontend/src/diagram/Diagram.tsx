@@ -86,12 +86,27 @@ function Flow({ ws, focus, selWire, onCard, onWire, overlay, picking }: Props) {
       if (old) { q.set(n.id, old); continue; }
       const e = ws.edges.find((x) => x.a === n.id || x.b === n.id), nb = e && pos.get(e.a === n.id ? e.b : e.a);
       const free = (x: number, y: number) => ![...q.values(), ...pos.values()].some((o) => Math.abs(o.x - x) < CW + 8 && Math.abs(o.y - y) < CH + 8);
-      let x = (nb?.x ?? 0) - CW - 80, y = nb?.y ?? 0;
-      for (let k = 0; k < 40 && !free(x, y); k++) y += CH + 12;
-      q.set(n.id, { x, y });
+      const [bx, by] = [nb?.x ?? 0, nb?.y ?? 0], spots: [number, number][] = [];   // the free spot nearest to what it is wired to
+      for (const dx of [-1, 1, -2, 2]) for (let k = -8; k <= 8; k++) spots.push([bx + dx * (CW + 40), by + k * (CH + 12)]);
+      const d = (t: [number, number]) => (t[0] - bx) ** 2 + (t[1] - by) ** 2, best = spots.filter(([x, y]) => free(x, y)).sort((u, v) => d(u) - d(v))[0] ?? [bx - CW - 80, by + 20 * (CH + 12)];
+      q.set(n.id, { x: best[0], y: best[1] });
     }
     setPos(q);
   }
+
+  // a card added by an edit that lands outside the view: bring it and what it is wired to into view (never zoomed in), so the new source is never off screen
+  const known = useRef(new Set(ws.components.map((n) => n.id)));
+  useEffect(() => {
+    const added = ws.components.filter((n) => !known.current.has(n.id));
+    known.current = new Set(ws.components.map((n) => n.id));
+    const p = added.length ? pos.get(added[0].id) : null, el = host.current;
+    if (!p || !el) return;
+    const v = rf.getViewport(), x = p.x * v.zoom + v.x, y = p.y * v.zoom + v.y;
+    if (x < 0 || y < 0 || x + CW * v.zoom > el.clientWidth - 64 || y + CH * v.zoom > el.clientHeight) {
+      const e = ws.edges.find((e) => e.a === added[0].id || e.b === added[0].id);
+      rf.fitView({ nodes: [{ id: added[0].id }, ...(e ? [{ id: e.a === added[0].id ? e.b : e.a }] : [])], duration: 450, padding: 0.4, maxZoom: v.zoom });
+    }
+  }, [ids]);  // eslint-disable-line react-hooks/exhaustive-deps
 
   const firstId = ws.components.length ? [...auto].sort((a, b) => a[1].x - b[1].x || a[1].y - b[1].y)[0][0] : "";
   const [cards, setCards, onCardsChange] = useNodesState<RFNode<CardData>>([]);

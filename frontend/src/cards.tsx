@@ -32,7 +32,7 @@ function Status({ sim, stale }: { sim?: OverlayItem; stale: boolean }) {
 function Issues({ list }: { list: Issue[] }) {
   if (!list.length) return null;
   return <ul className="card-issues" aria-label="Issues">{list.map((i) => <li key={i.k}>
-    <span className={`dot ${i.severity}`} aria-hidden="true" /><span><strong>{i.title || i.message}</strong>{i.title && i.message && <span className="faint"> {i.message}</span>}</span></li>)}</ul>;
+    <span className={`dot ${i.severity}`} aria-hidden="true" /><span><strong>{i.title || i.message}</strong>{i.title && i.message && <span className="faint issue-more">{i.message}</span>}</span></li>)}</ul>;
 }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
@@ -88,7 +88,7 @@ function ComponentView({ target, ws, stale, onClose, onSwitch, onSaved, onError 
   const fixedKind = !!c && c.kind === "harness";
 
   return <Shell title={c ? c.name || c.id : titleSkel}
-    footer={c && <><span className="spacer" /><button className="btn" onClick={onClose}>Close</button>
+    footer={c && <><span className="spacer" /><button className="btn" onClick={onClose}>Cancel</button>
       <button className="btn btn-primary" onClick={save} disabled={!dirty || bad || busy} aria-busy={busy}>Save</button></>}>
     {err ? <Failed err={err} retry={reload} /> : !c ? <div className="card-skel" aria-busy="true"><SkeletonRows n={3} /><SkeletonRows n={5} /></div> : <>
       <p className="card-kind"><span className="kind-chip"><KindIcon kind={c.kind} size={14} />{c.kind}</span>
@@ -145,7 +145,7 @@ function WireView({ target, ws, stale, onClose, onSwitch, onSaved, onError }: Pr
 
   return <Shell title={c ? <><span className="swatch swatch-lg" style={{ "--c": c.hex } as React.CSSProperties} aria-hidden="true" />{c.label || c.id}</> : titleSkel}
 
-    footer={c && <><span className="spacer" /><button className="btn" onClick={onClose}>Close</button>
+    footer={c && <><span className="spacer" /><button className="btn" onClick={onClose}>Cancel</button>
       <button className="btn btn-primary" onClick={save} disabled={!dirty || bad || busy} aria-busy={busy}>Save</button></>}>
     {err ? <Failed err={err} retry={reload} /> : !c ? <div className="card-skel" aria-busy="true"><SkeletonRows n={3} /><SkeletonRows n={5} /></div> : <>
       <p className="card-kind"><span className="kind-chip">wire</span><span className="faint">{c.id}{c.colour ? ` · ${c.colour}` : ""}</span></p>
@@ -180,7 +180,7 @@ function SourceView({ src, ws, onClose, onSaved, onError }: Props & { src: Sourc
   if (src.i_limit_A !== null) rows.push(["Current limit", `${src.i_limit_A} A`]);
   if (src.capacity_Ah !== null) rows.push(["Capacity", `${src.capacity_Ah} Ah`]);
   return <Shell title={src.name}
-    footer={<><button className="btn btn-danger" onClick={remove} disabled={busy} aria-busy={busy}>Remove source</button><span className="spacer" /><button className="btn" onClick={onClose}>Close</button></>}>
+    footer={<><button className="btn btn-danger" onClick={remove} disabled={busy} aria-busy={busy}>Remove source</button><span className="spacer" /><button className="btn" onClick={onClose}>Cancel</button></>}>
     <p className="card-kind"><span className="kind-chip"><KindIcon kind={src.type} size={14} />{SRC_TYPE[src.type] ?? src.type}</span><span className="faint">{src.id} · added in the app, not in your sheet</span></p>
     <dl className="meta">{rows.map(([k, v]) => <div key={k}><dt>{k}</dt><dd title={v}>{v}</dd></div>)}</dl>
   </Shell>;

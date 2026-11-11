@@ -81,3 +81,4 @@
 .edge-menu-name { margin-left: auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 
 @media (prefers-reduced-motion: reduce) { .scrim, .sim-summary.anim-slide { animation: none; } }
+.issue-more { display: block; }

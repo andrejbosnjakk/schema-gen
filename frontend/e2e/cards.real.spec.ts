@@ -4,7 +4,7 @@ import { cardTests } from "./cards.shared";
 import { startServer, type Server } from "./server";
 
 let srv: Server;
-test.beforeAll(async () => { srv = await startServer(8830); });
+test.beforeAll(async () => { srv = await startServer(8830); await fetch(srv.url + "api/settings", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ tour_done: true }) }); });
 test.afterAll(() => srv?.stop());
 
 cardTests(async (page) => {

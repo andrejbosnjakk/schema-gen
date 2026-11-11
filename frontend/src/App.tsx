@@ -121,7 +121,7 @@ export function App() {
   }, [pick]);
   const closeCard = useCallback(() => { setCard(null); act("card-close"); }, []);
   const saved = useCallback((w: Workspace, what: string) => { edited(w); setCard(null); act("card-close"); toast({ tone: "ok", text: what.startsWith("Removed") ? `${what}.` : `Saved ${what}.` }); }, [edited, toast]);
-  const sourceAdded = useCallback((w: Workspace) => { edited(w); setSrcAt(null); toast({ tone: "ok", text: "Source added. Simulate again to see its effect." }); act("source-added"); }, [edited, toast]);
+  const sourceAdded = useCallback((w: Workspace) => { edited(w); setSrcAt(null); act("source-added"); }, [edited]);
   useEffect(() => {
     if (!pick) return;
     const key = (e: KeyboardEvent) => { if (e.key === "Escape") setPick(false); };

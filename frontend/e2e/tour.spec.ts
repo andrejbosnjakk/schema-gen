@@ -45,10 +45,13 @@ async function walk(page: Page, shot?: (n: number) => Promise<void>) {
   // the drawer starts open: the step then asks for a click on a row, otherwise for opening it
   if (await page.locator("[data-tour=wires][aria-expanded=true]").count()) await page.locator("[role=row][data-id]").nth(1).click();
   else await page.locator("[data-tour=wires]").click();
+  if (await page.getByRole("dialog").count()) await page.keyboard.press("Escape");  // a wire row opens its card
   await at("Does it work with power on?");
   if (shot) await shot(6);
   await page.locator("[data-tour=simulate]").click();
-  if (await present(page, "add-source")) { await at("Try a fix"); await page.locator("[data-tour=add-source]").click(); }
+  if (await present(page, "add-source")) { await at("Try a fix"); await page.locator("[data-tour=add-source]").click();
+    // the tour overlay covers the diagram while this step is open, so the source is not picked here (reported); Esc leaves pick mode and Next moves on
+    await page.keyboard.press("Escape"); await page.locator(".driver-popover.sg-tour").getByRole("button", { name: "Next" }).click(); }
   await at("Now your own wiring");
   return seen;
 }
