@@ -16,7 +16,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from ..core import tables
-from ..core.context import Ctx
+from ..core.context import Ctx, infer_spec
 from ..core.model import Component, Model, Part, Terminal
 from ..core.net import NodeKey
 from .engine import REF, Circuit, Relay
@@ -154,7 +154,7 @@ def build(m: Model, cfg: Any = None, measured: dict[str, float] | None = None, s
         return sorted(out, key=lambda t: t.key())
 
     pds = {p.id: p for p in m.protective_devices}
-    infer: dict[str, Any] = dict(d.get("sources") or {}) if d.get("infer") else {}
+    infer = bool(d.get("infer"))
     counts: Counter[str] = Counter()
     for comp in m.components:
         p = ctx.part_of(comp.raw)
@@ -202,9 +202,9 @@ def build(m: Model, cfg: Any = None, measured: dict[str, float] | None = None, s
                 elif st in ("de-energized", "de-energised", "off"): c.off.update(no)
                 else: c.relays.append(Relay(comp.id, cn, p.coil.v_pickup, p.coil.v_dropout, no, nc))
         spec = None
-        if infer and st not in ("off", "failed", "fail") and not (p and (p.source or p.supply_out)) and comp.raw in by_dev \
+        if infer and st not in ("off", "failed", "fail") and not (p and (p.source or p.supply_out or p.load)) and comp.raw in by_dev \
                 and comp.kind not in ("relay", "switch", "breaker", "fuse", "bus", "splice", "harness"):
-            spec = infer_spec(comp, infer)
+            spec = infer_spec(comp, d)
             if spec: _inferred_source(sm, comp, dict(spec), terms, N)
         if p and st not in ("off", "failed", "fail") and comp.raw in by_dev:
             _sources_and_loads(sm, comp, p, terms, N, used)
@@ -231,11 +231,6 @@ def build(m: Model, cfg: Any = None, measured: dict[str, float] | None = None, s
     if not sm.sources: sm.missing.append("no source: no battery or DC/DC part data (source: v_oc / v_out)" + hint)
     if not sm.loads: sm.missing.append("no load: no load part data and no conductor with a current value")
     return sm
-
-
-def infer_spec(comp: Component, specs: dict[str, Any]) -> dict[str, Any] | None:
-    """The sim.sources entry whose regex matches the component's code or name (an inferred battery or DC/DC)."""
-    return next((dict(v) for k, v in specs.items() if re.search(k, comp.id) or re.search(k, comp.raw)), None)
 
 
 POWER = re.compile(r"\d\s*V\b")  # a supply function class: "14 V", "24 V", "5 V"
@@ -344,7 +339,8 @@ def _default_load(sm: SimModel, comp: Component, amps: float, N: Any) -> int:
     """--infer: a device with power conductors but no part data and no current value draws `amps` (constant current) from
     its first power conductor, so a bus with such devices on it counts as loaded. Returns 1 when a load was added."""
     ctx, c, net = sm.ctx, sm.circuit, sm.ctx.net
-    pw = [(i, e) for i, e in net.by_dev[comp.raw] if POWER.search(ctx.m.conductors[i].kind)]
+    pw = [(i, e) for i, e in net.by_dev[comp.raw] if POWER.search(ctx.m.conductors[i].kind)
+          and any(net.role(ctx.m.conductors[j].end(k).device) in ("bus", "breaker") for j, k in net.net_ends(i))]  # fed from the distribution
     if not pw: return 0
     gnd = [(i, e) for i, e in net.by_dev[comp.raw] if ctx.m.conductors[i].kind == "GND"]
     pn, minus = N(net.node(*pw[0])), N(net.node(*gnd[0])) if gnd else REF

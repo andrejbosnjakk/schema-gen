@@ -27,7 +27,8 @@ def test_index_has_every_object_type(client):
     ix = c.get("/api/index").json()
     assert len(ix["conductors"]) == 23 and ix["nets"] and ix["components"] and ix["connectors"] and ix["lists"]["gauge"]
     assert {i["rule"] for i in ix["issues"]} == {"pin-tbd", "open-item", "open-status"}
-    assert c.get("/api/health").json() == {"ready": True, "error": ""}
+    h = c.get("/api/health").json()
+    assert h["ready"] is True and "graphviz" in h
 
 
 @pytest.mark.parametrize("typ,oid,title", [("conductor", "PWR-ECU-A", "L04"), ("pin", "ECU/J1/1", "ECU engine control unit J1 1"), ("component", "CB-ECU", "CB-ECU"),

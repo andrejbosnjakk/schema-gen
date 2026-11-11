@@ -76,6 +76,15 @@ class Ctx:
         for i in idx: k[self.m.conductors[i].kind] += 1
         return max(sorted(k), key=lambda x: k[x]) if k else ""
 
+    def is_source(self, comp: Component) -> bool:
+        """A battery or DC/DC: by kind, by part data (source), else by name (sim.sources, never sim.not_sources)."""
+        if comp.kind in ("battery", "dcdc"): return True
+        p = self.part_of(comp.raw)
+        if p and (p.source or p.load): return bool(p.source)
+        if comp.kind in ("relay", "switch", "breaker", "fuse", "bus", "splice", "harness"): return False
+        from . import tables
+        return infer_spec(comp, tables.table("sim", self.cfg)) is not None
+
     # ---------------------------------------------------------------- protection regions
     def contact_peers(self, t: Terminal) -> list[Terminal]:
         """Terminals joined to t through a switch or relay contact (any state), from the part's contacts."""
@@ -174,3 +183,11 @@ def harness_pins(m: Model, ctx: Ctx) -> dict[str, dict[str, dict[str, list[int]]
 def dsub_size(raw: str) -> int | None:
     m = re.search(r"D-SUB (\d+)", raw)
     return int(m.group(1)) if m else None
+
+
+def infer_spec(comp: Component, d: dict[str, Any]) -> dict[str, Any] | None:
+    """The sim.sources entry whose regex matches the component's code or name (an inferred battery or DC/DC); None for
+    names that match sim.not_sources ("battery management system", "battery charger")."""
+    nots = d.get("not_sources")
+    if nots and (re.search(nots, comp.raw) or re.search(nots, comp.name or "")): return None
+    return next((dict(v) for k, v in (d.get("sources") or {}).items() if re.search(k, comp.id) or re.search(k, comp.raw)), None)

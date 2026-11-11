@@ -8,11 +8,9 @@ from collections import Counter, defaultdict
 from typing import Any
 
 from .. import __version__
-from ..core import tables
 from ..core.model import Component
 from ..core.rules import RULES
 from ..exporters.palette import HEX
-from ..sim.build import infer_spec
 
 SEV = {"error": 0, "warning": 1, "info": 2}
 RANK = {"battery": 0, "dcdc": 0, "breaker": 1, "fuse": 1, "switch": 1, "relay": 1, "bus": 2, "harness": 3}
@@ -21,10 +19,7 @@ RANK = {"battery": 0, "dcdc": 0, "breaker": 1, "fuse": 1, "switch": 1, "relay": 
 def rank(st: Any, c: Component) -> int:
     """Power-flow column: 0 sources, 1 protection and switching, 2 buses, 3 harness connectors, 4 loads."""
     if c.kind in RANK: return RANK[c.kind]
-    p = st.ctx.part_of(c.raw)
-    if p and p.source: return 0
-    if infer_spec(c, dict(tables.table("sim", st.cfg).get("sources") or {})): return 0
-    return 4
+    return 0 if st.ctx.is_source(c) else 4
 
 
 def _worst(a: str, b: str) -> str:

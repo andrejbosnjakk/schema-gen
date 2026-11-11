@@ -284,7 +284,7 @@ class Session:
         self.st.wait()
         return self.st
 
-    def open(self, path: str | Path, background: bool = False) -> State:
+    def start(self, path: str | Path, background: bool = False) -> State:
         p = Path(path).expanduser()
         if p.is_file() and p.suffix.lower() in (".yml", ".yaml"): p = p.parent
         if not (p / "schemagen.yml").is_file(): raise AppError("not-found", f"There is no schemagen.yml in {p}.")
@@ -330,7 +330,7 @@ def create_app(project: str | Path | None = None, background: bool = False) -> F
     app.state.graphviz = graphviz()  # checked once at start
     lg = userdata.log()
     lg.info("schemagen %s starting; graphviz: %s", __version__, app.state.graphviz)
-    if project is not None: S.open(project, background)
+    if project is not None: S.start(project, background)
     app.state.session = S
 
     @app.middleware("http")
@@ -377,7 +377,7 @@ def create_app(project: str | Path | None = None, background: bool = False) -> F
             except FileNotFoundError as e: raise AppError("not-found", "The example project is missing from this installation.", detail=str(e)) from None
         elif isinstance(b.get("path"), str) and b["path"].strip(): path = Path(b["path"].strip())
         else: raise AppError("bad-request", "Give a project folder (path) or example: true.")
-        return ws.workspace(S.open(path))
+        return ws.workspace(S.start(path))
 
     @app.post("/api/import")
     async def import_(file: UploadFile = File(...)) -> dict[str, Any]:  # noqa: B008
@@ -390,7 +390,7 @@ def create_app(project: str | Path | None = None, background: bool = False) -> F
         def do() -> dict[str, Any]:
             try: folder = userdata.new_import(name, data)
             except ValueError as e: raise AppError("import-failed", f"{e}.") from None
-            try: return ws.workspace(S.open(folder))
+            try: return ws.workspace(S.start(folder))
             except BaseException:
                 import shutil
                 shutil.rmtree(folder, ignore_errors=True)
