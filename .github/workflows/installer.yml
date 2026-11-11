@@ -1,0 +1,37 @@
+name: installer
+on:
+  push:
+    branches: ["dev/1.0*"]
+    tags: ["v*"]
+  workflow_dispatch:
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Inno Setup (preinstalled on windows-latest; install it if an image ever drops it)
+        shell: pwsh
+        run: if (-not (Test-Path "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe")) { choco install innosetup -y --no-progress }
+      - name: build the app and the installer
+        shell: pwsh
+        run: ./packaging/build.ps1 -Python python
+      - name: smoke test the built app (window opens, /api/health answers, closes cleanly)
+        shell: pwsh
+        run: ./packaging/smoke.ps1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: schemagen-installer
+          path: packaging/dist/schemagen-setup-*.exe
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: schemagen-desktop-log
+          path: ${{ runner.temp }}/schemagen-home/logs/
+          if-no-files-found: ignore

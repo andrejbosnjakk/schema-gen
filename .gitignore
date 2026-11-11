@@ -12,3 +12,8 @@ frontend/e2e-results/
 frontend/playwright-report/
 tests/.sim-out/
 .coverage
+# desktop packaging: build venv, PyInstaller and Inno Setup output, generated notices (packaging/build.ps1)
+packaging/.venv/
+packaging/build/
+packaging/dist/
+packaging/licences/THIRD_PARTY.txt

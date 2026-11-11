@@ -395,3 +395,48 @@ One entry per open choice taken during the 0.2 → 0.5 work: context, choice, wh
 - Choice: eight steps (diagram, a component card, its contents, Issues, Wires, Simulate, + Source, Import), each naming
   the real finding it shows (W045, CB-XPDR, the 0 V cabin bus) instead of generic help; listed in docs/tour.md.
 - Why: a tour that points at a real mistake teaches what the tool is for in the first minute.
+
+## D70. Desktop app: pywebview window around the local server
+- Choice: `schemagen/desktop.py` starts uvicorn on a free 127.0.0.1 port in a thread, waits for `/api/health`, opens a
+  pywebview window titled "schemagen" (maximised, minimum 1280 × 720, black-and-white bolt icon), and stops the server
+  when the window closes. pywebview (BSD-3-Clause) uses the WebView2 runtime that ships with Windows 10/11, so nothing
+  else is installed and no browser tab opens. Logs go to `%LOCALAPPDATA%\schemagen\logs\schemagen.log`
+  (`SCHEMAGEN_HOME` overrides the folder); a startup failure is a native error dialog that names the log.
+- Without a project argument it uses the server's start screen when `create_app(None)` is accepted; until then it
+  copies the bundled example to `%LOCALAPPDATA%\schemagen\projects\Example aircraft` and opens that copy. It sets
+  `SCHEMAGEN_EXAMPLE` to the bundled example. Web storage persists in `%LOCALAPPDATA%\schemagen\webview`.
+- Why: the owner's users are not programmers: double-click, a window, no terminal, no Python or Node.
+
+## D71. PyInstaller onedir, Python 3.14
+- Choice: one onedir bundle (`packaging/schemagen.spec`), windowed, no UPX. Onefile would unpack about 130 MB to %TEMP%
+  on every start (seconds, and antivirus scans each time); onedir starts in about 2 s and the installer compresses it
+  anyway (132 MB on disk, 42 MB installer). Built with Python 3.14 (pythonnet 3.2 and cffi have 3.14 wheels).
+- Bundled: `schemagen/app/static`, `schemagen/core/data`, `schemagen/templates`, `examples/aircraft` (else
+  `examples/demo`), `packaging/assets/icon*`. Excluded: `wireviz`, the `graphviz` Python package and Pillow (only
+  WireViz needs them), tkinter, test tools, and pywebview's non-Windows back ends.
+- `packaging/third_party.py` writes `THIRD_PARTY.txt` from what PyInstaller actually bundled (its TOC files), with the
+  licence texts, and fails the build on a non-permissive package or on WireViz.
+
+## D72. No Graphviz or WireViz in the installer
+- WireViz is GPL-3.0: schemagen only runs it as a command and it never ships in the bundle. Graphviz is EPL-1.0, a weak copyleft
+  licence, not on the permissive list for anything that ships; its Windows build also carries LGPL libraries (cairo,
+  pango, glib). Shipping unmodified binaries would be legal with a source offer, but it fails the permissive-only rule,
+  and it would not help: without WireViz there is nothing to call `dot`.
+- Behaviour in the installed app: the main diagram, checks, simulation, pinout, wire list and fault sweep need neither.
+  Harness drawings run the `wireviz` command if it is on PATH (a user who installs Graphviz and `pip install
+  wireviz==0.4.1`); otherwise the export answers `graphviz-missing` with a plain sentence. No runtime download.
+
+## D73. Per-user Inno Setup installer
+- Choice: `packaging/installer.iss`: no admin (`PrivilegesRequired=lowest`), installs into
+  `%LOCALAPPDATA%\Programs\schemagen`, Start-menu entry and a desktop shortcut (checked by default), MIT licence page,
+  `LICENSE.txt` and `THIRD_PARTY.txt` in the install folder, uninstaller in Apps & features. An upgrade deletes the old
+  `_internal` first. User data lives in `%LOCALAPPDATA%\schemagen` and survives uninstall.
+- Why: a university or company laptop often has no admin rights; Inno Setup is free and scriptable on CI.
+
+## D74. One build command and a CI installer
+- `packaging/build.ps1`: frontend (if npm), the build venv `packaging/.venv` (pinned pywebview and PyInstaller in
+  `packaging/requirements.txt`), PyInstaller, the notices, then Inno Setup if `iscc` is found →
+  `packaging/dist/schemagen-setup-<version>.exe`. `packaging/smoke.ps1` starts the built exe with a fresh
+  `SCHEMAGEN_HOME`, checks `/api/health` and the "schemagen" window, closes it and checks the server stopped.
+- `.github/workflows/installer.yml` runs both on `windows-latest` for pushes to `dev/1.0*` and tags `v*`, and uploads the
+  installer as an artifact. The installer is not code-signed yet: SmartScreen shows "unknown publisher" on first run.
