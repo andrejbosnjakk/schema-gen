@@ -1,7 +1,7 @@
 // The app: a start screen when no project is open, else the main screen (diagram, issues, wires).
 import { useCallback, useEffect, useRef, useState } from "react";
 import { act, canRetry, get, post, say, upload } from "./api";
-import { Diagram, type Focus } from "./diagram/Diagram";
+import { Diagram, Legend, type Focus } from "./diagram/Diagram";
 import { Issues, SkeletonRows, Wires } from "./panels";
 import { Logo } from "./theme/icons";
 import { startTour, Tour } from "./tour";
@@ -150,7 +150,7 @@ export function App() {
         {ws && !busy ? <Diagram ws={ws} focus={focus} selWire={selWire} onCard={openCard} /> : <DiagramSkeleton />}
       </main>
     </div>
-    <Wires wires={ws?.conductors ?? null} open={wiresOpen} loading={busy} sel={selWire} onPick={pickWire}
+    <Wires wires={ws?.conductors ?? null} legend={ws && !busy && <Legend palette={ws.palette} used={ws.edges.flatMap((e) => e.cls)} />} open={wiresOpen} loading={busy} sel={selWire} onPick={pickWire}
            onToggle={() => setWiresOpen((o) => { if (!o) act("wires-open"); return !o; })} />
     {card && <Dialog title={card.name || card.id} onClose={closeCard} tour="card">
       <p className="card-kind"><span className="kind-chip">{card.kind}</span><span className="faint">{card.id} · {card.pins} pins</span></p></Dialog>}

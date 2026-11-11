@@ -140,3 +140,84 @@ for (const theme of ["light", "dark"]) {
     expect(serious(await new AxeBuilder({ page }).analyze()), "main").toEqual([]);
   });
 }
+
+// ---- the polish pass: readable diagram, calmer edges, compact drawer ----
+const zoomOf = (p: Page) => p.evaluate(() => new DOMMatrix(getComputedStyle(document.querySelector(".react-flow__viewport")!).transform).a);
+
+test("fit-to-screen at 1366x768 is readable: zoom at least 0.8, card names at least 11 px", async ({ page }) => {
+  await page.goto("/?mock=1&open=1");
+  await expect(page.locator(".node-card").first()).toBeVisible();
+  await page.waitForTimeout(600);
+  const z = await zoomOf(page);
+  const px = await page.evaluate((z) => parseFloat(getComputedStyle(document.querySelector(".card-name")!).fontSize) * z, z);
+  console.log(`mock fit zoom ${z.toFixed(2)}, card name ${px.toFixed(1)} px`);
+  expect(z).toBeGreaterThanOrEqual(0.8);
+  expect(px).toBeGreaterThanOrEqual(11);
+});
+
+test("edges rest at about 55 % opacity; hovering one emphasises it and dims the rest", async ({ page }) => {
+  await page.goto("/?mock=1&open=1");
+  await expect(page.locator(".bundle:not(.ground)").first()).toBeVisible();
+  expect(await page.locator(".bundle:not(.ground)").first().evaluate((e) => parseFloat(getComputedStyle(e).opacity))).toBeCloseTo(0.55, 1);
+  // a point on some edge that nothing else covers (cards sit above edges)
+  const pt = await page.evaluate(() => {
+    for (const el of document.querySelectorAll<SVGPathElement>(".bundle-hit")) {
+      const L = el.getTotalLength(), m = el.getScreenCTM()!;
+      for (let t = 0.05; t < 1; t += 0.05) {
+        const p = el.getPointAtLength(L * t), x = m.a * p.x + m.c * p.y + m.e, y = m.b * p.x + m.d * p.y + m.f;
+        if (document.elementFromPoint(x, y) === el) return { x, y, id: el.parentElement!.querySelector(".bundle")!.closest("[data-testid]")?.getAttribute("data-testid") ?? "", i: [...document.querySelectorAll(".bundle-hit")].indexOf(el) };
+      }
+    }
+    return null;
+  });
+  expect(pt).not.toBeNull();
+  await page.mouse.move(pt!.x, pt!.y);
+  await page.waitForTimeout(300);
+  const ops = await page.locator(".bundle-g").evaluateAll((gs) => gs.map((g) => parseFloat(getComputedStyle(g.querySelector(".bundle")!).opacity)));
+  expect(ops[pt!.i]).toBeGreaterThan(0.9);
+  expect(ops.filter((o, i) => i !== pt!.i && o < 0.3).length).toBeGreaterThan(0);
+});
+
+test("dark theme: every edge and table dot has contrast of at least 3:1 with its surface", async ({ page }) => {
+  await page.goto("/?mock=1&open=1");
+  await expect(page.locator(".bundle").first()).toBeVisible();
+  await page.evaluate(() => { document.documentElement.dataset.theme = "dark"; });
+  await page.waitForTimeout(500);
+  const low = await page.evaluate(() => {
+    const rgb = (s: string) => (/(\d+)[ ,]+(\d+)[ ,]+(\d+)/.exec(s) ?? []).slice(1, 4).map(Number);
+    const lum = (c: number[]) => { const f = (v: number) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }; return 0.2126 * f(c[0]) + 0.7152 * f(c[1]) + 0.0722 * f(c[2]); };
+    const cr = (a: number[], b: number[]) => { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); };
+    const canvas = rgb(getComputedStyle(document.querySelector(".canvas")!).backgroundColor), bg = rgb(getComputedStyle(document.body).backgroundColor);
+    const out: string[] = [];
+    document.querySelectorAll(".bundle").forEach((e) => { const c = rgb(getComputedStyle(e).stroke); if (cr(c, canvas) < 3) out.push(`edge ${c}`); });
+    document.querySelectorAll(".tbody .swatch").forEach((e) => { const c = rgb(getComputedStyle(e).backgroundColor); if (cr(c, bg) < 3) out.push(`dot ${c}`); });
+    return out;
+  });
+  expect(low).toEqual([]);
+});
+
+test("the Wires drawer starts compact, resizes by its handle, and remembers the height", async ({ page }) => {
+  await page.goto("/?mock=1&open=1");
+  const wires = page.locator(".wires");
+  await expect(page.locator("[role=row][data-id]").first()).toBeVisible();
+  const h0 = (await wires.boundingBox())!.height;
+  expect(h0).toBeLessThanOrEqual(768 * 0.28);
+  const grip = page.getByRole("separator", { name: "Resize the wire list" });
+  const g = (await grip.boundingBox())!;
+  await page.mouse.move(g.x + g.width / 2, g.y + 4); await page.mouse.down(); await page.mouse.move(g.x + g.width / 2, g.y - 100, { steps: 5 }); await page.mouse.up();
+  const h1 = (await wires.boundingBox())!.height;
+  expect(h1).toBeGreaterThan(h0 + 80);
+  await page.reload();
+  await expect(page.locator("[role=row][data-id]").first()).toBeVisible();
+  expect(Math.abs((await wires.boundingBox())!.height - h1)).toBeLessThan(2);
+  await grip.focus(); await page.keyboard.press("ArrowDown");
+  expect((await wires.boundingBox())!.height).toBeLessThan(h1);
+  for (const sel of ["html", ".tbody"]) expect(await noSideScroll(page, sel), sel).toBe(true);
+});
+
+test("a drawer height that cannot be stored still works (no localStorage)", async ({ page }) => {
+  await page.addInitScript(() => { Object.defineProperty(window, "localStorage", { get() { throw new Error("blocked"); } }); });
+  await page.goto("/?mock=1&open=1");
+  await expect(page.locator("[role=row][data-id]").first()).toBeVisible();
+  expect((await page.locator(".wires").boundingBox())!.height).toBeLessThanOrEqual(768 * 0.28);
+});

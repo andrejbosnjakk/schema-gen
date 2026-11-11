@@ -8,7 +8,7 @@ body { overflow: hidden; }
 .dot { display: inline-block; flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--text-3); }
 .dot.error { background: var(--err); } .dot.warning { background: var(--warn); } .dot.info { background: var(--accent); }
 .swatch { display: inline-block; flex: none; width: 8px; height: 8px; margin-right: 6px; border-radius: 2px; vertical-align: 0;
-          background: color-mix(in srgb, var(--c) 72%, var(--text)); }
+          background: var(--c); }
 .faint { color: var(--text-2); }
 .empty { padding: var(--s2); color: var(--text-2); }
 
@@ -101,8 +101,13 @@ body { overflow: hidden; }
 .skel-rows .skeleton { height: 14px; } .skel-rows .skeleton.tall { height: 36px; }
 
 /* wires drawer */
-.wires { display: flex; flex-direction: column; min-width: 0; background: var(--bg); border-top: var(--border-w) solid var(--border); z-index: var(--z-drawer); }
-.wires.open { height: clamp(184px, 30vh, 320px); }
+.wires { position: relative; display: flex; flex-direction: column; min-width: 0; background: var(--bg); border-top: var(--border-w) solid var(--border); z-index: var(--z-drawer); }
+.wires.open { min-height: 112px; }
+.drawer-grip { position: absolute; top: -4px; left: 0; right: 0; height: 9px; z-index: 1; cursor: ns-resize; touch-action: none; }
+.drawer-grip::after { content: ""; position: absolute; left: 50%; top: 3px; width: 36px; height: 3px; margin-left: -18px; border-radius: 2px; background: var(--border-strong);
+                      transition: background var(--dur-fast) var(--ease); }
+.drawer-grip:hover::after, .drawer-grip:focus-visible::after { background: var(--accent); }
+.drawer-grip:focus-visible { outline: 0; }
 .drawer-head { display: flex; align-items: center; justify-content: space-between; gap: var(--s2); height: 40px; padding: 0 var(--s1); flex: none; }
 .drawer-handle { display: inline-flex; align-items: center; gap: var(--s1); height: var(--control-h); padding: 0 var(--s1); border: 0; border-radius: var(--radius);
                  background: none; color: var(--text-2); cursor: pointer; }
@@ -133,31 +138,30 @@ body { overflow: hidden; }
 .flow .react-flow { --xy-background-color: var(--canvas); background: var(--canvas); }
 .flow .react-flow__attribution { background: transparent; color: var(--text-2); font-size: 10px; padding: 2px 6px; }
 .flow .react-flow__attribution a { color: var(--text-2); }
-.node-card { display: flex; align-items: center; gap: 10px; width: 200px; height: 48px; padding: 0 12px; background: var(--surface); color: var(--text);
+.node-card { display: flex; align-items: center; gap: 8px; position: relative; padding: 0 8px; background: var(--surface); color: var(--text);
         border: var(--border-w) solid var(--border-strong); border-radius: var(--radius); cursor: pointer; transition: border-color var(--dur-fast) var(--ease); }
 .node-card:hover { border-color: var(--text-2); }
 .node-card.hl { border-color: var(--accent); box-shadow: 0 0 0 3px var(--focus); }
-.card-icon { flex: none; display: grid; place-items: center; width: 28px; height: 28px; border-radius: var(--radius-sm); background: var(--surface-2); color: var(--text-2); }
-.card-text { flex: 1; min-width: 0; display: flex; flex-direction: column; line-height: 1.3; }
-.card-name { font-weight: var(--fw-med); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.card-meta { color: var(--text-2); font-size: var(--fs-xs); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.card-icon { flex: none; display: grid; place-items: center; width: 20px; height: 20px; color: var(--text-2); }
+.card-icon svg { width: 16px; height: 16px; }
+.card-name { flex: 1; min-width: 0; line-height: 1.3; font-weight: var(--fw-med); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .node-card .port { width: 0; height: 0; min-width: 0; min-height: 0; border: 0; background: none; opacity: 0; pointer-events: none; }
 .react-flow__node.zone-node { pointer-events: none; }
 .zone { border-radius: calc(var(--radius) * 2); background: color-mix(in srgb, var(--surface-2) 55%, transparent); border: var(--border-w) solid var(--border); }
 .zone-name { position: absolute; top: 7px; left: 12px; color: var(--text-2); font-size: var(--fs-xs); font-weight: var(--fw-med); text-transform: uppercase; letter-spacing: 0.06em; }
-.bundle { fill: none; stroke: color-mix(in srgb, var(--c, var(--text-3)) 72%, var(--text)); stroke-linecap: round; transition: opacity var(--dur-fast) var(--ease); }
-.bundle.ground { opacity: 0.35; }
+.bundle { fill: none; stroke: var(--c, var(--text-3)); stroke-width: calc(var(--w, 1.5) * 1px); stroke-linecap: round; stroke-linejoin: round; opacity: 0.55;
+          transition: opacity var(--dur-fast) var(--ease), stroke-width var(--dur-fast) var(--ease); }
+.bundle.ground { opacity: 0.4; }
 .bundle.dim { opacity: 0.12; }
-.bundle.hl { opacity: 1; }
+.bundle.hl, .bundle-g:hover .bundle.ground, .bundle-g:hover .bundle { opacity: 1; stroke-width: calc(var(--w, 1.5) * 1px + 1.5px); }
+.react-flow__edges:has(.bundle-g:hover) .bundle-g:not(:hover) .bundle:not(.hl) { opacity: 0.15; }
 .bundle-hit { fill: none; stroke: transparent; stroke-width: 14; pointer-events: stroke; }
 .elabel { position: absolute; padding: 0 6px; height: 20px; line-height: 18px; font-size: var(--fs-xs); font-weight: var(--fw-med); color: var(--text-2); white-space: nowrap;
           background: var(--surface); border: var(--border-w) solid var(--border); border-radius: var(--radius-sm); pointer-events: none; font-variant-numeric: tabular-nums; }
 .elabel.dim { opacity: 0.25; }
 .elabel.pinned { z-index: 5; color: var(--text); border-color: var(--border-strong); }
 .flow[data-far] .elabel:not(.pinned) { display: none; }
-.legend { position: absolute; left: var(--s2); bottom: var(--s2); z-index: 5; display: flex; flex-wrap: wrap; gap: 4px 12px; max-width: calc(100% - 140px); margin: 0;
-          padding: 6px 10px; list-style: none; background: var(--surface); border: var(--border-w) solid var(--border); border-radius: var(--radius);
-          color: var(--text-2); font-size: var(--fs-xs); }
+.legend { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 2px 12px; margin: 0; padding: 0; list-style: none; color: var(--text-2); font-size: var(--fs-xs); }
 .legend li { display: inline-flex; align-items: center; white-space: nowrap; }
 .zoom-controls { position: absolute; right: var(--s2); bottom: var(--s2); z-index: 5; display: flex; flex-direction: column; padding: 2px; background: var(--surface);
                  border: var(--border-w) solid var(--border); border-radius: var(--radius); }
@@ -165,3 +169,5 @@ body { overflow: hidden; }
 .diagram-skel { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: var(--s4); padding: var(--s4); overflow: hidden; }
 .skel-col { display: flex; flex-direction: column; gap: 14px; }
 .skel-card { width: 160px; height: 44px; border-radius: var(--radius); }
+
+.node-card .dot { position: absolute; top: -3px; right: -3px; box-shadow: 0 0 0 2px var(--canvas); }
