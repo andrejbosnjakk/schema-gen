@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { App } from "./App";
 import "./theme";
 import "./app.css";
+import "./overlay.css";
 
 const q = new URLSearchParams(location.search);
 // the in-memory server exists only in dev and `--mode mock` builds (the e2e tests); a production build has no mock

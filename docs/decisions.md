@@ -607,3 +607,61 @@ The dimming is `--scrim`, so light and dark are both designed. With `prefers-red
 ## D94. Seen means finished or skipped
 Done, Skip tour and the last-step action all send `POST /api/settings {tour_done: true}`; a failure is ignored, so the tour
 may show again next launch. Replay from the help menu works at any time and records the same.
+
+## D80. One dialog, one card at a time
+- Choice: clicking a component, a wire row or an edge opens one centred `.dialog` (`data-tour="card"`) over the scrim, with a 200 ms
+  pop. Clicking a pin's wire or its other end inside it swaps the object in the same dialog (no close and reopen, so no flash and
+  focus stays). `Dialog` traps Tab, closes on Esc or a scrim click, and returns focus to what had it; the card's title and
+  footer are portalled into the dialog's header and footer so they can change with the object.
+- Why: Linear-style calm: nothing jumps, and the keyboard never escapes the card.
+
+## D81. Card data comes from the card endpoints, the form edits a few fields
+- Choice: the card loads `/api/card/component|wire/{id}` (skeleton while loading, plain message with Retry on failure). Component:
+  name, kind (a select, not harness) and rating for breakers and fuses; wire: label, name, gauge, current, notes. Only changed fields
+  are posted. Save closes the card with a short toast; the returned Workspace replaces the old one without touching the view.
+- Why: the contract's edit endpoints take partial bodies, and a closed card after Save shows the diagram change at once.
+
+## D82. A Workspace swap keeps the view
+- Choice: the diagram is keyed by project root and lays out once; a later Workspace (an edit, a source) keeps every card position,
+  zoom and pan. A card that appears is placed beside what it is wired to, and the view pans to it only when it would be off screen.
+- Why: "update in place, no flash". Before, every new Workspace re-ran the layout.
+
+## D83. A bundle click opens its wire
+- Choice: an edge with one wire opens that wire's card; a bundle of several shows a small menu of its wires first. Ignored while
+  picking a source.
+- Why: the diagram shows bundles, the card is per wire; the menu keeps it one click for the common single wire.
+
+## D84. The simulation is drawn on the cards
+- Choice: bus cards get a voltage badge (red when unpowered or below 90 % of nominal), breaker cards a loading bar (ok below 80 %,
+  amber from 80 %, red from 100 % or tripping), error or warn items a red or amber ring, error or warn conductors a red or amber
+  tint on their bundle. Colours are status tokens only.
+- Why: the picture answers "which part is the problem" before any text is read.
+
+## D85. Summary with groups, Clear, and stale marking
+- Choice: a small panel slides in at the top of the canvas with `summary.text` and one clickable line per group (zoom and pulse, as an
+  Issue click). Any edit (card save, source add or remove) marks the result out of date: dimmed overlay and "Results are out of
+  date, simulate again". Simulate replaces it; Clear removes it. Opening another project drops it.
+- Why: a stale number that looks fresh is worse than none.
+
+## D86. A card shows the simulation's reason as its status line
+- Choice: when the server's card carries `sim`, it is the first line under the title (red, amber or neutral), marked "(out of date)"
+  when the overlay is stale.
+- Why: the reason sentence already exists; the card is where people look next.
+
+## D87. + Source is a pick, then a small dialog
+- Choice: the toolbar button enters pick mode (hint chip, crosshair, Esc cancels); clicking any card opens the dialog (type, voltage
+  defaulting to the attach point's most common wire voltage, internal resistance for a battery or current limit otherwise, optional
+  capacity and name). `POST /api/sources` returns the Workspace; the source is a rank 0 card with an edge to its attach point.
+- Why: the attach point is what a person is looking at, so ask for it on the diagram, not in a form.
+
+## D88. A source's card is built from the Workspace and can be removed
+- Choice: `/api/card/component` does not know app sources, so their card shows the stored values and a Remove source button
+  (`DELETE /api/sources/{id}`). No success toast on adding: the new card and the "out of date" mark are the feedback.
+- Why: a source is not in the wire sheet; no extra endpoint was needed.
+
+## D89. Tests and the tour
+- Choice: cards, simulate, stale and + Source are one set of flows (`e2e/cards.shared.ts`) run on the mock and on a real server of
+  its own (so edits never leak into other specs); on the real example a battery on the Cabin bus makes the cabin problem disappear.
+  Footer buttons of the card are "Cancel" so "Close" names only the header's X (the tour test looks for it). While the tour
+  spotlights + Source its overlay covers the diagram, so a source cannot be picked during that step (the tour spec presses Next).
+- Why: found while merging the tour; the pick needs the tour to let clicks through, which is the tour's call.

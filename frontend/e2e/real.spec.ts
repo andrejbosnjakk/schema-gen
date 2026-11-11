@@ -44,6 +44,7 @@ test("a reload opens the project again; wire row click and issue click work on r
   await page.goto("/");
   await expect(page.locator(".node-card").first()).toBeVisible({ timeout: 20_000 });
   await page.locator("[role=row][data-id]").nth(2).click();
+  await page.keyboard.press("Escape");  // the row opens the wire card
   await expect(page.locator(".node-card.hl")).toHaveCount(2);
   await page.locator(".issue:not([disabled])").first().click();
   await expect(page.locator(".node-card.anim-pulse").first()).toBeVisible();

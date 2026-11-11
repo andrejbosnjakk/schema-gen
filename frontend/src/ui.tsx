@@ -1,5 +1,6 @@
 // Small shared pieces: UI glyphs, a menu button, toasts, a dialog.
-import { useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 
 const G: Record<string, ReactNode> = {
   plus: <path d="M8 3.5v9M3.5 8h9" />, minus: <path d="M3.5 8h9" />,
@@ -61,20 +62,40 @@ export function Toasts({ list, close }: { list: Toast[]; close: (id: number) => 
   </div>;
 }
 
-/** A centred dialog over a scrim; Escape or the scrim closes it. */
-export function Dialog({ title, onClose, children, tour }: { title: ReactNode; onClose: () => void; children?: ReactNode; tour?: string }) {
-  const id = useId(), close = useRef<HTMLButtonElement>(null);
+const FOCUSABLE = "button:not(:disabled), [href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex='-1'])";
+
+const Slots = createContext<{ title: HTMLElement | null; footer: HTMLElement | null }>({ title: null, footer: null });
+/** Content that belongs in a dialog's heading or footer but is rendered by a component deeper in (a card that changes object keeps one dialog). */
+export const DialogTitle = ({ children }: { children: ReactNode }) => { const { title } = useContext(Slots); return title ? createPortal(children, title) : null; };
+export const DialogFooter = ({ children }: { children: ReactNode }) => { const { footer } = useContext(Slots); return footer ? createPortal(children, footer) : null; };
+
+/** A centred dialog over a scrim. Escape or the scrim closes it; Tab stays inside; focus returns to where it was. `focusKey` refocuses the close button (a new object in the same dialog). */
+export function Dialog({ title, onClose, children, footer, tour, className = "", focusKey, focus }: {
+  title?: ReactNode; onClose: () => void; children?: ReactNode; footer?: ReactNode; tour?: string; className?: string; focusKey?: string; focus?: string }) {
+  const [tEl, setT] = useState<HTMLElement | null>(null), [fEl, setF] = useState<HTMLElement | null>(null);
+  const id = useId(), close = useRef<HTMLButtonElement>(null), box = useRef<HTMLDivElement>(null), done = useRef(onClose);
+  done.current = onClose;
   useEffect(() => {
     const prev = document.activeElement as HTMLElement | null;
-    close.current?.focus();
-    const key = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
-    document.addEventListener("keydown", key);
-    return () => { document.removeEventListener("keydown", key); prev?.focus?.(); };
-  }, [onClose]);
+    const key = (e: KeyboardEvent) => {
+      if (e.key === "Escape") { e.stopPropagation(); done.current(); return; }
+      if (e.key !== "Tab") return;
+      const its = [...(box.current?.querySelectorAll<HTMLElement>(FOCUSABLE) ?? [])];
+      if (!its.length) return;
+      const first = its[0], last = its[its.length - 1], a = document.activeElement;
+      if (!box.current?.contains(a)) { e.preventDefault(); first.focus(); }
+      else if (e.shiftKey && a === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && a === last) { e.preventDefault(); first.focus(); }
+    };
+    document.addEventListener("keydown", key, true);
+    return () => { document.removeEventListener("keydown", key, true); prev?.focus?.(); };
+  }, []);
+  useEffect(() => { (focus && box.current?.querySelector<HTMLElement>(focus) || close.current)?.focus(); }, [focusKey]);  // eslint-disable-line react-hooks/exhaustive-deps
   return <div className="scrim" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-    <div className="dialog anim-pop" role="dialog" aria-modal="true" aria-labelledby={id} data-tour={tour}>
-      <header><h2 id={id}>{title}</h2><button ref={close} className="btn btn-ghost btn-icon btn-sm" onClick={onClose} aria-label="Close"><Glyph name="x" /></button></header>
-      <section>{children}</section>
+    <div className={`dialog anim-pop ${className}`} ref={box} role="dialog" aria-modal="true" aria-labelledby={id} data-tour={tour}>
+      <header><h2 id={id} ref={setT}>{title}</h2><button ref={close} className="btn btn-ghost btn-icon btn-sm" onClick={onClose} aria-label="Close"><Glyph name="x" /></button></header>
+      <Slots.Provider value={{ title: tEl, footer: fEl }}><section>{children}</section></Slots.Provider>
+      <footer ref={setF}>{footer}</footer>
     </div>
   </div>;
 }

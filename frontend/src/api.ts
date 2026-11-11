@@ -46,6 +46,7 @@ export async function get<T>(path: string): Promise<T> {
   }
 }
 export const post = <T>(path: string, body: unknown = {}) => once<T>("POST", path, body);
+export const del = <T>(path: string) => once<T>("DELETE", path);
 
 /** Upload a file (multipart `file`) with progress 0..1 while sending; resolves with the answer once the server is done. */
 export function upload<T>(path: string, file: File, onProgress: (f: number) => void): Promise<T> {
