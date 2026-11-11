@@ -5,11 +5,6 @@
 #ifndef AppVersion
   #define AppVersion "0.0.0"
 #endif
-#if FileExists(AddBackslash(SourcePath) + "assets\icon.ico")
-  #define AppIcon "assets\icon.ico"
-#else
-  #define AppIcon "build\assets\icon.ico"   ; temporary black-and-white icon until stream C's lands (schemagen.spec writes it)
-#endif
 
 [Setup]
 AppId={{6F1C2B7E-3D4A-4C59-9E21-5B7A0C8D4E13}
@@ -27,7 +22,7 @@ ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 MinVersion=10.0
 LicenseFile=..\LICENSE
-SetupIconFile={#AppIcon}
+SetupIconFile=assets\icon.ico
 UninstallDisplayIcon={app}\schemagen.exe
 UninstallDisplayName=schemagen
 OutputDir=dist

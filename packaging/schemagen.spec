@@ -7,20 +7,7 @@ ROOT = HERE.parent
 ASSETS = HERE / "assets"
 EXAMPLE = next(p for p in (ROOT / "examples" / "aircraft", ROOT / "examples" / "demo") if (p / "schemagen.yml").exists())
 
-
-def icon() -> Path:
-    """Stream C's icon; until it lands, a temporary black-and-white tile in build/ (never committed under assets/)."""
-    if (ASSETS / "icon.ico").exists(): return ASSETS / "icon.ico"
-    from PIL import Image, ImageDraw
-    tmp = HERE / "build" / "assets" / "icon.ico"; tmp.parent.mkdir(parents=True, exist_ok=True)
-    im = Image.new("RGBA", (256, 256), (0, 0, 0, 0)); d = ImageDraw.Draw(im)
-    d.rounded_rectangle((8, 8, 248, 248), 48, fill="#111418")
-    d.polygon([(148, 28), (64, 144), (120, 144), (100, 228), (192, 104), (134, 104)], fill="white")  # the bolt
-    im.save(tmp, sizes=[(s, s) for s in (16, 24, 32, 48, 64, 128, 256)])
-    return tmp
-
-
-ICON = icon()
+ICON = ASSETS / "icon.ico"  # stream C's black-and-white bolt, 16-256 px: exe, window and installer
 datas = [
     (str(ROOT / "schemagen" / "app" / "static"), "schemagen/app/static"),
     (str(ROOT / "schemagen" / "core" / "data"), "schemagen/core/data"),

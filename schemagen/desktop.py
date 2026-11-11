@@ -59,7 +59,7 @@ def _project(arg: str | None):
     if arg or inspect.signature(create_app).parameters["project"].default is None: return arg
     ex = bundled_example()
     if not ex: raise RuntimeError("no project given and no example bundled")
-    dst = home() / "projects" / "Example"
+    dst = home() / "projects" / f"Example {ex.name}"
     if not dst.exists(): shutil.copytree(ex, dst)  # the install folder is not for change sets
     return str(dst)
 
