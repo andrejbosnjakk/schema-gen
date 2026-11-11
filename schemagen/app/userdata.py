@@ -99,7 +99,7 @@ def new_import(filename: str, data: bytes) -> Path:
         if readable.detect(dest / name): src["format"] = "readable"
     except Exception as e:  # noqa: BLE001  (not a workbook at all)
         shutil.rmtree(dest, ignore_errors=True)
-        raise ValueError(f"{filename} could not be read as a spreadsheet ({type(e).__name__})") from e
+        raise ValueError(f"{filename} could not be read. Save it as .xlsx or .csv and try again.") from e
     import yaml
     (dest / "schemagen.yml").write_text(f"# Imported in the app from {filename}. Paths are relative to this file.\n"
                                         + yaml.safe_dump({"source": src}, sort_keys=False, allow_unicode=True), encoding="utf-8")
