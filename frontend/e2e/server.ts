@@ -6,8 +6,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
-const VENV = path.resolve(ROOT, "../../../.venv/Scripts/python.exe");  // the main checkout's, when this is a worktree
-export const PYTHON = process.env.SG_PYTHON || (fs.existsSync(VENV) ? VENV : "python");
+const VENV = [path.resolve(ROOT, ".venv/Scripts/python.exe"), path.resolve(ROOT, "../../../.venv/Scripts/python.exe")].find((p) => fs.existsSync(p));  // this checkout's, else the main checkout's (worktree)
+export const PYTHON = process.env.SG_PYTHON || VENV || "python";
 export const serverEnv = (home: string) => ({ ...process.env, PYTHONPATH: ROOT, SCHEMAGEN_HOME: home }) as Record<string, string>;
 
 export interface Server { url: string; home: string; stop: () => void }
