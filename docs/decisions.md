@@ -552,3 +552,36 @@ One entry per open choice taken during the 0.2 → 0.5 work: context, choice, wh
   `oversize_steps` is gone.
 - Why: the aircraft example has three mistakes and said "20 problems"; 10 AWG on a 30 A breaker is correct, a wire is
   sized for its protection, not its load. Supersedes the wire-warn rule in D48.
+## D76. The diagram is packed to the screen, not stacked in one band
+- Choice: `diagram/layout.ts` builds one block per zone (power-flow columns by rank, a short rank sharing the column before
+  it, tall columns wrapped), then packs the blocks (skyline, sources and protection first) and searches the row limit per
+  block, the strip width and the packing order for the largest fit-to-screen zoom on the canvas size at load. Cards are
+  one line (204 x 30 px, icon, name, status dot as a corner badge); kind and pin count moved to the tooltip. Fit zoom on the
+  real example at 1366x768 (Issues open, drawer at its default): 0.37 before, 0.86 after; card names 11.2 px on screen.
+  The zoom buttons get their own 64 px gutter in fitView so they never cover a card.
+- Why: a very wide band made the fit zoom about 0.4 and the text unreadable; names at 13 px need 0.85 or more to reach 11 px.
+  Measured in e2e (mock and real) by reading the React Flow viewport transform.
+
+## D77. Calmer edges
+- Choice: orthogonal routes with rounded corners (one vertical run in the channel before the target), 55 % opacity at rest
+  (GND 40 %), hovering an edge or a card emphasises its bundles and dims the rest, a selected wire does the same. Labels
+  stay collision-free (cards and zone names are obstacles) and are hidden below zoom 0.9. Wire colours are drawn by
+  `diagram/colour.ts`: the palette colour toned toward the text colour and pulled further until it has 3:1 contrast with its
+  surface, so black GND is grey on the dark canvas and yellow is olive on the light one. The table dots and the legend use
+  the same function (against the drawer surface).
+- Why: beziers over 80 bundles were a hairball; black wires vanished in dark.
+
+## D78. The Wires drawer is compact, resizable and remembered
+- Choice: default height is the header and about four rows, at most 28 % of the window (200 px at 768); a grip on its top
+  edge resizes it (pointer drag, or arrow keys); the height is kept per viewer in `localStorage` (try/catch, the default when
+  storage is blocked). The colour legend moved into the drawer header so it never covers the diagram.
+- Why: the drawer took a third of the height and left too little for the diagram.
+
+## D79. Tested against the real server
+- Choice: Playwright has two projects: `mock` (in-memory server, built with `--mode mock`; its example is now the real
+  example's `/api/workspace`) and `real` (`python -m schemagen app --port 8799 --no-browser`, empty `SCHEMAGEN_HOME`,
+  serving the build in `schemagen/app/static`, so run `npm run build` first). `real` covers start, open the example, readable
+  fit, reload, axe, imports (synth sheet, the example workbook, a broken file) and a failing request. The screenshots in
+  `docs/screens` come from real servers started per run (`e2e/server.ts`).
+- Server findings: a broken workbook answers "could not be read as a spreadsheet (BadZipFile)" (the exception class leaks
+  into the message); an imported project is named after the file stem ("wires").
