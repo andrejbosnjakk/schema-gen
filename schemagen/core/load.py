@@ -71,7 +71,9 @@ def load(cfg: Config | str | Path, apply_changes: bool = True) -> Loaded:
         naming = naming_for(cfg)  # the importer registered its harness connectors in cfg
     elif src: t = table_in.read(cfg.root, src)
     else: t = rows_in.read(wl, cfg.tables)
-    warnings: list[str] = t.warnings + (changes.apply(t.rows, changes.load_all(cfg.root)) if apply_changes else [])
+    sets = changes.load_all(cfg.root) if apply_changes else []
+    warnings: list[str] = t.warnings + changes.apply(t.rows, sets)
+    changes.apply_components(t.components, t.protection, sets)
     problems: list[Problem] = []
     parts = parts_in.from_cards(cfg.cards, warnings, problems)
     sheet = parts_in.from_sheet(t.parts, problems) if t.parts else []

@@ -4,6 +4,15 @@
      "ops": [{"op": "set", "id": "W12", "field": "p1", "old": "...", "new": "..."},
              {"op": "add", "id": "W99", "row": {...}}, {"op": "delete", "id": "W7"}]}
 
+App edits beyond the wire rows (1.0):
+
+     {"op": "component", "id": "ECU", "field": "name" | "kind" | "zone" | "rating_A", "old": ..., "new": ..., "row": {"device": raw}}
+     {"op": "add-source", "id": "S1", "row": {"attach": "BB1", "type": "battery", "nominal_V": 14, ...}}
+     {"op": "delete-source", "id": "S1"}
+
+A component op becomes a Components (or, for rating_A, a Protection) record, so the model builder applies it like a
+row in those tables; app sources are not wire data and are only read by the simulation and the workspace.
+
 Fields are neutral field names (p1, p1c, awg, st, ...). A `set` whose value is already `new` is skipped (applying
 twice is harmless); one whose current value is neither `old` nor `new` is a conflict and is reported, not applied.
 The app saves every edit this way and undo removes the last change set, so project files stay git-friendly.
@@ -25,7 +34,7 @@ FLIP_FIELDS = [("p1", "p2"), ("p1c", "p2c"), ("p1p", "p2p"), ("p1side", "p2side"
 
 
 class Op(Base):
-    op: Literal["set", "add", "delete"]
+    op: Literal["set", "add", "delete", "component", "add-source", "delete-source"]
     id: str
     field: str = ""
     old: Any = None
@@ -56,6 +65,7 @@ def apply(recs: list[Record], sets: list[ChangeSet]) -> list[str]:
     for cs in sets:
         by_id = {text(r.data.get("id")): r for r in recs}
         for op in cs.ops:
+            if op.op not in ("set", "add", "delete"): continue
             r = by_id.get(op.id)
             if op.op == "add":
                 if r is None:
@@ -69,6 +79,37 @@ def apply(recs: list[Record], sets: list[ChangeSet]) -> list[str]:
                 msgs.append(f"change set {cs.id}: {op.id}.{op.field} is '{cur}', expected '{text(op.old)}' (not applied)"); continue
             r.data[op.field] = op.new
     return msgs
+
+
+RATING_KEYS = ("rating", "rating_a", "amps", "a")
+
+
+def apply_components(components: list[Record], protection: list[Record], sets: list[ChangeSet]) -> None:
+    """Apply component ops to the Components and Protection records in place (adding a record when there is none)."""
+    for cs in sets:
+        for op in cs.ops:
+            if op.op != "component": continue
+            if op.field == "rating_A":
+                r = next((x for x in protection if text(next((v for k, v in x.data.items() if str(k).strip().lower() in ("id", "code", "cb", "device")
+                                                              and v not in (None, "")), "")) == op.id), None)
+                if r is None: r = Record({"id": op.id}, f"changes/{cs.id}.json"); protection.append(r)
+                key = next((k for k in r.data if str(k).strip().lower() in RATING_KEYS), "rating")
+                r.data[key] = op.new
+                continue
+            raw = text(op.row.get("device")) or op.id
+            r = next((x for x in components if text(x.data.get("device")) == raw), None)
+            if r is None: r = Record({"device": raw}, f"changes/{cs.id}.json"); components.append(r)
+            r.data[op.field] = op.new
+
+
+def app_sources(sets: list[ChangeSet]) -> list[dict[str, Any]]:
+    """Sources added in the app, in order (a later delete removes an earlier add)."""
+    out: dict[str, dict[str, Any]] = {}
+    for cs in sets:
+        for op in cs.ops:
+            if op.op == "add-source": out[op.id] = dict(op.row, id=op.id)
+            elif op.op == "delete-source": out.pop(op.id, None)
+    return list(out.values())
 
 
 def flip_ops(rec: Record) -> list[Op]:

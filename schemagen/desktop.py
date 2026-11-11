@@ -1,16 +1,14 @@
 """The desktop app: the local server in a thread and the frontend in its own window (pywebview), for the installer.
 
-    schemagen-desktop [<project>]   (no project: the start screen, or the bundled example on servers without one)
+    schemagen-desktop [<project>]   (no project: the start screen)
 
 Logs go to %LOCALAPPDATA%\\schemagen\\logs\\schemagen.log (SCHEMAGEN_HOME overrides the folder); a startup failure is shown
 in a native dialog, since the installed app has no terminal.
 """
 from __future__ import annotations
 
-import inspect
 import logging
 import os
-import shutil
 import socket
 import sys
 import threading
@@ -18,14 +16,9 @@ import time
 import urllib.request
 from pathlib import Path
 
+from .app.userdata import home
+
 log = logging.getLogger("schemagen.desktop")
-
-
-def home() -> Path:
-    """The user folder for logs, settings and projects (never the install folder, which may be read-only)."""
-    if os.environ.get("SCHEMAGEN_HOME"): return Path(os.environ["SCHEMAGEN_HOME"])
-    if os.name == "nt": return Path(os.environ.get("LOCALAPPDATA") or Path.home() / "AppData" / "Local") / "schemagen"
-    return Path(os.environ.get("XDG_STATE_HOME") or Path.home() / ".local" / "state") / "schemagen"
 
 
 def bundled_example() -> Path | None:
@@ -35,14 +28,13 @@ def bundled_example() -> Path | None:
 
 
 def _logging() -> Path:
-    d = home() / "logs"; d.mkdir(parents=True, exist_ok=True)
-    f = d / "schemagen.log"
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s",
-                        handlers=[logging.FileHandler(f, encoding="utf-8")], force=True)
-    if sys.stdout is None or sys.stderr is None:  # windowed exe: no console, so print() and tracebacks go to the log
-        out = open(f, "a", encoding="utf-8", buffering=1)  # noqa: SIM115
+    """The app's rotating log (app/userdata.py); a windowed exe has no console, so print() and tracebacks go to stdout.log."""
+    from .app import userdata
+    userdata.log()
+    if sys.stdout is None or sys.stderr is None:
+        out = open(home() / "logs" / "stdout.log", "a", encoding="utf-8", buffering=1)  # noqa: SIM115
         sys.stdout = sys.stdout or out; sys.stderr = sys.stderr or out
-    return f
+    return home() / "logs" / "schemagen.log"
 
 
 def _error(msg: str) -> None:
@@ -51,17 +43,6 @@ def _error(msg: str) -> None:
         import ctypes
         ctypes.windll.user32.MessageBoxW(None, msg, "schemagen", 0x10)  # MB_ICONERROR
     else: print(msg, file=sys.stderr)
-
-
-def _project(arg: str | None):
-    """The project to open; None when the server has a start screen (create_app(None)), else a copy of the example."""
-    from .app.server import create_app
-    if arg or inspect.signature(create_app).parameters["project"].default is None: return arg
-    ex = bundled_example()
-    if not ex: raise RuntimeError("no project given and no example bundled")
-    dst = home() / "projects" / f"Example {ex.name}"
-    if not dst.exists(): shutil.copytree(ex, dst)  # the install folder is not for change sets
-    return str(dst)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -76,7 +57,7 @@ def main(argv: list[str] | None = None) -> int:
         import webview
         from . import __version__
         from .app.server import create_app
-        app = create_app(_project(argv[0] if argv else None), background=True)
+        app = create_app(argv[0] if argv else None, background=True)  # no project: the start screen
         with socket.socket() as s: s.bind(("127.0.0.1", 0)); port = s.getsockname()[1]
         server = uvicorn.Server(uvicorn.Config(app, host="127.0.0.1", port=port, log_level="warning", log_config=None))
         th = threading.Thread(target=server.run, daemon=True); th.start()

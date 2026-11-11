@@ -440,3 +440,43 @@ One entry per open choice taken during the 0.2 → 0.5 work: context, choice, wh
   `SCHEMAGEN_HOME`, checks `/api/health` and the "schemagen" window, closes it and checks the server stopped.
 - `.github/workflows/installer.yml` runs both on `windows-latest` for pushes to `dev/1.0*` and tags `v*`, and uploads the
   installer as an artifact. The installer is not code-signed yet: SmartScreen shows "unknown publisher" on first run.
+## D43. Drawings fail loudly and clean up
+- Choice: Graphviz `dot` is found on PATH, `SCHEMAGEN_DOT` or the usual install folders; a missing one is the plain
+  `graphviz-missing` error, WireViz's own stderr is surfaced on a failed render, and `.tmp` files are always removed.
+- Why: a silent empty drawing folder looked like a bug in the tool.
+
+## D44. Never a pass while a bus with loads is unpowered
+- Choice: the simulation walks from sources through wires, breakers and closed contacts; a bus with loads that no source
+  reaches reads 0 V and the run is not a pass. Not a `check` rule: the demo has a fed-from-nowhere bus on purpose, and
+  D66 pins the example's findings; the overlay and `sim` carry it.
+- Why: a floating return drop (about 14 V) made an unfed bus look healthy.
+
+## D45. One definition of a source
+- Choice: `Ctx.is_source` (battery or DC/DC by kind, part data, else the `sim.sources` names minus `sim.not_sources`:
+  battery management systems, chargers, sensors) is used by the workspace rank and the simulation.
+- Why: the rank and the simulation disagreed about what a source is.
+
+## D46. Errors are one shape, causes go to a log
+- Choice: every non-2xx answer is `{error: {code, message, retry}}`; global handlers turn any exception into `internal`
+  and write the traceback to `<user data>/logs/schemagen.log` (rotating, 1 MB x 3). The user data root is
+  `SCHEMAGEN_HOME`, else `%LOCALAPPDATA%\schemagen`, else `~/.local/state/schemagen`.
+- Why: the frontend shows a sentence and a Retry button; a traceback helps nobody there.
+
+## D47. The app may start with no project
+- Choice: `schemagen app` without a project serves the start screen; settings (tour, theme, recent) live in
+  `settings.json` under the user data root; the example is copied once to `projects/Example aircraft` and the copy is
+  opened (located by `SCHEMAGEN_EXAMPLE`, `sys._MEIPASS`, then the repository); an uploaded sheet gets its own project
+  folder. `python-multipart` (Apache-2.0) reads the upload.
+- Why: the install folder is read-only, and edits are change sets in the project folder.
+
+## D48. The overlay says why, in one line, per object
+- Choice: `sim/overlay.py` judges wires against the protection table (too small for its breaker or current: error;
+  3 or more gauges heavier than needed: warn), breakers (too big for the wire: error; over the rating: error; trips;
+  80 % loading: warn) and buses (no source: error). W045, CB-XPDR and the cabin bus come out as three different texts.
+- Why: `gauge-protection` reports one finding for two different mistakes; the fix differs.
+
+## D49. Sources added in the app are change sets
+- Choice: `POST /api/sources` and `DELETE /api/sources/{id}` write `add-source` / `delete-source` ops; the simulation
+  reads them with the project's own sources, and they show as rank-0 components. Positions are view state in
+  `<project>/layout.json`, not a change set. Export writes under `<project>/out/`.
+- Why: a what-if source survives a reload, is undoable, and never rewrites the input sheet.

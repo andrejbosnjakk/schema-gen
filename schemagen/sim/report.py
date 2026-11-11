@@ -68,7 +68,8 @@ def to_html(rep: dict[str, Any]) -> str:
     for sc in rep["scenarios"]:
         st = "pass" if sc["ok"] else "FAIL"
         exp = "".join(f"<tr class=\"{'ok' if x['ok'] else 'bad'}\"><td>{e(x['kind'])}</td><td>{e(x['detail'])}</td></tr>" for x in sc["expectations"])
-        bus = "".join(f"<tr><td>{e(b['id'])}</td><td>{b['voltage_V']:.3f}</td></tr>" for b in sc["buses"])
+        bus = "".join(f"<tr class=\"{'' if b['powered'] else 'bad'}\"><td>{e(b['id'])}</td><td>{b['voltage_V']:.3f}{'' if b['powered'] else ' (no source)'}</td></tr>"
+                      for b in sc["buses"])
         prot = "".join(f"<tr class=\"{'bad' if p['trips'] else ''}\"><td>{e(p['id'])}</td><td>{p['current_A']:.3f}</td><td>{p['rating_A'] or ''}</td>"
                        f"<td>{_pct(p['loading'])}</td><td>{_sec(p['trip_s'])}</td></tr>"
                        for p in sorted(sc["protective"], key=lambda p: -(p["loading"] or 0))[:40])
@@ -76,8 +77,9 @@ def to_html(rep: dict[str, Any]) -> str:
         fl = "".join(f"<li>{e(ld['component'])}: {ld['voltage_V']:.2f} V (min {ld['v_min']} V)</li>" for ld in fail) or "<li>none</li>"
         asm = "".join(f"<li><b>{e(a['what'])}</b> ({e(a['provenance'])}): {e(a['note'])}</li>" for a in sc["assumptions"])
         miss = "".join(f"<li>{e(x)}</li>" for x in sc["missing"])
+        unp = "".join(f"<li>{e(x)}: has loads, no source reaches it</li>" for x in sc.get("unpowered", []))
         parts.append(f"<section><h2>{e(sc['scenario'])} <span class=\"{st.lower()}\">{st}</span></h2>"
-                     + (f"<h3>Cannot simulate</h3><ul>{miss}</ul>" if miss else "") +
+                     + (f"<h3>Cannot simulate</h3><ul>{miss}</ul>" if miss else "") + (f"<h3>Unpowered buses</h3><ul>{unp}</ul>" if unp else "") +
                      f"<p>{'converged' if sc['converged'] else 'NOT converged: ' + e(sc['message'])} in {sc['iterations']} iterations, "
                      f"KCL residual {sc['residual']:.1e} A, {sc['seconds'] * 1000:.0f} ms</p>"
                      f"<h3>Expectations</h3><table>{exp or '<tr><td>none</td></tr>'}</table>"
@@ -129,6 +131,7 @@ def run_cli(a: Any) -> int:
         print(f"{flag:4}  {sc['scenario']}: {sc['iterations']} iterations, residual {sc['residual']:.1e} A")
         for x in sc["expectations"]:
             if not x["ok"]: print(f"      expectation failed: {x['detail']}")
+        for x in sc.get("unpowered", []): print(f"      bus {x} has loads but no source reaches it")
         if not sc["converged"]: print(f"      {sc['message']}")
         bad += not sc["ok"]
     sw = rep.get("fault_sweep")
