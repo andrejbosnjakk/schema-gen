@@ -11,6 +11,8 @@ def test_overlay_counts_root_causes_not_symptoms(ac):  # noqa: F811
     assert g == {frozenset({"conductor:W045", "component:CB-LANDING-LT"}), frozenset({"conductor:W058", "component:CB-XPDR"}),
                  frozenset({"component:BB-CABIN-BUS", "component:CABIN-FAN", "component:CABIN-LIGHT", "component:USB-CHARGER"})}
     assert all(x["status"] == "error" and x["title"] for x in s["groups"])
+    titles = {x["title"] for x in s["groups"]}  # W045 carries more than 22 AWG may (wire too small); W058 carries 1.5 A (breaker too big)
+    assert {"W045 is too small for CB-LANDING-LT", "CB-XPDR is too big for W058"} <= titles
     assert o["items"]["component:CABIN-FAN"] == {"status": "error", "reason": "no supply: Cabin bus has no source"}
 
 

@@ -50,10 +50,10 @@ def overlay(m: Model, cfg: Any, sources: list[dict[str, Any]] | None = None, mea
             lim = tables.max_rating(awg, pd.kind if pd else "breaker", cfg) if awg is not None else None
             if rating and lim and rating > lim:
                 kind = pd.kind if pd else "breaker"
-                put(f"conductor:{c.id}", "error", f"{awg} AWG is too small for {rating:g} A {kind} {pid} (max {lim:g} A)", f"component:{pid}",
-                    f"{c.label} is too small for {pid}")
-                put(f"component:{pid}", "error", f"{rating:g} A is too big for {awg} AWG wire {c.label} (max {lim:g} A)", f"component:{pid}",
-                    f"{c.label} is too small for {pid}")
+                # the wire carries more than its gauge may: the wire is too small; it carries less: the breaker is too big
+                title = f"{c.label} is too small for {pid}" if cur.get(c.id, 0.0) > lim else f"{pid} is too big for {c.label}"
+                put(f"conductor:{c.id}", "error", f"{awg} AWG is too small for {rating:g} A {kind} {pid} (max {lim:g} A)", f"component:{pid}", title)
+                put(f"component:{pid}", "error", f"{rating:g} A is too big for {awg} AWG wire {c.label} (max {lim:g} A)", f"component:{pid}", title)
     margin = float(d.get("heavy_margin", 2.0))
     for i, c in enumerate(conds):
         a, awg = cur.get(c.id, 0.0), c.awg
