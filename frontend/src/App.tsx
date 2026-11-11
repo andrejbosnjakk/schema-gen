@@ -122,6 +122,8 @@ export function App() {
   const closeCard = useCallback(() => { setCard(null); act("card-close"); }, []);
   const saved = useCallback((w: Workspace, what: string) => { edited(w); setCard(null); act("card-close"); toast({ tone: "ok", text: what.startsWith("Removed") ? `${what}.` : `Saved ${what}.` }); }, [edited, toast]);
   const sourceAdded = useCallback((w: Workspace) => { edited(w); setSrcAt(null); act("source-added"); }, [edited]);
+  const picking = pick || srcAt !== null;  // the tour steps aside while a source is being placed (docs/tour.md)
+  useEffect(() => { act(picking ? "source-pick" : "source-pick-end"); }, [picking]);
   useEffect(() => {
     if (!pick) return;
     const key = (e: KeyboardEvent) => { if (e.key === "Escape") setPick(false); };

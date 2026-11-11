@@ -50,10 +50,21 @@ async function walk(page: Page, shot?: (n: number) => Promise<void>) {
   if (shot) await shot(6);
   await page.locator("[data-tour=simulate]").click();
   if (await present(page, "add-source")) { await at("Try a fix"); await page.locator("[data-tour=add-source]").click();
-    // the tour overlay covers the diagram while this step is open, so the source is not picked here (reported); Esc leaves pick mode and Next moves on
-    await page.keyboard.press("Escape"); await page.locator(".driver-popover.sg-tour").getByRole("button", { name: "Next" }).click(); }
+    // the tour steps aside while the source is placed: pick the cabin bus, add a battery; the tour then moves on by itself
+    await expect(page.locator(".driver-popover.sg-tour")).toBeHidden();
+    await page.locator('[data-tour-node="BB-CABIN-BUS"]').click();
+    await page.getByRole("dialog").getByRole("button", { name: "Add source" }).click(); }
   await at("Now your own wiring");
   return seen;
+}
+
+/** The example open, with no tour showing: a test may run on a fresh server (alone, or after a failure restarted the worker). */
+async function openProject(page: Page) {
+  const example = page.getByRole("button", { name: "Open the example project" });
+  await expect(page.locator(".node-card").first().or(example)).toBeVisible({ timeout: 20_000 });
+  if (await example.isVisible()) await example.click();  // run on its own: no project open yet
+  await expect(page.locator(".node-card").first()).toBeVisible({ timeout: 20_000 });
+  if (await page.locator(".driver-popover.sg-tour").count()) await page.locator(".driver-popover.sg-tour").getByRole("button", { name: "Skip tour" }).click();
 }
 
 test("starts after the example opens; each step advances on the real action; Done ends it for good", async ({ page }) => {
@@ -90,7 +101,7 @@ test("Next moves on without the action, a card never opened is skipped, Skip end
 
 test("replay from the help menu runs the whole tour again", async ({ page }) => {
   await page.goto(srv.url);
-  await expect(page.locator(".node-card").first()).toBeVisible({ timeout: 20_000 });
+  await openProject(page);
   await page.getByRole("button", { name: "Help" }).click();
   await page.getByRole("menuitem", { name: "Replay the tour" }).click();
   await walk(page);
@@ -104,7 +115,7 @@ for (const [w, h] of [[1366, 768], [1920, 1080]]) for (const theme of ["light", 
     await page.setViewportSize({ width: w, height: h });
     await page.request.post(srv.url + "api/settings", { data: { theme } });
     await page.goto(srv.url);
-    await expect(page.locator(".node-card").first()).toBeVisible({ timeout: 20_000 });
+    await openProject(page);
     await page.getByRole("button", { name: "Help" }).click();
     await page.getByRole("menuitem", { name: "Replay the tour" }).click();
     const names: Record<number, string> = { 1: "1-diagram", 2: "2-component", 4: "4-issues", 6: "6-simulate" };

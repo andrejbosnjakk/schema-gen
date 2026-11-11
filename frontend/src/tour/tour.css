@@ -19,3 +19,4 @@
 .driver-popover.sg-tour .driver-popover-arrow-side-left.driver-popover-arrow { border-left-color: var(--surface); }
 .driver-popover.sg-tour .driver-popover-arrow-side-right.driver-popover-arrow { border-right-color: var(--surface); }
 @media (prefers-reduced-motion: reduce) { .driver-popover.sg-tour, .driver-overlay path { transition: none !important; animation: none !important; } }
+body.sg-tour-aside .driver-overlay, body.sg-tour-aside .driver-popover { display: none !important; }

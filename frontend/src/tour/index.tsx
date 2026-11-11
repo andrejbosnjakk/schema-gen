@@ -43,10 +43,17 @@ async function waitFor(s: Step, g: number): Promise<HTMLElement | null> {
   return null;
 }
 
+/** Steps aside while the user places a source: hide the spotlight and let clicks reach the diagram, then come back. */
+function aside(on: boolean) {
+  document.body.classList.toggle("sg-tour-aside", on && !!run);
+  if (run) document.body.classList.toggle("driver-active", !on);
+}
+
 /** Ends the tour and records that it has been seen (finished or skipped). */
 function stop() {
   if (!run) return;
   const { d } = run; run = null; gen++;
+  document.body.classList.remove("sg-tour-aside");
   d.destroy();
   post("/api/settings", { tour_done: true }).catch(() => { /* seen only for this session */ });
 }
@@ -100,6 +107,7 @@ export function Tour() {
   useEffect(() => {
     const h = (e: Event) => {
       const r = run, a = (e as CustomEvent<{ action: string }>).detail?.action;
+      if (a === "source-pick" || a === "source-pick-end") { aside(a === "source-pick"); return; }
       if (!r || !a || !r.on.includes(a)) return;
       const g = r.gen;
       window.clearTimeout(r.timer);
