@@ -21,7 +21,7 @@ export default defineConfig({
          launchOptions: { ...(exe ? { executablePath: exe } : {}), args: ["--disable-background-networking", "--disable-component-update", "--no-pings"] } },
   projects: smoke ? [{ name: "smoke", testMatch: "smoke.spec.ts" }] : [
     { name: "mock", testMatch: "app.spec.ts", use: { baseURL: "http://127.0.0.1:5199/" } },
-    { name: "real", testMatch: ["real.spec.ts", "screens.spec.ts"], use: { baseURL: "http://127.0.0.1:8799/" } },
+    { name: "real", testMatch: ["real.spec.ts", "screens.spec.ts", "tour.spec.ts"], use: { baseURL: "http://127.0.0.1:8799/" } },
   ],
   webServer: smoke ? [] : [
     { command: "npx vite build --mode mock --outDir e2e-dist --emptyOutDir && npx vite preview --outDir e2e-dist --port 5199 --strictPort --host 127.0.0.1",

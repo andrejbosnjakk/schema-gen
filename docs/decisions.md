@@ -585,3 +585,25 @@ One entry per open choice taken during the 0.2 → 0.5 work: context, choice, wh
   `docs/screens` come from real servers started per run (`e2e/server.ts`).
 - Server findings: a broken workbook answers "could not be read as a spreadsheet (BadZipFile)" (the exception class leaks
   into the message); an imported project is named after the file stem ("wires").
+
+## D90. The tour uses driver.js, driven by our own step engine
+driver.js (MIT, pinned 1.11.0) does the spotlight and popover placement; the step order, the "advance on the action" logic and
+the footer (counter, Skip tour, Next/Done) are ours (`frontend/src/tour/index.tsx`), so the library's own buttons, keyboard
+control and overlay clicks are switched off. It is only called through `highlight()`, one step at a time. Cost: about +13 kB gzip JS, +1 kB gzip CSS.
+
+## D91. A step advances when the app announces the action, and Next always works
+Each step lists the `schemagen:action` names it waits for; on one it moves on after 450 ms so the result is seen. Next and
+Skip tour stay available, so nobody is stuck if an action is impossible. The last step ends with Done (or `import-start`).
+
+## D92. Steps with a missing target are skipped, never broken
+Targets are checked when a step is about to show. The step count ("3 of 7") is taken at the start from the targets that exist,
+so a missing `data-tour="add-source"` shortens the tour. The card step waits up to about a second for the dialog to render and is skipped if it never opened.
+A step may adapt its wording to the screen: the Wires drawer starts open, so the step then asks for a click on a row (`wire-click`) and spotlights the drawer.
+
+## D93. The popover is styled with the design tokens only
+`.driver-popover.sg-tour` (`tour.css`) copies the `.dialog` look: surface, border, radius, `--shadow-pop`, Inter, accent primary button, a muted step counter.
+The dimming is `--scrim`, so light and dark are both designed. With `prefers-reduced-motion` driver.js animation is off and the view fit does not wait for its animation.
+
+## D94. Seen means finished or skipped
+Done, Skip tour and the last-step action all send `POST /api/settings {tour_done: true}`; a failure is ignored, so the tour
+may show again next launch. Replay from the help menu works at any time and records the same.

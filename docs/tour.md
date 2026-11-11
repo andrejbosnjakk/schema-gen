@@ -38,3 +38,8 @@ must change them too (tests/test_example_aircraft.py pins the ids).
   tour first fits the view.
 - Step 6's numbers come from the simulation of the example as shipped (main bus 13.39 V, essential bus 13.29 V, cabin
   bus 0 V); they hold while the cards in `examples/aircraft/cards` are unchanged.
+
+- The Wires drawer starts open. Step 5 then spotlights the drawer, asks for a click on a row (W045) and advances on
+  `wire-click`; with the drawer closed it asks to open it and advances on `wires-open`.
+- A step whose target is missing is skipped and the counter shrinks ("1 of 7"); Next and Skip tour always work.
+- `e2e/tour.spec.ts` walks the tour with the real actions; screenshots are in `docs/screens/7-tour/`.
