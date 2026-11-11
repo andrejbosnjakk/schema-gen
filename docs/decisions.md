@@ -540,3 +540,15 @@ One entry per open choice taken during the 0.2 → 0.5 work: context, choice, wh
   150 to 200 ms transforms and opacity only. The theme comes only from `src/theme` (tokens and component classes); small
   text uses `--text-2` because `--text-3` fails 4.5:1 on dark. Playwright e2e (with axe, no serious violations), at
   1366x768 and 1920x1080 in both themes, are the acceptance tests for steps 1 to 3.
+
+## D75. The overlay counts root causes and judges wires against their protector
+- Choice: `summary.problems` is the number of `summary.groups`, one per root cause: a wire and the breaker it does not
+  fit are one group (W045 with CB-LANDING-LT), loads unpowered only because their bus has no source fold into that
+  bus's group (their items stay `error`, "no supply: Cabin bus has no source"), a trip is its own group. The text is
+  "N problems, M trips" plus ", K unpowered bus(es)" only when K > 0; the unpowered bus is also one of the N problems.
+  "Far heavier than needed" (warn only) means: a protected wire whose gauge two steps thinner is still allowed for its
+  breaker or fuse by `protection.yml`; an unprotected wire is compared with its current times `heavy_margin`
+  (`core/data/sim.yml`, 25, a design default: no standard gives it, and a feeder is sized for drop and faults).
+  `oversize_steps` is gone.
+- Why: the aircraft example has three mistakes and said "20 problems"; 10 AWG on a 30 A breaker is correct, a wire is
+  sized for its protection, not its load. Supersedes the wire-warn rule in D48.

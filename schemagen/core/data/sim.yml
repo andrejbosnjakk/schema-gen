@@ -28,7 +28,10 @@ sources: {"^BAT": {kind: battery, r_int: 0.01}, "^DCDC": {kind: dcdc, r_out: 0.0
 # much (constant current) from its first supply conductor, so a bus with such devices counts as loaded. Assumed: a
 # small instrument or controller; set the conductors' current (or part data) for real values.
 default_load_A: 0.5
-# overlay flags (design heuristics, not from a standard): a breaker above this share of its rating is a warning, and a
-# wire at least this many sizes of the protection table heavier than its current and breaker need is "far heavier".
+# overlay flags (design heuristics, not from a standard): a breaker above this share of its rating is a warning. A wire is
+# "far heavier than needed" when the gauge two steps thinner would still be allowed for its breaker or fuse by the
+# protection table (protection.yml, FAA AC 43.13-1B Table 11-3); a wire without a protector is judged against its
+# current times heavy_margin, which is large because such a wire (a main feeder) is sized for voltage drop, fault current and
+# mechanical strength, not for its load. No standard gives the number (AC 43.13-1B only tabulates protector ratings): design default.
 breaker_warn_loading: 0.8
-oversize_steps: 3
+heavy_margin: 25.0
