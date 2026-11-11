@@ -144,10 +144,32 @@ export function build(target: number, name: string, extraIssues: Issue[] = []): 
     components: [...comps.values()], edges, conductors: wires, issues, zones, positions: {}, sources: [], palette: PALETTE };
 }
 
-const OVERLAY: Overlay = { ok: false, summary: { problems: 3, trips: 0, unpowered: 1, text: "3 problems, 0 trips" },
-  buses: [{ id: "MAIN", voltage_V: 13.6, nominal_V: 14, powered: true }, { id: "AVB", voltage_V: 0, nominal_V: 14, powered: false }],
-  breakers: [{ id: "CB-MAIN", current_A: 41.2, rating_A: 60, loading: 0.69, trips: false }],
-  items: { "component:AVB": { status: "error", reason: "Avionics bus has loads and no source" } }, assumptions: ["Loads without part data draw their sheet current."] };
+/** A plausible overlay for `ws`: buses reachable from a source are powered; every error issue is a group; breakers load by their wires' current. */
+function simulate(ws: Workspace): Overlay {
+  const live = new Set(ws.components.filter((n) => n.rank === 0 && !/HV/.test(n.id)).map((n) => n.id));
+  for (let moved = true; moved;) { moved = false; for (const e of ws.edges) if (e.cls.some((c) => c !== "GND") || !e.wires.length)
+    for (const [x, y] of [[e.a, e.b], [e.b, e.a]]) if (live.has(x) && !live.has(y)) { live.add(y); moved = true; } }
+  const buses = ws.components.filter((n) => n.kind === "bus" && !/ground/i.test(n.name)).map((n) => ({ id: n.id, voltage_V: live.has(n.id) ? 13.4 : 0, nominal_V: 14, powered: live.has(n.id) }));
+  const rating = (n: Node) => Number(/(\d+(?:\.\d+)?) A/.exec(n.name)?.[1]) || null;
+  const breakers = ws.components.filter((n) => n.kind === "breaker").map((n) => {
+    const i = Math.max(0, ...ws.conductors.filter((w) => w.a === n.id || w.b === n.id).map((w) => w.current ?? 0)), r = rating(n);
+    return { id: n.id, current_A: i, rating_A: r, loading: r ? i / r : null, trips: false };
+  }).filter((b) => b.loading !== null);
+  const items: Overlay["items"] = {}, groups: Overlay["summary"]["groups"] = [];
+  for (const i of ws.issues.filter((x) => x.severity === "error" && x.objects.length)) {
+    groups.push({ title: i.title, objects: i.objects, status: "error" });
+    for (const o of i.objects) items[o] = { status: "error", reason: i.title };
+  }
+  for (const b of buses.filter((x) => !x.powered)) {
+    const n = ws.components.find((c) => c.id === b.id)!;
+    groups.push({ title: `No supply: ${n.name} has no source`, objects: [`component:${b.id}`], status: "error" });
+    items[`component:${b.id}`] = { status: "error", reason: `${n.name} has loads and no source` };
+  }
+  const dead = buses.filter((b) => !b.powered).length;
+  return { ok: groups.length === 0, summary: { problems: groups.length, trips: 0, unpowered: dead,
+    text: `${groups.length} problem${groups.length === 1 ? "" : "s"}, 0 trips${dead ? `, ${dead} unpowered bus${dead === 1 ? "" : "es"}` : ""}`, groups },
+    buses, breakers, items, assumptions: ["Loads without part data draw their sheet current."] };
+}
 
 /** Route the app's calls to the in-memory server. */
 export function install(q: URLSearchParams) {
@@ -155,6 +177,7 @@ export function install(q: URLSearchParams) {
   const example = () => (q.has("wires") ? build(big, "Kestrel E2") : structuredClone(aircraft) as Workspace);
   let ws: Workspace | null = q.has("open") ? example() : null;
   let failOpen = q.get("fail") === "open";
+  let overlay: Overlay | null = null;
   const session: Session = { project: ws?.project ?? null, tour_done: true, theme: "light", recent: [
     { name: "Kestrel E2", path: "examples/aircraft", opened: "2026-11-06T09:12:00" },
     { name: "Glider avionics retrofit", path: "C:\\Users\\you\\Documents\\wiring\\glider-avionics", opened: "2026-10-28T16:40:00" }] };
@@ -165,7 +188,7 @@ export function install(q: URLSearchParams) {
     if (path === "/api/settings") { Object.assign(session, body); return ok({ ok: true }, 20); }
     if (path === "/api/open") {
       if (failOpen) { failOpen = false; return err(503, "internal", "The project could not be opened just now. Please try again.", true); }
-      ws = example(); return ok(ws, 350);
+      ws = example(); overlay = null; return ok(ws, 350);
     }
     if (path === "/api/import") {
       const f = body as File;
@@ -177,7 +200,47 @@ export function install(q: URLSearchParams) {
     }
     if (path === "/api/workspace") return ws ? ok(ws) : err(409, "no-project", "No project is open.");
     if (path === "/api/positions") { if (ws) Object.assign(ws.positions, (body as { positions: object }).positions); return ok({ ok: true }, 20); }
-    if (path === "/api/simulate") return ok(OVERLAY, 600);
+    if (path === "/api/simulate") { if (!ws) return err(409, "no-project", "No project is open."); overlay = simulate(ws); return ok(overlay, 600); }
+    const card = /^\/api\/card\/(component|wire)\/(.+)$/.exec(path);
+    if (card && ws) {
+      const id = decodeURIComponent(card[2]);
+      if (card[1] === "wire") {
+        const w = ws.conductors.find((x) => x.id === id);
+        if (!w) return err(404, "not-found", `There is no wire ${id}.`);
+        const sim = overlay?.items[`conductor:${id}`];
+        return ok({ id, label: w.label, name: w.name, from: w.from, to: w.to, gauge: w.gauge, voltage: w.voltage, current: w.current, length: w.length, colour: w.cls, hex: w.hex,
+          harness: w.harness, protection: w.protection, status: w.status, notes: w.notes, issues: ws.issues.filter((i) => i.objects.includes(`conductor:${id}`)), ...(sim ? { sim } : {}) }, 200);
+      }
+      const n = ws.components.find((x) => x.id === id);
+      if (!n) return err(404, "not-found", `There is no component ${id}.`);
+      const pins = ws.conductors.filter((w) => w.a === id || w.b === id).map((w, i) => ({ pin: String(i + 1), wire: w.id, wire_label: w.label, name: w.name, gauge: w.gauge,
+        other: w.a === id ? w.to : w.from }));
+      const sim = overlay?.items[`component:${id}`];
+      return ok({ id, name: n.name, kind: n.kind, location: n.zone, rating_A: /(\d+(?:\.\d+)?) A/.exec(n.name) && /breaker|fuse/.test(n.kind) ? Number(/(\d+(?:\.\d+)?) A/.exec(n.name)![1]) : null,
+        connectors: pins.length ? [{ id: "J1", pins }] : [], issues: ws.issues.filter((i) => i.objects.some((o) => o === `component:${id}` || o === `protective:${id}` || o.startsWith(`pin:${id}/`))), ...(sim ? { sim } : {}) }, 200);
+    }
+    const edit = /^\/api\/(component|wire)\/(.+)$/.exec(path);
+    if (edit && method === "POST" && ws) {
+      const id = decodeURIComponent(edit[2]), b = body as Record<string, unknown>;
+      if (edit[1] === "wire") { const w = ws.conductors.find((x) => x.id === id); if (w) Object.assign(w, b); }
+      else { const n = ws.components.find((x) => x.id === id); if (n) { if (typeof b.name === "string") n.name = b.name; if (typeof b.kind === "string") n.kind = b.kind;
+        if (typeof b.rating_A === "number") n.name = n.name.replace(/\d+(?:\.\d+)? A/, `${b.rating_A} A`); } }
+      return ok(structuredClone(ws), 150);
+    }
+    if (path === "/api/sources" && method === "POST" && ws) {
+      const b = body as { attach: string; type: string; nominal_V: number; r_int_ohm?: number; i_limit_A?: number; capacity_Ah?: number; name?: string };
+      const id = `SRC-${ws.sources.length + 1}`, nm = b.name || `${{ battery: "Battery", dcdc: "DC/DC", bench: "Bench supply" }[b.type] ?? "Source"} ${b.nominal_V} V`;
+      ws.sources.push({ id, name: nm, attach: b.attach, type: b.type, nominal_V: b.nominal_V, r_int_ohm: b.r_int_ohm ?? (b.type === "battery" ? 0.01 : null), i_limit_A: b.i_limit_A ?? null, capacity_Ah: b.capacity_Ah ?? null });
+      ws.components.push({ id, name: nm, kind: b.type, zone: "", subsystem: "", pins: 0, rank: 0, sev: "" });
+      ws.edges.push({ id: `${id}~${b.attach}`, a: id, b: b.attach, wires: [], cls: [], label: `${b.nominal_V} V` });
+      return ok(structuredClone(ws), 150);
+    }
+    const rm = /^\/api\/sources\/(.+)$/.exec(path);
+    if (rm && method === "DELETE" && ws) {
+      const id = decodeURIComponent(rm[1]);
+      ws.sources = ws.sources.filter((x) => x.id !== id); ws.components = ws.components.filter((x) => x.id !== id); ws.edges = ws.edges.filter((x) => x.a !== id);
+      return ok(structuredClone(ws), 150);
+    }
     if (path === "/api/export") return ok({ folder: `${ws?.project.root}\\out`, files: ["X-WING.svg", "X-TAIL.svg"] }, 400);
     if (path === "/api/reveal") return ok({ ok: true });
     return err(404, "not-found", `Nothing at ${method} ${path}.`);

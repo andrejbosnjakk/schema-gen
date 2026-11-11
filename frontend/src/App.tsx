@@ -1,12 +1,15 @@
 // The app: a start screen when no project is open, else the main screen (diagram, issues, wires).
 import { useCallback, useEffect, useRef, useState } from "react";
 import { act, canRetry, get, post, say, upload } from "./api";
+import { CardDialog } from "./cards";
 import { Diagram, Legend, type Focus } from "./diagram/Diagram";
 import { Issues, SkeletonRows, Wires } from "./panels";
+import { SimSummary } from "./simulate";
+import { classVoltage, SourceDialog } from "./source";
 import { Logo } from "./theme/icons";
 import { startTour, Tour } from "./tour";
-import type { ExportResult, Issue, Node, Overlay, Session, Wire, Workspace } from "./types";
-import { Dialog, Glyph, MenuButton, Toasts, type Toast } from "./ui";
+import type { CardTarget, ExportResult, Issue, Node, Overlay, Session, SimGroup, Wire, Workspace } from "./types";
+import { Glyph, MenuButton, Toasts, type Toast } from "./ui";
 
 type Theme = "light" | "dark";
 const SHEET = /\.(xlsx|csv)$/i;
@@ -23,8 +26,10 @@ export function App() {
   const [wiresOpen, setWiresOpen] = useState(true);
   const [selWire, setSelWire] = useState<string | null>(null);
   const [focus, setFocus] = useState<Focus | null>(null);
-  const [card, setCard] = useState<Node | null>(null);
+  const [card, setCard] = useState<CardTarget | null>(null);
   const [simulating, setSimulating] = useState(false);
+  const [sim, setSim] = useState<{ o: Overlay; stale: boolean } | null>(null);   // the simulation drawn on the diagram; stale after any edit
+  const [pick, setPick] = useState(false), [srcAt, setSrcAt] = useState<Node | null>(null);   // "+ Source": choosing the attach point, then the dialog
   const picker = useRef<HTMLInputElement>(null);
 
   const toast = useCallback((t: Omit<Toast, "id">) => {
@@ -36,7 +41,9 @@ export function App() {
     toast({ tone: "err", text: say(e), action: retry && canRetry(e) ? { label: "Retry", run: retry } : undefined }), [toast]);
 
   const applyTheme = (t: Theme) => { setTheme(t); document.documentElement.dataset.theme = t; };
-  const show = (w: Workspace) => { setWs(w); setSelWire(null); setFocus(null); setIssuesOpen(true); setWiresOpen(true); };
+  const show = (w: Workspace) => { setWs(w); setSelWire(null); setFocus(null); setIssuesOpen(true); setWiresOpen(true); setSim(null); setCard(null); setPick(false); setSrcAt(null); };
+  /** An edit came back as a Workspace: swap it in without touching the view, and the simulation no longer matches it. */
+  const edited = useCallback((w: Workspace) => { setWs(w); setSim((s) => s && { ...s, stale: true }); }, []);
 
   const loadSession = useCallback(() => {
     setFatal(null);
@@ -81,19 +88,21 @@ export function App() {
 
   const simulate = () => {
     setSimulating(true);
-    post<Overlay>("/api/simulate").then((o) => { toast({ tone: o.ok ? "ok" : "info", text: `Simulation: ${o.summary.text}.` }); act("simulate-done"); },
+    post<Overlay>("/api/simulate").then((o) => { setSim({ o, stale: false }); act("simulate-done"); },
       (e) => fail(e, simulate)).finally(() => setSimulating(false));
   };
+  const clearSim = () => { setSim(null); act("simulate-clear"); };
   const exportAs = (kind: string, what: string) => {
     toast({ tone: "info", text: `Exporting ${what.toLowerCase()}…` });
     post<ExportResult>("/api/export", { kind }).then((r) => toast({ tone: "ok", text: `${what}: ${r.files.length} ${r.files.length === 1 ? "file" : "files"} saved.`,
       action: { label: "Show folder", run: () => { post("/api/reveal", { path: r.folder }).catch((e) => fail(e)); } } }), (e) => fail(e, () => exportAs(kind, what)));
   };
 
-  const pickIssue = (i: Issue) => {
+  /** Zoom to and pulse the objects a list of typed refs ("component:ID", "conductor:ID", "pin:ID/C/P") names. */
+  const focusOn = (objects: string[]) => {
     const ids: string[] = [];
     let wire: string | undefined;
-    for (const o of i.objects) {
+    for (const o of objects) {
       const t = o.slice(0, o.indexOf(":")), id = o.slice(o.indexOf(":") + 1);
       if (t === "component") ids.push(id);
       else if (t === "pin") ids.push(id.split("/")[0]);
@@ -101,11 +110,24 @@ export function App() {
     }
     setSelWire(wire ?? null);
     setFocus({ ids, wire, nonce: Date.now() });
-    act("issue-click");
   };
-  const pickWire = (w: Wire) => { setSelWire(w.id); setFocus({ ids: [w.a, w.b], wire: w.id, nonce: Date.now() }); act("wire-click"); };
-  const openCard = useCallback((n: Node) => { setCard(n); act("card-open"); }, []);
+  const pickIssue = (i: Issue) => { focusOn(i.objects); act("issue-click"); };
+  const pickGroup = (g: SimGroup) => focusOn(g.objects);
+  const openWire = useCallback((id: string) => { setSelWire(id); setCard((c) => { if (!c) act("card-open"); return { type: "wire", id }; }); }, []);
+  const pickWire = (w: Wire) => { setSelWire(w.id); setFocus({ ids: [w.a, w.b], wire: w.id, nonce: Date.now() }); act("wire-click"); openWire(w.id); };
+  const openCard = useCallback((n: Node) => {
+    if (pick) { setPick(false); setSrcAt(n); return; }
+    setCard({ type: "component", id: n.id }); act("card-open");
+  }, [pick]);
   const closeCard = useCallback(() => { setCard(null); act("card-close"); }, []);
+  const saved = useCallback((w: Workspace, what: string) => { edited(w); setCard(null); act("card-close"); toast({ tone: "ok", text: what.startsWith("Removed") ? `${what}.` : `Saved ${what}.` }); }, [edited, toast]);
+  const sourceAdded = useCallback((w: Workspace) => { edited(w); setSrcAt(null); toast({ tone: "ok", text: "Source added. Simulate again to see its effect." }); act("source-added"); }, [edited, toast]);
+  useEffect(() => {
+    if (!pick) return;
+    const key = (e: KeyboardEvent) => { if (e.key === "Escape") setPick(false); };
+    document.addEventListener("keydown", key);
+    return () => document.removeEventListener("keydown", key);
+  }, [pick]);
 
   const filePicker = <input ref={picker} type="file" accept=".xlsx,.csv" hidden onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ""; if (f) importFile(f); }} />;
   const overlays = <>
@@ -147,13 +169,17 @@ export function App() {
       <main className="canvas" aria-busy={busy}>
         {!issuesOpen && counts && <button className="issues-chip" onClick={() => setIssuesOpen(true)} data-tour="issues">
           {counts.error > 0 && <span className="dot error" aria-hidden="true" />}Issues <span className="count">{counts.all}</span></button>}
-        {ws && !busy ? <Diagram ws={ws} focus={focus} selWire={selWire} onCard={openCard} /> : <DiagramSkeleton />}
+        {ws && !busy ? <Diagram ws={ws} focus={focus} selWire={selWire} onCard={openCard} onWire={(id) => { if (!pick) openWire(id); }} overlay={sim} picking={pick} /> : <DiagramSkeleton />}
+        {ws && !busy && <div className="canvas-tools">
+          <button className="btn" data-tour="add-source" aria-pressed={pick} onClick={() => setPick((p) => !p)}><Glyph name="plus" />Source</button></div>}
+        {sim && <SimSummary o={sim.o} stale={sim.stale} onGroup={pickGroup} onClear={clearSim} />}
+        {pick && <div className="pick-hint anim-pop" role="status"><Glyph name="plus" size={14} />Click a bus or component to attach the source<span className="kbd">Esc</span></div>}
       </main>
     </div>
     <Wires wires={ws?.conductors ?? null} legend={ws && !busy && <Legend palette={ws.palette} used={ws.edges.flatMap((e) => e.cls)} />} open={wiresOpen} loading={busy} sel={selWire} onPick={pickWire}
            onToggle={() => setWiresOpen((o) => { if (!o) act("wires-open"); return !o; })} />
-    {card && <Dialog title={card.name || card.id} onClose={closeCard} tour="card">
-      <p className="card-kind"><span className="kind-chip">{card.kind}</span><span className="faint">{card.id} · {card.pins} pins</span></p></Dialog>}
+    {card && ws && <CardDialog target={card} ws={ws} stale={!!sim?.stale} onClose={closeCard} onSwitch={setCard} onSaved={saved} onError={fail} />}
+    {srcAt && ws && <SourceDialog at={srcAt} volt={classVoltage(ws, srcAt.id)} onClose={() => setSrcAt(null)} onSaved={sourceAdded} onError={fail} />}
     {filePicker}{overlays}
   </div>;
 }
