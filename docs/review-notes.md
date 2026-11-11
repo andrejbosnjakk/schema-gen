@@ -21,6 +21,16 @@ overlay says "15 A is too big for 20 AWG wire". Same fact, two framings.
 A wire without a protector is "far heavier than needed" only above 25 × its current (`sim.heavy_margin`, a design
 default with no standard behind it, D75). In practice it almost never fires.
 
+## Layout is pinned after the first edit
+Adding or removing a card saves every card's position (D95), so nothing moves on reload. The cost: once pinned, the
+packed layout is never recomputed for that project, even after many edits or a re-import into the same folder. There
+is no "re-arrange" action yet.
+
+## Cards
+- The pin column in component cards is blank where the sheet gives no pin name or number.
+- `/api/card/component/{id}` returns not-found for sources added in the app; their card is built in the frontend
+  from `Workspace.sources`.
+
 ## Smaller items
 - An imported project is named after its file stem ("wires").
 - The installer is not code-signed (SmartScreen shows "unknown publisher").
