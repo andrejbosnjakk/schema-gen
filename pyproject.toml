@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "schema-gen"  # the import package and the command stay `schemagen` (that PyPI name is taken)
-version = "0.6.0"
+version = "1.0.0"
 description = "Wiring design from one source of truth: harness drawings, tables, pinouts, checks, test sheets and a DC simulation."
 readme = "README.md"
 license = "MIT"
