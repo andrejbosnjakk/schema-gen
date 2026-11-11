@@ -29,6 +29,7 @@ export function App() {
   const [card, setCard] = useState<CardTarget | null>(null);
   const [simulating, setSimulating] = useState(false);
   const [sim, setSim] = useState<{ o: Overlay; stale: boolean } | null>(null);   // the simulation drawn on the diagram; stale after any edit
+  const [simOpen, setSimOpen] = useState(true);                   // the summary panel: open after Simulate, a chip while a source is placed
   const [pick, setPick] = useState(false), [srcAt, setSrcAt] = useState<Node | null>(null);   // "+ Source": choosing the attach point, then the dialog
   const picker = useRef<HTMLInputElement>(null);
 
@@ -88,7 +89,7 @@ export function App() {
 
   const simulate = () => {
     setSimulating(true);
-    post<Overlay>("/api/simulate").then((o) => { setSim({ o, stale: false }); act("simulate-done"); },
+    post<Overlay>("/api/simulate").then((o) => { setSim({ o, stale: false }); setSimOpen(true); act("simulate-done"); },
       (e) => fail(e, simulate)).finally(() => setSimulating(false));
   };
   const clearSim = () => { setSim(null); act("simulate-clear"); };
@@ -123,6 +124,7 @@ export function App() {
   const saved = useCallback((w: Workspace, what: string) => { edited(w); setCard(null); act("card-close"); toast({ tone: "ok", text: what.startsWith("Removed") ? `${what}.` : `Saved ${what}.` }); }, [edited, toast]);
   const sourceAdded = useCallback((w: Workspace) => { edited(w); setSrcAt(null); act("source-added"); }, [edited]);
   const picking = pick || srcAt !== null;  // the tour steps aside while a source is being placed (docs/tour.md)
+  useEffect(() => { if (picking) setSimOpen(false); }, [picking]);
   useEffect(() => { act(picking ? "source-pick" : "source-pick-end"); }, [picking]);
   useEffect(() => {
     if (!pick) return;
@@ -160,6 +162,7 @@ export function App() {
           { label: "Wire list", hint: "XLSX", run: () => exportAs("wirelist", "Wire list") }]} />
         <button className="btn btn-primary" data-tour="simulate" onClick={simulate} disabled={!ws || simulating} aria-busy={simulating}>
           <Glyph name="play" />{simulating ? "Simulating…" : "Simulate"}</button>
+        {sim && <SimSummary o={sim.o} stale={sim.stale} open={simOpen} onOpen={setSimOpen} onGroup={pickGroup} onClear={clearSim} />}
         <span className="sep" aria-hidden="true" />
         <button className="btn btn-ghost btn-icon" onClick={toggleTheme} aria-label={theme === "light" ? "Switch to dark theme" : "Switch to light theme"} title={theme === "light" ? "Dark theme" : "Light theme"}>
           <Glyph name={theme === "light" ? "moon" : "sun"} /></button>
@@ -174,7 +177,6 @@ export function App() {
         {ws && !busy ? <Diagram ws={ws} focus={focus} selWire={selWire} onCard={openCard} onWire={(id) => { if (!pick) openWire(id); }} overlay={sim} picking={pick} /> : <DiagramSkeleton />}
         {ws && !busy && <div className="canvas-tools">
           <button className="btn" data-tour="add-source" aria-pressed={pick} onClick={() => setPick((p) => !p)}><Glyph name="plus" />Source</button></div>}
-        {sim && <SimSummary o={sim.o} stale={sim.stale} onGroup={pickGroup} onClear={clearSim} />}
         {pick && <div className="pick-hint anim-pop" role="status"><Glyph name="plus" size={14} />Click a bus or component to attach the source<span className="kbd">Esc</span></div>}
       </main>
     </div>

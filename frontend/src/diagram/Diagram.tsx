@@ -94,6 +94,17 @@ function Flow({ ws, focus, selWire, onCard, onWire, overlay, picking }: Props) {
     setPos(q);
   }
 
+  // adding or removing a card pins every position the user sees (the packing would otherwise come out different on reload and move the zones)
+  const firstIds = useRef(ids);
+  useEffect(() => {
+    if (firstIds.current === ids) return;
+    firstIds.current = ids;
+    const positions: Record<string, [number, number] | null> = {};
+    for (const n of ws.components) { const p = pos.get(n.id); if (p) positions[n.id] = [Math.round(p.x), Math.round(p.y)]; }
+    for (const id of Object.keys(ws.positions)) if (!(id in positions)) positions[id] = null;
+    post("/api/positions", { positions }).catch(() => { /* view state only */ });
+  }, [ids]);  // eslint-disable-line react-hooks/exhaustive-deps
+
   // a card added by an edit that lands outside the view: bring it and what it is wired to into view (never zoomed in), so the new source is never off screen
   const known = useRef(new Set(ws.components.map((n) => n.id)));
   useEffect(() => {

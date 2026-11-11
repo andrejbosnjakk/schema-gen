@@ -665,3 +665,16 @@ may show again next launch. Replay from the help menu works at any time and reco
   Footer buttons of the card are "Cancel" so "Close" names only the header's X (the tour test looks for it). While the tour
   spotlights + Source its overlay covers the diagram, so a source cannot be picked during that step (the tour spec presses Next).
 - Why: found while merging the tour; the pick needs the tour to let clicks through, which is the tour's call.
+
+## D95. Adding or removing a card pins every position; the Simulate summary is a chip
+- Choice: when the set of cards changes (a source added or removed), the diagram posts every card's current position to
+  `/api/positions` (removed ids as null). Positions are view state, so the packing is never recomputed around the new node on
+  reload: no zone or card moves, and the new card stays where it appeared beside its attach point. The first load is unchanged
+  (packed layout, nothing stored until a drag or an edit).
+- Choice: the Simulate summary is a chip in the top bar next to Simulate ("3 problems", error dot, chevron, "(out of date)" when
+  stale) with Clear beside it; its list drops down over the canvas only while open. Open right after Simulate, collapsed while
+  + Source is placed, opened again by the next Simulate. Collapsed, nothing of it is on the canvas, so no card can be covered
+  (e2e checks `elementFromPoint` on every card centre at 1366x768). Fit padding stays as it was: a canvas toolbar strip cost
+  fit zoom (0.81, card text 10.6 px, under the readability test).
+- Why: a reload that rearranges the diagram breaks the no-jumps rule; a panel over the diagram hid the bus a source had to attach to.
+- Alternative not taken: a packing order keyed only by zone id and size. It still moves blocks when the attach zone grows.
