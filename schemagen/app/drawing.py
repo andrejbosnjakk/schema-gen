@@ -66,8 +66,8 @@ def drawing(st: Any, cid: str, to: str = "") -> dict[str, Any] | None:
     total = sum(len(g["rows"]) for g in groups)
     cut = max(0, total - MAX_ROWS)
     if cut:
-        left = MAX_ROWS
-        for g in groups: g["rows"], left = g["rows"][:left], max(0, left - len(g["rows"]))
+        room = MAX_ROWS
+        for g in groups: g["rows"], room = g["rows"][:room], max(0, room - len(g["rows"]))
         groups = [g for g in groups if g["rows"]]
     wires = {s["wire"] for g in groups for r in g["rows"] for s in r["left"] + r["right"]}
     return dict(id=c.id, name=c.name or c.id, kind=kind_of(st, c), to=dict(id=other.id, name=other.name or other.id) if other else None,

@@ -181,9 +181,9 @@ class Builder:
         for raw in kinds:
             cid = code(raw) or raw
             if kinds[raw] == "harness": cid = self.harness(raw)[1]
-            k = 2
+            n = 2
             base = cid
-            while cid in comps: cid = f"{base}~{k}"; k += 1
+            while cid in comps: cid = f"{base}~{n}"; n += 1
             p = self.part_for(raw)
             zc = sorted(zones_of[raw].items(), key=lambda kv: (-kv[1], kv[0]))
             comp = Component(id=cid, raw=raw, name=str(self.naming.device(raw, self.inp.display)), kind=kinds[raw],  # type: ignore[arg-type]

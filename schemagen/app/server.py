@@ -455,7 +455,8 @@ def create_app(project: str | Path | None = None, background: bool = False) -> F
             if b["name"].strip() != c.name: ops.append(ch.Op(op="component", id=cid, field="name", old=c.name, new=b["name"].strip(), row={"device": c.raw}))
         kind = c.kind
         if "kind" in b:
-            if b["kind"] not in KINDS or b["kind"] == "harness": raise AppError("bad-request", f"kind must be one of {', '.join(k for k in KINDS if k != 'harness')}.")
+            if b["kind"] not in KINDS or b["kind"] == "harness":
+                raise AppError("bad-request", f"kind must be one of {', '.join(k for k in KINDS if k != 'harness')}.")
             if c.kind == "harness": raise AppError("bad-request", f"{cid} is a harness connector; its kind comes from the project settings.")
             kind = b["kind"]
             if kind != c.kind: ops.append(ch.Op(op="component", id=cid, field="kind", old=c.kind, new=kind, row={"device": c.raw}))

@@ -34,7 +34,7 @@ def _candidates() -> list[Path]:
     out = []
     if os.environ.get("SCHEMAGEN_DOT"):
         p = Path(os.environ["SCHEMAGEN_DOT"]); out.append(p / exe if p.is_dir() else p)
-    if getattr(sys, "_MEIPASS", None): out.append(Path(sys._MEIPASS) / "graphviz" / exe)  # the desktop build
+    if getattr(sys, "_MEIPASS", None): out.append(Path(getattr(sys, "_MEIPASS", "")) / "graphviz" / exe)  # the desktop build
     for env in ("ProgramFiles", "ProgramFiles(x86)", "LOCALAPPDATA"):
         if os.environ.get(env):
             out += [Path(os.environ[env]) / "Graphviz" / "bin" / exe, Path(os.environ[env]) / "Programs" / "Graphviz" / "bin" / exe]

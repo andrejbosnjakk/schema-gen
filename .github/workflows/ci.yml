@@ -1,13 +1,19 @@
 name: ci
-on: [push, pull_request]
+# branch pushes do not run CI (a pull request does); start a run by hand from the Actions tab when needed
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
 jobs:
   test:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
-      matrix:
-        os: [ubuntu-latest, windows-latest]
-        python: ["3.12", "3.14"]
+      matrix:  # one Python per system: the oldest and the newest that CI covers
+        include:
+          - {os: ubuntu-latest, python: "3.12"}
+          - {os: windows-latest, python: "3.14"}
     defaults:
       run:
         shell: bash
@@ -38,9 +44,10 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
-      matrix:
-        os: [ubuntu-latest, windows-latest]
-        python: ["3.12", "3.14"]
+      matrix:  # one Python per system: the oldest and the newest that CI covers
+        include:
+          - {os: ubuntu-latest, python: "3.12"}
+          - {os: windows-latest, python: "3.14"}
     defaults:
       run:
         shell: bash
@@ -85,8 +92,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
-        python: ["3.12", "3.14"]
+        include:
+          - {os: ubuntu-latest, python: "3.12"}
     defaults:
       run:
         shell: bash

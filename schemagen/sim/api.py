@@ -75,7 +75,7 @@ def _summarise(sm: SimModel, r: Result, name: str, dt: float) -> OpPoint:
     srcs = [dict(element=s.name, component=sm.sources.get(s.name, ""), current_A=r.i.get(s.name, 0.0), limited=s.name in r.limited,
                  off=s.name in c.off) for s in c.src]
     loaded = Counter(island(ld.plus) for ld in sm.loads if ld.element not in c.off)
-    buses = []
+    buses: list[dict[str, Any]] = []
     for b in m.buses:
         k, gnd = island(sm.name((b.raw,))), b.function_class == "GND"
         on = gnd or k in fed

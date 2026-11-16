@@ -184,7 +184,8 @@ def component_card(st: Any, cid: str) -> dict[str, Any] | None:
         other = "; ".join(sorted({where(ctx, x) for x, _ in ctx.net.reach(i, 3 - e)}))  # display text, no codes
         by_con[t.connector].append(dict(pin=t.pin or t.connector, wire=cd.id, wire_label=cd.label, wire_name=cd.name, name=d.name if d and d.name else "",
                                         pin_name=d.name if d and d.name else "", other=other, gauge=cd.gauge))
-    connectors = [dict(id=k, pins=sorted(v, key=lambda p: (_natural(p["pin"]), p["wire_label"]))) for k, v in sorted(by_con.items(), key=lambda kv: _natural(kv[0]))]
+    connectors: list[dict[str, Any]] = [{"id": k, "pins": sorted(by_con[k], key=lambda p: (_natural(p["pin"]), p["wire_label"]))}
+                                         for k in sorted(by_con, key=_natural)]
     out = dict(id=c.id, name=c.name or c.id, kind=kind_of(st, c), location=c.zone, rating_A=pd.rating_a if pd else None, connectors=connectors,
                issues=_issues_for(st, {f"component:{cid}", f"connector:{cid}", f"protective:{cid}"}, cid))
     sim = (st.overlay or {}).get("items", {}).get(f"component:{cid}")

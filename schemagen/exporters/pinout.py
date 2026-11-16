@@ -143,7 +143,7 @@ def write_html(m: Model, path: Path, ctx: Ctx | None = None, project: str = "") 
     head = ("<thead><tr>" + "".join(f"<th>{e(h)}</th>" for _, h, _ in COLS) + "<th class=\"tick\">Connected</th><th class=\"tick\">Continuity</th></tr></thead>")
     parts = []
     for b in blocks(m, ctx):
-        rows = "".join(f"<tr{' class=\"spare\"' if not r['id'] else ''}>"
+        rows = "".join(("<tr>" if r["id"] else '<tr class="spare">')
                        + "".join(f"<td>{e('spare' if k == 'wire' and not r['id'] else str(r[k]))}</td>" for k, _, _ in COLS)
                        + "<td class=\"tick\"><span class=\"box\"></span></td>" * 2 + "</tr>" for r in b["rows"])
         parts.append(f"<section id=\"{e(b['id'])}\"><h2>{e(b['title'] or b['id'])} <small>{e(b['id'])}</small></h2>"

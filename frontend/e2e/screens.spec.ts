@@ -12,7 +12,7 @@ const OUT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../do
 const SIZES = [[1366, 768], [1920, 1080]];
 const day = (n: number) => new Date(Date.now() - n * 864e5).toISOString().slice(0, 19);
 const RECENT = [{ name: "Kestrel E2 harness", opened: day(0) }, { name: "Example aircraft", opened: day(3) }];
-const BASE = path.join(path.parse(os.tmpdir()).root, "schemagen", "projects");  // a short, neutral path for the Recent list
+const BASE = path.join(process.platform === "win32" ? path.parse(os.tmpdir()).root : os.tmpdir(), "schemagen", "projects");  // a short, neutral path for the Recent list (a drive root is not writable on Linux)
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), "sg-shots-"));
 test.beforeAll(() => { execFileSync(PYTHON, ["-m", "schemagen", "synth", "--readable", "--wires", "300", "-o", dir], { env: serverEnv(dir), cwd: ROOT }); });
 

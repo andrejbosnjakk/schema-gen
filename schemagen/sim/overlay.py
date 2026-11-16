@@ -78,8 +78,10 @@ def overlay(m: Model, cfg: Any, sources: list[dict[str, Any]] | None = None, mea
         if p["trips"]:
             put(key, "error", f"{cname(p['id'])} trips: {p['current_A']:.1f} A through its {r:g} A rating" + (f" (in {p['trip_s']:.2g} s)" if p["trip_s"] else ""),
                 f"trip:{p['id']}", f"{cname(p['id'])} trips")
-        elif ld is not None and ld > 1: put(key, "error", f"{cname(p['id'])} is undersized: {p['current_A']:.1f} A is above its {r:g} A rating", key, f"{cname(p['id'])} is undersized")
-        elif ld is not None and ld >= warn: put(key, "warn", f"{cname(p['id'])} carries {p['current_A']:.1f} A, {100 * ld:.0f} % of its {r:g} A rating", key, f"{cname(p['id'])} is nearly full")
+        elif ld is not None and ld > 1: put(key, "error", f"{cname(p['id'])} is undersized: {p['current_A']:.1f} A is above its {r:g} A rating", key,
+                                             f"{cname(p['id'])} is undersized")
+        elif ld is not None and ld >= warn: put(key, "warn", f"{cname(p['id'])} carries {p['current_A']:.1f} A, {100 * ld:.0f} % of its {r:g} A rating", key,
+                                                f"{cname(p['id'])} is nearly full")
     unfed = set(op.unpowered)
     bus_of = {b.id: b for b in m.buses}
     def bname(bid: str) -> str: return bus_of[bid].raw[len(bid):].strip() or bid  # "Cabin bus" from "BB-CABIN-BUS Cabin bus"
@@ -97,9 +99,9 @@ def overlay(m: Model, cfg: Any, sources: list[dict[str, Any]] | None = None, mea
     for ld in op.loads:
         if ld["off"] or ld["powered"]: continue
         v, vmin = ld["voltage_V"], ld["v_min"]
-        key, bid = f"component:{ld['component']}", on_bus.get(ld["component"])
+        key, hung = f"component:{ld['component']}", on_bus.get(ld["component"])
         who = cname(ld["component"])
-        if bid and v < 0.5: put(key, "error", f"{who} has no supply: {bname(bid)} has no source", f"component:{bid}", f"{bname(bid)} has no power source")
+        if hung and v < 0.5: put(key, "error", f"{who} has no supply: {bname(hung)} has no source", f"component:{hung}", f"{bname(hung)} has no power source")
         else: put(key, "error", f"{who} has no supply: no source reaches it" if v < 0.5 else f"{who} gets {v:.2f} V, below its minimum {vmin:g} V")
     for b in op.buses:
         if b["id"] in unfed:
@@ -108,7 +110,8 @@ def overlay(m: Model, cfg: Any, sources: list[dict[str, Any]] | None = None, mea
     errors = sum(x["status"] == "error" for x in items.values())
     trips = sum(p["trips"] for p in op.protective)
     problems = len(groups)
-    text = f"{problems} problem{'s' * (problems != 1)}, {trips} trip{'s' * (trips != 1)}" + (f", {len(unfed)} unpowered bus{'es' * (len(unfed) != 1)}" if unfed else "")
+    text = f"{problems} problem{'s' * (problems != 1)}, {trips} trip{'s' * (trips != 1)}" \
+        + (f", {len(unfed)} unpowered bus{'es' * (len(unfed) != 1)}" if unfed else "")
     if op.missing: text = "Cannot simulate: " + "; ".join(op.missing)
     elif not op.converged: text = f"The simulation did not converge: {op.message}"
     return dict(ok=op.converged and not op.missing and not unfed and not errors,

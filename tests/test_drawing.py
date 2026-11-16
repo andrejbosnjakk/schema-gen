@@ -26,7 +26,8 @@ def test_every_wire_end_is_drawn_once_per_component(ws):
         if n["id"].startswith("SRC-"): continue
         d = c.get(f"/api/drawing/{n['id']}").json()
         assert not d["cut"]
-        first = [s[0]["wire"] for r in (g["rows"] for g in d["groups"]) for row in r for s in ([row["left"]] if row["left"] else []) + ([row["right"]] if row["right"] else [])]
+        first = [s[0]["wire"] for r in (g["rows"] for g in d["groups"]) for row in r
+                 for s in ([row["left"]] if row["left"] else []) + ([row["right"]] if row["right"] else [])]
         for wid in set(first): seen[wid] = seen.get(wid, 0) + 1
         for run in runs(d):  # a run ends on a real terminal, never on a splice or a connector pin with a wire behind it
             assert run[-1]["role"] not in ("splice",), (n["id"], run[-1])

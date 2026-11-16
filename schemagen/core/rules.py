@@ -330,7 +330,8 @@ def r_side_guessed(ctx: Ctx) -> Iterator[tuple[str, list[str], str]]:
     for con in ctx.m.connectors:
         for h in con.halves:
             if h.guessed:
-                yield f"{con.id}: '{h.name}' was taken as the {h.side} half. If that is wrong, the two halves are swapped in the pin tables", [f"connector:{con.id}"], \
+                yield f"{con.id}: '{h.name}' was taken as the {h.side} half. If that is wrong, the two halves are swapped in the pin tables", \
+                    [f"connector:{con.id}"], \
                     f"add sides: {{{con.id}: {{'{h.name}': near|far}}}} to schemagen.yml"
 
 
@@ -394,8 +395,9 @@ def _fed(ctx: Ctx, app_sources: list[dict[str, Any]]) -> tuple[set[NodeKey], boo
     net, conds = ctx.net, ctx.m.conductors
     by_dev: dict[str, list[Terminal]] = defaultdict(list)
     for dev, con, pin in ctx.by_terminal: by_dev[dev].append(Terminal(device=dev, connector=con, pin=pin))
-    power = lambda i: conds[i].kind not in POWER_CLASSES_EXCLUDED  # noqa: E731
-    live = lambda t: ctx.pin_type(t) != "ground" and t.connector.strip().lower() != "coil" and any(power(i) for i, _ in ctx.by_terminal[t.key()])  # noqa: E731
+    def power(i: int) -> bool: return conds[i].kind not in POWER_CLASSES_EXCLUDED
+    def live(t: Terminal) -> bool:
+        return ctx.pin_type(t) != "ground" and t.connector.strip().lower() != "coil" and any(power(i) for i, _ in ctx.by_terminal[t.key()])
     adj: dict[NodeKey, set[NodeKey]] = defaultdict(set)
     for i, c in enumerate(conds):
         if power(i): a, b = net.node(i, 1), net.node(i, 2); adj[a].add(b); adj[b].add(a)
@@ -411,8 +413,8 @@ def _fed(ctx: Ctx, app_sources: list[dict[str, Any]]) -> tuple[set[NodeKey], boo
                 for q in ctx.contact_peers(t): adj[net.node_of(t)].add(net.node_of(q)); adj[net.node_of(q)].add(net.node_of(t))
         elif ctx.is_source(comp) or (p and p.supply_out): start += [net.node_of(t) for t in ts]
     for s in app_sources:
-        comp = ctx.comp_by_id.get(str(s.get("attach", "")))
-        if comp: start += [(comp.raw,)] if comp.kind in ("bus", "splice") else [net.node_of(t) for t in by_dev.get(comp.raw, []) if live(t)]
+        att = ctx.comp_by_id.get(str(s.get("attach", "")))
+        if att: start += [(att.raw,)] if att.kind in ("bus", "splice") else [net.node_of(t) for t in by_dev.get(att.raw, []) if live(t)]
     seen, todo = set(start), list(start)
     while todo:
         for y in adj[todo.pop()]:
