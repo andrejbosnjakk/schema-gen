@@ -16,13 +16,15 @@ from check_licences import ALLOWED, npm_licences
 from check_licences import licence as meta_licence  # noqa: E402
 
 WORK = HERE / "build" / "work" / "schemagen"
+FONT_LICENCE = HERE.parent / "schemagen" / "drawing" / "fonts" / "LICENSE-Inter.txt"
 OUT = HERE / "licences" / "THIRD_PARTY.txt"
-NEVER = {"wireviz", "graphviz", "pillow"}  # GPL WireViz and what only it needs stay out of the bundle (D72)
+NEVER = {"wireviz", "graphviz"}  # GPL WireViz and what only it needs stay out of the bundle (D72); Pillow is in since reportlab imports it
 FIXED = [  # bundled, but not Python distributions
     ("Python", "PSF-2.0", "the Python runtime (python3xx.dll and the standard library), https://docs.python.org/3/license.html"),
     ("PyInstaller bootloader", "GPL-2.0-or-later WITH Bootloader-exception",
      "the exception allows distributing the bootloader with any program under any licence, https://pyinstaller.org/en/stable/license.html"),
     ("Microsoft WebView2 SDK (webview/lib)", "BSD-3-Clause (Microsoft)", "the loader pywebview ships; the WebView2 runtime itself is part of Windows"),
+    ("Inter font (drawing/fonts)", "OFL-1.1", "SIL Open Font License 1.1, text below; the fonts are embedded in the exported drawing PDFs"),
     ("Microsoft Visual C++ runtime (vcruntime140.dll)", "Microsoft redistributable", "shipped with Python for Windows"),
 ]
 
@@ -73,6 +75,7 @@ def main() -> int:
     lines += ["", "", "Notes", "-----"] + [f"{n}: {note}" for n, _, note in FIXED] + ["", "", "Licence texts", "-------------"]
     for n, d in sorted(dists.items()):
         lines += ["", f"== {n} {d.version} ({licence(d)}) ==", "", licence_text(d) or "(no licence file in the package metadata; see its project page)"]
+    lines += ["", "== Inter font (OFL-1.1) ==", "", FONT_LICENCE.read_text(encoding="utf-8").strip()]
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text("\n".join(lines) + "\n", encoding="utf-8")
     print(f"{OUT}: {len(dists)} Python packages, {len(npm)} npm packages")

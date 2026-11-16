@@ -12,13 +12,14 @@ datas = [
     (str(ROOT / "schemagen" / "app" / "static"), "schemagen/app/static"),
     (str(ROOT / "schemagen" / "core" / "data"), "schemagen/core/data"),
     (str(ROOT / "schemagen" / "templates"), "schemagen/templates"),
+    (str(ROOT / "schemagen" / "drawing" / "fonts"), "schemagen/drawing/fonts"),  # Inter for the drawing engine (style.font_files)
     (str(EXAMPLE), f"examples/{EXAMPLE.name}"),
     (str(ICON), "assets"),  # the window icon (desktop.py reads assets/icon.ico)
 ]
 datas += [(str(p), "assets") for p in ASSETS.glob("icon-*.png")]
 
-# WireViz is GPL-3.0 and only ever run as a command: it, and what only it needs, never ships in the bundle.
-EXCLUDES = ["wireviz", "graphviz", "PIL", "tkinter", "_tkinter", "matplotlib", "IPython", "pytest", "hypothesis", "setuptools", "pip",
+# WireViz is GPL-3.0 and only ever run as a command: it, and what only it needs, never ships in the bundle (Pillow does: reportlab imports it).
+EXCLUDES = ["wireviz", "graphviz", "tkinter", "_tkinter", "matplotlib", "IPython", "pytest", "hypothesis", "setuptools", "pip",
             "webview.platforms.qt", "webview.platforms.gtk", "webview.platforms.cef", "webview.platforms.android", "webview.platforms.cocoa"]
 
 a = Analysis([str(HERE / "launch.py")], pathex=[str(ROOT)], datas=datas, excludes=EXCLUDES,
