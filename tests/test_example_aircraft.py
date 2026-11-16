@@ -92,7 +92,7 @@ def test_wireviz_connections_use_listed_pins(tmp_path, name):
     shutil.copytree(AIRCRAFT.parent / name, d, ignore=shutil.ignore_patterns("out"))
     assert main(["draw", str(d), "--all", "--no-render"]) == 0
     for f in (d / "out").glob("*.yml"):
-        doc = yaml.safe_load(f.read_text("utf-8"))
+        doc = yaml.safe_load(f.read_text(encoding="utf-8"))
         if not isinstance(doc, dict) or "connectors" not in doc: continue
         for row in doc.get("connections", []):
             for part in row:
