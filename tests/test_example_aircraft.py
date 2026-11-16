@@ -89,4 +89,7 @@ def test_sheet_is_reproducible(tmp_path):
     spec = importlib.util.spec_from_file_location("make_sheet", AIRCRAFT / "make_sheet.py")
     ms = importlib.util.module_from_spec(spec); spec.loader.exec_module(ms)
     ms.write(tmp_path / "w.xlsx")
-    assert (tmp_path / "w.xlsx").read_bytes() == (AIRCRAFT / "wires.xlsx").read_bytes()
+    import zipfile
+    parts = lambda f: {i.filename: z.read(i) for z in [zipfile.ZipFile(f)] for i in z.infolist()}  # noqa: E731
+    # the unpacked parts, not the file bytes: the compressed stream depends on the zlib build (zlib or zlib-ng)
+    assert parts(tmp_path / "w.xlsx") == parts(AIRCRAFT / "wires.xlsx")
