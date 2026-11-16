@@ -1,62 +1,128 @@
 # schema-gen
 
-Turns a wire list (one row = one physical conductor) into wiring-harness documentation, and later into a
-simulation of the electrical system. Built for vehicles, aircraft and machines: anything with harness
-connectors, splices, breakers and buses.
+Turns a wire list (one row = one physical conductor) into a map of the electrical system, checks, a DC simulation and
+harness documentation. It is for people who build and rewire vehicles, aircraft and machines: anything with harness
+connectors, splices, breakers and buses. You bring a wire list (a spreadsheet); schemagen shows the system as one
+diagram, finds mistakes, and answers "does it work with the power on?" without a circuit-design tool.
 
-- **Harness drawings** per harness connector, rendered with [WireViz](https://github.com/wireviz/WireViz) (SVG, PNG,
-  HTML + BOM). One bundle per far item, each wire labelled with its gauge (`RD:L05 · 22`), CAN pairs twisted and shielded.
-  Wide harnesses are split by side or by function.
-- **"Continues at"**: every wire that ends on a splice, bus, breaker or another harness gets a short next-hop note
-  (`L05 → L04 (CB-ECU LOAD), L06 (X-BH 2) [1]`); the full continuation and net end points go into a numbered footnote
-  table under the drawing and into the cut list.
-- **Cut list** (CSV): label, from, to, bundle, gauge, colour, length, continues-at.
-- **Continuity / insulation test sheet** (CSV) between reachable terminals only (splices are sleeved, so tests walk
-  through them): each connector half to its equipment, end to end through the mated connector (parallel contacts
-  flagged), and pin-to-pin insulation that knows which pins are tied on purpose.
-- **Consistency checks**: pin clashes, one-sided pins, gauge or function changes across a connector, TBD pins and gauges.
-- **index.html**: all drawings in one offline page; a wire-label search highlights the wire and its footnote.
-- **Part data from datasheet cards**: pin names from a structured block in each card (the start of a part library).
-- **One palette** for every output; other tools read it with `schemagen palette`.
+## Status
 
-Since 0.3 the wire list loads into a typed, lossless model; on top of it sit a rules engine, pinouts, a sheet template
-for teams, a label ledger, diffs, a DC simulation with a fault sweep (0.4) and a local app (0.5). Start with the
-[tutorial](docs/tutorial.md); see [CHANGELOG.md](CHANGELOG.md), [docs/ROADMAP.md](docs/ROADMAP.md),
-[docs/decisions.md](docs/decisions.md) and [docs/metrics.md](docs/metrics.md).
+- **1.0** is built, has had its product review and is merged into `main`. The fixes made after that review are on
+  `dev/1.1` and not in `main` yet.
+- **1.1** is in progress on branch `dev/1.1`. It is about real wiring drawings (see "What 1.1 is about"). The drawing
+  engine is not built yet.
+- The Python distribution is `schema-gen`; the import package and the command are `schemagen`. `pyproject.toml` says 1.0.0.
 
-![demo harness](docs/demo_X-BH.png)
+## What the app does today
 
-## Quick start
+Run it as a desktop window or in the browser (see "Install and run"). Everything is local: it listens on 127.0.0.1 only,
+sends nothing anywhere, and bundles its assets.
+
+- **Import** a wire list: drop an `.xlsx` or `.csv` on the window. A readable sheet (display names, connector and pin in
+  one cell, see [docs/readable.md](docs/readable.md)) and the neutral table format both work. Cells it cannot read become
+  findings, not exceptions. Without part data the sheet is simulated as "everything switched on" (D96).
+- **The map**: one diagram of the whole system, components in power-flow order, grouped by zone, one line per pair of
+  components. Zoom and pan; positions are remembered once you move a card.
+- **Cards**: click a component to open its card: the issues on it first, then its pins and the wire on each. An Edit
+  button reveals the fields; edits are saved as change sets (below). Wires have cards too.
+- **Issues**: the rules (below) as sentences, grouped by cause. Click one to find it on the map.
+- **Simulate**: one button runs the DC simulation and draws the result on the cards: bus voltages, how loaded each
+  breaker and wire is, loads that stay dark and why. A wire thinner than its breaker allows, a breaker too big for its
+  wire, and a bus with loads but no source are called out.
+- **+ Source**: click a bus and add a battery to it to try a fix. This is a change set; the sheet is not touched.
+- **Wires**: a drawer with every row of the sheet; click a row to see the wire on the map.
+- **Export**: the project as a workbook or JSON, a printable wiring checklist (one table per component with tick
+  boxes), and harness drawings. Harness drawings need Graphviz and WireViz installed separately (see below).
+- **Quickstart tour**: eight steps on the fictional example (`examples/aircraft`, the Kestrel E2, 121 wires, three
+  deliberate mistakes). Skippable and replayable from the Help menu. See [docs/tour.md](docs/tour.md).
+- **Edits are change sets** (`changes/*.json`): applied on every load, undoable, never silent rewrites of your input files.
+
+![the map of the example project](docs/screens/3-main/1920-light.png)
+
+![Simulate on the example project](docs/screens/5-simulate/1920-light.png)
+
+These screenshots show 1.0. In 1.1 the component card shows a drawing instead of the pin table, and the map labels lines
+with wire counts.
+
+## What 1.1 is about
+
+This is a plan, not something that is done. Decision D106 in [docs/decisions.md](docs/decisions.md) sets the direction.
+
+- **The map** stays one picture of the system. Exact wiring moves into drawings inside the card of a component, of a
+  connection (a line on the map) and later of a harness connector or a selection.
+- **A wiring-diagram engine of our own** in `schemagen/drawing/`: real aircraft-style wiring diagrams on A3 and A4 sheets
+  with a title block. One Python engine produces a geometry JSON; the app renders it as SVG and exports SVG and PDF.
+  The drawings must be good enough to rewire from, so the scope (component, connection, harness, selection) is an
+  input of the engine from the start.
+- **WireViz becomes an optional extra.** Today it is a hard dependency in `pyproject.toml` (`wireviz==0.4.1`) and
+  `schemagen draw` and the harness-drawings export use it. 1.1 moves it out of the default install, so the default
+  install and the installer contain no GPL code. The cut list and continuity list move into the checklist export first.
+- **Accuracy** is checked by a netlist round trip: the netlist read back from the geometry must equal the project's.
+- **Order**: a symbol sheet and six reference drawings first, then a review stop, then integration into the app.
+
+Already on `dev/1.1` (commit `0113927`): the map counts wires per line ("6 wires"), hovering a card lights its power
+circuit, the component card shows a first drawing of each pin's run (`GET /api/drawing/{id}`, in
+`schemagen/app/drawing.py`; not the engine above), a connection card opens for a line with several wires, and
+"Save as PDF" prints a title-block sheet. The Playwright suite and the print path in the desktop window are not yet
+verified for these changes.
+
+## Install and run
 
 ```bash
-sudo apt-get install graphviz        # WireViz needs Graphviz's `dot`
-pip install -e ".[dev]"              # PyPI: pip install schema-gen (the command is `schemagen`)
-schemagen draw examples/demo         # writes examples/demo/out/
-schemagen check examples/demo        # rules
-schemagen sim examples/demo          # DC simulation of the demo's scenarios
-schemagen app examples/demo          # the app in your browser
+pip install -e ".[dev]"              # from a checkout; the command is `schemagen`
+schemagen app                        # the start screen; or: schemagen app examples/aircraft
+schemagen app examples/demo --no-browser   # serve only, open http://127.0.0.1:8765 yourself
 pytest
 ```
 
+- Harness drawings (`schemagen draw`, and the Export menu's drawings) need Graphviz's `dot` on the PATH
+  (`sudo apt-get install graphviz`, or the Windows installer from graphviz.org) in addition to the `wireviz` package
+  that `pip install` brings in. Everything else works without Graphviz.
+- **Windows installer**: `packaging/build.ps1` builds `packaging/dist/schemagen-setup-<version>.exe`
+  (pywebview window, PyInstaller, per-user Inno Setup installer, no admin rights). CI builds it for pushes to
+  `dev/1.0*` and for `v*` tags ([.github/workflows/installer.yml](.github/workflows/installer.yml)). It is not
+  code-signed, so SmartScreen shows "unknown publisher". The installer ships neither WireViz nor Graphviz (D72).
+  User data goes to `%LOCALAPPDATA%\schemagen`.
+- Frontend development: `cd frontend && npm ci && npm run dev` (proxies `/api` to a running `schemagen app`);
+  `npm run build` writes `schemagen/app/static/`; `npx playwright test` runs the end-to-end tests.
+
+Start with the [tutorial](docs/tutorial.md) for the CLI. See also [CHANGELOG.md](CHANGELOG.md),
+[docs/ROADMAP.md](docs/ROADMAP.md), [docs/decisions.md](docs/decisions.md), [docs/api.md](docs/api.md) and
+[docs/metrics.md](docs/metrics.md).
+
+## Command line
+
+The CLI predates the app and still works on its own. `schemagen draw examples/demo` writes `examples/demo/out/`.
+
 | command | does |
 |---|---|
-| `schemagen draw <project> [X-BH ...] [--all] [--split none\|side\|function\|auto] [--no-render] [--no-interfaces]` | harness drawings, interface drawings for every conductor no harness drawing reaches, coverage report, and their extras |
-| `schemagen check <project> [--format text\|json\|sarif] [-o FILE]` | the rules (severity, objects, fix hint); exits 1 on an error |
-| `schemagen fix direction <project> [--apply]` | a reviewable change set (JSON + diff) that makes every wire follow the direction convention; `--apply` stores it in `changes/` |
-| `schemagen pinout <project>` | pinout per component and harness connector (XLSX + HTML), spares included |
+| `schemagen draw <project> [X-BH ...] [--all] [--split none\|side\|function\|auto] [--no-render] [--no-interfaces]` | harness drawings (WireViz), interface drawings for every conductor no harness drawing reaches, coverage report, cut list, continuity / insulation test sheet, `index.html`; `--no-render` skips WireViz |
+| `schemagen check <project> [--format text\|json\|sarif] [-o FILE] [--rule ID]` | the rules (severity, objects, fix hint); exits 1 on an error |
+| `schemagen fix direction\|names <project> [--apply]` | a reviewable change set (JSON + diff); `direction` makes every wire follow the direction convention; `--apply` stores it in `changes/` |
+| `schemagen pinout <project> [--page-breaks]` | pinout and reintegration checklist per component and harness connector (XLSX + HTML), spares included |
 | `schemagen wirelist <project> -o wirelist.xlsx` | readable wire list with the project's display names |
 | `schemagen template [<project>] -o sheet.xlsx` | the editable workbook with dropdowns (works after upload to Google Sheets) |
-| `schemagen labels <project> --update` | label ledger: records labels in use, retires removed ones with a reason |
+| `schemagen labels <project> --update` | label ledger: records labels in use, retires removed ones with a reason (`--retire`, `--reason`) |
 | `schemagen diff <A> <B> [--project DIR] [--format text\|json\|html]` | added, removed and changed wires, pins, labels, protection, open items; A and B are folders or git revisions |
 | `schemagen changes <project> [--undo]` | list or undo the stored change sets |
-| `schemagen app <project> [--port 8765]` | the local app in the browser: wire table editor, object pages, net explorer, drawings, system graph, simulation, issues, diff |
-| `schemagen sim <project> [scenario.yml ...] [--faults all]` | DC operating point per scenario and the fault sweep; HTML + JSON report in `<out>/sim/`; exits 1 when an expectation fails |
-| `schemagen export <project> -o wires.xlsx` | the project in the neutral table format: `.xlsx` workbook, a folder of CSVs, `.csv` (wires only) or `.json` (the whole model) |
+| `schemagen app [<project>] [--port 8765] [--host H] [--no-browser]` | the local app; without a project it opens the start screen |
+| `schemagen sim <project> [scenario.yml ...] [--faults all] [--infer]` | DC operating point per scenario and the fault sweep; HTML + JSON report in `<out>/sim/`; exits 1 when an expectation fails |
+| `schemagen export <project> -o wires.xlsx [--readable]` | the project in the neutral table format: `.xlsx` workbook, a folder of CSVs, `.csv` (wires only) or `.json` (the whole model); `--readable` writes the readable sheet layout |
 | `schemagen schema [-o schemas]` | JSON Schemas of the model, the part library and issues |
-| `schemagen synth --wires N --seed S -o DIR` | a synthetic (fictional) project for tests and benchmarks |
+| `schemagen synth --wires N --seed S -o DIR [--readable] [--clean]` | a synthetic (fictional) project for tests and benchmarks |
 | `schemagen palette <project> [--json]` | function class → colour code and hex, for spreadsheets and schematic tools |
 
-`<project>` is a `schemagen.yml` or the folder that holds it. `--no-render` writes YAML, CSVs and checks without WireViz.
+`<project>` is a `schemagen.yml` or the folder that holds it. The `draw` command produces:
+
+- **Harness drawings** per harness connector, one bundle per far item, each wire labelled with its gauge
+  (`RD:L05 · 22`), CAN pairs twisted and shielded. Wide harnesses are split by side or by function.
+- **"Continues at"** notes: every wire that ends on a splice, bus, breaker or another harness gets a short next-hop
+  note (`L05 → L04 (CB-ECU LOAD), L06 (X-BH 2) [1]`); the full continuation goes into a numbered footnote table and the cut list.
+- **Cut list** (CSV) and a **continuity / insulation test sheet** (CSV) between reachable terminals only (splices are
+  sleeved, so tests walk through them).
+- **index.html**: all drawings in one offline page with a wire-label search.
+
+![demo harness](docs/demo_X-BH.png)
 
 ## A project
 
@@ -89,8 +155,9 @@ its own column on export (`key:json` when it holds lists or numbers). Row-module
 Connector-half sides: give them in `schemagen.yml` (`sides: {X-BH: {Cabin half: near, Engine half: far}}`) or in the
 table's `from side` / `to side` columns. `near_words` is only a fallback, and every guess is reported as a warning.
 
-A *readable* wire list (display names, connector and pin merged into one text cell) is a view, not a source: it has
-lost the device codes and pin structure the net model needs. Export the structured rows instead.
+A *readable* wire list (display names, connector and pin merged into one text cell) is also accepted since 0.7: the
+importer in `importers/readable.py` parses the cells into devices, connectors and pins, and cells it cannot parse become
+findings (see [docs/readable.md](docs/readable.md)). The structured neutral table stays the lossless format.
 
 `schemagen.yml` (all keys optional except what your data needs; see [examples/demo/schemagen.yml](examples/demo/schemagen.yml)):
 
@@ -182,23 +249,13 @@ open / fail, `expect` `powered`, `max_drop_V`, `min_voltage`, `no_trip`); see `s
 `--faults all` shorts every powered node to ground and reports the prospective current, the device that trips first
 and when, wire survival (I²t, IEC 60364-4-43 k), the interrupt rating and selectivity. A design check, not certification evidence.
 
-## The app
+## The app's server
 
-`schemagen app <project>` starts a local server (127.0.0.1 only, no telemetry, assets bundled in the package) and
-opens the browser:
-
-- **Wires**: a virtualised table with dropdowns for gauge, function class and status, inline findings; edits are
-  saved as a change set in `changes/` (Undo removes the last one).
-- **Object pages** for every wire, pin, component, harness connector, harness, net and part: properties, links,
-  sources, findings and git history. **Ctrl K** searches every object.
-- **Net explorer**: click a pin and its net lights up in the table, the drawings (wire labels are clickable) and the
-  system graph.
-- **System graph**, **Drawings**, **Simulation** (scenario, bus voltage tree, breaker and wire loading, failing loads,
-  fault sweep), **Issues** (findings and open items, filters), **Changes & diff** (diff against a git revision,
-  direction-fix preview and apply).
-
-Frontend development: `cd frontend && npm ci && npm run dev` (proxies `/api` to a running `schemagen app`);
-`npm run build` writes `schemagen/app/static/`; `npx playwright test` runs the end-to-end tests.
+`schemagen app` starts a FastAPI server (127.0.0.1 only, no telemetry, assets bundled in the package) that serves the
+React + TypeScript frontend from `schemagen/app/static/`. The desktop window (`schemagen/desktop.py`) wraps the same
+server in a pywebview window. The endpoints the frontend uses are in [docs/api.md](docs/api.md). The endpoints of the
+0.5 multi-page app (`/api/index`, `/api/object`, `/api/graph`, `/api/sim/*`, `/api/drawings*`, `/api/diff`) are still
+served for tests and power users; the 1.0 frontend does not call them.
 
 ## Code map
 
@@ -208,13 +265,15 @@ Frontend development: `cd frontend && npm ci && npm run dev` (proxies `/api` to 
 | `core/config.py` | `schemagen.yml` → `Config` |
 | `core/load.py`, `core/build.py` | pick the importer, resolve labels / classes / sides, derive components and protection |
 | `core/net.py` | typed connectivity (union-find); breakers and switches are elements, not connections |
-| `importers/` | row modules, tables (XLSX / CSV / CSV folder / JSON), WireViz YAML, part cards |
+| `importers/` | row modules, tables (XLSX / CSV / CSV folder / JSON), the readable sheet, WireViz YAML, part cards |
 | `exporters/` | neutral table (workbook / CSV folder / CSV), JSON model, pinout, readable wire list, sheet template |
 | `core/rules.py`, `core/context.py`, `core/direction.py` | rules engine, shared analysis (pin types, protection regions, CAN buses), direction convention |
 | `core/changes.py`, `core/diff.py`, `core/ledger.py` | change sets, project diff (folders or git revisions), label ledger |
 | `core/tables.py`, `core/data/` | cited reference tables (protection, copper, CAN, simulation defaults) |
 | `renderers/` | interface drawings, the WireViz command runner (parallel batches) |
-| `app/server.py`, `frontend/` | the local app: FastAPI server and the React + TypeScript frontend (built into `app/static/`) |
+| `app/server.py`, `app/workspace.py`, `app/drawing.py`, `app/userdata.py`, `desktop.py`, `frontend/` | the local app: FastAPI server, the main screen and cards in one call, the card drawing (1.1, first version), per-user settings, the desktop window, and the React + TypeScript frontend (built into `app/static/`) |
+| `packaging/` | Windows installer: PyInstaller spec, Inno Setup script, `build.ps1`, smoke test, third-party notices |
+| `sim/overlay.py`, `core/fit.py` | the app's Simulate overlay (one status and reason per object); the one sentence for a wire that does not fit its protective device |
 | `sim/engine.py`, `sim/build.py`, `sim/api.py`, `sim/report.py` | MNA solver (Newton, relays, current limits), model → circuit with provenance, operating point / expectations / fault sweep, report and CLI |
 | `renderers/project.py`, `renderers/wirenet.py` | the loaded project as 0.2-style wire dicts and net queries, for the drawing code |
 | `drawing.py`, `outputs.py`, `cards.py`, `project.py`, `net.py`, `palette.py`, `config.py`, `table.py`, `styles.py` | 0.2 import paths, kept as re-exports |
@@ -226,6 +285,7 @@ Frontend development: `cd frontend && npm ci && npm run dev` (proxies `/api` to 
 
 ## Why WireViz 0.4.1 (and not Filare)
 
+This is about the current `draw` command; 1.1 plans its own drawing engine and makes WireViz optional (see above).
 Short version: WireViz renders everything this needs; Filare 1.6.0 (its fork) drops notes on simple nodes and
 wires without a length from the BOM, and does not install cleanly. Details in [docs/wireviz-evaluation.md](docs/wireviz-evaluation.md).
 The generator emits plain WireViz YAML, so the renderer stays replaceable.
@@ -233,4 +293,4 @@ The generator emits plain WireViz YAML, so the renderer stays replaceable.
 ## Licence
 
 MIT (see `LICENSE`). WireViz is GPL-3.0, so schemagen never imports it: it writes WireViz YAML and runs the separate
-`wireviz` command (a test checks this).
+`wireviz` command (a test checks this). The Windows installer does not contain WireViz or Graphviz (D72).

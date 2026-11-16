@@ -1,6 +1,60 @@
 # Changelog
 
-## 0.6.0 (unreleased)
+## 1.1.0 (in progress, branch dev/1.1)
+
+Real wiring drawings, made by schemagen itself (decision D106). Planned, not done: the drawing engine in
+`schemagen/drawing/` (geometry JSON, SVG in the app, SVG and PDF export, A3 / A4 sheets with a title block, a netlist
+round trip as the accuracy check) and WireViz as an optional extra instead of a hard dependency. On the branch so far
+(commit 0113927):
+
+- The map labels a line with its wire count ("6 wires"); a single wire shows its own label. Hovering a card lights its
+  power circuit. The per-wire menu on edges is gone.
+- The component card shows a drawing of each pin's run (`GET /api/drawing/{id}`, `?to=` for one line) instead of the
+  pin table. This first version is not the planned engine.
+- A line with several wires opens a connection card.
+- "Save as PDF" prints the card's drawing as a sheet with a title block.
+- Not yet verified: the Playwright suite and printing in the desktop window.
+
+## 1.0.0
+
+One screen, one idea: import a wire list, see the system, find what is wrong, simulate. Reviewed on branch dev/1.0.
+`pyproject.toml` went from 0.6.0 to 1.0.0; there was no separate 0.7 release.
+
+- **Main screen:** a start screen, drag-and-drop import, one block diagram of the whole system (components in power-flow
+  order, zones as blocks, bundles instead of wires, no overlapping edge labels), an Issues list in sentences grouped by
+  cause, and a compact Wires drawer. Light and designed dark theme, bundled Inter font, black-and-white bolt logo.
+- **Cards:** a popup card per component and per wire; read first (issues, then pins and wires), Edit reveals the fields.
+  Edits and rating changes are change sets. Adding or removing a card pins every position, so nothing jumps.
+- **Simulate:** one button draws the DC result on the cards: voltages, breaker and wire loading, a one-line reason per
+  object, a summary chip. A wire that carries more than its gauge allows is too small; one that carries less than
+  its breaker rating means the breaker is too big. A bus with loads and no source is never a pass.
+- **+ Source:** click a bus and add a battery; stored as a change set, removable.
+- **Quickstart tour:** eight steps on the example, advancing on the user's actions, skippable and replayable.
+- **Example project:** `examples/aircraft`, a fictional electric aircraft (121 wires, three deliberate mistakes).
+- **Desktop app and installer:** `schemagen/desktop.py` (pywebview window around the local server), PyInstaller onedir
+  build, per-user Inno Setup installer (`packaging/build.ps1`, CI workflow `installer.yml`). Not code-signed. The
+  installer contains no WireViz and no Graphviz (D72).
+- **API:** one `/api/workspace` call for the main screen, card endpoints, `/api/simulate`, `/api/sources`,
+  `/api/export`, one error shape, a session with recent projects (docs/api.md). The 0.5 endpoints remain.
+- **Export:** the checklist (one table per component with tick boxes, A4 print layout); harness drawings fail with a
+  plain message when Graphviz or WireViz is missing and leave nothing behind.
+- A file that is not a spreadsheet, or has no wires, gets a plain message.
+- Docs: `docs/api.md`, `docs/tour.md`, `docs/design-tokens.md`, `docs/review-notes.md`.
+
+## 0.7 (in the 1.0 line, never released on its own)
+
+- **Readable-sheet importer and exporter:** connector and pin grammar, device kinds from names (a Components tab
+  overrides), unparseable cells as findings, near-duplicate names, `schemagen export --readable`,
+  `schemagen synth --readable`, `schemagen fix names` (docs/readable.md).
+- **Fixes from running a real sheet:** CAN wires by name and CAN terminations after T-pieces or by jumper; no direction
+  for terminator leads, loops, E-STOP chains or returns through a harness; text such as TBD in number columns is
+  kept on the round trip; harness connectors keep the code their name carries; default harness sides.
+- **Drawings:** an item's interface drawing shows every wire on it; connector size from the name (D-sub 25, 12-pin);
+  Graphviz is found on PATH, `SCHEMAGEN_DOT` or the install folders.
+- **Workspace shell and system canvas** (React Flow, dagre): the base the 1.0 screen replaced.
+- `schemagen sim --infer` also finds sources by name ("14 V battery", "DC/DC converter").
+
+## 0.6.0
 
 Fixes from running 0.5 on a real wire list, and Windows support.
 
