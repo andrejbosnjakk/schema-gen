@@ -10,7 +10,7 @@ readme = "README.md"
 license = "MIT"
 requires-python = ">=3.10"
 # wireviz (GPL-3.0) is not a dependency: it is the optional extra [wireviz], run only as a separate command, never imported
-dependencies = ["pyyaml>=6", "pydantic>=2.5", "openpyxl>=3.1", "numpy>=1.24", "scipy>=1.10", "fastapi>=0.110", "uvicorn>=0.29", "python-multipart>=0.0.9"]
+dependencies = ["pyyaml>=6", "pydantic>=2.5", "openpyxl>=3.1", "numpy>=1.24", "scipy>=1.10", "fastapi>=0.110", "uvicorn>=0.29", "python-multipart>=0.0.9", "reportlab>=4"]
 
 [project.optional-dependencies]
 xlsx = []  # openpyxl is a core dependency since 0.3; kept so `schema-gen[xlsx]` still installs
@@ -25,7 +25,7 @@ schemagen = "schemagen.cli:main"
 include = ["schemagen*"]
 
 [tool.setuptools.package-data]
-schemagen = ["templates/*.html", "core/data/*.yml", "app/static/*.html", "app/static/assets/*"]
+schemagen = ["templates/*.html", "core/data/*.yml", "drawing/fonts/*", "app/static/*.html", "app/static/assets/*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
