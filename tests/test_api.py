@@ -191,7 +191,8 @@ def test_export_files(ac):
 def test_export_drawings(ac):
     c, _ = ac
     r = c.post("/api/export", json={"kind": "drawings"})
-    assert r.status_code == 200 and any(f.endswith((".svg", ".png")) for f in r.json()["files"])
+    assert r.status_code == 200, r.text
+    assert any(f.endswith((".svg", ".png")) for f in r.json()["files"])
 
 
 def test_export_drawings_without_graphviz(ac, monkeypatch):
