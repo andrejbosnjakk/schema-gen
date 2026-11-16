@@ -29,106 +29,106 @@
 <g data-model="component:SNS-D"><polygon points="365,155 400,155 398.75,157.5 400,160 398.75,162.5 400,165 398.75,167.5 400,170 398.75,172.5 400,175 398.75,177.5 400,180 398.75,182.5 400,185 398.75,187.5 400,190 398.75,192.5 400,195 365,195" fill="#fff" stroke="#000" stroke-width="0.35" stroke-linejoin="round"/><rect x="367.5" y="162.5" width="30" height="30" fill="#fff" stroke="#000" stroke-width="0.35"/><line x1="367.5" y1="167.5" x2="397.5" y2="167.5" fill="none" stroke="#000" stroke-width="0.18"/><line x1="365" y1="170" x2="367.5" y2="170" fill="none" stroke="#000" stroke-width="0.35"/><line x1="365" y1="175" x2="367.5" y2="175" fill="none" stroke="#000" stroke-width="0.35"/><line x1="365" y1="180" x2="367.5" y2="180" fill="none" stroke="#000" stroke-width="0.35"/><line x1="365" y1="185" x2="367.5" y2="185" fill="none" stroke="#000" stroke-width="0.35"/><line x1="365" y1="190" x2="367.5" y2="190" fill="none" stroke="#000" stroke-width="0.35"/></g>
 <g data-model="component:SNS-E"><polygon points="365,205 400,205 398.75,207.5 400,210 398.75,212.5 400,215 398.75,217.5 400,220 398.75,222.5 400,225 398.75,227.5 400,230 398.75,232.5 400,235 398.75,237.5 400,240 398.75,242.5 400,245 365,245" fill="#fff" stroke="#000" stroke-width="0.35" stroke-linejoin="round"/><rect x="367.5" y="212.5" width="30" height="30" fill="#fff" stroke="#000" stroke-width="0.35"/><line x1="367.5" y1="217.5" x2="397.5" y2="217.5" fill="none" stroke="#000" stroke-width="0.18"/><line x1="365" y1="220" x2="367.5" y2="220" fill="none" stroke="#000" stroke-width="0.35"/><line x1="365" y1="225" x2="367.5" y2="225" fill="none" stroke="#000" stroke-width="0.35"/><line x1="365" y1="230" x2="367.5" y2="230" fill="none" stroke="#000" stroke-width="0.35"/><line x1="365" y1="235" x2="367.5" y2="235" fill="none" stroke="#000" stroke-width="0.35"/><line x1="365" y1="240" x2="367.5" y2="240" fill="none" stroke="#000" stroke-width="0.35"/></g>
 <g data-model="connector:X-25"><rect x="195" y="55" width="50" height="140" fill="#fff" stroke="#000" stroke-width="0.35"/><line x1="195" y1="67.5" x2="245" y2="67.5" fill="none" stroke="#000" stroke-width="0.18"/><line x1="195" y1="61" x2="245" y2="61" fill="none" stroke="#000" stroke-width="0.18"/><line x1="220" y1="61" x2="220" y2="195" fill="none" stroke="#000" stroke-width="0.18"/></g>
-<polyline points="245,70 310,70 310,30 365,30" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:SIG-01-E"/>
-<polyline points="245,70 310,70 310,30 365,30" fill="none" stroke="#0066ff" stroke-width="0.245" stroke-linejoin="round"/>
-<polyline points="65,60 165,60 165,70 195,70" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:SIG-01-F"/>
-<polyline points="65,60 165,60 165,70 195,70" fill="none" stroke="#0066ff" stroke-width="0.245" stroke-linejoin="round"/>
-<polyline points="245,75 290,75 290,35 365,35" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:SIG-02-E"/>
-<polyline points="245,75 290,75 290,35 365,35" fill="none" stroke="#0066ff" stroke-width="0.245" stroke-linejoin="round"/>
-<polyline points="65,65 160,65 160,75 195,75" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:SIG-02-F"/>
-<polyline points="65,65 160,65 160,75 195,75" fill="none" stroke="#0066ff" stroke-width="0.245" stroke-linejoin="round"/>
-<polyline points="245,80 295,80 295,40 365,40" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:SIG-03-E"/>
-<polyline points="245,80 295,80 295,40 365,40" fill="none" stroke="#0066ff" stroke-width="0.245" stroke-linejoin="round"/>
-<polyline points="65,70 155,70 155,80 195,80" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:SIG-03-F"/>
-<polyline points="65,70 155,70 155,80 195,80" fill="none" stroke="#0066ff" stroke-width="0.245" stroke-linejoin="round"/>
-<polyline points="245,85 300,85 300,45 365,45" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:SIG-04-E"/>
-<polyline points="245,85 300,85 300,45 365,45" fill="none" stroke="#0066ff" stroke-width="0.245" stroke-linejoin="round"/>
-<polyline points="65,75 150,75 150,85 195,85" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:SIG-04-F"/>
-<polyline points="65,75 150,75 150,85 195,85" fill="none" stroke="#0066ff" stroke-width="0.245" stroke-linejoin="round"/>
-<polyline points="245,90 305,90 305,50 365,50" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:SIG-05-E"/>
-<polyline points="245,90 305,90 305,50 365,50" fill="none" stroke="#0066ff" stroke-width="0.245" stroke-linejoin="round"/>
-<polyline points="65,80 145,80 145,90 195,90" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:SIG-05-F"/>
-<polyline points="65,80 145,80 145,90 195,90" fill="none" stroke="#0066ff" stroke-width="0.245" stroke-linejoin="round"/>
-<polyline points="245,95 310,95 310,75 365,75" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:SIG-06-E"/>
-<polyline points="245,95 310,95 310,75 365,75" fill="none" stroke="#0066ff" stroke-width="0.245" stroke-linejoin="round"/>
-<polyline points="65,85 140,85 140,95 195,95" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:SIG-06-F"/>
-<polyline points="65,85 140,85 140,95 195,95" fill="none" stroke="#0066ff" stroke-width="0.245" stroke-linejoin="round"/>
-<polyline points="245,100 315,100 315,80 365,80" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:SIG-07-E"/>
-<polyline points="245,100 315,100 315,80 365,80" fill="none" stroke="#0066ff" stroke-width="0.245" stroke-linejoin="round"/>
-<polyline points="65,90 135,90 135,100 195,100" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:SIG-07-F"/>
-<polyline points="65,90 135,90 135,100 195,100" fill="none" stroke="#0066ff" stroke-width="0.245" stroke-linejoin="round"/>
-<polyline points="245,105 320,105 320,85 365,85" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:SIG-08-E"/>
-<polyline points="245,105 320,105 320,85 365,85" fill="none" stroke="#0066ff" stroke-width="0.245" stroke-linejoin="round"/>
-<polyline points="65,95 130,95 130,105 195,105" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:SIG-08-F"/>
-<polyline points="65,95 130,95 130,105 195,105" fill="none" stroke="#0066ff" stroke-width="0.245" stroke-linejoin="round"/>
-<polyline points="245,110 325,110 325,90 365,90" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:SIG-09-E"/>
-<polyline points="245,110 325,110 325,90 365,90" fill="none" stroke="#0066ff" stroke-width="0.245" stroke-linejoin="round"/>
-<polyline points="65,100 125,100 125,110 195,110" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:SIG-09-F"/>
-<polyline points="65,100 125,100 125,110 195,110" fill="none" stroke="#0066ff" stroke-width="0.245" stroke-linejoin="round"/>
-<polyline points="245,115 330,115 330,95 365,95" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:SIG-10-E"/>
-<polyline points="245,115 330,115 330,95 365,95" fill="none" stroke="#0066ff" stroke-width="0.245" stroke-linejoin="round"/>
-<polyline points="65,105 120,105 120,115 195,115" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:SIG-10-F"/>
-<polyline points="65,105 120,105 120,115 195,115" fill="none" stroke="#0066ff" stroke-width="0.245" stroke-linejoin="round"/>
-<polyline points="245,120 340,120 340,125 365,125" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:SIG-11-E"/>
-<polyline points="245,120 340,120 340,125 365,125" fill="none" stroke="#0066ff" stroke-width="0.245" stroke-linejoin="round"/>
-<polyline points="65,110 115,110 115,120 195,120" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:SIG-11-F"/>
-<polyline points="65,110 115,110 115,120 195,120" fill="none" stroke="#0066ff" stroke-width="0.245" stroke-linejoin="round"/>
-<polyline points="245,125 335,125 335,130 365,130" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:SIG-12-E"/>
-<polyline points="245,125 335,125 335,130 365,130" fill="none" stroke="#0066ff" stroke-width="0.245" stroke-linejoin="round"/>
-<polyline points="65,115 110,115 110,125 195,125" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:SIG-12-F"/>
-<polyline points="65,115 110,115 110,125 195,125" fill="none" stroke="#0066ff" stroke-width="0.245" stroke-linejoin="round"/>
-<polyline points="245,130 330,130 330,135 365,135" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:SIG-13-E"/>
-<polyline points="245,130 330,130 330,135 365,135" fill="none" stroke="#0066ff" stroke-width="0.245" stroke-linejoin="round"/>
-<polyline points="60,145 110,145 110,130 195,130" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:SIG-13-F"/>
-<polyline points="60,145 110,145 110,130 195,130" fill="none" stroke="#0066ff" stroke-width="0.245" stroke-linejoin="round"/>
-<polyline points="245,135 325,135 325,140 365,140" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:SIG-14-E"/>
-<polyline points="245,135 325,135 325,140 365,140" fill="none" stroke="#0066ff" stroke-width="0.245" stroke-linejoin="round"/>
-<polyline points="60,150 115,150 115,135 195,135" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:SIG-14-F"/>
-<polyline points="60,150 115,150 115,135 195,135" fill="none" stroke="#0066ff" stroke-width="0.245" stroke-linejoin="round"/>
-<polyline points="245,140 320,140 320,145 365,145" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:SIG-15-E"/>
-<polyline points="245,140 320,140 320,145 365,145" fill="none" stroke="#0066ff" stroke-width="0.245" stroke-linejoin="round"/>
-<polyline points="60,155 120,155 120,140 195,140" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:SIG-15-F"/>
-<polyline points="60,155 120,155 120,140 195,140" fill="none" stroke="#0066ff" stroke-width="0.245" stroke-linejoin="round"/>
-<polyline points="245,145 315,145 315,170 365,170" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:SIG-16-E"/>
-<polyline points="245,145 315,145 315,170 365,170" fill="none" stroke="#0066ff" stroke-width="0.245" stroke-linejoin="round"/>
-<polyline points="60,160 125,160 125,145 195,145" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:SIG-16-F"/>
-<polyline points="60,160 125,160 125,145 195,145" fill="none" stroke="#0066ff" stroke-width="0.245" stroke-linejoin="round"/>
-<polyline points="245,150 335,150 335,175 365,175" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:SIG-17-E"/>
-<polyline points="245,150 335,150 335,175 365,175" fill="none" stroke="#0066ff" stroke-width="0.245" stroke-linejoin="round"/>
-<polyline points="60,165 130,165 130,150 195,150" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:SIG-17-F"/>
-<polyline points="60,165 130,165 130,150 195,150" fill="none" stroke="#0066ff" stroke-width="0.245" stroke-linejoin="round"/>
-<polyline points="245,155 330,155 330,180 365,180" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:SIG-18-E"/>
-<polyline points="245,155 330,155 330,180 365,180" fill="none" stroke="#0066ff" stroke-width="0.245" stroke-linejoin="round"/>
-<polyline points="60,170 135,170 135,155 195,155" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:SIG-18-F"/>
-<polyline points="60,170 135,170 135,155 195,155" fill="none" stroke="#0066ff" stroke-width="0.245" stroke-linejoin="round"/>
-<polyline points="245,160 325,160 325,185 365,185" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:SIG-19-E"/>
-<polyline points="245,160 325,160 325,185 365,185" fill="none" stroke="#0066ff" stroke-width="0.245" stroke-linejoin="round"/>
-<polyline points="60,175 140,175 140,160 195,160" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:SIG-19-F"/>
-<polyline points="60,175 140,175 140,160 195,160" fill="none" stroke="#0066ff" stroke-width="0.245" stroke-linejoin="round"/>
-<polyline points="245,165 320,165 320,190 365,190" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:SIG-20-E"/>
-<polyline points="245,165 320,165 320,190 365,190" fill="none" stroke="#0066ff" stroke-width="0.245" stroke-linejoin="round"/>
-<polyline points="60,180 145,180 145,165 195,165" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:SIG-20-F"/>
-<polyline points="60,180 145,180 145,165 195,165" fill="none" stroke="#0066ff" stroke-width="0.245" stroke-linejoin="round"/>
-<polyline points="245,170 310,170 310,220 365,220" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:SIG-21-E"/>
-<polyline points="245,170 310,170 310,220 365,220" fill="none" stroke="#0066ff" stroke-width="0.245" stroke-linejoin="round"/>
-<polyline points="60,185 150,185 150,170 195,170" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:SIG-21-F"/>
-<polyline points="60,185 150,185 150,170 195,170" fill="none" stroke="#0066ff" stroke-width="0.245" stroke-linejoin="round"/>
-<polyline points="245,175 305,175 305,225 365,225" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:SIG-22-E"/>
-<polyline points="245,175 305,175 305,225 365,225" fill="none" stroke="#0066ff" stroke-width="0.245" stroke-linejoin="round"/>
-<polyline points="60,190 155,190 155,175 195,175" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:SIG-22-F"/>
-<polyline points="60,190 155,190 155,175 195,175" fill="none" stroke="#0066ff" stroke-width="0.245" stroke-linejoin="round"/>
-<polyline points="245,180 300,180 300,230 365,230" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:SIG-23-E"/>
-<polyline points="245,180 300,180 300,230 365,230" fill="none" stroke="#0066ff" stroke-width="0.245" stroke-linejoin="round"/>
-<polyline points="60,195 160,195 160,180 195,180" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:SIG-23-F"/>
-<polyline points="60,195 160,195 160,180 195,180" fill="none" stroke="#0066ff" stroke-width="0.245" stroke-linejoin="round"/>
-<polyline points="245,185 295,185 295,235 365,235" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:SIG-24-E"/>
-<polyline points="245,185 295,185 295,235 365,235" fill="none" stroke="#0066ff" stroke-width="0.245" stroke-linejoin="round"/>
-<polyline points="60,200 165,200 165,185 195,185" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:SIG-24-F"/>
-<polyline points="60,200 165,200 165,185 195,185" fill="none" stroke="#0066ff" stroke-width="0.245" stroke-linejoin="round"/>
-<polyline points="245,190 290,190 290,240 365,240" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:SIG-25-E"/>
-<polyline points="245,190 290,190 290,240 365,240" fill="none" stroke="#0066ff" stroke-width="0.245" stroke-linejoin="round"/>
-<polyline points="60,205 170,205 170,190 195,190" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:SIG-25-F"/>
-<polyline points="60,205 170,205 170,190 195,190" fill="none" stroke="#0066ff" stroke-width="0.245" stroke-linejoin="round"/>
+<polyline points="245,70 310,70 310,30 365,30" fill="none" stroke="#000" stroke-width="0.75" stroke-linejoin="round" data-model="conductor:SIG-01-E"/>
+<polyline points="245,70 310,70 310,30 365,30" fill="none" stroke="#0066ff" stroke-width="0.35" stroke-linejoin="round"/>
+<polyline points="65,60 165,60 165,70 195,70" fill="none" stroke="#000" stroke-width="0.75" stroke-linejoin="round" data-model="conductor:SIG-01-F"/>
+<polyline points="65,60 165,60 165,70 195,70" fill="none" stroke="#0066ff" stroke-width="0.35" stroke-linejoin="round"/>
+<polyline points="245,75 290,75 290,35 365,35" fill="none" stroke="#000" stroke-width="0.75" stroke-linejoin="round" data-model="conductor:SIG-02-E"/>
+<polyline points="245,75 290,75 290,35 365,35" fill="none" stroke="#0066ff" stroke-width="0.35" stroke-linejoin="round"/>
+<polyline points="65,65 160,65 160,75 195,75" fill="none" stroke="#000" stroke-width="0.75" stroke-linejoin="round" data-model="conductor:SIG-02-F"/>
+<polyline points="65,65 160,65 160,75 195,75" fill="none" stroke="#0066ff" stroke-width="0.35" stroke-linejoin="round"/>
+<polyline points="245,80 295,80 295,40 365,40" fill="none" stroke="#000" stroke-width="0.75" stroke-linejoin="round" data-model="conductor:SIG-03-E"/>
+<polyline points="245,80 295,80 295,40 365,40" fill="none" stroke="#0066ff" stroke-width="0.35" stroke-linejoin="round"/>
+<polyline points="65,70 155,70 155,80 195,80" fill="none" stroke="#000" stroke-width="0.75" stroke-linejoin="round" data-model="conductor:SIG-03-F"/>
+<polyline points="65,70 155,70 155,80 195,80" fill="none" stroke="#0066ff" stroke-width="0.35" stroke-linejoin="round"/>
+<polyline points="245,85 300,85 300,45 365,45" fill="none" stroke="#000" stroke-width="0.75" stroke-linejoin="round" data-model="conductor:SIG-04-E"/>
+<polyline points="245,85 300,85 300,45 365,45" fill="none" stroke="#0066ff" stroke-width="0.35" stroke-linejoin="round"/>
+<polyline points="65,75 150,75 150,85 195,85" fill="none" stroke="#000" stroke-width="0.75" stroke-linejoin="round" data-model="conductor:SIG-04-F"/>
+<polyline points="65,75 150,75 150,85 195,85" fill="none" stroke="#0066ff" stroke-width="0.35" stroke-linejoin="round"/>
+<polyline points="245,90 305,90 305,50 365,50" fill="none" stroke="#000" stroke-width="0.75" stroke-linejoin="round" data-model="conductor:SIG-05-E"/>
+<polyline points="245,90 305,90 305,50 365,50" fill="none" stroke="#0066ff" stroke-width="0.35" stroke-linejoin="round"/>
+<polyline points="65,80 145,80 145,90 195,90" fill="none" stroke="#000" stroke-width="0.75" stroke-linejoin="round" data-model="conductor:SIG-05-F"/>
+<polyline points="65,80 145,80 145,90 195,90" fill="none" stroke="#0066ff" stroke-width="0.35" stroke-linejoin="round"/>
+<polyline points="245,95 310,95 310,75 365,75" fill="none" stroke="#000" stroke-width="0.75" stroke-linejoin="round" data-model="conductor:SIG-06-E"/>
+<polyline points="245,95 310,95 310,75 365,75" fill="none" stroke="#0066ff" stroke-width="0.35" stroke-linejoin="round"/>
+<polyline points="65,85 140,85 140,95 195,95" fill="none" stroke="#000" stroke-width="0.75" stroke-linejoin="round" data-model="conductor:SIG-06-F"/>
+<polyline points="65,85 140,85 140,95 195,95" fill="none" stroke="#0066ff" stroke-width="0.35" stroke-linejoin="round"/>
+<polyline points="245,100 315,100 315,80 365,80" fill="none" stroke="#000" stroke-width="0.75" stroke-linejoin="round" data-model="conductor:SIG-07-E"/>
+<polyline points="245,100 315,100 315,80 365,80" fill="none" stroke="#0066ff" stroke-width="0.35" stroke-linejoin="round"/>
+<polyline points="65,90 135,90 135,100 195,100" fill="none" stroke="#000" stroke-width="0.75" stroke-linejoin="round" data-model="conductor:SIG-07-F"/>
+<polyline points="65,90 135,90 135,100 195,100" fill="none" stroke="#0066ff" stroke-width="0.35" stroke-linejoin="round"/>
+<polyline points="245,105 320,105 320,85 365,85" fill="none" stroke="#000" stroke-width="0.75" stroke-linejoin="round" data-model="conductor:SIG-08-E"/>
+<polyline points="245,105 320,105 320,85 365,85" fill="none" stroke="#0066ff" stroke-width="0.35" stroke-linejoin="round"/>
+<polyline points="65,95 130,95 130,105 195,105" fill="none" stroke="#000" stroke-width="0.75" stroke-linejoin="round" data-model="conductor:SIG-08-F"/>
+<polyline points="65,95 130,95 130,105 195,105" fill="none" stroke="#0066ff" stroke-width="0.35" stroke-linejoin="round"/>
+<polyline points="245,110 325,110 325,90 365,90" fill="none" stroke="#000" stroke-width="0.75" stroke-linejoin="round" data-model="conductor:SIG-09-E"/>
+<polyline points="245,110 325,110 325,90 365,90" fill="none" stroke="#0066ff" stroke-width="0.35" stroke-linejoin="round"/>
+<polyline points="65,100 125,100 125,110 195,110" fill="none" stroke="#000" stroke-width="0.75" stroke-linejoin="round" data-model="conductor:SIG-09-F"/>
+<polyline points="65,100 125,100 125,110 195,110" fill="none" stroke="#0066ff" stroke-width="0.35" stroke-linejoin="round"/>
+<polyline points="245,115 330,115 330,95 365,95" fill="none" stroke="#000" stroke-width="0.75" stroke-linejoin="round" data-model="conductor:SIG-10-E"/>
+<polyline points="245,115 330,115 330,95 365,95" fill="none" stroke="#0066ff" stroke-width="0.35" stroke-linejoin="round"/>
+<polyline points="65,105 120,105 120,115 195,115" fill="none" stroke="#000" stroke-width="0.75" stroke-linejoin="round" data-model="conductor:SIG-10-F"/>
+<polyline points="65,105 120,105 120,115 195,115" fill="none" stroke="#0066ff" stroke-width="0.35" stroke-linejoin="round"/>
+<polyline points="245,120 340,120 340,125 365,125" fill="none" stroke="#000" stroke-width="0.75" stroke-linejoin="round" data-model="conductor:SIG-11-E"/>
+<polyline points="245,120 340,120 340,125 365,125" fill="none" stroke="#0066ff" stroke-width="0.35" stroke-linejoin="round"/>
+<polyline points="65,110 115,110 115,120 195,120" fill="none" stroke="#000" stroke-width="0.75" stroke-linejoin="round" data-model="conductor:SIG-11-F"/>
+<polyline points="65,110 115,110 115,120 195,120" fill="none" stroke="#0066ff" stroke-width="0.35" stroke-linejoin="round"/>
+<polyline points="245,125 335,125 335,130 365,130" fill="none" stroke="#000" stroke-width="0.75" stroke-linejoin="round" data-model="conductor:SIG-12-E"/>
+<polyline points="245,125 335,125 335,130 365,130" fill="none" stroke="#0066ff" stroke-width="0.35" stroke-linejoin="round"/>
+<polyline points="65,115 110,115 110,125 195,125" fill="none" stroke="#000" stroke-width="0.75" stroke-linejoin="round" data-model="conductor:SIG-12-F"/>
+<polyline points="65,115 110,115 110,125 195,125" fill="none" stroke="#0066ff" stroke-width="0.35" stroke-linejoin="round"/>
+<polyline points="245,130 330,130 330,135 365,135" fill="none" stroke="#000" stroke-width="0.75" stroke-linejoin="round" data-model="conductor:SIG-13-E"/>
+<polyline points="245,130 330,130 330,135 365,135" fill="none" stroke="#0066ff" stroke-width="0.35" stroke-linejoin="round"/>
+<polyline points="60,145 110,145 110,130 195,130" fill="none" stroke="#000" stroke-width="0.75" stroke-linejoin="round" data-model="conductor:SIG-13-F"/>
+<polyline points="60,145 110,145 110,130 195,130" fill="none" stroke="#0066ff" stroke-width="0.35" stroke-linejoin="round"/>
+<polyline points="245,135 325,135 325,140 365,140" fill="none" stroke="#000" stroke-width="0.75" stroke-linejoin="round" data-model="conductor:SIG-14-E"/>
+<polyline points="245,135 325,135 325,140 365,140" fill="none" stroke="#0066ff" stroke-width="0.35" stroke-linejoin="round"/>
+<polyline points="60,150 115,150 115,135 195,135" fill="none" stroke="#000" stroke-width="0.75" stroke-linejoin="round" data-model="conductor:SIG-14-F"/>
+<polyline points="60,150 115,150 115,135 195,135" fill="none" stroke="#0066ff" stroke-width="0.35" stroke-linejoin="round"/>
+<polyline points="245,140 320,140 320,145 365,145" fill="none" stroke="#000" stroke-width="0.75" stroke-linejoin="round" data-model="conductor:SIG-15-E"/>
+<polyline points="245,140 320,140 320,145 365,145" fill="none" stroke="#0066ff" stroke-width="0.35" stroke-linejoin="round"/>
+<polyline points="60,155 120,155 120,140 195,140" fill="none" stroke="#000" stroke-width="0.75" stroke-linejoin="round" data-model="conductor:SIG-15-F"/>
+<polyline points="60,155 120,155 120,140 195,140" fill="none" stroke="#0066ff" stroke-width="0.35" stroke-linejoin="round"/>
+<polyline points="245,145 315,145 315,170 365,170" fill="none" stroke="#000" stroke-width="0.75" stroke-linejoin="round" data-model="conductor:SIG-16-E"/>
+<polyline points="245,145 315,145 315,170 365,170" fill="none" stroke="#0066ff" stroke-width="0.35" stroke-linejoin="round"/>
+<polyline points="60,160 125,160 125,145 195,145" fill="none" stroke="#000" stroke-width="0.75" stroke-linejoin="round" data-model="conductor:SIG-16-F"/>
+<polyline points="60,160 125,160 125,145 195,145" fill="none" stroke="#0066ff" stroke-width="0.35" stroke-linejoin="round"/>
+<polyline points="245,150 335,150 335,175 365,175" fill="none" stroke="#000" stroke-width="0.75" stroke-linejoin="round" data-model="conductor:SIG-17-E"/>
+<polyline points="245,150 335,150 335,175 365,175" fill="none" stroke="#0066ff" stroke-width="0.35" stroke-linejoin="round"/>
+<polyline points="60,165 130,165 130,150 195,150" fill="none" stroke="#000" stroke-width="0.75" stroke-linejoin="round" data-model="conductor:SIG-17-F"/>
+<polyline points="60,165 130,165 130,150 195,150" fill="none" stroke="#0066ff" stroke-width="0.35" stroke-linejoin="round"/>
+<polyline points="245,155 330,155 330,180 365,180" fill="none" stroke="#000" stroke-width="0.75" stroke-linejoin="round" data-model="conductor:SIG-18-E"/>
+<polyline points="245,155 330,155 330,180 365,180" fill="none" stroke="#0066ff" stroke-width="0.35" stroke-linejoin="round"/>
+<polyline points="60,170 135,170 135,155 195,155" fill="none" stroke="#000" stroke-width="0.75" stroke-linejoin="round" data-model="conductor:SIG-18-F"/>
+<polyline points="60,170 135,170 135,155 195,155" fill="none" stroke="#0066ff" stroke-width="0.35" stroke-linejoin="round"/>
+<polyline points="245,160 325,160 325,185 365,185" fill="none" stroke="#000" stroke-width="0.75" stroke-linejoin="round" data-model="conductor:SIG-19-E"/>
+<polyline points="245,160 325,160 325,185 365,185" fill="none" stroke="#0066ff" stroke-width="0.35" stroke-linejoin="round"/>
+<polyline points="60,175 140,175 140,160 195,160" fill="none" stroke="#000" stroke-width="0.75" stroke-linejoin="round" data-model="conductor:SIG-19-F"/>
+<polyline points="60,175 140,175 140,160 195,160" fill="none" stroke="#0066ff" stroke-width="0.35" stroke-linejoin="round"/>
+<polyline points="245,165 320,165 320,190 365,190" fill="none" stroke="#000" stroke-width="0.75" stroke-linejoin="round" data-model="conductor:SIG-20-E"/>
+<polyline points="245,165 320,165 320,190 365,190" fill="none" stroke="#0066ff" stroke-width="0.35" stroke-linejoin="round"/>
+<polyline points="60,180 145,180 145,165 195,165" fill="none" stroke="#000" stroke-width="0.75" stroke-linejoin="round" data-model="conductor:SIG-20-F"/>
+<polyline points="60,180 145,180 145,165 195,165" fill="none" stroke="#0066ff" stroke-width="0.35" stroke-linejoin="round"/>
+<polyline points="245,170 310,170 310,220 365,220" fill="none" stroke="#000" stroke-width="0.75" stroke-linejoin="round" data-model="conductor:SIG-21-E"/>
+<polyline points="245,170 310,170 310,220 365,220" fill="none" stroke="#0066ff" stroke-width="0.35" stroke-linejoin="round"/>
+<polyline points="60,185 150,185 150,170 195,170" fill="none" stroke="#000" stroke-width="0.75" stroke-linejoin="round" data-model="conductor:SIG-21-F"/>
+<polyline points="60,185 150,185 150,170 195,170" fill="none" stroke="#0066ff" stroke-width="0.35" stroke-linejoin="round"/>
+<polyline points="245,175 305,175 305,225 365,225" fill="none" stroke="#000" stroke-width="0.75" stroke-linejoin="round" data-model="conductor:SIG-22-E"/>
+<polyline points="245,175 305,175 305,225 365,225" fill="none" stroke="#0066ff" stroke-width="0.35" stroke-linejoin="round"/>
+<polyline points="60,190 155,190 155,175 195,175" fill="none" stroke="#000" stroke-width="0.75" stroke-linejoin="round" data-model="conductor:SIG-22-F"/>
+<polyline points="60,190 155,190 155,175 195,175" fill="none" stroke="#0066ff" stroke-width="0.35" stroke-linejoin="round"/>
+<polyline points="245,180 300,180 300,230 365,230" fill="none" stroke="#000" stroke-width="0.75" stroke-linejoin="round" data-model="conductor:SIG-23-E"/>
+<polyline points="245,180 300,180 300,230 365,230" fill="none" stroke="#0066ff" stroke-width="0.35" stroke-linejoin="round"/>
+<polyline points="60,195 160,195 160,180 195,180" fill="none" stroke="#000" stroke-width="0.75" stroke-linejoin="round" data-model="conductor:SIG-23-F"/>
+<polyline points="60,195 160,195 160,180 195,180" fill="none" stroke="#0066ff" stroke-width="0.35" stroke-linejoin="round"/>
+<polyline points="245,185 295,185 295,235 365,235" fill="none" stroke="#000" stroke-width="0.75" stroke-linejoin="round" data-model="conductor:SIG-24-E"/>
+<polyline points="245,185 295,185 295,235 365,235" fill="none" stroke="#0066ff" stroke-width="0.35" stroke-linejoin="round"/>
+<polyline points="60,200 165,200 165,185 195,185" fill="none" stroke="#000" stroke-width="0.75" stroke-linejoin="round" data-model="conductor:SIG-24-F"/>
+<polyline points="60,200 165,200 165,185 195,185" fill="none" stroke="#0066ff" stroke-width="0.35" stroke-linejoin="round"/>
+<polyline points="245,190 290,190 290,240 365,240" fill="none" stroke="#000" stroke-width="0.75" stroke-linejoin="round" data-model="conductor:SIG-25-E"/>
+<polyline points="245,190 290,190 290,240 365,240" fill="none" stroke="#0066ff" stroke-width="0.35" stroke-linejoin="round"/>
+<polyline points="60,205 170,205 170,190 195,190" fill="none" stroke="#000" stroke-width="0.75" stroke-linejoin="round" data-model="conductor:SIG-25-F"/>
+<polyline points="60,205 170,205 170,190 195,190" fill="none" stroke="#0066ff" stroke-width="0.35" stroke-linejoin="round"/>
 <text x="17.5" y="135" font-size="3.436" text-anchor="start" font-weight="600" data-model="component:ACU">ACU</text>
 <text x="27.3" y="135" font-size="3.436" text-anchor="start" data-model="component:ACU">aux control unit</text>
 <text x="19" y="141.25" font-size="3.436" text-anchor="start" font-weight="600" data-model="component:ACU">J1</text>

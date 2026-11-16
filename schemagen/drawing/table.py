@@ -9,6 +9,7 @@ from typing import Any
 from ..app.workspace import _natural
 from ..exporters.palette import words as colour_words
 from . import symbols as S
+from .route import unit
 from .style import SIZE, areas, fit
 
 Elem = dict[str, Any]
@@ -77,7 +78,7 @@ def draw(lines: list[tuple[str, Any]], size: str, y: float) -> tuple[list[Elem],
         if kind == "head": t(v, 1, cy, "head"); continue
         rules.append(dict(kind="rect", stroke="thin", fill="none", x=ax + 1, y=cy - 1.25, w=2.5, h=2.5))
         t(v["label"], 1, cy, w=COLS[2] - COLS[1] - 1)
-        t(" ".join(x for x in (f"{v['gauge']} AWG" if v["gauge"] else "", colour_words(v["colour"])) if x), 2, cy, w=COLS[3] - COLS[2] - 1)
+        t(" ".join(x for x in (unit(v["gauge"]), colour_words(v["colour"])) if x), 2, cy, w=COLS[3] - COLS[2] - 1)
         t(v["frm"], 3, cy, w=WIDTH - 2)
         t(v["to"], 4, cy, w=WIDTH)
     return rules, texts

@@ -168,7 +168,7 @@ def test_svg_is_deterministic_and_well_formed() -> None:
     root = ET.fromstring(a)
     assert root.tag.endswith("svg") and root.get("viewBox") == "0 0 420 297"
     assert 'data-model="component:ECU"' in a and 'data-model="conductor:W001"' in a
-    assert re.search(r"<polyline[^>]*stroke-width=\"0.9\"", a)   # the heavy wire
+    assert re.search(r"<polyline[^>]*stroke-width=\"1.1\"", a)   # the heavy wire
     assert "<text" in a and "Inter" in a
     assert svg(symbol_sheet(), 1) != a and svg(symbol_sheet(), 0, colour=False) != a
     assert "font-face" in svg(symbol_sheet(), 0, embed_font=True)

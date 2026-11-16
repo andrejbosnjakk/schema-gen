@@ -253,8 +253,8 @@ def place(page: Elem, size: str = "A3", fside: dict[str, str] | None = None, spr
     wrongside = {f["id"]: nodes[owner[f["at"]]].act[k] for f, k in ((f, f["at"]) for f in page["flags"]) if k in nodes[owner[f["at"]]].act
                  and nodes[owner[f["at"]]].act[k] != ("R" if nodes[f["id"]].col > nodes[owner[f["at"]]].col else "L")}
     if wrongside: return place(page, size, dict(fside or {}, **wrongside), spread, reserve)   # a flag on the side where the symbol's terminal is not
-    ring = [w for w, ns, k0, k1, rev in paths if w in page["wires"] and any(m.act.get(k, "") not in ("", "R" if o.col > m.col else "L") for m, k, o in ((ns[0], k0, ns[-1]), (ns[-1], k1, ns[0])))]  # noqa: E501
-    if ring:   # a wire that would have to run back through a symbol (a loop in the wiring): two off-sheet flags instead, each naming the other end
+    ring = [w for w, ns, k0, k1, rev in paths if w in page["wires"] and (owner[w["a"]] == owner[w["b"]] or any(m.act.get(k, "") not in ("", "R" if o.col > m.col else "L") for m, k, o in ((ns[0], k0, ns[-1]), (ns[-1], k1, ns[0]))))]  # noqa: E501
+    if ring:   # a wire that would have to run back through a symbol (a loop in the wiring, or both ends on one part): two off-sheet flags, each naming the other end
         ids = {w["id"] for w in ring}
         stubs: list[Elem] = [dict(id=f"flag:{w['id']}:{e}", model=w["model"], kind="off_sheet", at=at, target=to, target_item="", text="→ " + _words(page, to), label=w["label"], gauge=w["gauge"],  # noqa: E501
                    colour=w["colour"], hex=w["hex"], cls=w["cls"], weight=w["weight"], stub=e) for w in ring for e, at, to in ((1, w["a"], w["b"]), (2, w["b"], w["a"]))]  # noqa: E501
@@ -596,7 +596,7 @@ def notes(pg: Elem, sh: Elem, table: str = "") -> list[str]:
     els = [*pg["wires"], *pg["flags"], *(c for f in pg["flags"] for c in f.get("covers", []))]
     ex = next((w for w in pg["wires"] if w["gauge"] and w["colour"]), None) or next((w for w in els if w["gauge"] and w["colour"]), None)
     out = []
-    if ex: out.append(f"Wire text {R.label_text(ex)} = wire {ex['label']}, {ex['gauge']} AWG, {colour_words(ex['colour'])}.")
+    if ex: out.append(f"Wire text {R.label_text(ex)} = wire {ex['label']}, {R.unit(ex['gauge'])}, {colour_words(ex['colour'])}.")
     codes = sorted({w["colour"] for w in els if w["colour"]})
     cur = "Colours:"
     for c in codes:

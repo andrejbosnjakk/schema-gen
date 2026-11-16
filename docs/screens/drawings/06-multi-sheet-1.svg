@@ -39,36 +39,36 @@
 <g data-model="component:SP-CAN1-L-SPLICE-PANEL"><line x1="240" y1="97.5" x2="240" y2="107.5" fill="none" stroke="#000" stroke-width="0.35"/><line x1="240" y1="100" x2="215" y2="100" fill="none" stroke="#000" stroke-width="0.35"/><circle cx="240" cy="100" r="0.9" fill="#000" stroke="#000" stroke-width="0.35"/><line x1="240" y1="100" x2="265" y2="100" fill="none" stroke="#000" stroke-width="0.35"/><circle cx="240" cy="100" r="0.9" fill="#000" stroke="#000" stroke-width="0.35"/><line x1="240" y1="105" x2="265" y2="105" fill="none" stroke="#000" stroke-width="0.35"/><circle cx="240" cy="105" r="0.9" fill="#000" stroke="#000" stroke-width="0.35"/></g>
 <g data-model="component:TRANSPONDER"><polygon points="215,170 250,170 248.75,172.5 250,175 248.75,177.5 250,180 248.75,182.5 250,185 248.75,187.5 250,190 215,190" fill="#fff" stroke="#000" stroke-width="0.35" stroke-linejoin="round"/><rect x="217.5" y="177.5" width="30" height="10" fill="#fff" stroke="#000" stroke-width="0.35"/><line x1="217.5" y1="182.5" x2="247.5" y2="182.5" fill="none" stroke="#000" stroke-width="0.18"/><line x1="215" y1="185" x2="217.5" y2="185" fill="none" stroke="#000" stroke-width="0.35"/></g>
 <g data-model="connector:X-WR"><rect x="215" y="205" width="55" height="25" fill="#fff" stroke="#000" stroke-width="0.35"/><line x1="215" y1="217.5" x2="270" y2="217.5" fill="none" stroke="#000" stroke-width="0.18"/><line x1="215" y1="211" x2="270" y2="211" fill="none" stroke="#000" stroke-width="0.18"/><line x1="242.5" y1="211" x2="242.5" y2="230" fill="none" stroke="#000" stroke-width="0.18"/></g>
-<polyline points="35,95 75,95 75,90 95,90" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:W051"/>
-<polyline points="35,95 75,95 75,90 95,90" fill="none" stroke="#ff0000" stroke-width="0.245" stroke-linejoin="round"/>
-<polyline points="135,95 185,95 185,25 215,25" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:W052"/>
-<polyline points="135,95 185,95 185,25 215,25" fill="none" stroke="#000000" stroke-width="0.245" stroke-linejoin="round"/>
-<polyline points="135,120 195,120 195,185 215,185" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:W061"/>
-<polyline points="135,120 195,120 195,185 215,185" fill="none" stroke="#0066ff" stroke-width="0.245" stroke-linejoin="round"/>
-<polyline points="215,145 190,145 190,125 135,125" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:W066"/>
-<polyline points="215,145 190,145 190,125 135,125" fill="none" stroke="#0066ff" stroke-width="0.245" stroke-linejoin="round"/>
-<polyline points="215,220 185,220 185,130 135,130" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:W068"/>
-<polyline points="215,220 185,220 185,130 135,130" fill="none" stroke="#0066ff" stroke-width="0.245" stroke-linejoin="round"/>
-<polyline points="215,225 180,225 180,135 135,135" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:W070"/>
-<polyline points="215,225 180,225 180,135 135,135" fill="none" stroke="#0066ff" stroke-width="0.245" stroke-linejoin="round"/>
-<polyline points="215,65 180,65 180,100 135,100" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:W100"/>
-<polyline points="215,65 180,65 180,100 135,100" fill="none" stroke="#00ff00" stroke-width="0.245" stroke-linejoin="round"/>
-<polyline points="215,100 185,100 185,105 135,105" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:W107"/>
-<polyline points="215,100 185,100 185,105 135,105" fill="none" stroke="#00ff00" stroke-width="0.245" stroke-linejoin="round"/>
-<polyline points="270,220 315,220 315,215 340,215" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:W067"/>
-<polyline points="270,220 315,220 315,215 340,215" fill="none" stroke="#0066ff" stroke-width="0.245" stroke-linejoin="round"/>
-<polyline points="270,225 315,225 315,240 340,240" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:W069"/>
-<polyline points="270,225 315,225 315,240 340,240" fill="none" stroke="#0066ff" stroke-width="0.245" stroke-linejoin="round"/>
-<polyline points="265,65 315,65 315,60 340,60" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:W099"/>
-<polyline points="265,65 315,65 315,60 340,60" fill="none" stroke="#00ff00" stroke-width="0.245" stroke-linejoin="round"/>
-<polyline points="265,70 315,70 315,80 340,80" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:W101"/>
-<polyline points="265,70 315,70 315,80 340,80" fill="none" stroke="#00ff00" stroke-width="0.245" stroke-linejoin="round"/>
-<polyline points="265,100 320,100 320,105 340,105" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:W106"/>
-<polyline points="265,100 320,100 320,105 340,105" fill="none" stroke="#00ff00" stroke-width="0.245" stroke-linejoin="round"/>
-<polyline points="265,105 315,105 315,125 340,125" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:W108"/>
-<polyline points="265,105 315,105 315,125 340,125" fill="none" stroke="#00ff00" stroke-width="0.245" stroke-linejoin="round"/>
-<polyline points="255,25 340,25" fill="none" stroke="#000" stroke-width="0.9" stroke-linejoin="round" data-model="conductor:W007"/>
-<polyline points="255,25 340,25" fill="none" stroke="#000000" stroke-width="0.49" stroke-linejoin="round"/>
+<polyline points="35,95 75,95 75,90 95,90" fill="none" stroke="#000" stroke-width="0.75" stroke-linejoin="round" data-model="conductor:W051"/>
+<polyline points="35,95 75,95 75,90 95,90" fill="none" stroke="#ff0000" stroke-width="0.35" stroke-linejoin="round"/>
+<polyline points="135,95 185,95 185,25 215,25" fill="none" stroke="#000" stroke-width="0.75" stroke-linejoin="round" data-model="conductor:W052"/>
+<polyline points="135,95 185,95 185,25 215,25" fill="none" stroke="#000000" stroke-width="0.35" stroke-linejoin="round"/>
+<polyline points="135,120 195,120 195,185 215,185" fill="none" stroke="#000" stroke-width="0.75" stroke-linejoin="round" data-model="conductor:W061"/>
+<polyline points="135,120 195,120 195,185 215,185" fill="none" stroke="#0066ff" stroke-width="0.35" stroke-linejoin="round"/>
+<polyline points="215,145 190,145 190,125 135,125" fill="none" stroke="#000" stroke-width="0.75" stroke-linejoin="round" data-model="conductor:W066"/>
+<polyline points="215,145 190,145 190,125 135,125" fill="none" stroke="#0066ff" stroke-width="0.35" stroke-linejoin="round"/>
+<polyline points="215,220 185,220 185,130 135,130" fill="none" stroke="#000" stroke-width="0.75" stroke-linejoin="round" data-model="conductor:W068"/>
+<polyline points="215,220 185,220 185,130 135,130" fill="none" stroke="#0066ff" stroke-width="0.35" stroke-linejoin="round"/>
+<polyline points="215,225 180,225 180,135 135,135" fill="none" stroke="#000" stroke-width="0.75" stroke-linejoin="round" data-model="conductor:W070"/>
+<polyline points="215,225 180,225 180,135 135,135" fill="none" stroke="#0066ff" stroke-width="0.35" stroke-linejoin="round"/>
+<polyline points="215,65 180,65 180,100 135,100" fill="none" stroke="#000" stroke-width="0.75" stroke-linejoin="round" data-model="conductor:W100"/>
+<polyline points="215,65 180,65 180,100 135,100" fill="none" stroke="#00ff00" stroke-width="0.35" stroke-linejoin="round"/>
+<polyline points="215,100 185,100 185,105 135,105" fill="none" stroke="#000" stroke-width="0.75" stroke-linejoin="round" data-model="conductor:W107"/>
+<polyline points="215,100 185,100 185,105 135,105" fill="none" stroke="#00ff00" stroke-width="0.35" stroke-linejoin="round"/>
+<polyline points="270,220 315,220 315,215 340,215" fill="none" stroke="#000" stroke-width="0.75" stroke-linejoin="round" data-model="conductor:W067"/>
+<polyline points="270,220 315,220 315,215 340,215" fill="none" stroke="#0066ff" stroke-width="0.35" stroke-linejoin="round"/>
+<polyline points="270,225 315,225 315,240 340,240" fill="none" stroke="#000" stroke-width="0.75" stroke-linejoin="round" data-model="conductor:W069"/>
+<polyline points="270,225 315,225 315,240 340,240" fill="none" stroke="#0066ff" stroke-width="0.35" stroke-linejoin="round"/>
+<polyline points="265,65 315,65 315,60 340,60" fill="none" stroke="#000" stroke-width="0.75" stroke-linejoin="round" data-model="conductor:W099"/>
+<polyline points="265,65 315,65 315,60 340,60" fill="none" stroke="#00ff00" stroke-width="0.35" stroke-linejoin="round"/>
+<polyline points="265,70 315,70 315,80 340,80" fill="none" stroke="#000" stroke-width="0.75" stroke-linejoin="round" data-model="conductor:W101"/>
+<polyline points="265,70 315,70 315,80 340,80" fill="none" stroke="#00ff00" stroke-width="0.35" stroke-linejoin="round"/>
+<polyline points="265,100 320,100 320,105 340,105" fill="none" stroke="#000" stroke-width="0.75" stroke-linejoin="round" data-model="conductor:W106"/>
+<polyline points="265,100 320,100 320,105 340,105" fill="none" stroke="#00ff00" stroke-width="0.35" stroke-linejoin="round"/>
+<polyline points="265,105 315,105 315,125 340,125" fill="none" stroke="#000" stroke-width="0.75" stroke-linejoin="round" data-model="conductor:W108"/>
+<polyline points="265,105 315,105 315,125 340,125" fill="none" stroke="#00ff00" stroke-width="0.35" stroke-linejoin="round"/>
+<polyline points="255,25 340,25" fill="none" stroke="#000" stroke-width="1.1" stroke-linejoin="round" data-model="conductor:W007"/>
+<polyline points="255,25 340,25" fill="none" stroke="#000000" stroke-width="0.7" stroke-linejoin="round"/>
 <g data-model="conductor:W067"><rect x="340" y="210" width="50" height="10" fill="#fff" stroke="#000" stroke-width="0.35"/><line x1="347.5" y1="210" x2="347.5" y2="220" fill="none" stroke="#000" stroke-width="0.18"/></g>
 <text x="343.75" y="216.25" font-size="3.436" text-anchor="middle" font-weight="600" data-model="conductor:W067">2</text>
 <text x="368.75" y="214" font-size="3.436" text-anchor="middle" font-weight="600" data-model="conductor:W067">continues on sheet 2:</text>

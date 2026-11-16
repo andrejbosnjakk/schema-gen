@@ -214,3 +214,11 @@ has no such data); the reference drawings are in `docs/screens/drawings/` (golde
 - Wires are drawn in their colour (`hex`) inside a black casing, in the app, the SVG and the PDF; the code text stays, so a black-and-white print reads the same.
 - Flag text is plain words: an off-sheet flag `to X-FW cockpit side 11`, a continuation `continues on sheet 2: X-FW cockpit side 11`; the contract's `text` still
   holds the long form. A terminal of a part that is not in scope and has no wire on the sheet has a dashed lead (a stub that cannot be taken for a wire).
+
+## Rules the checks enforce (`checks.report`)
+
+`wire_through_symbol`: no wire segment enters the interior of any symbol or flag (the wire's own end symbol included; a wire reaches its anchor from outside).
+`wire_overlaps`: two different conductors never share a collinear stretch (stubs of one conductor may). `gauge_unit`: a gauge is a plain number and the unit appears
+once in any text (the scene strips a `AWG` the sheet already wrote; a gauge that is not a number, such as `TBD`, is printed as written). Label overlaps are
+`text_overlaps`, `text_symbol_overlaps` and `wire_text_overlaps`. A wire whose two ends are on one component is drawn as two off-sheet flags, each naming the other
+end. The in-line symbols of two terminals (breaker, fuse, terminator, battery) are used only for parts that list at most two terminals; others are blocks.

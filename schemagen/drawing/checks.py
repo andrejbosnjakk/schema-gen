@@ -116,22 +116,18 @@ def text_symbol_overlaps(g: Geometry) -> list[Finding]:
 
 
 def wire_through_symbol(g: Geometry) -> list[Finding]:
-    """Wire segments through the interior of a symbol or flag, except the end segment of a wire on its own end symbol/flag."""
+    """Wire segments through the interior of any symbol or flag, the wire's own end symbol included: a wire reaches its anchor on the edge from outside."""
     out: list[Finding] = []
     for sh in g["sheets"]:
         syms, flags = sh.get("symbols", []), sh.get("flags", [])
-        owner = {a["id"]: s["id"] for s in syms for a in s.get("anchors", [])}
         grid = _Grid()
         boxes = [*syms, *flags]
         for k, b in enumerate(boxes): grid.add(k, *_box(b))
         for s in _segs(sh):
             w, k = s[0], s[1]
-            last = len(w["points"]) - 2
-            own = {w.get("a"), owner.get(w.get("a"))} if k == 0 else set()
-            if k == last: own |= {w.get("b"), owner.get(w.get("b"))}
             for j in sorted(grid.near(*s[2:])):
                 b = boxes[j]
-                if b["id"] not in own and _hits(s, b):
+                if _hits(s, b):
                     out.append(_f("wire_through_symbol", sh, [w["id"], b["id"]], f"wire {w['id']} runs through {b['id']}"))
     return out
 
@@ -173,11 +169,11 @@ def wire_overlaps(g: Geometry) -> list[Finding]:
         for i, s in enumerate(segs):
             for j in sorted(grid.near(*s[2:])):
                 u = segs[j]
-                if j <= i or u[0]["id"] == s[0]["id"] or _horizontal(s) != _horizontal(u): continue
+                if j <= i or u[0]["model"] == s[0]["model"] or _horizontal(s) != _horizontal(u): continue
                 h = _horizontal(s)
                 same = abs((s[3] if h else s[2]) - (u[3] if h else u[2])) < EPS
                 span = (min(s[4], u[4]) - max(s[2], u[2])) if h else (min(s[5], u[5]) - max(s[3], u[3]))
-                pair = tuple(sorted((s[0]["id"], u[0]["id"])))
+                pair = tuple(sorted((s[0]["model"].removeprefix("conductor:"), u[0]["model"].removeprefix("conductor:"))))
                 if same and span > EPS and pair not in seen:
                     seen.add(pair)  # type: ignore[arg-type]
                     out.append(_f("wire_overlaps", sh, list(pair), f"wires {pair[0]} and {pair[1]} run on top of each other"))
@@ -229,7 +225,20 @@ def min_text(g: Geometry) -> list[Finding]:
             for sh in g["sheets"] for t in _texts(sh) if t.get("size_mm", 0) < MIN_TEXT - EPS]
 
 
-CHECKS = (text_overlaps, text_symbol_overlaps, wire_through_symbol, wire_text_overlaps, off_grid, wire_overlaps, out_of_sheet, min_text)
+def gauge_unit(g: Geometry) -> list[Finding]:
+    """A gauge that carries its unit already, or wire text that says AWG twice."""
+    out: list[Finding] = []
+    sheets: list[Any] = list(g["sheets"])
+    for sh in sheets:
+        for w in sh.get("wires", []):
+            if re.search(r"awg", w.get("gauge", ""), re.I): out.append(_f("gauge_unit", sh, [w["id"]], f"wire {w['id']} gauge {w['gauge']!r} carries its unit"))
+        for t in [*_texts(sh), *(sh.get("table") or {}).get("rows", [])]:
+            s = t.get("s") if "s" in t else f"{t.get('gauge', '')} AWG"
+            if re.search(r"awg\W*awg", s, re.I): out.append(_f("gauge_unit", sh, [s], f"{s!r} names the unit twice"))
+    return out
+
+
+CHECKS = (text_overlaps, text_symbol_overlaps, wire_through_symbol, wire_text_overlaps, off_grid, wire_overlaps, gauge_unit, out_of_sheet, min_text)
 
 
 def report(g: Geometry) -> Any:

@@ -7,7 +7,7 @@ from typing import Any
 
 from ..core.net import NodeKey
 from .geometry import Geometry, Scene
-from .scope import members
+from .scope import gauge, members
 
 Entry = tuple[str, str, str, str, str, str]  # conductor id, end, end (sorted pin refs), label, gauge, colour
 
@@ -82,7 +82,7 @@ def expected(st: Any, sc: Scene) -> set[Entry]:
     for i, c in enumerate(conds):
         if net.node(i, 1) in nodes or net.node(i, 2) in nodes:
             a, b = sorted((ctx.ref(c.from_), ctx.ref(c.to)))
-            out.add((c.id, a, b, c.label, c.gauge, c.colour_code or c.colour))
+            out.add((c.id, a, b, c.label, gauge(c.gauge), c.colour_code or c.colour))
     return out
 
 

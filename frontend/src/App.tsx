@@ -113,7 +113,7 @@ export function App() {
   const clearSim = () => { setSim(null); act("simulate-clear"); };
   const exportAs = (kind: string, what: string, scope?: string) => {
     toast({ tone: "info", text: `Exporting ${what.toLowerCase()}…` });
-    post<ExportResult>("/api/export", { kind, scope }).then((r) => toast({ tone: "ok", text: `${what}: ${r.files.length} ${r.files.length === 1 ? "file" : "files"} saved.`,
+    post<ExportResult>("/api/export", { kind, scope }).then((r) => toast({ tone: "ok", text: `${what}: ${r.files.length} ${r.files.length === 1 ? "file" : "files"} saved.${r.failed?.length ? ` ${r.failed.length} could not be drawn: ${r.failed.join(", ")}.` : ""}`,
       action: { label: "Show folder", run: () => { post("/api/reveal", { path: r.folder }).catch((e) => fail(e)); } } }), (e) => fail(e, () => exportAs(kind, what, scope)));
   };
 

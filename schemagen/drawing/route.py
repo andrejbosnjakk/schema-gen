@@ -4,6 +4,7 @@ through each. `tracks` orders the vertical jogs of one channel (few crossings, n
 a wire's points, `labels` puts the wire texts just above horizontal stretches where nothing else is."""
 from __future__ import annotations
 
+import re
 from typing import Any
 
 from . import symbols as S
@@ -78,9 +79,14 @@ def trace(pts: list[tuple[float, float]]) -> list[list[float]]:
     return [[x, y] for x, y in out]
 
 
+def unit(gauge: str) -> str:
+    """`22` -> `22 AWG`; a gauge that is not a number (`TBD`) stays as written."""
+    return f"{gauge} AWG" if re.fullmatch(r"\d+(\.\d+)?", gauge or "") else (gauge or "")
+
+
 def label_text(w: dict[str, Any]) -> str:
     """`L05  22 AWG  RD`: label, then gauge with its unit, then colour code."""
-    return " ".join(x for x in (w.get("label", ""), f"{w['gauge']} AWG" if w.get("gauge") else "", w.get("colour", "")) if x)
+    return " ".join(x for x in (w.get("label", ""), unit(w.get("gauge", "")), w.get("colour", "")) if x)
 
 
 def _boxes(sh: dict[str, Any]) -> list[tuple[float, float, float, float, str]]:

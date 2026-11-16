@@ -37,3 +37,9 @@ The demo also gained P (ratings, panel labels), D and O tables.
 |---|---|---|
 | docs/screens/drawings/*.svg, *.pdf | wire table under the drawing (or on a table sheet), wire text `W052 20 AWG BK`, wires in colour, worked key and colour codes in the notes, flags `to ...` / `continues on sheet N: ...`, dashed leads on unwired terminals of parts, summary flag `+ N more wires on X`, harness name without the repeated code | part 1 and 2 of the readable-drawings brief (D114) |
 | symbol-sheet-3.svg (new), symbol-sheet.pdf | third page `How to read these drawings` | part 3 of the brief |
+
+## Drawing defects found on a real project
+
+| file | difference | why |
+|---|---|---|
+| docs/screens/drawings/*.svg, *.pdf | wire casing 0.4 mm wider than the colour core (core centred at any zoom); a wire with both ends on one part is two off-sheet flags | the coloured line looked doubled on screen; such wires were drawn through the block |

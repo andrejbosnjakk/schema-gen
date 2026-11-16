@@ -547,8 +547,9 @@ def create_app(project: str | Path | None = None, background: bool = False) -> F
         if kind in ("diagram", "drawings"):
             from . import diagrams as dg
             if kind == "diagram" and not isinstance(b.get("scope"), str): raise AppError("bad-request", "Give the scope of the diagram, such as component:ECU.")
-            files = dg.export_one(st, b["scope"], out) if kind == "diagram" else dg.export_all(st, out)
-            return dict(folder=str(out), files=files)
+            if kind == "diagram": return dict(folder=str(out), files=dg.export_one(st, b["scope"], out))
+            files, failed = dg.export_all(st, out)
+            return dict(folder=str(out), files=files, failed=failed)
         before = {p: p.stat().st_mtime for p in out.rglob("*") if p.is_file()} if out.exists() else {}
         out.mkdir(parents=True, exist_ok=True)
         if kind == "pinout":

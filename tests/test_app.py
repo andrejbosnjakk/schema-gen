@@ -128,3 +128,22 @@ def test_export_all_drawings_makes_a_book(client):
     assert "wiring-diagrams.pdf" in files and "drawings/component-ECU.pdf" in per and "drawings/component-X-BH.pdf" in per
     assert all((out / f).is_file() for f in files)
     assert _pages(out / "wiring-diagrams.pdf") == len(symbol_sheet()["sheets"]) + sum(_pages(out / f) for f in per)
+
+
+def test_export_all_survives_one_failed_drawing(client, monkeypatch):
+    """One drawing that raises is logged and listed in `failed`; every other drawing and the book are still written."""
+    from schemagen.app import diagrams
+    c, d = client
+    real = diagrams.draw
+
+    def draw(st, scope, *a, **k):
+        if scope == "component:ECU": raise KeyError("pin:ECU//3")
+        return real(st, scope, *a, **k)
+    monkeypatch.setattr(diagrams, "draw", draw)
+    r = c.post("/api/export", json=dict(kind="drawings"))
+    assert r.status_code == 200, r.text
+    j = r.json()
+    assert j["failed"] == ["ECU"] and "wiring-diagrams.pdf" in j["files"] and "drawings/component-X-BH.pdf" in j["files"]
+    assert "drawings/component-ECU.pdf" not in j["files"] and (d / "out" / "wiring-diagrams.pdf").is_file()
+    monkeypatch.setattr(diagrams, "draw", lambda *a, **k: (_ for _ in ()).throw(KeyError("x")))
+    assert c.post("/api/export", json=dict(kind="drawings")).status_code == 400

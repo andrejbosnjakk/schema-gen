@@ -167,13 +167,13 @@ the project folder and survives reloads) and used by `/api/simulate`. It appears
 
 | method | path | body | returns |
 |---|---|---|---|
-| POST | `/api/export` | `{kind: "diagram", scope}`, or `{kind: "drawings"\|"pinout"\|"faults"\|"wirelist"}` | `{folder, files: string[]}` (`pinout` writes `checklist.html` and `checklist.xlsx`: the wiring checklist) |
+| POST | `/api/export` | `{kind: "diagram", scope}`, or `{kind: "drawings"\|"pinout"\|"faults"\|"wirelist"}` | `{folder, files: string[]}` (`drawings` adds `failed: string[]`, the components that could not be drawn; `pinout` writes `checklist.html` and `checklist.xlsx`: the wiring checklist) |
 | POST | `/api/reveal` | `{path}` | `{ok}`: opens the folder in the file manager |
 
 `diagram` writes the one drawing as `drawings/<scope>.pdf` (`component-ECU.pdf`, `connection-A_B.pdf`, `selection-A+B.pdf`). `drawings` draws every
 component and harness connector that has wires (splices are drawn inside the runs through them) with schemagen's own engine: one PDF each in
 `drawings/` and `wiring-diagrams.pdf`, one book of all of them in the same order with the symbol sheet first. They are rendered aside and moved into
-the out folder only when all of them rendered, so a failed render leaves nothing behind. Neither needs Graphviz or WireViz.
+the out folder. One that cannot be drawn is logged and listed in `failed`; the others and the book are still written (every one failing is a 400). Neither needs Graphviz or WireViz.
 
 ## Kept from 0.7
 

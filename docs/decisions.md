@@ -824,3 +824,8 @@ may show again next launch. Replay from the help menu works at any time and reco
   flags say `to ...` and `continues on sheet N: ...`; an unwired terminal of a part that is not in scope has a dashed lead. `docs/screens/drawings` and the
   symbol sheet gained a third page, `How to read these drawings`.
 - Why: the aircraft is rewired by students who are not electricians (D106): they work wire by wire from the table, label both ends and tick it.
+
+## D115. Geometry rules from a real project, and a drawing that fails does not stop the export
+- Choice: the checks above became rules (D114's drawings met a real project: jumpers inside one connector ran through the block, `22 AWG` was printed twice, a battery
+  with three terminals crashed the layout). `export_all` logs a drawing that raises, writes the rest and the book, and answers `failed: [component ids]`.
+- Why: a defect on one sheet must not cost the whole set, and every defect the owner finds should become a check that runs over every scope.

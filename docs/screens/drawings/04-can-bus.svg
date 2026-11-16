@@ -28,22 +28,22 @@
 <g data-model="component:MOTOR-CONTROLLER"><polygon points="320,45 395,45 393.75,47.5 395,50 393.75,52.5 395,55 393.75,57.5 395,60 393.75,62.5 395,65 393.75,67.5 395,70 393.75,72.5 395,75 320,75" fill="#fff" stroke="#000" stroke-width="0.35" stroke-linejoin="round"/><rect x="322.5" y="57.5" width="70" height="15" fill="#fff" stroke="#000" stroke-width="0.35"/><line x1="322.5" y1="62.5" x2="392.5" y2="62.5" fill="none" stroke="#000" stroke-width="0.18"/><line x1="320" y1="65" x2="322.5" y2="65" fill="none" stroke="#000" stroke-width="0.35"/><line x1="320" y1="70" x2="322.5" y2="70" fill="none" stroke="#000" stroke-width="0.35"/></g>
 <g data-model="component:SP-CAN1-H-SPLICE-MOTOR-BAY"><line x1="200" y1="82.5" x2="200" y2="92.5" fill="none" stroke="#000" stroke-width="0.35"/><line x1="200" y1="85" x2="170" y2="85" fill="none" stroke="#000" stroke-width="0.35"/><circle cx="200" cy="85" r="0.9" fill="#000" stroke="#000" stroke-width="0.35"/><line x1="200" y1="90" x2="170" y2="90" fill="none" stroke="#000" stroke-width="0.35"/><circle cx="200" cy="90" r="0.9" fill="#000" stroke="#000" stroke-width="0.35"/><line x1="200" y1="85" x2="230" y2="85" fill="none" stroke="#000" stroke-width="0.35"/><circle cx="200" cy="85" r="0.9" fill="#000" stroke="#000" stroke-width="0.35"/><line x1="200" y1="90" x2="230" y2="90" fill="none" stroke="#000" stroke-width="0.35"/><circle cx="200" cy="90" r="0.9" fill="#000" stroke="#000" stroke-width="0.35"/></g>
 <g data-model="component:SP-CAN1-L-SPLICE-MOTOR-BAY"><line x1="200" y1="132.5" x2="200" y2="142.5" fill="none" stroke="#000" stroke-width="0.35"/><line x1="200" y1="135" x2="170" y2="135" fill="none" stroke="#000" stroke-width="0.35"/><circle cx="200" cy="135" r="0.9" fill="#000" stroke="#000" stroke-width="0.35"/><line x1="200" y1="140" x2="170" y2="140" fill="none" stroke="#000" stroke-width="0.35"/><circle cx="200" cy="140" r="0.9" fill="#000" stroke="#000" stroke-width="0.35"/><line x1="200" y1="135" x2="230" y2="135" fill="none" stroke="#000" stroke-width="0.35"/><circle cx="200" cy="135" r="0.9" fill="#000" stroke="#000" stroke-width="0.35"/><line x1="200" y1="140" x2="230" y2="140" fill="none" stroke="#000" stroke-width="0.35"/><circle cx="200" cy="140" r="0.9" fill="#000" stroke="#000" stroke-width="0.35"/></g>
-<polyline points="230,85 275,85 275,65 320,65" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:W103"/>
-<polyline points="230,85 275,85 275,65 320,65" fill="none" stroke="#00ff00" stroke-width="0.245" stroke-linejoin="round"/>
-<polyline points="170,85 135,85 135,75 85,75" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:W104"/>
-<polyline points="170,85 135,85 135,75 85,75" fill="none" stroke="#00ff00" stroke-width="0.245" stroke-linejoin="round"/>
-<polyline points="230,135 280,135 280,70 320,70" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:W110"/>
-<polyline points="230,135 280,135 280,70 320,70" fill="none" stroke="#00ff00" stroke-width="0.245" stroke-linejoin="round"/>
-<polyline points="170,135 130,135 130,80 85,80" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:W111"/>
-<polyline points="170,135 130,135 130,80 85,80" fill="none" stroke="#00ff00" stroke-width="0.245" stroke-linejoin="round"/>
-<polyline points="230,90 285,90 285,120 320,120" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:W102"/>
-<polyline points="230,90 285,90 285,120 320,120" fill="none" stroke="#00ff00" stroke-width="0.245" stroke-linejoin="round"/>
-<polyline points="170,90 135,90 135,130 75,130" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:W105"/>
-<polyline points="170,90 135,90 135,130 75,130" fill="none" stroke="#00ff00" stroke-width="0.245" stroke-linejoin="round"/>
-<polyline points="230,140 275,140 275,150 320,150" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:W109"/>
-<polyline points="230,140 275,140 275,150 320,150" fill="none" stroke="#00ff00" stroke-width="0.245" stroke-linejoin="round"/>
-<polyline points="170,140 130,140 130,160 75,160" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:W112"/>
-<polyline points="170,140 130,140 130,160 75,160" fill="none" stroke="#00ff00" stroke-width="0.245" stroke-linejoin="round"/>
+<polyline points="230,85 275,85 275,65 320,65" fill="none" stroke="#000" stroke-width="0.75" stroke-linejoin="round" data-model="conductor:W103"/>
+<polyline points="230,85 275,85 275,65 320,65" fill="none" stroke="#00ff00" stroke-width="0.35" stroke-linejoin="round"/>
+<polyline points="170,85 135,85 135,75 85,75" fill="none" stroke="#000" stroke-width="0.75" stroke-linejoin="round" data-model="conductor:W104"/>
+<polyline points="170,85 135,85 135,75 85,75" fill="none" stroke="#00ff00" stroke-width="0.35" stroke-linejoin="round"/>
+<polyline points="230,135 280,135 280,70 320,70" fill="none" stroke="#000" stroke-width="0.75" stroke-linejoin="round" data-model="conductor:W110"/>
+<polyline points="230,135 280,135 280,70 320,70" fill="none" stroke="#00ff00" stroke-width="0.35" stroke-linejoin="round"/>
+<polyline points="170,135 130,135 130,80 85,80" fill="none" stroke="#000" stroke-width="0.75" stroke-linejoin="round" data-model="conductor:W111"/>
+<polyline points="170,135 130,135 130,80 85,80" fill="none" stroke="#00ff00" stroke-width="0.35" stroke-linejoin="round"/>
+<polyline points="230,90 285,90 285,120 320,120" fill="none" stroke="#000" stroke-width="0.75" stroke-linejoin="round" data-model="conductor:W102"/>
+<polyline points="230,90 285,90 285,120 320,120" fill="none" stroke="#00ff00" stroke-width="0.35" stroke-linejoin="round"/>
+<polyline points="170,90 135,90 135,130 75,130" fill="none" stroke="#000" stroke-width="0.75" stroke-linejoin="round" data-model="conductor:W105"/>
+<polyline points="170,90 135,90 135,130 75,130" fill="none" stroke="#00ff00" stroke-width="0.35" stroke-linejoin="round"/>
+<polyline points="230,140 275,140 275,150 320,150" fill="none" stroke="#000" stroke-width="0.75" stroke-linejoin="round" data-model="conductor:W109"/>
+<polyline points="230,140 275,140 275,150 320,150" fill="none" stroke="#00ff00" stroke-width="0.35" stroke-linejoin="round"/>
+<polyline points="170,140 130,140 130,160 75,160" fill="none" stroke="#000" stroke-width="0.75" stroke-linejoin="round" data-model="conductor:W112"/>
+<polyline points="170,140 130,140 130,160 75,160" fill="none" stroke="#00ff00" stroke-width="0.35" stroke-linejoin="round"/>
 <g data-model="conductor:W102"><polygon points="320,120 323,115 402,115 405,120 402,125 323,125" fill="#fff" stroke="#000" stroke-width="0.35" stroke-linejoin="round"/></g>
 <text x="362.5" y="119" font-size="3.436" text-anchor="middle" font-weight="600" data-model="conductor:W102">to Firewall connector X-FW motor side 11 -&gt;</text>
 <text x="362.5" y="123.5" font-size="3.436" text-anchor="middle" font-weight="600" data-model="conductor:W102">CAN terminator panel 1, EFIS J1 7</text>

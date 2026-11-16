@@ -67,3 +67,9 @@ row("GND-ACU-1", "ACU aux control unit", "J1", "14", "GNDB ground bus", "Stud", 
 P = [dict(id="CB-FCU", rating=5, panel="FCU", loads=["FCU"])]
 D = []
 O = []
+# Jumpers inside one connector, a gauge that already says AWG, and a part written with pin numbers and no connector name
+row("JMP-1", "JMP jumper unit", "J1", "1", "JMP jumper unit", "J1", "3", "Jumper 1", "—", "22 AWG")
+row("JMP-2", "JMP jumper unit", "J1", "2", "JMP jumper unit", "J1", "4", "Jumper 2", "—", "22 AWG")
+row("BX-1", "BATX battery aux", "", "1", "JMP jumper unit", "J1", "7", "Aux plus", "14 V", "22 AWG")
+row("BX-2", "BATX battery aux", "", "2", "JMP jumper unit", "J1", "8", "Aux minus", "GND", "22 AWG")
+row("BX-3", "BATX battery aux", "", "3", "JMP jumper unit", "J1", "9", "Aux status", "—", "22 AWG")

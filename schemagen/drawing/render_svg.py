@@ -38,12 +38,13 @@ def layers(sh: dict[str, Any]) -> Iterator[Layer]:
 
 
 def casing(w: dict[str, Any], colour: bool = True) -> float:
-    """Line width of a wire's black casing (mm): a little wider than the class width when its colour is drawn inside."""
-    return WIRE[w["weight"]] + (0.2 if colour and w.get("hex") and not w.get("fault") else 0.0)
+    """Line width of a wire's black casing (mm): when its colour is drawn inside, 0.2 mm of black shows on each side of the core (at least a pixel on screen,
+    so the core looks centred at any zoom)."""
+    return WIRE[w["weight"]] + (0.4 if colour and w.get("hex") and not w.get("fault") else 0.0)
 
 
 def core(w: dict[str, Any]) -> float:
-    return round(WIRE[w["weight"]] * 0.7, 3)
+    return WIRE[w["weight"]]
 
 
 def num(v: float) -> str:

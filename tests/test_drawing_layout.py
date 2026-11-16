@@ -68,6 +68,33 @@ def test_crossings_at_most_5(states):
     assert max(worst.values()) <= 5, sorted(worst.items(), key=lambda t: -t[1])[:3]
 
 
+def test_jumpers_and_units_and_odd_terminals(states):
+    """Fictional fixture parts that broke a real project: wires between two pins of one connector (drawn as two flags, never through the
+    block), a gauge that already says AWG (printed once), and a 3-terminal battery written with pin numbers and no connector name."""
+    st = states["fixture"]
+    for s in ("component:JMP", "component:BATX"):
+        g = draw(st, s)
+        assert checks.report(g)["findings"] == [] and roundtrip(st, scene(st, s), g) == [], s
+        texts = [t["s"] for sh in g["sheets"] for t in sh["texts"]]
+        assert any("22 AWG" in t for t in texts) and not any("AWG AWG" in t for t in texts)
+    g = draw(st, "component:JMP")
+    assert not [f for f in checks.wire_through_symbol(g)] and sum(f["kind"] == "off_sheet" for sh in g["sheets"] for f in sh["flags"]) >= 4
+
+
+def test_checks_catch_the_defects(states):
+    """The rules behind the real-project defects: a wire through a block, two wires on one line, the unit twice."""
+    g = draw(states["fixture"], "component:JMP")
+    sh = g["sheets"][0]
+    s = sh["symbols"][0]
+    w = dict(sh["wires"][0], id="X1", points=[[s["x"] - 5, s["y"] + s["h"] / 2 // 5 * 5], [s["x"] + s["w"] + 5, s["y"] + s["h"] / 2 // 5 * 5]])
+    assert checks.wire_through_symbol(dict(g, sheets=[dict(sh, wires=[w])]))
+    a = dict(sh["wires"][0], id="A", model="conductor:A", points=[[0.0, 5.0], [50.0, 5.0]])
+    b = dict(a, id="B", model="conductor:B", points=[[20.0, 5.0], [70.0, 5.0]])
+    assert checks.wire_overlaps(dict(g, sheets=[dict(sh, wires=[a, b])]))
+    assert checks.gauge_unit(dict(g, sheets=[dict(sh, wires=[dict(a, gauge="22 AWG")])]))
+    assert checks.gauge_unit(dict(g, sheets=[dict(sh, texts=[dict(sh["texts"][0], s="W1 22 AWG AWG BK")])]))
+
+
 def test_wire_table(states):
     """Every sheet has a table row per conductor it shows, in words; the check notices a row that disagrees with the drawing."""
     g = draw(states["aircraft"], "component:EFIS")
