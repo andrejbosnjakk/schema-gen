@@ -33,6 +33,7 @@ jobs:
       - run: python -m mypy schemagen
       # failed tests also become annotations on the run, so the cause shows on the summary page without opening the log
       - run: |
+          set +e  # the step shell stops at the first failing line otherwise, before the annotations
           python -m pytest -q -rfE -m "not perf" --cov=schemagen --cov-report=term 2>&1 | tee pytest.log; s=${PIPESTATUS[0]}
           grep -E "^(FAILED|ERROR) " pytest.log | cut -c1-900 | sed "s/^/::error::/" || true
           exit $s
