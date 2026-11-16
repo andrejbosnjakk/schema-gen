@@ -7,6 +7,18 @@ HEX = {"BK": "#000000", "WH": "#ffffff", "GY": "#999999", "PK": "#ff66cc", "RD":
        "VT": "#8000ff", "BN": "#895956", "BG": "#ceb673", "IV": "#f5f0d0", "SL": "#708090", "CU": "#d6775e",
        "SN": "#aaaaaa", "SR": "#84878c", "GD": "#ffcf80"}
 
+# the colour codes in words, for tables a person reads
+NAMES = {"BK": "black", "WH": "white", "GY": "grey", "PK": "pink", "RD": "red", "OG": "orange", "YE": "yellow", "OL": "olive", "GN": "green",
+         "TQ": "turquoise", "LB": "light blue", "BU": "blue", "VT": "violet", "BN": "brown", "BG": "beige", "IV": "ivory", "SL": "slate", "CU": "copper",
+         "SN": "silver", "SR": "silver", "GD": "gold"}
+
+
+def words(code):
+    """A colour code in words: `GNWH` -> `green / white stripe`; a code that is not known stays as written."""
+    base, stripe = code[:2], code[2:4]
+    if base not in NAMES: return code
+    return NAMES[base] + (f" / {NAMES[stripe]} stripe" if stripe in NAMES else "")
+
 
 def entries(cfg):
     """[(function class, colour code, base hex, stripe hex or '')] for the project palette."""

@@ -108,9 +108,9 @@ def symbol_sheet() -> Geometry:
     notes = ["Fictional data: not a real project.", "Contacts are drawn unpowered.", "Spare pins are grey and have no anchor."]
 
     def sheet(n: str, syms: list[Any], wires: list[Any], texts: list[Any], flags: list[Any], k: list[str]) -> dict[str, Any]:
-        sh: dict[str, Any] = dict(n=int(n), of=2, size="A3", w_mm=SHEETS["A3"][0], h_mm=SHEETS["A3"][1], grid_mm=5.0,
+        sh: dict[str, Any] = dict(n=int(n), of=3, size="A3", w_mm=SHEETS["A3"][0], h_mm=SHEETS["A3"][1], grid_mm=5.0,
                                 symbols=syms, wires=wires, texts=texts, flags=flags)
-        sh.update(S.furniture(META, "A3", int(n), 2, k, notes if n == "1" else ["Continuation target of W004 on sheet 1."]))
+        sh.update(S.furniture(META, "A3", int(n), 3, k, notes if n == "1" else ["Continuation target of W004 on sheet 1."]))
         return sh
     # sheet 2: where W004 continues
     far2 = dict(it["far"], id="component:ECU", model="component:ECU", code="ECU", name="Engine control unit",
@@ -124,7 +124,58 @@ def symbol_sheet() -> Geometry:
     t2.append(S.text("W004  24 RD", g2["x"] + g2["w"] + 2.5, a1["y"] - 3, "left", "wire"))
     info = dict(title=META["title"], scope=META["scope"], project=META["project"], revision=META["revision"], date=META["date"], drawn_by=META["drawn_by"],
                 source=META["source"])
-    return dict(version=1, drawing=info, sheets=[sheet("1", syms, wires, texts, flags, kinds), sheet("2", [s2], [w2], t2, [g2], ["block", "continuation"])])  # type: ignore
+    return dict(version=1, drawing=info, sheets=[sheet("1", syms, wires, texts, flags, kinds), sheet("2", [s2], [w2], t2, [g2], ["block", "continuation"]),  # type: ignore
+                                                 reading_sheet(info)])  # type: ignore
+
+
+READING = [  # (picture, what it is and what it means for the person wiring it)
+    ("block", "Component: a box, one row per pin with its number and name. Wires leave on the side of the row."),
+    ("splice", "Splice: several wires permanently joined at one point; everything on the dot is electrically one wire."),
+    ("relay", "Relay or contactor: a heavy switch operated by a small current; the thin wires go to the coil, the thick ones to the contact."),
+    ("breaker", "Breaker: a resettable fuse; power goes in one side and out the other."),
+    ("switch", "Switch: opens or closes one wire; drawn open."),
+    ("ground", "Ground bus: the common bar where all return wires end."),
+    ("bus", "Bus: a bar that feeds several wires from one supply."),
+    ("harness", "Harness connector: a plug pair; pin 11 on one half continues as pin 11 on the other."),
+    ("terminator", "Terminator: a resistor that closes each end of the CAN bus."),
+    ("battery", "Battery: the long plate is plus."),
+    ("off_sheet", "Pointed flag: the wire leaves this drawing; the text says where it goes."),
+    ("continuation", "Box flag with a number: the wire continues on that sheet."),
+    ("partial", "Jagged edge: the component has more pins than this sheet shows."),
+    ("spare", "Grey pin: spare, no wire."),
+    ("fault", "Dashed wire: the simulation found a fault on it."),
+    ("stub", "Dashed stub on a part: that terminal has no wire on this drawing."),
+    ("text", "Wire text, for example W052 20 AWG BK: the label to put on the wire, its size and its colour code. The wire table spells them out."),
+]
+STEPS = ["1. Find the wire in the wire table (under the drawing or on the table sheet after it).",
+         "2. Cut it and put its label on both ends.",
+         "3. Connect the From end and the To end as the table says, then tick the box."]
+
+
+def reading_sheet(info: dict[str, str]) -> dict[str, Any]:
+    """The page `How to read these drawings`: one plain sentence for every symbol, then how to work from a sheet."""
+    ax, ay, aw, ah = areas("A3")["area"]
+    B = S._B({"model": ""}, 0, 0)
+    B.text("How to read these drawings", ax, ay + 2.5, "left", "title", S.SIZE_TITLE)
+    col, pitch = aw / 2, 17.0
+    for i, (k, t) in enumerate(READING):
+        x, y = ax + col * (i // 9), ay + 14 + pitch * (i % 9)
+        C = S._B({"model": ""}, x, y)
+        if k == "partial": C.poly([(1, 0.5), (9, 0.5), (9, 1.5), (8, 2), (9, 2.5), (8, 3), (9, 3.5), (9, 4.5), (1, 4.5)], True)
+        elif k == "fault": C.line(0, 2.5, 10, 2.5, S.N, True)
+        elif k == "stub": C.line(0, 2.5, 10, 2.5, S.N, True); C.circle(10, 2.5, 0.9, S.N, "black")
+        elif k == "text": C.text("W052", 0, 2.5, "left", "wire")
+        else: S._mini(k, C)
+        B.prims += C.prims
+        B.texts += C.texts
+        for j, line in enumerate(S.wrap(t, col - 40, S.SIZE, False, 3)): B.text(line, x + 20, y + 2.5 + 4.5 * j, "left", "pin")
+    y = ay + 14 + pitch * 9 + 5
+    B.text("Working from a sheet", ax, y, "left", "name")
+    for i, t in enumerate(STEPS): B.text(t, ax, y + 6 + 4.5 * i, "left", "pin")
+    sh: dict[str, Any] = dict(n=3, of=3, size="A3", w_mm=SHEETS["A3"][0], h_mm=SHEETS["A3"][1], grid_mm=5.0,
+                           symbols=[], wires=[], texts=B.texts, flags=[], rules=B.prims)
+    sh.update(S.furniture(dict(info, title="How to read these drawings"), "A3", 3, 3, [], ["Fictional example: not a project."]))
+    return sh
 
 
 def main(argv: list[str]) -> int:
@@ -134,7 +185,9 @@ def main(argv: list[str]) -> int:
     out.mkdir(parents=True, exist_ok=True)
     g = symbol_sheet()
     for p in validate(g): print("problem:", p)
-    (out / "symbol-sheet.svg").write_text(svg(g, 0, embed_font=True), encoding="utf8", newline="\n")
+    for i in range(len(g["sheets"])):
+        name = "symbol-sheet.svg" if not i else f"symbol-sheet-{i + 1}.svg"
+        (out / name).write_text(svg(g, i, embed_font=True), encoding="utf8", newline="\n")
     pdf(g, out / "symbol-sheet.pdf")
     return 0
 

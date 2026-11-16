@@ -27,6 +27,7 @@ def layers(sh: dict[str, Any]) -> Iterator[Layer]:
         if isinstance(e, dict) and "prims" in e:
             yield "prims", "", e["prims"]
             for t in e.get("texts", []): yield "text", "", t
+    yield "prims", "", sh.get("rules", [])
     for s in sh.get("symbols", []): yield "prims", s["model"], s["prims"]
     for w in sh.get("wires", []): yield "wire", w["model"], w
     for f in sh.get("flags", []):
@@ -34,6 +35,15 @@ def layers(sh: dict[str, Any]) -> Iterator[Layer]:
         yield "prims", f["model"], pr
         for t in tx: yield "text", f["model"], t
     for t in [*sh.get("texts", []), *sh.get("notes", [])]: yield "text", t["model"], t
+
+
+def casing(w: dict[str, Any], colour: bool = True) -> float:
+    """Line width of a wire's black casing (mm): a little wider than the class width when its colour is drawn inside."""
+    return WIRE[w["weight"]] + (0.2 if colour and w.get("hex") and not w.get("fault") else 0.0)
+
+
+def core(w: dict[str, Any]) -> float:
+    return round(WIRE[w["weight"]] * 0.7, 3)
 
 
 def num(v: float) -> str:
@@ -82,8 +92,9 @@ def _font_css() -> str:
     return f"<style>{''.join(faces)}</style>" if faces else ""
 
 
-def svg(geometry: Geometry, sheet: int = 0, colour: bool = False, embed_font: bool = False) -> str:
-    """Sheet number `sheet` (0 based) as SVG text. colour adds each wire's colour as a thin stripe; embed_font embeds Inter."""
+def svg(geometry: Geometry, sheet: int = 0, colour: bool = True, embed_font: bool = False) -> str:
+    """Sheet number `sheet` (0 based) as SVG text. colour draws each wire in its colour inside a black casing (the code text stays, so a black-and-white
+    print reads the same); embed_font embeds Inter."""
     sh: Any = geometry["sheets"][sheet]
     W, H = sh["w_mm"], sh["h_mm"]
     out = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{num(W)}mm" height="{num(H)}mm" viewBox="0 0 {num(W)} {num(H)}" font-family="{FAMILY}">']
@@ -95,10 +106,10 @@ def svg(geometry: Geometry, sheet: int = 0, colour: bool = False, embed_font: bo
         elif kind == "text": out.append(_text(v))
         else:
             pts = " ".join(f"{num(x)},{num(y)}" for x, y in v["points"])
-            wd = WIRE[v["weight"]]
+            wd = casing(v, colour)
             dash = ' stroke-dasharray="1.5 1"' if v.get("fault") else ""
             out.append(f'<polyline points="{pts}" fill="none" stroke="#000" stroke-width="{num(wd)}" stroke-linejoin="round"{dash} data-model="{escape(model)}"/>')  # noqa: E501
-            if colour and v.get("hex"):
-                out.append(f'<polyline points="{pts}" fill="none" stroke="{escape(v["hex"])}" stroke-width="{num(max(0.12, wd / 2))}" stroke-linejoin="round"/>')
+            if colour and v.get("hex") and not v.get("fault"):
+                out.append(f'<polyline points="{pts}" fill="none" stroke="{escape(v["hex"])}" stroke-width="{num(core(v))}" stroke-linejoin="round"/>')
     out.append("</svg>")
     return "\n".join(out) + "\n"

@@ -817,3 +817,10 @@ may show again next launch. Replay from the help menu works at any time and reco
   app (the CLI `schemagen draw` keeps it), so the app no longer needs Graphviz.
 - Why: the drawings must serve a physical rewire (D106), the old row drawing and its print sheet did not, and one engine keeps the viewer, the PDFs and
   the CLI identical.
+
+## D114. Wire table on every drawing, colour in the drawing, plain flag words
+- Choice: every sheet carries a wire table (label, wire in words, from, to, tick box) under the drawing when it fits, else on table sheets after the drawing
+  sheets of the same drawing; wire text carries the unit (`20 AWG`); wires are drawn in their colour (black casing, coloured core) in the app and in exports;
+  flags say `to ...` and `continues on sheet N: ...`; an unwired terminal of a part that is not in scope has a dashed lead. `docs/screens/drawings` and the
+  symbol sheet gained a third page, `How to read these drawings`.
+- Why: the aircraft is rewired by students who are not electricians (D106): they work wire by wire from the table, label both ends and tick it.

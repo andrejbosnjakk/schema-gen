@@ -4,7 +4,7 @@
 <g data-model=""><rect x="10" y="10" width="400" height="275" fill="none" stroke="#000" stroke-width="0.5"/><rect x="270" y="255" width="140" height="30" fill="none" stroke="#000" stroke-width="0.35"/><line x1="270" y1="265" x2="410" y2="265" fill="none" stroke="#000" stroke-width="0.18"/><line x1="270" y1="275" x2="410" y2="275" fill="none" stroke="#000" stroke-width="0.18"/><line x1="370" y1="255" x2="370" y2="265" fill="none" stroke="#000" stroke-width="0.18"/><line x1="340" y1="265" x2="340" y2="275" fill="none" stroke="#000" stroke-width="0.18"/><line x1="290" y1="275" x2="290" y2="285" fill="none" stroke="#000" stroke-width="0.18"/><line x1="320" y1="275" x2="320" y2="285" fill="none" stroke="#000" stroke-width="0.18"/><line x1="360" y1="275" x2="360" y2="285" fill="none" stroke="#000" stroke-width="0.18"/><rect x="10" y="255" width="135" height="30" fill="none" stroke="#000" stroke-width="0.35"/><rect x="145" y="255" width="125" height="30" fill="none" stroke="#000" stroke-width="0.35"/></g>
 <text x="271.5" y="261.75" font-size="4.811" text-anchor="start" font-weight="600" data-model="">EFIS</text>
 <text x="371.5" y="258.75" font-size="3.436" text-anchor="start" fill="#6b6b6b" data-model="">SHEET</text>
-<text x="371.5" y="263.25" font-size="3.436" text-anchor="start" data-model="">1 of 3</text>
+<text x="371.5" y="263.25" font-size="3.436" text-anchor="start" data-model="">1 of 4</text>
 <text x="271.5" y="268.75" font-size="3.436" text-anchor="start" fill="#6b6b6b" data-model="">PROJECT</text>
 <text x="271.5" y="273.25" font-size="3.436" text-anchor="start" data-model="">aircraft</text>
 <text x="341.5" y="268.75" font-size="3.436" text-anchor="start" fill="#6b6b6b" data-model="">SCOPE</text>
@@ -31,109 +31,129 @@
 <text x="70" y="258.75" font-size="3.436" text-anchor="start" data-model="">Continued</text>
 <g data-model=""><polygon points="57,262.5 59,260.5 64,260.5 66,262.5 64,264.5 59,264.5" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round"/></g>
 <text x="70" y="263.75" font-size="3.436" text-anchor="start" data-model="">Off-sheet</text>
-<g data-model="component:BB-GROUND-BUS"><line x1="215" y1="22.5" x2="215" y2="27.5" fill="none" stroke="#000" stroke-width="0.35"/><line x1="215" y1="25" x2="195" y2="25" fill="none" stroke="#000" stroke-width="0.35"/><circle cx="215" cy="25" r="0.9" fill="#000" stroke="#000" stroke-width="0.35"/><line x1="215" y1="25" x2="235" y2="25" fill="none" stroke="#000" stroke-width="0.35"/><circle cx="215" cy="25" r="0.9" fill="#000" stroke="#000" stroke-width="0.35"/><line x1="215" y1="27.5" x2="215" y2="30" fill="none" stroke="#000" stroke-width="0.35"/><line x1="210" y1="30" x2="220" y2="30" fill="none" stroke="#000" stroke-width="0.35"/><line x1="212" y1="32.5" x2="218" y2="32.5" fill="none" stroke="#000" stroke-width="0.35"/><line x1="214" y1="35" x2="216" y2="35" fill="none" stroke="#000" stroke-width="0.35"/></g>
+<g data-model="component:BB-GROUND-BUS"><line x1="235" y1="22.5" x2="235" y2="27.5" fill="none" stroke="#000" stroke-width="0.35"/><line x1="235" y1="25" x2="215" y2="25" fill="none" stroke="#000" stroke-width="0.35"/><circle cx="235" cy="25" r="0.9" fill="#000" stroke="#000" stroke-width="0.35"/><line x1="235" y1="25" x2="255" y2="25" fill="none" stroke="#000" stroke-width="0.35"/><circle cx="235" cy="25" r="0.9" fill="#000" stroke="#000" stroke-width="0.35"/><line x1="235" y1="27.5" x2="235" y2="30" fill="none" stroke="#000" stroke-width="0.35"/><line x1="230" y1="30" x2="240" y2="30" fill="none" stroke="#000" stroke-width="0.35"/><line x1="232" y1="32.5" x2="238" y2="32.5" fill="none" stroke="#000" stroke-width="0.35"/><line x1="234" y1="35" x2="236" y2="35" fill="none" stroke="#000" stroke-width="0.35"/></g>
 <g data-model="component:CB-EFIS"><line x1="15" y1="95" x2="20" y2="95" fill="none" stroke="#000" stroke-width="0.35"/><line x1="30" y1="95" x2="35" y2="95" fill="none" stroke="#000" stroke-width="0.35"/><path d="M20 95A5 5 0 0 1 30 95" fill="none" stroke="#000" stroke-width="0.35"/><circle cx="20" cy="95" r="0.9" fill="#fff" stroke="#000" stroke-width="0.35"/><circle cx="30" cy="95" r="0.9" fill="#fff" stroke="#000" stroke-width="0.35"/><line x1="20" y1="95" x2="27" y2="91.5" fill="none" stroke="#000" stroke-width="0.35"/></g>
-<g data-model="component:EFIS"><rect x="85" y="70" width="40" height="70" fill="#fff" stroke="#000" stroke-width="0.35"/><rect x="87.5" y="82.5" width="35" height="25" fill="#fff" stroke="#000" stroke-width="0.35"/><line x1="87.5" y1="87.5" x2="122.5" y2="87.5" fill="none" stroke="#000" stroke-width="0.18"/><line x1="85" y1="90" x2="87.5" y2="90" fill="none" stroke="#000" stroke-width="0.35"/><line x1="122.5" y1="95" x2="125" y2="95" fill="none" stroke="#000" stroke-width="0.35"/><line x1="122.5" y1="100" x2="125" y2="100" fill="none" stroke="#000" stroke-width="0.35"/><line x1="122.5" y1="105" x2="125" y2="105" fill="none" stroke="#000" stroke-width="0.35"/><rect x="87.5" y="112.5" width="35" height="25" fill="#fff" stroke="#000" stroke-width="0.35"/><line x1="87.5" y1="117.5" x2="122.5" y2="117.5" fill="none" stroke="#000" stroke-width="0.18"/><line x1="122.5" y1="120" x2="125" y2="120" fill="none" stroke="#000" stroke-width="0.35"/><line x1="122.5" y1="125" x2="125" y2="125" fill="none" stroke="#000" stroke-width="0.35"/><line x1="122.5" y1="130" x2="125" y2="130" fill="none" stroke="#000" stroke-width="0.35"/><line x1="122.5" y1="135" x2="125" y2="135" fill="none" stroke="#000" stroke-width="0.35"/></g>
-<g data-model="component:GPS-RECEIVER"><polygon points="195,125 235,125 233.75,127.5 235,130 233.75,132.5 235,135 233.75,137.5 235,140 233.75,142.5 235,145 233.75,147.5 235,150 195,150" fill="#fff" stroke="#000" stroke-width="0.35" stroke-linejoin="round"/><rect x="197.5" y="137.5" width="35" height="10" fill="#fff" stroke="#000" stroke-width="0.35"/><line x1="197.5" y1="142.5" x2="232.5" y2="142.5" fill="none" stroke="#000" stroke-width="0.18"/><line x1="195" y1="145" x2="197.5" y2="145" fill="none" stroke="#000" stroke-width="0.35"/></g>
-<g data-model="component:SP-CAN1-H-SPLICE-PANEL"><line x1="220" y1="62.5" x2="220" y2="72.5" fill="none" stroke="#000" stroke-width="0.35"/><line x1="220" y1="65" x2="195" y2="65" fill="none" stroke="#000" stroke-width="0.35"/><circle cx="220" cy="65" r="0.9" fill="#000" stroke="#000" stroke-width="0.35"/><line x1="220" y1="65" x2="245" y2="65" fill="none" stroke="#000" stroke-width="0.35"/><circle cx="220" cy="65" r="0.9" fill="#000" stroke="#000" stroke-width="0.35"/><line x1="220" y1="70" x2="245" y2="70" fill="none" stroke="#000" stroke-width="0.35"/><circle cx="220" cy="70" r="0.9" fill="#000" stroke="#000" stroke-width="0.35"/></g>
-<g data-model="component:SP-CAN1-L-SPLICE-PANEL"><line x1="220" y1="97.5" x2="220" y2="107.5" fill="none" stroke="#000" stroke-width="0.35"/><line x1="220" y1="100" x2="195" y2="100" fill="none" stroke="#000" stroke-width="0.35"/><circle cx="220" cy="100" r="0.9" fill="#000" stroke="#000" stroke-width="0.35"/><line x1="220" y1="100" x2="245" y2="100" fill="none" stroke="#000" stroke-width="0.35"/><circle cx="220" cy="100" r="0.9" fill="#000" stroke="#000" stroke-width="0.35"/><line x1="220" y1="105" x2="245" y2="105" fill="none" stroke="#000" stroke-width="0.35"/><circle cx="220" cy="105" r="0.9" fill="#000" stroke="#000" stroke-width="0.35"/></g>
-<g data-model="component:TRANSPONDER"><polygon points="195,170 230,170 228.75,172.5 230,175 228.75,177.5 230,180 228.75,182.5 230,185 228.75,187.5 230,190 195,190" fill="#fff" stroke="#000" stroke-width="0.35" stroke-linejoin="round"/><rect x="197.5" y="177.5" width="30" height="10" fill="#fff" stroke="#000" stroke-width="0.35"/><line x1="197.5" y1="182.5" x2="227.5" y2="182.5" fill="none" stroke="#000" stroke-width="0.18"/><line x1="195" y1="185" x2="197.5" y2="185" fill="none" stroke="#000" stroke-width="0.35"/></g>
-<g data-model="connector:X-WR"><rect x="195" y="205" width="65" height="25" fill="#fff" stroke="#000" stroke-width="0.35"/><line x1="195" y1="217.5" x2="260" y2="217.5" fill="none" stroke="#000" stroke-width="0.18"/><line x1="195" y1="211" x2="260" y2="211" fill="none" stroke="#000" stroke-width="0.18"/><line x1="227.5" y1="211" x2="227.5" y2="230" fill="none" stroke="#000" stroke-width="0.18"/></g>
-<polyline points="35,95 65,95 65,90 85,90" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:W051"/>
-<polyline points="125,95 165,95 165,25 195,25" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:W052"/>
-<polyline points="125,120 175,120 175,185 195,185" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:W061"/>
-<polyline points="195,145 170,145 170,125 125,125" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:W066"/>
-<polyline points="195,220 165,220 165,130 125,130" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:W068"/>
-<polyline points="195,225 160,225 160,135 125,135" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:W070"/>
-<polyline points="195,65 160,65 160,100 125,100" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:W100"/>
-<polyline points="195,100 165,100 165,105 125,105" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:W107"/>
-<polyline points="260,220 295,220 295,215 320,215" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:W067"/>
-<polyline points="260,225 295,225 295,240 320,240" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:W069"/>
-<polyline points="245,65 295,65 295,60 320,60" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:W099"/>
-<polyline points="245,70 295,70 295,80 320,80" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:W101"/>
-<polyline points="245,100 300,100 300,105 320,105" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:W106"/>
-<polyline points="245,105 295,105 295,125 320,125" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:W108"/>
-<polyline points="235,25 320,25" fill="none" stroke="#000" stroke-width="0.7" stroke-linejoin="round" data-model="conductor:W007"/>
-<g data-model="conductor:W067"><rect x="320" y="210" width="40" height="10" fill="#fff" stroke="#000" stroke-width="0.35"/><line x1="327.5" y1="210" x2="327.5" y2="220" fill="none" stroke="#000" stroke-width="0.18"/></g>
-<text x="323.75" y="216.25" font-size="3.436" text-anchor="middle" font-weight="600" data-model="conductor:W067">2</text>
-<text x="343.75" y="216.25" font-size="3.436" text-anchor="middle" font-weight="600" data-model="conductor:W067">-&gt; OAT-PROBE 1</text>
-<g data-model="conductor:W069"><rect x="320" y="235" width="40" height="10" fill="#fff" stroke="#000" stroke-width="0.35"/><line x1="327.5" y1="235" x2="327.5" y2="245" fill="none" stroke="#000" stroke-width="0.18"/></g>
-<text x="323.75" y="241.25" font-size="3.436" text-anchor="middle" font-weight="600" data-model="conductor:W069">2</text>
-<text x="343.75" y="241.25" font-size="3.436" text-anchor="middle" font-weight="600" data-model="conductor:W069">-&gt; OAT-PROBE 2</text>
-<g data-model="conductor:W099"><rect x="320" y="55" width="65" height="10" fill="#fff" stroke="#000" stroke-width="0.35"/><line x1="327.5" y1="55" x2="327.5" y2="65" fill="none" stroke="#000" stroke-width="0.18"/></g>
-<text x="323.75" y="61.25" font-size="3.436" text-anchor="middle" font-weight="600" data-model="conductor:W099">2</text>
-<text x="356.25" y="61.25" font-size="3.436" text-anchor="middle" font-weight="600" data-model="conductor:W099">-&gt; CAN-TERMINATOR-PANEL 1</text>
-<g data-model="conductor:W101"><rect x="320" y="75" width="70" height="10" fill="#fff" stroke="#000" stroke-width="0.35"/><line x1="327.5" y1="75" x2="327.5" y2="85" fill="none" stroke="#000" stroke-width="0.18"/></g>
-<text x="323.75" y="81.25" font-size="3.436" text-anchor="middle" font-weight="600" data-model="conductor:W101">2</text>
-<text x="358.75" y="79" font-size="3.436" text-anchor="middle" font-weight="600" data-model="conductor:W101">-&gt; X-FW cockpit side-11 (Firewall</text>
-<text x="358.75" y="83.5" font-size="3.436" text-anchor="middle" font-weight="600" data-model="conductor:W101">connector X-FW)</text>
-<g data-model="conductor:W106"><rect x="320" y="100" width="70" height="10" fill="#fff" stroke="#000" stroke-width="0.35"/><line x1="327.5" y1="100" x2="327.5" y2="110" fill="none" stroke="#000" stroke-width="0.18"/></g>
-<text x="323.75" y="106.25" font-size="3.436" text-anchor="middle" font-weight="600" data-model="conductor:W106">2</text>
-<text x="358.75" y="106.25" font-size="3.436" text-anchor="middle" font-weight="600" data-model="conductor:W106">-&gt; CAN-TERMINATOR-PANEL 2</text>
-<g data-model="conductor:W108"><rect x="320" y="120" width="70" height="10" fill="#fff" stroke="#000" stroke-width="0.35"/><line x1="327.5" y1="120" x2="327.5" y2="130" fill="none" stroke="#000" stroke-width="0.18"/></g>
-<text x="323.75" y="126.25" font-size="3.436" text-anchor="middle" font-weight="600" data-model="conductor:W108">2</text>
-<text x="358.75" y="124" font-size="3.436" text-anchor="middle" font-weight="600" data-model="conductor:W108">-&gt; X-FW cockpit side-12 (Firewall</text>
-<text x="358.75" y="128.5" font-size="3.436" text-anchor="middle" font-weight="600" data-model="conductor:W108">connector X-FW)</text>
-<g data-model="conductor:W007"><polygon points="320,25 325,20 400,20 405,25 400,30 325,30" fill="#fff" stroke="#000" stroke-width="0.35" stroke-linejoin="round"/></g>
-<text x="362.5" y="24" font-size="3.436" text-anchor="middle" font-weight="600" data-model="conductor:W007">+ 17 more wires on BB-GROUND-BUS (see</text>
-<text x="362.5" y="28.5" font-size="3.436" text-anchor="middle" font-weight="600" data-model="conductor:W007">its own drawing)</text>
-<text x="215" y="20" font-size="3.436" text-anchor="middle" font-weight="600" data-model="component:BB-GROUND-BUS">BB-GROUND-BUS</text>
+<g data-model="component:EFIS"><rect x="95" y="70" width="40" height="70" fill="#fff" stroke="#000" stroke-width="0.35"/><rect x="97.5" y="82.5" width="35" height="25" fill="#fff" stroke="#000" stroke-width="0.35"/><line x1="97.5" y1="87.5" x2="132.5" y2="87.5" fill="none" stroke="#000" stroke-width="0.18"/><line x1="95" y1="90" x2="97.5" y2="90" fill="none" stroke="#000" stroke-width="0.35"/><line x1="132.5" y1="95" x2="135" y2="95" fill="none" stroke="#000" stroke-width="0.35"/><line x1="132.5" y1="100" x2="135" y2="100" fill="none" stroke="#000" stroke-width="0.35"/><line x1="132.5" y1="105" x2="135" y2="105" fill="none" stroke="#000" stroke-width="0.35"/><rect x="97.5" y="112.5" width="35" height="25" fill="#fff" stroke="#000" stroke-width="0.35"/><line x1="97.5" y1="117.5" x2="132.5" y2="117.5" fill="none" stroke="#000" stroke-width="0.18"/><line x1="132.5" y1="120" x2="135" y2="120" fill="none" stroke="#000" stroke-width="0.35"/><line x1="132.5" y1="125" x2="135" y2="125" fill="none" stroke="#000" stroke-width="0.35"/><line x1="132.5" y1="130" x2="135" y2="130" fill="none" stroke="#000" stroke-width="0.35"/><line x1="132.5" y1="135" x2="135" y2="135" fill="none" stroke="#000" stroke-width="0.35"/></g>
+<g data-model="component:GPS-RECEIVER"><polygon points="215,125 255,125 253.75,127.5 255,130 253.75,132.5 255,135 253.75,137.5 255,140 253.75,142.5 255,145 253.75,147.5 255,150 215,150" fill="#fff" stroke="#000" stroke-width="0.35" stroke-linejoin="round"/><rect x="217.5" y="137.5" width="35" height="10" fill="#fff" stroke="#000" stroke-width="0.35"/><line x1="217.5" y1="142.5" x2="252.5" y2="142.5" fill="none" stroke="#000" stroke-width="0.18"/><line x1="215" y1="145" x2="217.5" y2="145" fill="none" stroke="#000" stroke-width="0.35"/></g>
+<g data-model="component:SP-CAN1-H-SPLICE-PANEL"><line x1="240" y1="62.5" x2="240" y2="72.5" fill="none" stroke="#000" stroke-width="0.35"/><line x1="240" y1="65" x2="215" y2="65" fill="none" stroke="#000" stroke-width="0.35"/><circle cx="240" cy="65" r="0.9" fill="#000" stroke="#000" stroke-width="0.35"/><line x1="240" y1="65" x2="265" y2="65" fill="none" stroke="#000" stroke-width="0.35"/><circle cx="240" cy="65" r="0.9" fill="#000" stroke="#000" stroke-width="0.35"/><line x1="240" y1="70" x2="265" y2="70" fill="none" stroke="#000" stroke-width="0.35"/><circle cx="240" cy="70" r="0.9" fill="#000" stroke="#000" stroke-width="0.35"/></g>
+<g data-model="component:SP-CAN1-L-SPLICE-PANEL"><line x1="240" y1="97.5" x2="240" y2="107.5" fill="none" stroke="#000" stroke-width="0.35"/><line x1="240" y1="100" x2="215" y2="100" fill="none" stroke="#000" stroke-width="0.35"/><circle cx="240" cy="100" r="0.9" fill="#000" stroke="#000" stroke-width="0.35"/><line x1="240" y1="100" x2="265" y2="100" fill="none" stroke="#000" stroke-width="0.35"/><circle cx="240" cy="100" r="0.9" fill="#000" stroke="#000" stroke-width="0.35"/><line x1="240" y1="105" x2="265" y2="105" fill="none" stroke="#000" stroke-width="0.35"/><circle cx="240" cy="105" r="0.9" fill="#000" stroke="#000" stroke-width="0.35"/></g>
+<g data-model="component:TRANSPONDER"><polygon points="215,170 250,170 248.75,172.5 250,175 248.75,177.5 250,180 248.75,182.5 250,185 248.75,187.5 250,190 215,190" fill="#fff" stroke="#000" stroke-width="0.35" stroke-linejoin="round"/><rect x="217.5" y="177.5" width="30" height="10" fill="#fff" stroke="#000" stroke-width="0.35"/><line x1="217.5" y1="182.5" x2="247.5" y2="182.5" fill="none" stroke="#000" stroke-width="0.18"/><line x1="215" y1="185" x2="217.5" y2="185" fill="none" stroke="#000" stroke-width="0.35"/></g>
+<g data-model="connector:X-WR"><rect x="215" y="205" width="55" height="25" fill="#fff" stroke="#000" stroke-width="0.35"/><line x1="215" y1="217.5" x2="270" y2="217.5" fill="none" stroke="#000" stroke-width="0.18"/><line x1="215" y1="211" x2="270" y2="211" fill="none" stroke="#000" stroke-width="0.18"/><line x1="242.5" y1="211" x2="242.5" y2="230" fill="none" stroke="#000" stroke-width="0.18"/></g>
+<polyline points="35,95 75,95 75,90 95,90" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:W051"/>
+<polyline points="35,95 75,95 75,90 95,90" fill="none" stroke="#ff0000" stroke-width="0.245" stroke-linejoin="round"/>
+<polyline points="135,95 185,95 185,25 215,25" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:W052"/>
+<polyline points="135,95 185,95 185,25 215,25" fill="none" stroke="#000000" stroke-width="0.245" stroke-linejoin="round"/>
+<polyline points="135,120 195,120 195,185 215,185" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:W061"/>
+<polyline points="135,120 195,120 195,185 215,185" fill="none" stroke="#0066ff" stroke-width="0.245" stroke-linejoin="round"/>
+<polyline points="215,145 190,145 190,125 135,125" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:W066"/>
+<polyline points="215,145 190,145 190,125 135,125" fill="none" stroke="#0066ff" stroke-width="0.245" stroke-linejoin="round"/>
+<polyline points="215,220 185,220 185,130 135,130" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:W068"/>
+<polyline points="215,220 185,220 185,130 135,130" fill="none" stroke="#0066ff" stroke-width="0.245" stroke-linejoin="round"/>
+<polyline points="215,225 180,225 180,135 135,135" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:W070"/>
+<polyline points="215,225 180,225 180,135 135,135" fill="none" stroke="#0066ff" stroke-width="0.245" stroke-linejoin="round"/>
+<polyline points="215,65 180,65 180,100 135,100" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:W100"/>
+<polyline points="215,65 180,65 180,100 135,100" fill="none" stroke="#00ff00" stroke-width="0.245" stroke-linejoin="round"/>
+<polyline points="215,100 185,100 185,105 135,105" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:W107"/>
+<polyline points="215,100 185,100 185,105 135,105" fill="none" stroke="#00ff00" stroke-width="0.245" stroke-linejoin="round"/>
+<polyline points="270,220 315,220 315,215 340,215" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:W067"/>
+<polyline points="270,220 315,220 315,215 340,215" fill="none" stroke="#0066ff" stroke-width="0.245" stroke-linejoin="round"/>
+<polyline points="270,225 315,225 315,240 340,240" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:W069"/>
+<polyline points="270,225 315,225 315,240 340,240" fill="none" stroke="#0066ff" stroke-width="0.245" stroke-linejoin="round"/>
+<polyline points="265,65 315,65 315,60 340,60" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:W099"/>
+<polyline points="265,65 315,65 315,60 340,60" fill="none" stroke="#00ff00" stroke-width="0.245" stroke-linejoin="round"/>
+<polyline points="265,70 315,70 315,80 340,80" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:W101"/>
+<polyline points="265,70 315,70 315,80 340,80" fill="none" stroke="#00ff00" stroke-width="0.245" stroke-linejoin="round"/>
+<polyline points="265,100 320,100 320,105 340,105" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:W106"/>
+<polyline points="265,100 320,100 320,105 340,105" fill="none" stroke="#00ff00" stroke-width="0.245" stroke-linejoin="round"/>
+<polyline points="265,105 315,105 315,125 340,125" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:W108"/>
+<polyline points="265,105 315,105 315,125 340,125" fill="none" stroke="#00ff00" stroke-width="0.245" stroke-linejoin="round"/>
+<polyline points="255,25 340,25" fill="none" stroke="#000" stroke-width="0.9" stroke-linejoin="round" data-model="conductor:W007"/>
+<polyline points="255,25 340,25" fill="none" stroke="#000000" stroke-width="0.49" stroke-linejoin="round"/>
+<g data-model="conductor:W067"><rect x="340" y="210" width="50" height="10" fill="#fff" stroke="#000" stroke-width="0.35"/><line x1="347.5" y1="210" x2="347.5" y2="220" fill="none" stroke="#000" stroke-width="0.18"/></g>
+<text x="343.75" y="216.25" font-size="3.436" text-anchor="middle" font-weight="600" data-model="conductor:W067">2</text>
+<text x="368.75" y="214" font-size="3.436" text-anchor="middle" font-weight="600" data-model="conductor:W067">continues on sheet 2:</text>
+<text x="368.75" y="218.5" font-size="3.436" text-anchor="middle" font-weight="600" data-model="conductor:W067">OAT-PROBE 1</text>
+<g data-model="conductor:W069"><rect x="340" y="235" width="50" height="10" fill="#fff" stroke="#000" stroke-width="0.35"/><line x1="347.5" y1="235" x2="347.5" y2="245" fill="none" stroke="#000" stroke-width="0.18"/></g>
+<text x="343.75" y="241.25" font-size="3.436" text-anchor="middle" font-weight="600" data-model="conductor:W069">2</text>
+<text x="368.75" y="239" font-size="3.436" text-anchor="middle" font-weight="600" data-model="conductor:W069">continues on sheet 2:</text>
+<text x="368.75" y="243.5" font-size="3.436" text-anchor="middle" font-weight="600" data-model="conductor:W069">OAT-PROBE 2</text>
+<g data-model="conductor:W099"><rect x="340" y="55" width="60" height="10" fill="#fff" stroke="#000" stroke-width="0.35"/><line x1="347.5" y1="55" x2="347.5" y2="65" fill="none" stroke="#000" stroke-width="0.18"/></g>
+<text x="343.75" y="61.25" font-size="3.436" text-anchor="middle" font-weight="600" data-model="conductor:W099">2</text>
+<text x="373.75" y="59" font-size="3.436" text-anchor="middle" font-weight="600" data-model="conductor:W099">continues on sheet 2:</text>
+<text x="373.75" y="63.5" font-size="3.436" text-anchor="middle" font-weight="600" data-model="conductor:W099">CAN-TERMINATOR-PANEL 1</text>
+<g data-model="conductor:W101"><rect x="340" y="75" width="60" height="10" fill="#fff" stroke="#000" stroke-width="0.35"/><line x1="347.5" y1="75" x2="347.5" y2="85" fill="none" stroke="#000" stroke-width="0.18"/></g>
+<text x="343.75" y="81.25" font-size="3.436" text-anchor="middle" font-weight="600" data-model="conductor:W101">2</text>
+<text x="373.75" y="79" font-size="3.436" text-anchor="middle" font-weight="600" data-model="conductor:W101">continues on sheet 2: X-FW</text>
+<text x="373.75" y="83.5" font-size="3.436" text-anchor="middle" font-weight="600" data-model="conductor:W101">cockpit side-11</text>
+<g data-model="conductor:W106"><rect x="340" y="100" width="65" height="10" fill="#fff" stroke="#000" stroke-width="0.35"/><line x1="347.5" y1="100" x2="347.5" y2="110" fill="none" stroke="#000" stroke-width="0.18"/></g>
+<text x="343.75" y="106.25" font-size="3.436" text-anchor="middle" font-weight="600" data-model="conductor:W106">2</text>
+<text x="376.25" y="104" font-size="3.436" text-anchor="middle" font-weight="600" data-model="conductor:W106">continues on sheet 2:</text>
+<text x="376.25" y="108.5" font-size="3.436" text-anchor="middle" font-weight="600" data-model="conductor:W106">CAN-TERMINATOR-PANEL 2</text>
+<g data-model="conductor:W108"><rect x="340" y="120" width="60" height="10" fill="#fff" stroke="#000" stroke-width="0.35"/><line x1="347.5" y1="120" x2="347.5" y2="130" fill="none" stroke="#000" stroke-width="0.18"/></g>
+<text x="343.75" y="126.25" font-size="3.436" text-anchor="middle" font-weight="600" data-model="conductor:W108">2</text>
+<text x="373.75" y="124" font-size="3.436" text-anchor="middle" font-weight="600" data-model="conductor:W108">continues on sheet 2: X-FW</text>
+<text x="373.75" y="128.5" font-size="3.436" text-anchor="middle" font-weight="600" data-model="conductor:W108">cockpit side-12</text>
+<g data-model="conductor:W007"><polygon points="340,25 343,20 377,20 380,25 377,30 343,30" fill="#fff" stroke="#000" stroke-width="0.35" stroke-linejoin="round"/></g>
+<text x="360" y="24" font-size="3.436" text-anchor="middle" font-weight="600" data-model="conductor:W007">+ 17 more wires on</text>
+<text x="360" y="28.5" font-size="3.436" text-anchor="middle" font-weight="600" data-model="conductor:W007">BB-GROUND-BUS</text>
+<text x="235" y="20" font-size="3.436" text-anchor="middle" font-weight="600" data-model="component:BB-GROUND-BUS">BB-GROUND-BUS</text>
 <text x="25" y="101.75" font-size="3.436" text-anchor="middle" font-weight="600" data-model="component:CB-EFIS">CB-EFIS</text>
 <text x="25" y="106.25" font-size="3.436" text-anchor="middle" data-model="component:CB-EFIS">5 A</text>
-<text x="87.5" y="75" font-size="3.436" text-anchor="start" font-weight="600" data-model="component:EFIS">EFIS</text>
-<text x="87.5" y="80" font-size="3.436" text-anchor="start" data-model="component:EFIS">Kestrel EFIS 10 inch</text>
-<text x="89" y="86.25" font-size="3.436" text-anchor="start" font-weight="600" data-model="component:EFIS">J1</text>
-<text x="89" y="91.25" font-size="3.436" text-anchor="start" data-model="pin:EFIS/J1/1">1</text>
-<text x="93.2" y="91.25" font-size="3.436" text-anchor="start" data-model="pin:EFIS/J1/1">POWER</text>
-<text x="121" y="96.25" font-size="3.436" text-anchor="end" data-model="pin:EFIS/J1/2">2</text>
-<text x="116.8" y="96.25" font-size="3.436" text-anchor="end" data-model="pin:EFIS/J1/2">GND</text>
-<text x="121" y="101.25" font-size="3.436" text-anchor="end" data-model="pin:EFIS/J1/7">7</text>
-<text x="116.8" y="101.25" font-size="3.436" text-anchor="end" data-model="pin:EFIS/J1/7">CAN_H</text>
-<text x="121" y="106.25" font-size="3.436" text-anchor="end" data-model="pin:EFIS/J1/8">8</text>
-<text x="116.8" y="106.25" font-size="3.436" text-anchor="end" data-model="pin:EFIS/J1/8">CAN_L</text>
-<text x="89" y="116.25" font-size="3.436" text-anchor="start" font-weight="600" data-model="component:EFIS">J2</text>
-<text x="121" y="121.25" font-size="3.436" text-anchor="end" data-model="pin:EFIS/J2/3">3</text>
-<text x="116.7" y="121.25" font-size="3.436" text-anchor="end" data-model="pin:EFIS/J2/3">ALT OUT</text>
-<text x="121" y="126.25" font-size="3.436" text-anchor="end" data-model="pin:EFIS/J2/4">4</text>
-<text x="116.7" y="126.25" font-size="3.436" text-anchor="end" data-model="pin:EFIS/J2/4">GPS IN</text>
-<text x="121" y="131.25" font-size="3.436" text-anchor="end" data-model="pin:EFIS/J2/7">7</text>
-<text x="116.7" y="131.25" font-size="3.436" text-anchor="end" data-model="pin:EFIS/J2/7">OAT</text>
-<text x="121" y="136.25" font-size="3.436" text-anchor="end" data-model="pin:EFIS/J2/8">8</text>
-<text x="116.7" y="136.25" font-size="3.436" text-anchor="end" data-model="pin:EFIS/J2/8">OAT REF</text>
-<text x="197.5" y="130" font-size="3.436" text-anchor="start" font-weight="600" data-model="component:GPS-RECEIVER">GPS-RECEIVER</text>
-<text x="197.5" y="135" font-size="3.436" text-anchor="start" data-model="component:GPS-RECEIVER">Kestrel GPS receiver</text>
-<text x="199" y="141.25" font-size="3.436" text-anchor="start" font-weight="600" data-model="component:GPS-RECEIVER">J1</text>
-<text x="199" y="146.25" font-size="3.436" text-anchor="start" data-model="pin:GPS-RECEIVER/J1/4">4</text>
-<text x="203.3" y="146.25" font-size="3.436" text-anchor="start" data-model="pin:GPS-RECEIVER/J1/4">DATA OUT</text>
-<text x="220" y="60" font-size="3.436" text-anchor="middle" font-weight="600" data-model="component:SP-CAN1-H-SPLICE-PANEL">SP-CAN1-H-SPLICE-PANEL</text>
-<text x="220" y="95" font-size="3.436" text-anchor="middle" font-weight="600" data-model="component:SP-CAN1-L-SPLICE-PANEL">SP-CAN1-L-SPLICE-PANEL</text>
-<text x="197.5" y="175" font-size="3.436" text-anchor="start" font-weight="600" data-model="component:TRANSPONDER">TRANSPONDER</text>
-<text x="199" y="181.25" font-size="3.436" text-anchor="start" font-weight="600" data-model="component:TRANSPONDER">J1</text>
-<text x="199" y="186.25" font-size="3.436" text-anchor="start" data-model="pin:TRANSPONDER/J1/5">5</text>
-<text x="198.825" y="209.75" font-size="3.436" text-anchor="start" font-weight="600" data-model="connector:X-WR">X-WR</text>
-<text x="210.975" y="209.75" font-size="3.436" text-anchor="start" data-model="connector:X-WR">Wing root connector X-WR</text>
-<text x="211.25" y="215" font-size="3.436" text-anchor="middle" font-weight="600" data-model="connector:X-WR">cockpit side</text>
-<text x="197" y="221.25" font-size="3.436" text-anchor="start" data-model="pin:X-WR/cockpit side/7">7</text>
-<text x="197" y="226.25" font-size="3.436" text-anchor="start" data-model="pin:X-WR/cockpit side/8">8</text>
-<text x="243.75" y="215" font-size="3.436" text-anchor="middle" font-weight="600" data-model="connector:X-WR">wing side</text>
-<text x="258" y="221.25" font-size="3.436" text-anchor="end" data-model="pin:X-WR/wing side/7">7</text>
-<text x="258" y="226.25" font-size="3.436" text-anchor="end" data-model="pin:X-WR/wing side/8">8</text>
-<text x="37.5" y="93.75" font-size="3.436" text-anchor="start" data-model="conductor:W051">W051  20 RD</text>
-<text x="127.5" y="93.75" font-size="3.436" text-anchor="start" data-model="conductor:W052">W052  20 BK</text>
-<text x="127.5" y="118.75" font-size="3.436" text-anchor="start" data-model="conductor:W061">W061  22 BU</text>
-<text x="127.5" y="123.75" font-size="3.436" text-anchor="start" data-model="conductor:W066">W066  22 BU</text>
-<text x="167.5" y="218.75" font-size="3.436" text-anchor="start" data-model="conductor:W068">W068  22 BU</text>
-<text x="127.5" y="128.75" font-size="3.436" text-anchor="start" data-model="conductor:W068">W068  22 BU</text>
-<text x="162.5" y="223.75" font-size="3.436" text-anchor="start" data-model="conductor:W070">W070  22 BU</text>
-<text x="127.5" y="133.75" font-size="3.436" text-anchor="start" data-model="conductor:W070">W070  22 BU</text>
-<text x="167.5" y="63.75" font-size="3.436" text-anchor="start" data-model="conductor:W100">W100  22 GN</text>
-<text x="127.5" y="103.75" font-size="3.436" text-anchor="start" data-model="conductor:W107">W107  22 GNWH</text>
-<text x="262.5" y="218.75" font-size="3.436" text-anchor="start" data-model="conductor:W067">W067  22 BU</text>
-<text x="262.5" y="223.75" font-size="3.436" text-anchor="start" data-model="conductor:W069">W069  22 BU</text>
-<text x="247.5" y="63.75" font-size="3.436" text-anchor="start" data-model="conductor:W099">W099  22 GN</text>
-<text x="247.5" y="68.75" font-size="3.436" text-anchor="start" data-model="conductor:W101">W101  22 GN</text>
-<text x="247.5" y="98.75" font-size="3.436" text-anchor="start" data-model="conductor:W106">W106  22 GNWH</text>
-<text x="247.5" y="103.75" font-size="3.436" text-anchor="start" data-model="conductor:W108">W108  22 GNWH</text>
+<text x="97.5" y="75" font-size="3.436" text-anchor="start" font-weight="600" data-model="component:EFIS">EFIS</text>
+<text x="97.5" y="80" font-size="3.436" text-anchor="start" data-model="component:EFIS">Kestrel EFIS 10 inch</text>
+<text x="99" y="86.25" font-size="3.436" text-anchor="start" font-weight="600" data-model="component:EFIS">J1</text>
+<text x="99" y="91.25" font-size="3.436" text-anchor="start" data-model="pin:EFIS/J1/1">1</text>
+<text x="103.2" y="91.25" font-size="3.436" text-anchor="start" data-model="pin:EFIS/J1/1">POWER</text>
+<text x="131" y="96.25" font-size="3.436" text-anchor="end" data-model="pin:EFIS/J1/2">2</text>
+<text x="126.8" y="96.25" font-size="3.436" text-anchor="end" data-model="pin:EFIS/J1/2">GND</text>
+<text x="131" y="101.25" font-size="3.436" text-anchor="end" data-model="pin:EFIS/J1/7">7</text>
+<text x="126.8" y="101.25" font-size="3.436" text-anchor="end" data-model="pin:EFIS/J1/7">CAN_H</text>
+<text x="131" y="106.25" font-size="3.436" text-anchor="end" data-model="pin:EFIS/J1/8">8</text>
+<text x="126.8" y="106.25" font-size="3.436" text-anchor="end" data-model="pin:EFIS/J1/8">CAN_L</text>
+<text x="99" y="116.25" font-size="3.436" text-anchor="start" font-weight="600" data-model="component:EFIS">J2</text>
+<text x="131" y="121.25" font-size="3.436" text-anchor="end" data-model="pin:EFIS/J2/3">3</text>
+<text x="126.7" y="121.25" font-size="3.436" text-anchor="end" data-model="pin:EFIS/J2/3">ALT OUT</text>
+<text x="131" y="126.25" font-size="3.436" text-anchor="end" data-model="pin:EFIS/J2/4">4</text>
+<text x="126.7" y="126.25" font-size="3.436" text-anchor="end" data-model="pin:EFIS/J2/4">GPS IN</text>
+<text x="131" y="131.25" font-size="3.436" text-anchor="end" data-model="pin:EFIS/J2/7">7</text>
+<text x="126.7" y="131.25" font-size="3.436" text-anchor="end" data-model="pin:EFIS/J2/7">OAT</text>
+<text x="131" y="136.25" font-size="3.436" text-anchor="end" data-model="pin:EFIS/J2/8">8</text>
+<text x="126.7" y="136.25" font-size="3.436" text-anchor="end" data-model="pin:EFIS/J2/8">OAT REF</text>
+<text x="217.5" y="130" font-size="3.436" text-anchor="start" font-weight="600" data-model="component:GPS-RECEIVER">GPS-RECEIVER</text>
+<text x="217.5" y="135" font-size="3.436" text-anchor="start" data-model="component:GPS-RECEIVER">Kestrel GPS receiver</text>
+<text x="219" y="141.25" font-size="3.436" text-anchor="start" font-weight="600" data-model="component:GPS-RECEIVER">J1</text>
+<text x="219" y="146.25" font-size="3.436" text-anchor="start" data-model="pin:GPS-RECEIVER/J1/4">4</text>
+<text x="223.3" y="146.25" font-size="3.436" text-anchor="start" data-model="pin:GPS-RECEIVER/J1/4">DATA OUT</text>
+<text x="240" y="60" font-size="3.436" text-anchor="middle" font-weight="600" data-model="component:SP-CAN1-H-SPLICE-PANEL">SP-CAN1-H-SPLICE-PANEL</text>
+<text x="240" y="95" font-size="3.436" text-anchor="middle" font-weight="600" data-model="component:SP-CAN1-L-SPLICE-PANEL">SP-CAN1-L-SPLICE-PANEL</text>
+<text x="217.5" y="175" font-size="3.436" text-anchor="start" font-weight="600" data-model="component:TRANSPONDER">TRANSPONDER</text>
+<text x="219" y="181.25" font-size="3.436" text-anchor="start" font-weight="600" data-model="component:TRANSPONDER">J1</text>
+<text x="219" y="186.25" font-size="3.436" text-anchor="start" data-model="pin:TRANSPONDER/J1/5">5</text>
+<text x="219.225" y="209.75" font-size="3.436" text-anchor="start" font-weight="600" data-model="connector:X-WR">X-WR</text>
+<text x="231.375" y="209.75" font-size="3.436" text-anchor="start" data-model="connector:X-WR">Wing root connector</text>
+<text x="228.75" y="215" font-size="3.436" text-anchor="middle" font-weight="600" data-model="connector:X-WR">cockpit side</text>
+<text x="217" y="221.25" font-size="3.436" text-anchor="start" data-model="pin:X-WR/cockpit side/7">7</text>
+<text x="217" y="226.25" font-size="3.436" text-anchor="start" data-model="pin:X-WR/cockpit side/8">8</text>
+<text x="256.25" y="215" font-size="3.436" text-anchor="middle" font-weight="600" data-model="connector:X-WR">wing side</text>
+<text x="268" y="221.25" font-size="3.436" text-anchor="end" data-model="pin:X-WR/wing side/7">7</text>
+<text x="268" y="226.25" font-size="3.436" text-anchor="end" data-model="pin:X-WR/wing side/8">8</text>
+<text x="37.5" y="93.75" font-size="3.436" text-anchor="start" data-model="conductor:W051">W051 20 AWG RD</text>
+<text x="137.5" y="93.75" font-size="3.436" text-anchor="start" data-model="conductor:W052">W052 20 AWG BK</text>
+<text x="137.5" y="118.75" font-size="3.436" text-anchor="start" data-model="conductor:W061">W061 22 AWG BU</text>
+<text x="137.5" y="123.75" font-size="3.436" text-anchor="start" data-model="conductor:W066">W066 22 AWG BU</text>
+<text x="137.5" y="128.75" font-size="3.436" text-anchor="start" data-model="conductor:W068">W068 22 AWG BU</text>
+<text x="137.5" y="133.75" font-size="3.436" text-anchor="start" data-model="conductor:W070">W070 22 AWG BU</text>
+<text x="137.5" y="98.75" font-size="3.436" text-anchor="start" data-model="conductor:W100">W100 22 AWG GN</text>
+<text x="137.5" y="103.75" font-size="3.436" text-anchor="start" data-model="conductor:W107">W107 22 AWG GNWH</text>
+<text x="272.5" y="218.75" font-size="3.436" text-anchor="start" data-model="conductor:W067">W067 22 AWG BU</text>
+<text x="272.5" y="223.75" font-size="3.436" text-anchor="start" data-model="conductor:W069">W069 22 AWG BU</text>
+<text x="267.5" y="63.75" font-size="3.436" text-anchor="start" data-model="conductor:W099">W099 22 AWG GN</text>
+<text x="267.5" y="68.75" font-size="3.436" text-anchor="start" data-model="conductor:W101">W101 22 AWG GN</text>
+<text x="267.5" y="98.75" font-size="3.436" text-anchor="start" data-model="conductor:W106">W106 22 AWG GNWH</text>
+<text x="267.5" y="103.75" font-size="3.436" text-anchor="start" data-model="conductor:W108">W108 22 AWG GNWH</text>
 <text x="146.5" y="258.75" font-size="3.436" text-anchor="start" fill="#6b6b6b" data-model="">NOTES</text>
-<text x="146.5" y="263.75" font-size="3.436" text-anchor="start" data-model="">Wire text: label, gauge (AWG), colour code.</text>
+<text x="146.5" y="263.75" font-size="3.436" text-anchor="start" data-model="">Wire text W051 20 AWG RD = wire W051, 20 AWG, red.</text>
+<text x="146.5" y="268.25" font-size="3.436" text-anchor="start" data-model="">Colours: BK black, BU blue, GN green, GNWH green / white stripe,</text>
+<text x="146.5" y="272.75" font-size="3.436" text-anchor="start" data-model="">  RD red.</text>
+<text x="146.5" y="277.25" font-size="3.436" text-anchor="start" data-model="">Wire table: on sheet 4.</text>
 </svg>

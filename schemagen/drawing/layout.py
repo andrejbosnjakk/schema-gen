@@ -19,6 +19,7 @@ from ..app.workspace import _natural
 from . import route as R
 from .geometry import Anchor
 from . import symbols as S
+from ..exporters.palette import words as colour_words
 from .style import GRID, SIZE, areas, ceil_to, text_w
 
 BARS = ("splice", "bus", "ground")
@@ -142,9 +143,10 @@ def _taps(it: Elem, ends: list[tuple[str, str, Elem, str]], pos: dict[str, float
     return out
 
 
-def place(page: Elem, size: str = "A3", fside: dict[str, str] | None = None, spread: int = 0) -> Elem:
+def place(page: Elem, size: str = "A3", fside: dict[str, str] | None = None, spread: int = 0, reserve: float = 0.0) -> Elem:
     """Lays out and routes one page: returns the sheet's symbols, wires, texts, flags, the natural extent (`w`, `h`, before `spread`) and `bad`
-    (pairs of wires in one channel that need a dogleg: should be 0). spread 1: use the sheet, rows stretched up to 2x and channels widened (2: channels only)."""
+    (pairs of wires in one channel that need a dogleg: should be 0). spread 1: use the sheet, rows stretched up to 2x and channels widened (2: channels only).
+    reserve: height kept free at the foot of the area (for the wire table)."""
     col, lvl, flip = columns(page)
     items = {i["id"]: i for i in page["items"]}
     owner = {p["anchor"]: i["id"] for i in items.values() for b in i["blocks"] for p in b["pins"]}
@@ -239,19 +241,24 @@ def place(page: Elem, size: str = "A3", fside: dict[str, str] | None = None, spr
             sy["h"] = max(sy["h"], ceil_to(a["y"] - y + GRID * (len(ks) - 1) + 2.5))
         back = {k: ref for ref, ks in n.fan.items() for k in ks} | {e[0]: e[3] for e in n.ends}
         for a in sy["anchors"]: a["model"] = back.get(a["model"], a["model"])
+        if n.item and n.item["symbol"] not in ("block", "harness", *BARS) and n.item["role"] != "in_scope":   # no wire here: a dashed lead, not a loose wire
+            used = {e[3] for e in n.ends}
+            for a in (a for a in sy["anchors"] if a["model"] not in used):
+                for pr in sy["prims"]:
+                    if pr["kind"] == "line" and ((pr["x1"], pr["y1"]) == (a["x"], a["y"]) or (pr["x2"], pr["y2"]) == (a["x"], a["y"])): pr["dash"] = True
         for t in tx: t["model"] = back.get(t["model"], t["model"])
         return sy, tx
     for n in nodes.values():
         if n.kind == "item": build(n, {})
     wrongside = {f["id"]: nodes[owner[f["at"]]].act[k] for f, k in ((f, f["at"]) for f in page["flags"]) if k in nodes[owner[f["at"]]].act
                  and nodes[owner[f["at"]]].act[k] != ("R" if nodes[f["id"]].col > nodes[owner[f["at"]]].col else "L")}
-    if wrongside: return place(page, size, dict(fside or {}, **wrongside), spread)   # a flag on the side where the symbol's terminal is not
+    if wrongside: return place(page, size, dict(fside or {}, **wrongside), spread, reserve)   # a flag on the side where the symbol's terminal is not
     ring = [w for w, ns, k0, k1, rev in paths if w in page["wires"] and any(m.act.get(k, "") not in ("", "R" if o.col > m.col else "L") for m, k, o in ((ns[0], k0, ns[-1]), (ns[-1], k1, ns[0])))]  # noqa: E501
     if ring:   # a wire that would have to run back through a symbol (a loop in the wiring): two off-sheet flags instead, each naming the other end
         ids = {w["id"] for w in ring}
         stubs: list[Elem] = [dict(id=f"flag:{w['id']}:{e}", model=w["model"], kind="off_sheet", at=at, target=to, target_item="", text="→ " + _words(page, to), label=w["label"], gauge=w["gauge"],  # noqa: E501
                    colour=w["colour"], hex=w["hex"], cls=w["cls"], weight=w["weight"], stub=e) for w in ring for e, at, to in ((1, w["a"], w["b"]), (2, w["b"], w["a"]))]  # noqa: E501
-        return place(dict(page, wires=[w for w in page["wires"] if w["id"] not in ids], flags=page["flags"] + stubs), size, None, spread)
+        return place(dict(page, wires=[w for w in page["wires"] if w["id"] not in ids], flags=page["flags"] + stubs), size, None, spread, reserve)
     # ---- rows
     focus = [n for n in nodes.values() if n.kind == "item" and n.item and n.item["role"] == "in_scope"] or [n for n in nodes.values() if n.kind == "item"]
     c0 = max(focus, key=lambda n: (len(nb[n.id]), -n.col)).col if focus else 0
@@ -281,7 +288,8 @@ def place(page: Elem, size: str = "A3", fside: dict[str, str] | None = None, spr
     def crossings() -> int:
         n = 0
         for c in range(ncol - 1):
-            hs = [(ns[i].at(hopkeys(ns, k0, k1, i)[0]), ns[i + 1].at(hopkeys(ns, k0, k1, i)[1])) for el, ns, k0, k1, rev in paths for i in range(len(ns) - 1) if ns[i].col == c]  # noqa: E501
+            hs = [(ypos[ns[i].id] + ns[i].off[hopkeys(ns, k0, k1, i)[0]][1], ypos[ns[i + 1].id] + ns[i + 1].off[hopkeys(ns, k0, k1, i)[1]][1])
+                  for el, ns, k0, k1, rev in paths for i in range(len(ns) - 1) if ns[i].col == c]
             n += sum((a[0] - b[0]) * (a[1] - b[1]) < 0 for i, a in enumerate(hs) for b in hs[i + 1:])
         return n
 
@@ -299,7 +307,7 @@ def place(page: Elem, size: str = "A3", fside: dict[str, str] | None = None, spr
         for c in [c0] + [c for d in range(1, ncol) for c in (c0 + d, c0 - d) if 0 <= c < ncol]:
             settle(c, 0 if c == c0 else -1 if c > c0 else 1, npass == 0 and c != c0)
     best = (crossings(), {c: list(v) for c, v in cols.items()}, dict(ypos))
-    for _ in range(3):                                            # barycentre sweeps to the right and to the left; keep the fewest crossings
+    for _ in range(8):                                            # barycentre sweeps to the right and to the left; keep the fewest crossings
         for seq in (range(1, ncol), range(ncol - 2, -1, -1)):
             for c in seq: settle(c, -1 if seq.step > 0 else 1, True)
             x = crossings()
@@ -314,16 +322,21 @@ def place(page: Elem, size: str = "A3", fside: dict[str, str] | None = None, spr
         return min(ypos[n.id] for n in nodes.values()), max(ypos[n.id] + n.h for n in nodes.values())
     rebar()
     ax, ay, aw, ah = areas(size)["area"]
+    ah -= reserve
     top, bottom = extent() if nodes else (0.0, 0.0)
     nat_h = bottom - top
     stretched = False
-    if spread == 1 and nodes and (f := min(2.0, ah / max(1.0, nat_h))) >= 1.2:    # stretch the rows; undone when anything would overlap
-        keep = dict(ypos)
-        for n in nodes.values(): ypos[n.id] = top + math.floor((ypos[n.id] - top) * f / GRID + 1e-9) * GRID
-        rebar()
-        if any(ypos[b.id] < ypos[a.id] + a.h + (0.0 if a.kind == b.kind == "dummy" else GAP) - 1e-9 for ns in cols.values() for a, b in zip(ns, ns[1:])):
-            ypos.update(keep); rebar()
-        else: stretched = True
+    if spread == 1 and nodes:    # stretch the rows by the factor that leaves the fewest crossings (not when anything would overlap)
+        base = dict(ypos)
+        pick: tuple[int, float, dict[str, float]] = (crossings(), 1.0, base)
+        for f in sorted({min(2.0, ah / max(1.0, nat_h)), 2.0 if 2 * nat_h <= ah else 1.0, 1.5 if 1.5 * nat_h <= ah else 1.0} - {1.0}, reverse=True):
+            for n in nodes.values(): ypos[n.id] = top + math.floor((base[n.id] - top) * f / GRID + 1e-9) * GRID
+            rebar()
+            gap = lambda a, b: a.h + (0.0 if a.kind == b.kind == "dummy" else GAP)  # noqa: E731
+            if any(ypos[b.id] < ypos[a.id] + gap(a, b) - 1e-9 for ns in cols.values() for a, b in zip(ns, ns[1:])): continue
+            if (x := crossings()) < pick[0] or (x == pick[0] and pick[1] == 1.0): pick = (x, f, dict(ypos))
+        ypos.update(pick[2]); rebar()
+        stretched = pick[1] > 1.0
     for n in nodes.values(): n.y = ypos[n.id]
     # ---- channels: tracks and widths
     tr: dict[tuple[int, str], int] = {}
@@ -347,7 +360,7 @@ def place(page: Elem, size: str = "A3", fside: dict[str, str] | None = None, spr
     chw = [max(10.0, ceil_to(room[c]) + GRID * ntr[c]) for c in range(ncol - 1)]
     colw = [ceil_to(max((n.w for n in cols[c]), default=0.0)) for c in range(ncol)]
     nat_w = sum(colw) + sum(chw)
-    if stretched and nat_w > aw: return place(page, size, fside, 2)      # the stretch cost tracks and the page no longer fits: do without
+    if stretched and nat_w > aw: return place(page, size, fside, 2, reserve)      # the stretch cost tracks and the page no longer fits: do without
     if spread and ncol > 1: chw = [w + min(40.0, max(0.0, (aw - nat_w) // (ncol - 1) // GRID * GRID)) for w in chw]
     cx = [0.0]
     for c in range(ncol - 1): cx.append(cx[-1] + colw[c] + chw[c])
@@ -463,7 +476,8 @@ def _page(sc: Elem, elems: list[tuple[str, Elem]], nums: dict[str, list[int]] | 
         sheet = lambda e: min((n for n in nums.get(_cid(e), []) if n != me), default=None)  # noqa: E731
         mk = [_flag(sc, e, a, o, sheet(e), e["text"].removeprefix("→ ") if "a" not in e else None) for a, e, o in lst]
         if it["symbol"] in ("bus", "ground") and it["role"] != "in_scope" and len(mk) >= 4:
-            cov = [dict(id=_cid(e), at=a, target=o, label=e["label"], gauge=e["gauge"], colour=e["colour"]) for a, e, o in lst if "covers" not in e]
+            cov = [dict(id=_cid(e), at=a, target=o, label=e["label"], gauge=e["gauge"], colour=e["colour"], text=(e.get("text") or _words(sc, o)).removeprefix("→ "))
+                   for a, e, o in lst if "covers" not in e]
             cov += [c for _, e, _ in lst for c in e.get("covers", [])]
             sh = sorted({m["sheet"] for m in mk if m["sheet"]})
             mk = [dict(mk[0], id=f"cont:+{_cid(mk[0])}", text=f"+ {len(cov)} more wires on {it['code']}" + (f" (sheet {', '.join(map(str, sh))})" if sh else ""),
@@ -523,6 +537,10 @@ def paginate(sc: Elem, size: str = "A3") -> list[Elem]:
         mine = lambda i: i["role"] == "in_scope" or (i["role"] == "harness" and (sc["scope"]["kind"] == "system" or i["code"] in sc["scope"]["ids"]))  # noqa: E731
         foc = [col[i["id"]] for i in pg["items"] if mine(i)]
         lo, hi = (min(foc), max(foc)) if foc else (0, top)
+        if foc and not ok(lo, hi):          # the scope's columns do not all fit: start from the first component named, the rest follows on later sheets
+            ids = sc["scope"]["ids"]
+            first = min((i for i in pg["items"] if mine(i) and i["code"] in ids), key=lambda i: ids.index(i["code"]), default=None)
+            if first: lo = hi = col[first["id"]]
         if not ok(lo, hi): return None
         while hi < top and ok(lo, hi + 1): hi += 1
         while lo > 0 and ok(lo - 1, hi): lo -= 1
@@ -572,11 +590,24 @@ def paginate(sc: Elem, size: str = "A3") -> list[Elem]:
     return out
 
 
-def notes(pg: Elem, sh: Elem) -> list[str]:
-    """The sheet's notes: what the wire text says, simulation faults, what contacts and spare pins look like."""
-    out = ["Wire text: label, gauge (AWG), colour code."]
+def notes(pg: Elem, sh: Elem, table: str = "") -> list[str]:
+    """The sheet's notes: a worked example of the wire text with the colour codes used on the sheet spelled out, where the wire table is,
+    simulation faults, what contacts, spare pins and dashed stubs look like. The strip holds five lines; the first ones matter most."""
+    els = [*pg["wires"], *pg["flags"], *(c for f in pg["flags"] for c in f.get("covers", []))]
+    ex = next((w for w in pg["wires"] if w["gauge"] and w["colour"]), None) or next((w for w in els if w["gauge"] and w["colour"]), None)
+    out = []
+    if ex: out.append(f"Wire text {R.label_text(ex)} = wire {ex['label']}, {ex['gauge']} AWG, {colour_words(ex['colour'])}.")
+    codes = sorted({w["colour"] for w in els if w["colour"]})
+    cur = "Colours:"
+    for c in codes:
+        item = f" {c} {colour_words(c)}" + ("," if c != codes[-1] else ".")
+        if text_w(cur + item, SIZE) > 118 and cur != "Colours:": out.append(cur); cur = "  " + item.strip()
+        else: cur += item
+    if codes: out.append(cur)
+    out += [f"Wire table: {table}."] if table else []
     out += [f"{w['label']} dashed: {w['fault']['status']}" + (f" ({w['fault']['reason']})" if w["fault"]["reason"] else "") for w in pg["wires"] if w["fault"]]
     kinds = {s["kind"] for s in sh["symbols"]}
     if kinds & {"switch", "relay"}: out.append("Contacts are drawn unpowered: switches open, relays de-energised.")
     if any(p["spare"] for it in pg["items"] for b in it["blocks"] for p in b["pins"]): out.append("Spare pins are grey and have no wire.")
+    if any(pr.get("dash") for s in sh["symbols"] for pr in s["prims"]): out.append("A dashed stub on a part: that terminal has no wire on this drawing.")
     return out

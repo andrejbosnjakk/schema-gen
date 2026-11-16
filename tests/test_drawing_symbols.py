@@ -154,7 +154,7 @@ def test_flag_geometry() -> None:
 def test_symbol_sheet_validates_and_renders() -> None:
     g = symbol_sheet()
     assert validate(g) == []
-    assert len(g["sheets"]) == 2
+    assert len(g["sheets"]) == 3
     texts = [t for sh in g["sheets"] for t in sh["texts"]]
     assert all(t["size_mm"] >= 2.5 for t in texts)
     kinds = {s["kind"] for s in g["sheets"][0]["symbols"]}
@@ -168,18 +168,18 @@ def test_svg_is_deterministic_and_well_formed() -> None:
     root = ET.fromstring(a)
     assert root.tag.endswith("svg") and root.get("viewBox") == "0 0 420 297"
     assert 'data-model="component:ECU"' in a and 'data-model="conductor:W001"' in a
-    assert re.search(r"<polyline[^>]*stroke-width=\"0.7\"", a)   # the heavy wire
+    assert re.search(r"<polyline[^>]*stroke-width=\"0.9\"", a)   # the heavy wire
     assert "<text" in a and "Inter" in a
-    assert svg(symbol_sheet(), 1) != a and svg(symbol_sheet(), 0, colour=True) != a
+    assert svg(symbol_sheet(), 1) != a and svg(symbol_sheet(), 0, colour=False) != a
     assert "font-face" in svg(symbol_sheet(), 0, embed_font=True)
 
 
 def test_pdf_has_one_page_per_sheet(tmp_path: Any) -> None:
     g = symbol_sheet()
     p = tmp_path / "a.pdf"
-    assert pdf(g, p) == 2
+    assert pdf(g, p) == 3
     data = p.read_bytes()
-    assert data.startswith(b"%PDF") and len(re.findall(rb"/Type\s*/Page\b", data)) == 2
+    assert data.startswith(b"%PDF") and len(re.findall(rb"/Type\s*/Page\b", data)) == 3
     q = tmp_path / "b.pdf"
     pdf(g, q)
     assert q.read_bytes() == data   # deterministic

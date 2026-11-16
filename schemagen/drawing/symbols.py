@@ -90,7 +90,8 @@ def flat(t: str) -> str:
 
 def _head(it: Item) -> tuple[str, str]:
     """Code and display name (the name only when it says more than the code: not the code again in words)."""
-    return it["code"], it["name"] if it["name"] and flat(it["name"]) != flat(it["code"]) else ""
+    name = " ".join(it["name"].replace(it["code"], "").split()) if it["name"] else ""      # "Wing root connector X-WR" -> "Wing root connector"
+    return it["code"], name if name and flat(name) != flat(it["code"]) else ""
 
 
 def _two(it: Item, sides: dict[str, str]) -> list[tuple[dict[str, Any], dict[str, Any], str]]:
@@ -473,16 +474,26 @@ def size(item: Item, sides: dict[str, str] | None = None) -> tuple[float, float]
 
 # ---------------------------------------------------------------- flags
 FLAG_H = 10.0
-FLAG_TIP = 5.0     # the pointed ends of an off-sheet flag
+FLAG_TIP = 3.0     # the pointed ends of an off-sheet flag
 FLAG_TAB = 7.5     # the sheet-number cell of a continuation flag
-FLAG_CHARS = 60.0  # mm of text per line (two lines at most)
+FLAG_CHARS = 52.0  # mm of text per line (two lines at most)
 
 
-def _flag_lines(kind: str, text: str) -> list[str]:
-    """The flag's text on at most two lines: as narrow as FLAG_CHARS lets it, wider only when it would be cut off."""
-    for w in (FLAG_CHARS, FLAG_CHARS + 12):
-        lines = wrap(text, w, SIZE, True, 2)
-        if not lines or not lines[-1].endswith("..") or text.endswith(".."): break
+def _plain(text: str) -> str:
+    """Where a flag leads, in words: no arrow, and the bracket after the name (what the part is) only while the whole text stays short."""
+    t = " ".join(text.removeprefix("→ ").split())
+    head, sep, par = t.rpartition(" (")
+    return head if sep and t.endswith(")") and (len(t) > 34 or head.split()[0] in par) else t
+
+
+def _flag_lines(kind: str, text: str, sheet: int | None = None) -> list[str]:
+    """The flag's text on at most two lines, as narrow as FLAG_CHARS lets it and wider only when it would be cut off. An off-sheet flag says
+    `to X-FW cockpit side 11`; a continuation says `continues on sheet 2: ...`; a summary flag (`+ 8 more wires on X`) is narrow."""
+    if text.startswith("+ "): return wrap(text, 44.0, SIZE, True, 2)
+    body = (f"continues on sheet {sheet or 9}: " if kind == "continuation" else "to ") + _plain(text)
+    for w in (FLAG_CHARS, FLAG_CHARS + 12, FLAG_CHARS + 30):
+        lines = wrap(body, w, SIZE, True, 2)
+        if not lines[-1].endswith(".."): break
     return lines
 
 
@@ -490,7 +501,7 @@ def flag(id: str, model: str, kind: str, text: str, target: str, sheet: int | No
     """A flag at (x, y) on the grid, sized to its text. The wire attaches at the middle of its left or right edge (a grid point,
     (x, y + 5) or (x + w, y + 5)). off_sheet: a pennant with pointed ends (text = where it leads); continuation: a box with a cell
     for the sheet number (text = the pin it continues to). `sheet` is the continuation's sheet number. `side` is the edge the wire enters."""
-    lines = _flag_lines(kind, text)
+    lines = _flag_lines(kind, text, sheet)
     pad = 2 * FLAG_TIP + 1 if kind == "off_sheet" else FLAG_TAB + 3
     w = ceil_to(max([_tw(t, "flag") for t in lines] or [0.0]) + pad)
     return Flag(id=id, model=model, x=x, y=y, w=max(w, 15.0), h=FLAG_H, text=text, target=target, sheet=sheet, kind=kind, side=side)  # type: ignore[typeddict-item]
@@ -500,7 +511,7 @@ def flag_shapes(f: Flag) -> tuple[list[Prim], list[Text]]:
     """The prims and texts a renderer draws for a flag."""
     B = _B({"model": f["model"]}, f["x"], f["y"])
     w, h = f["w"], f["h"]
-    lines = _flag_lines(f["kind"], f["text"])
+    lines = _flag_lines(f["kind"], f["text"], f.get("sheet"))
     if f["kind"] == "off_sheet":
         k = FLAG_TIP
         B.poly([(0, h / 2), (k, 0), (w - k, 0), (w, h / 2), (w - k, h), (k, h)], True, N, "white")

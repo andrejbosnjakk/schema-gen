@@ -79,8 +79,8 @@ def trace(pts: list[tuple[float, float]]) -> list[list[float]]:
 
 
 def label_text(w: dict[str, Any]) -> str:
-    """`L05  22 RD`: label, then gauge and colour code."""
-    return "  ".join(x for x in (w.get("label", ""), " ".join(t for t in (w.get("gauge", ""), w.get("colour", "")) if t)) if x)
+    """`L05  22 AWG  RD`: label, then gauge with its unit, then colour code."""
+    return " ".join(x for x in (w.get("label", ""), f"{w['gauge']} AWG" if w.get("gauge") else "", w.get("colour", "")) if x)
 
 
 def _boxes(sh: dict[str, Any]) -> list[tuple[float, float, float, float, str]]:

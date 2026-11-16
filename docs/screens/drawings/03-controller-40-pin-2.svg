@@ -4,7 +4,7 @@
 <g data-model=""><rect x="10" y="10" width="400" height="275" fill="none" stroke="#000" stroke-width="0.5"/><rect x="270" y="255" width="140" height="30" fill="none" stroke="#000" stroke-width="0.35"/><line x1="270" y1="265" x2="410" y2="265" fill="none" stroke="#000" stroke-width="0.18"/><line x1="270" y1="275" x2="410" y2="275" fill="none" stroke="#000" stroke-width="0.18"/><line x1="370" y1="255" x2="370" y2="265" fill="none" stroke="#000" stroke-width="0.18"/><line x1="340" y1="265" x2="340" y2="275" fill="none" stroke="#000" stroke-width="0.18"/><line x1="290" y1="275" x2="290" y2="285" fill="none" stroke="#000" stroke-width="0.18"/><line x1="320" y1="275" x2="320" y2="285" fill="none" stroke="#000" stroke-width="0.18"/><line x1="360" y1="275" x2="360" y2="285" fill="none" stroke="#000" stroke-width="0.18"/><rect x="10" y="255" width="135" height="30" fill="none" stroke="#000" stroke-width="0.35"/><rect x="145" y="255" width="125" height="30" fill="none" stroke="#000" stroke-width="0.35"/></g>
 <text x="271.5" y="261.75" font-size="4.811" text-anchor="start" font-weight="600" data-model="">FCU flight control unit</text>
 <text x="371.5" y="258.75" font-size="3.436" text-anchor="start" fill="#6b6b6b" data-model="">SHEET</text>
-<text x="371.5" y="263.25" font-size="3.436" text-anchor="start" data-model="">2 of 2</text>
+<text x="371.5" y="263.25" font-size="3.436" text-anchor="start" data-model="">2 of 3</text>
 <text x="271.5" y="268.75" font-size="3.436" text-anchor="start" fill="#6b6b6b" data-model="">PROJECT</text>
 <text x="271.5" y="273.25" font-size="3.436" text-anchor="start" data-model="">drawing_fixture</text>
 <text x="341.5" y="268.75" font-size="3.436" text-anchor="start" fill="#6b6b6b" data-model="">SCOPE</text>
@@ -21,15 +21,27 @@
 <text x="25" y="258.75" font-size="3.436" text-anchor="start" data-model="">Breaker</text>
 <g data-model=""><rect x="12" y="260.5" width="9" height="4" fill="none" stroke="#000" stroke-width="0.35"/><line x1="14.5" y1="260.5" x2="14.5" y2="264.5" fill="none" stroke="#000" stroke-width="0.18"/></g>
 <text x="25" y="263.75" font-size="3.436" text-anchor="start" data-model="">Continued</text>
-<g data-model="component:CB-FCU"><line x1="140" y1="125" x2="145" y2="125" fill="none" stroke="#000" stroke-width="0.35"/><line x1="155" y1="125" x2="160" y2="125" fill="none" stroke="#000" stroke-width="0.35"/><path d="M145 125A5 5 0 0 1 155 125" fill="none" stroke="#000" stroke-width="0.35"/><circle cx="145" cy="125" r="0.9" fill="#fff" stroke="#000" stroke-width="0.35"/><circle cx="155" cy="125" r="0.9" fill="#fff" stroke="#000" stroke-width="0.35"/><line x1="145" y1="125" x2="152" y2="121.5" fill="none" stroke="#000" stroke-width="0.35"/></g>
-<polyline points="160,125 240,125" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:PWR-FCU-1"/>
-<g data-model="conductor:PWR-FCU-1"><rect x="240" y="120" width="35" height="10" fill="#fff" stroke="#000" stroke-width="0.35"/><line x1="247.5" y1="120" x2="247.5" y2="130" fill="none" stroke="#000" stroke-width="0.18"/></g>
-<text x="243.75" y="126.25" font-size="3.436" text-anchor="middle" font-weight="600" data-model="conductor:PWR-FCU-1">1</text>
-<text x="261.25" y="126.25" font-size="3.436" text-anchor="middle" font-weight="600" data-model="conductor:PWR-FCU-1">-&gt; FCU J1-1</text>
-<text x="150" y="131.75" font-size="3.436" text-anchor="middle" font-weight="600" data-model="component:CB-FCU">CB-FCU</text>
-<text x="150" y="136.25" font-size="3.436" text-anchor="middle" data-model="component:CB-FCU">5 A</text>
-<text x="150" y="140.75" font-size="3.436" text-anchor="middle" data-model="component:CB-FCU">FCU</text>
-<text x="162.5" y="123.75" font-size="3.436" text-anchor="start" data-model="conductor:PWR-FCU-1">PWR-FCU-1  20 RD</text>
+<g data-model=""><line x1="15" y1="245.5" x2="404" y2="245.5" fill="none" stroke="#000" stroke-width="0.18"/><line x1="15" y1="250" x2="404" y2="250" fill="none" stroke="#000" stroke-width="0.18"/><rect x="16" y="246.5" width="2.5" height="2.5" fill="none" stroke="#000" stroke-width="0.18"/></g>
+<g data-model="component:CB-FCU"><line x1="120" y1="115" x2="125" y2="115" fill="none" stroke="#000" stroke-width="0.35"/><line x1="135" y1="115" x2="140" y2="115" fill="none" stroke="#000" stroke-width="0.35"/><path d="M125 115A5 5 0 0 1 135 115" fill="none" stroke="#000" stroke-width="0.35"/><circle cx="125" cy="115" r="0.9" fill="#fff" stroke="#000" stroke-width="0.35"/><circle cx="135" cy="115" r="0.9" fill="#fff" stroke="#000" stroke-width="0.35"/><line x1="125" y1="115" x2="132" y2="111.5" fill="none" stroke="#000" stroke-width="0.35"/></g>
+<polyline points="140,115 230,115" fill="none" stroke="#000" stroke-width="0.55" stroke-linejoin="round" data-model="conductor:PWR-FCU-1"/>
+<polyline points="140,115 230,115" fill="none" stroke="#ff0000" stroke-width="0.245" stroke-linejoin="round"/>
+<g data-model="conductor:PWR-FCU-1"><rect x="230" y="110" width="65" height="10" fill="#fff" stroke="#000" stroke-width="0.35"/><line x1="237.5" y1="110" x2="237.5" y2="120" fill="none" stroke="#000" stroke-width="0.18"/></g>
+<text x="233.75" y="116.25" font-size="3.436" text-anchor="middle" font-weight="600" data-model="conductor:PWR-FCU-1">1</text>
+<text x="266.25" y="116.25" font-size="3.436" text-anchor="middle" font-weight="600" data-model="conductor:PWR-FCU-1">continues on sheet 1: FCU J1-1</text>
+<text x="130" y="121.75" font-size="3.436" text-anchor="middle" font-weight="600" data-model="component:CB-FCU">CB-FCU</text>
+<text x="130" y="126.25" font-size="3.436" text-anchor="middle" data-model="component:CB-FCU">5 A</text>
+<text x="130" y="130.75" font-size="3.436" text-anchor="middle" data-model="component:CB-FCU">FCU</text>
+<text x="142.5" y="113.75" font-size="3.436" text-anchor="start" data-model="conductor:PWR-FCU-1">PWR-FCU-1 20 AWG RD</text>
+<text x="23" y="244.5" font-size="3.436" text-anchor="start" fill="#6b6b6b" data-model="">LABEL</text>
+<text x="45" y="244.5" font-size="3.436" text-anchor="start" fill="#6b6b6b" data-model="">WIRE</text>
+<text x="103" y="244.5" font-size="3.436" text-anchor="start" fill="#6b6b6b" data-model="">FROM</text>
+<text x="254" y="244.5" font-size="3.436" text-anchor="start" fill="#6b6b6b" data-model="">TO</text>
+<text x="23" y="249" font-size="3.436" text-anchor="start" data-model="">PWR-FCU-1</text>
+<text x="45" y="249" font-size="3.436" text-anchor="start" data-model="">20 AWG red</text>
+<text x="103" y="249" font-size="3.436" text-anchor="start" data-model="">CB-FCU, LOAD</text>
+<text x="254" y="249" font-size="3.436" text-anchor="start" data-model="">FCU J1-1 (sheet 1)</text>
 <text x="146.5" y="258.75" font-size="3.436" text-anchor="start" fill="#6b6b6b" data-model="">NOTES</text>
-<text x="146.5" y="263.75" font-size="3.436" text-anchor="start" data-model="">Wire text: label, gauge (AWG), colour code.</text>
+<text x="146.5" y="263.75" font-size="3.436" text-anchor="start" data-model="">Wire text PWR-FCU-1 20 AWG RD = wire PWR-FCU-1, 20 AWG, red.</text>
+<text x="146.5" y="268.25" font-size="3.436" text-anchor="start" data-model="">Colours: RD red.</text>
+<text x="146.5" y="272.75" font-size="3.436" text-anchor="start" data-model="">Wire table: under the drawing.</text>
 </svg>

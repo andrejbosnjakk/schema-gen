@@ -154,10 +154,11 @@ def _collapse(st: Any, ends: dict[int, int], fl: list[SceneFlag], node: dict[int
         if len(js) < COLLAPSE: continue
         js.sort(key=lambda j: _natural(conds[j].id))
         f0 = next(f for f in fl if f["model"] == f"conductor:{conds[js[0]].id}")
+        words = {f["model"]: f["text"].removeprefix("→ ") for f in fl}
         cov = [Cover(id=conds[j].id, at=ctx.ref(conds[j].end(ends[j])), target=ctx.ref(conds[j].end(3 - ends[j])), label=conds[j].label, gauge=conds[j].gauge,
-                     colour=conds[j].colour_code or conds[j].colour) for j in js]
+                     colour=conds[j].colour_code or conds[j].colour, text=words.get(f"conductor:{conds[j].id}", "")) for j in js]
         name = ctx.comp[conds[js[0]].end(ends[js[0]]).device]
-        out.append(dict(f0, id=f"flag:+{conds[js[0]].id}", target_item="", text=f"+ {len(js)} more wires on {name.id} (see its own drawing)", covers=cov))  # type: ignore[arg-type]
+        out.append(dict(f0, id=f"flag:+{conds[js[0]].id}", target_item="", text=f"+ {len(js)} more wires on {name.id}", covers=cov))  # type: ignore[arg-type]
         drop |= {f"conductor:{conds[j].id}" for j in js}
     return [f for f in fl if f["model"] not in drop] + out
 

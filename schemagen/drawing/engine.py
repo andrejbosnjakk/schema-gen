@@ -7,8 +7,10 @@ from typing import Any
 
 from . import layout as L
 from . import symbols as S
+from . import table as T
 from .geometry import SHEETS, Geometry
 from .scope import scene
+from .style import areas
 
 
 def draw(st: Any, scope: Any, size: str = "A3", meta: dict[str, str] | None = None) -> Geometry:
@@ -18,14 +20,30 @@ def draw(st: Any, scope: Any, size: str = "A3", meta: dict[str, str] | None = No
     pages = L.paginate(sc, size)  # type: ignore[arg-type]
     info: dict[str, str] = dict(title=sc["title"], scope=sc["scope"]["text"], project=sc["project"], revision=meta.get("revision", ""), date=meta.get("date", ""),
                 drawn_by=meta.get("drawn_by", ""), source=meta.get("source", ""))
+    ah = areas(size)["area"][3]
+    placed: list[tuple[Any, Any, list[Any], bool]] = []     # (page, its layout, its table rows, whether the table fits under the drawing)
+    for pg in pages:
+        rs = T.rows(pg)
+        fits = L.place(pg, size)["h"] + T.height(len(rs)) <= ah
+        placed.append((pg, L.place(pg, size, None, 1, T.height(len(rs)) if fits else 0.0), rs, fits))
+    tabs = T.pages([(n, rs) for n, (_, _, rs, fits) in enumerate(placed, 1) if not fits and rs], size)
+    of = len(pages) + len(tabs)
+    on = {n: len(pages) + 1 + next(k for k, t in enumerate(tabs) if n in t[2]) for n, (_, _, rs, fits) in enumerate(placed, 1) if not fits and rs}
     sheets: list[Any] = []
-    for n, pg in enumerate(pages, 1):
-        sh = L.place(pg, size, None, 1)
+    for n, (pg, sh, rs, fits) in enumerate(placed, 1):
         kinds = list(dict.fromkeys([s["kind"] for s in sh["symbols"]] + (["spare"] if any(p["spare"] for it in pg["items"] for b in it["blocks"] for p in b["pins"]) else [])  # noqa: E501
                                    + [f["kind"] for f in sh["flags"]]))
-        sheet: dict[str, Any] = dict(n=n, of=len(pages), size=size, w_mm=SHEETS[size][0], h_mm=SHEETS[size][1], grid_mm=5.0, symbols=sh["symbols"], wires=sh["wires"],  # noqa: E501
-                                     texts=sh["texts"], flags=sh["flags"])
-        sheet.update(S.furniture(info, size, n, len(pages), kinds, L.notes(pg, sh)))
+        rules, texts = T.inline(rs, size) if fits and rs else ([], [])
+        sheet: dict[str, Any] = dict(n=n, of=of, size=size, w_mm=SHEETS[size][0], h_mm=SHEETS[size][1], grid_mm=5.0, symbols=sh["symbols"], wires=sh["wires"],  # noqa: E501
+                                     texts=sh["texts"] + texts, flags=sh["flags"], rules=rules, table=dict(sheet=n if fits else on.get(n), rows=T.row_data(rs)))
+        where = "under the drawing" if fits else f"on sheet {on[n]}" if n in on else ""
+        sheet.update(S.furniture(info, size, n, of, kinds, L.notes(pg, sh, where)))
+        sheets.append(sheet)
+    for k, (rules, texts, shown) in enumerate(tabs):
+        n = len(pages) + 1 + k
+        sheet = dict(n=n, of=of, size=size, w_mm=SHEETS[size][0], h_mm=SHEETS[size][1], grid_mm=5.0, symbols=[], wires=[], texts=texts, flags=[], rules=rules,
+                     table=dict(sheet=n, rows=[]))
+        sheet.update(S.furniture(info, size, n, of, [], ["Wire table of sheet " + ", ".join(map(str, shown)) + "."]))
         sheets.append(sheet)
     return dict(version=1, drawing=info, sheets=sheets)  # type: ignore[return-value,typeddict-item]
 

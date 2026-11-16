@@ -30,3 +30,10 @@ The demo also gained P (ratings, panel labels), D and O tables.
 | same | a block's name is left out when it only repeats the code (`BATTERY-MANAGEMENT-SYSTEM` / "Battery management system"); the same in flag texts | the repeat made blocks and flags needlessly wide |
 | same | flag text wraps at 60 mm (72 mm only when it would be cut off) | narrower flags, more fits on one sheet |
 | same | a bus or ground in scope has no "+ N more wires" flag | every wire of the part the sheet is about is drawn |
+
+## Readable drawings, stage 2 (wire table, colour, words)
+
+| file | difference | why |
+|---|---|---|
+| docs/screens/drawings/*.svg, *.pdf | wire table under the drawing (or on a table sheet), wire text `W052 20 AWG BK`, wires in colour, worked key and colour codes in the notes, flags `to ...` / `continues on sheet N: ...`, dashed leads on unwired terminals of parts, summary flag `+ N more wires on X`, harness name without the repeated code | part 1 and 2 of the readable-drawings brief (D114) |
+| symbol-sheet-3.svg (new), symbol-sheet.pdf | third page `How to read these drawings` | part 3 of the brief |

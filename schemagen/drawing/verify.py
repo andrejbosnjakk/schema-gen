@@ -91,6 +91,18 @@ def diff(got: set[Entry], want: set[Entry]) -> list[str]:
     return sorted([f"missing: {fmt(e)}" for e in want - got] + [f"extra: {fmt(e)}" for e in got - want])
 
 
+def table(g: Geometry) -> list[str]:
+    """Differences between each sheet's wire table and the netlist of that sheet alone (same conductor, label, gauge, colour and both ends)."""
+    out: list[str] = []
+    sheets: list[Any] = list(g["sheets"])
+    for sh in sheets:
+        if "table" not in sh or not sh["symbols"]: continue     # a geometry without tables (hand-made), or a table sheet
+        rows = sh["table"]["rows"]
+        got = {(r["id"], *sorted((r["a"], r["b"])), r["label"], r["gauge"], r["colour"]) for r in rows}
+        out += [f"sheet {sh['n']} table {d}" for d in diff(got, netlist(dict(g, sheets=[sh])))]  # type: ignore[arg-type]
+    return out
+
+
 def roundtrip(st: Any, sc: Scene, g: Geometry) -> list[str]:
-    """Differences between what the geometry draws and what the model says for the scene's scope; [] = identical."""
-    return diff(netlist(g), expected(st, sc))
+    """Differences between what the geometry draws and what the model says for the scene's scope; [] = identical. Includes the wire tables."""
+    return diff(netlist(g), expected(st, sc)) + table(g)

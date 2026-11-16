@@ -86,6 +86,7 @@ class Cover(TypedDict):
     label: str
     gauge: str
     colour: str
+    text: str                     # where the other end is, in words
 
 
 class _SceneFlag(TypedDict):

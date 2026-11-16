@@ -12,8 +12,8 @@ from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen.canvas import Canvas
 
 from .geometry import Geometry
-from .render_svg import layers
-from .style import DASH, GREY, GREY_ROLES, LINE, WIRE, baseline_dy, em, font_files, glyphs, is_bold
+from .render_svg import casing, core, layers
+from .style import DASH, GREY, GREY_ROLES, LINE, baseline_dy, em, font_files, glyphs, is_bold
 
 FILL = {"black": (0, 0, 0), "white": (1, 1, 1)}
 
@@ -82,7 +82,10 @@ def _page(c: Canvas, sh: dict[str, Any], fonts: tuple[str, str]) -> None:
         else:
             pts = v["points"]
             c.setStrokeColorRGB(0, 0, 0)
-            path(pts, False, None, "k", WIRE[v["weight"]], bool(v.get("fault")))
+            path(pts, False, None, "k", casing(v), bool(v.get("fault")))
+            if len(v.get("hex") or "") == 7 and not v.get("fault"):
+                c.setStrokeColorRGB(*_hex(v["hex"]))
+                path(pts, False, None, "k", core(v))
 
 
 def pdf(geometry: Geometry | list[Geometry], path: str | Path) -> int:

@@ -12,7 +12,7 @@ from schemagen.drawing.engine import draw, export
 from schemagen.drawing.geometry import validate
 from schemagen.drawing.render_svg import svg
 from schemagen.drawing.scope import scene
-from schemagen.drawing.verify import roundtrip
+from schemagen.drawing.verify import roundtrip, table
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -66,6 +66,28 @@ def test_crossings_at_most_5(states):
     st = states["aircraft"]
     worst = {c.id: checks.crossings(draw(st, f"component:{c.id}")) for c in st.m.components}
     assert max(worst.values()) <= 5, sorted(worst.items(), key=lambda t: -t[1])[:3]
+
+
+def test_wire_table(states):
+    """Every sheet has a table row per conductor it shows, in words; the check notices a row that disagrees with the drawing."""
+    g = draw(states["aircraft"], "component:EFIS")
+    rows = {r["id"]: r for sh in g["sheets"] for r in sh["table"]["rows"]}
+    assert {"W051", "W052", "W106"} <= set(rows) and table(g) == []
+    assert rows["W051"]["frm"] == "CB-EFIS, LOAD" and rows["W052"]["frm"] == "EFIS, J1, pin 2 (GND)" and rows["W052"]["to"] == "ground bus BB-GROUND-BUS"
+    assert [sh for sh in g["sheets"] if not sh["symbols"]], "the EFIS wire table does not fit under its sheets: a table sheet follows"
+    rows["W051"]["gauge"] = "99"
+    assert table(g)
+
+
+def test_wire_table_inline(states):
+    g = draw(states["aircraft"], "component:K-BATTERY-CONTACTOR")
+    assert len(g["sheets"]) == 1 and g["sheets"][0]["table"]["sheet"] == 1 and g["sheets"][0]["rules"]
+
+
+def test_wires_drawn_in_colour(states):
+    g = draw(states["aircraft"], "component:K-BATTERY-CONTACTOR")
+    assert 'stroke="#ff0000"' in svg(g, 0) and 'stroke="#ff0000"' not in svg(g, 0, colour=False)
+    assert "22 AWG" in " ".join(t["s"] for t in g["sheets"][0]["texts"])
 
 
 def test_deterministic(states):

@@ -112,7 +112,7 @@ anchors of the from and to end, `pair`/`shield` from `extra.pair`/`extra.shield`
 **SceneFlag** `{id, model, kind: "off_sheet", at, target, target_item, text, label, gauge, colour, hex, cls, weight, covers?}`: `at` is the
 anchor on the drawn node, `target` the pin ref of the conductor's other end, `target_item` its item id, `text` "→ " plus
 `pinout.far_text` (display names, through splices and harness pins to where it lands). A bus or ground node with 4 or more such flags gets
-**one summary flag** instead (D111): `text` "+ 22 more wires on GND-BUS (see its own drawing)", `covers` the list of `{id, at, target, label, gauge,
+**one summary flag** instead (D111): `text` "+ 22 more wires on GND-BUS", `covers` the list of `{id, at, target, label, gauge,
 colour}` of the conductors it stands for (`at`, `target`, ... of the flag itself are the first one's). Splice flags stay individual.
 
 ## Geometry
@@ -122,7 +122,7 @@ model id it represents, "" for decoration).
 
 ```
 {version: 1, drawing: {title, scope, project, revision, date, drawn_by, source},
- sheets: [{n, of, size: "A3"|"A4", w_mm, h_mm, grid_mm: 5, symbols, wires, texts, flags, notes, legend, title_block}]}
+ sheets: [{n, of, size: "A3"|"A4", w_mm, h_mm, grid_mm: 5, symbols, wires, texts, flags, notes, legend, title_block, rules, table}]}
 ```
 
 Sheets are landscape: A3 420 x 297, A4 297 x 210. `notes` are texts; `legend` and `title_block` are free dicts the layout fills
@@ -199,3 +199,18 @@ a dogleg), wire text `label  gauge colour` above a horizontal stretch (twice on 
 between connectors of the scope's components, else through the middle. A wire is drawn on every sheet that shows both its ends; a splice, bus or ground
 shows a continuation flag for each other conductor drawn elsewhere (a summary flag when 4 or more). Twisted pair and shield notation is not drawn (the model
 has no such data); the reference drawings are in `docs/screens/drawings/` (golden SVGs, `python -m schemagen.drawing.reference`).
+
+## Wire table, wire text, flag text (readable drawings)
+
+- `sheet.table = {sheet, rows}`: one row per conductor the sheet shows (as a wire, as a flag, or under a summary flag): `{id, label, gauge, colour, a, b, frm, to}`,
+  `a`/`b` the pin refs of its two ends (a flagged conductor: the drawn end and the far end), `frm`/`to` those ends in words (`EFIS, J1, pin 2 (GND)`,
+  `splice SP-1`, `ground bus GND-BUS`; a far end that continues on another sheet ends in `(sheet N)`). Rows are in the natural order of the label.
+  `sheet` is the sheet the table is drawn on: the sheet itself when it fits under the drawing, else a table sheet after the last drawing sheet (no symbols,
+  no wires; its notes say which sheets' rows it holds). The table is drawn as `texts` plus `rules` (prims, drawn under the symbols); the renderers draw
+  `rules` like any prims. The colour column spells the code out (`GNWH` = green / white stripe, names in `exporters/palette.py`), the gauge column says `AWG`.
+  `verify.table(g)` (part of `verify.roundtrip`) compares each sheet's rows with the netlist of that sheet alone.
+- Wire text is `W052 20 AWG BK` (label, gauge with its unit, colour code). The notes box gives a worked example from the sheet, the colour codes used on it in words,
+  and where the wire table is.
+- Wires are drawn in their colour (`hex`) inside a black casing, in the app, the SVG and the PDF; the code text stays, so a black-and-white print reads the same.
+- Flag text is plain words: an off-sheet flag `to X-FW cockpit side 11`, a continuation `continues on sheet 2: X-FW cockpit side 11`; the contract's `text` still
+  holds the long form. A terminal of a part that is not in scope and has no wire on the sheet has a dashed lead (a stub that cannot be taken for a wire).
