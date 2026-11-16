@@ -8,7 +8,6 @@ import type { Edge, Issue, Node, Overlay, Session, Wire, Workspace } from "../ty
 const PALETTE: Record<string, string> = { "14 V": "#ff0000", "GND": "#000000", "CAN_H": "#00ff00", "CAN_L": "#00ff00",
   "HV": "#ff8000", "signal": "#0066ff", "5 V": "#8000ff" };
 const VOLT: Record<string, string> = { "14 V": "14 V", "GND": "0 V", "CAN_H": "CAN", "CAN_L": "CAN", "HV": "400 V", "signal": "signal", "5 V": "5 V" };
-const SHORT: Record<string, string> = { CAN_H: "CAN", CAN_L: "CAN", GND: "GND" };
 
 function rng(seed: number) { return () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296); }
 
@@ -136,8 +135,7 @@ export function build(target: number, name: string, extraIssues: Issue[] = []): 
   }
   const edges: Edge[] = [...groups].map(([k, g]) => {
     const [a, b] = k.split("~"), cls = [...new Set(g.map((x) => x.cls))];
-    const short = [...new Set(cls.map((c) => SHORT[c] ?? c))];
-    return { id: k, a, b, wires: g.map((x) => x.id), cls, label: short.length === 1 ? `${g.length} × ${short[0]}` : `${g.length} wires` };
+    return { id: k, a, b, wires: g.map((x) => x.id), cls, label: g.length > 1 ? `${g.length} wires` : g[0].label };
   });
   const zones = [...new Set(zone.values())].map((z) => ({ id: z.toLowerCase().replace(/\s+/g, "-"), name: z, members: [...zone].filter(([, v]) => v === z).map(([k]) => k) }));
   return { project: { name, root: `C:\\Users\\you\\AppData\\Local\\schemagen\\projects\\${name}`, version: "1.0.0", warnings: [] },
@@ -184,7 +182,11 @@ export function install(q: URLSearchParams) {
   const ok = (json: unknown, ms = 120) => new Promise<{ status: number; json: unknown }>((res) => setTimeout(() => res({ status: 200, json }), ms));
   const err = (status: number, code: string, message: string, retry = false) => ok({ error: { code, message, retry } }).then((r) => ({ ...r, status }));
   useMock(async (method, path, body) => {
+    if (path === "/api/health") return ok({ ready: true, version: "1.0.0", graphviz: { found: !q.has("nodrawings"), version: "", message: "" },
+      drawings: q.has("nodrawings") ? { available: false, message: "Harness drawings need Graphviz and WireViz, which are not part of schemagen." } : { available: true, message: "" } }, 10);
     if (path === "/api/session") return ok({ ...session, project: ws?.project ?? null });
+    if (path === "/api/close") { ws = null; overlay = null; return ok({ ok: true }, 20); }
+    if (path === "/api/recent/remove") { session.recent = session.recent.filter((r) => r.path !== (body as { path: string }).path); return ok({ ok: true }, 20); }
     if (path === "/api/settings") { Object.assign(session, body); return ok({ ok: true }, 20); }
     if (path === "/api/open") {
       if (failOpen) { failOpen = false; return err(503, "internal", "The project could not be opened just now. Please try again.", true); }
@@ -194,6 +196,7 @@ export function install(q: URLSearchParams) {
       const f = body as File;
       if (!/\.(xlsx|csv)$/i.test(f.name)) return err(400, "import-failed", "Only .xlsx and .csv wire sheets can be imported.");
       const rows = /\.csv$/i.test(f.name) ? (await f.text()).split(/\r?\n/).filter((l) => l.trim()).length - 1 : Math.round(f.size / 80);
+      if (rows < 1) return err(400, "import-failed", "This file has no wires. Check that it is a wire sheet with one wire per row.");
       ws = build(Math.max(20, rows), f.name.replace(/\.[^.]+$/, ""), [{ k: 0, rule: "readable-cell", severity: "warning",
         title: "Row 14: the pin cell could not be read", message: "“pin 3/4?” is not a pin; the wire is kept without a pin.", fix: "", objects: [] }]);
       return ok(ws, 200 + rows * 0.5);
@@ -201,6 +204,19 @@ export function install(q: URLSearchParams) {
     if (path === "/api/workspace") return ws ? ok(ws) : err(409, "no-project", "No project is open.");
     if (path === "/api/positions") { if (ws) Object.assign(ws.positions, (body as { positions: object }).positions); return ok({ ok: true }, 20); }
     if (path === "/api/simulate") { if (!ws) return err(409, "no-project", "No project is open."); overlay = simulate(ws); return ok(overlay, 600); }
+    const dr = /^\/api\/drawing\/(.+)$/.exec(path);
+    if (dr && ws) {   // one run per wire end on the component (the real server also walks through connector pins and splices)
+      const id = decodeURIComponent(dr[1]), to = q.get("to") ?? "", n = ws.components.find((x) => x.id === id);
+      if (!n) return err(404, "not-found", `There is no component ${id}.`);
+      const sev = { error: "error", warning: "warning" } as Record<string, string>;
+      const rows = ws.conductors.filter((w) => (w.a === id || w.b === id) && (!to || w.a === to || w.b === to)).map((w, i) => {
+        const o = w.a === id ? w.b : w.a;
+        return { pin: q.has("nopins") ? "" : String(i + 1), pin_name: q.has("nopins") || i % 3 ? "" : w.cls === "GND" ? "Return" : "Supply", left: [], right: [{ wire: w.id, label: w.label, name: w.name, gauge: w.gauge, colour: w.cls, hex: w.hex,
+          sev: sev[w.sev] ?? "", reason: overlay?.items[`conductor:${w.id}`]?.reason ?? "", at: w.a === id ? w.to : w.from, comp: o, role: "device" }] };
+      });
+      const t = ws.components.find((x) => x.id === to);
+      return ok({ id, name: n.name, kind: n.kind, to: t ? { id: t.id, name: t.name } : null, project: ws.project.name, sides: [], groups: rows.length ? [{ name: "J1", rows }] : [], wires: rows.length, cut: 0 }, 200);
+    }
     const card = /^\/api\/card\/(component|wire)\/(.+)$/.exec(path);
     if (card && ws) {
       const id = decodeURIComponent(card[2]);
@@ -213,11 +229,11 @@ export function install(q: URLSearchParams) {
       }
       const n = ws.components.find((x) => x.id === id);
       if (!n) return err(404, "not-found", `There is no component ${id}.`);
-      const pins = ws.conductors.filter((w) => w.a === id || w.b === id).map((w, i) => ({ pin: String(i + 1), wire: w.id, wire_label: w.label, name: w.name, gauge: w.gauge,
-        other: w.a === id ? w.to : w.from }));
+      const pins = ws.conductors.filter((w) => w.a === id || w.b === id).map((w, i) => ({ pin: q.has("nopins") ? "" : String(i + 1), pin_name: q.has("nopins") || i % 3 ? "" : w.cls === "GND" ? "Return" : "Supply", wire: w.id, wire_label: w.label,
+        wire_name: w.name, name: w.name, gauge: w.gauge, other: w.a === id ? w.to : w.from }));
       const sim = overlay?.items[`component:${id}`];
       return ok({ id, name: n.name, kind: n.kind, location: n.zone, rating_A: /(\d+(?:\.\d+)?) A/.exec(n.name) && /breaker|fuse/.test(n.kind) ? Number(/(\d+(?:\.\d+)?) A/.exec(n.name)![1]) : null,
-        connectors: pins.length ? [{ id: "J1", pins }] : [], issues: ws.issues.filter((i) => i.objects.some((o) => o === `component:${id}` || o === `protective:${id}` || o.startsWith(`pin:${id}/`))), ...(sim ? { sim } : {}) }, 200);
+        connectors: pins.length > 12 ? [{ id: "Firewall side", pins: pins.slice(0, Math.ceil(pins.length / 2)) }, { id: "Cabin side", pins: pins.slice(Math.ceil(pins.length / 2)) }] : pins.length ? [{ id: "J1", pins }] : [], issues: ws.issues.filter((i) => i.objects.some((o) => o === `component:${id}` || o === `protective:${id}` || o.startsWith(`pin:${id}/`))), ...(sim ? { sim } : {}) }, 200);
     }
     const edit = /^\/api\/(component|wire)\/(.+)$/.exec(path);
     if (edit && method === "POST" && ws) {

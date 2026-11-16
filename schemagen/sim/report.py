@@ -68,7 +68,8 @@ def to_html(rep: dict[str, Any]) -> str:
     for sc in rep["scenarios"]:
         st = "pass" if sc["ok"] else "FAIL"
         exp = "".join(f"<tr class=\"{'ok' if x['ok'] else 'bad'}\"><td>{e(x['kind'])}</td><td>{e(x['detail'])}</td></tr>" for x in sc["expectations"])
-        bus = "".join(f"<tr class=\"{'' if b['powered'] else 'bad'}\"><td>{e(b['id'])}</td><td>{b['voltage_V']:.3f}{'' if b['powered'] else ' (no source)'}</td></tr>"
+        bus = "".join(f"<tr class=\"{'' if b['powered'] else 'bad'}\"><td>{e(b['id'])}</td>"
+                      f"<td>{b['voltage_V']:.3f}{'' if b['powered'] else ' (no source)'}</td></tr>"
                       for b in sc["buses"])
         prot = "".join(f"<tr class=\"{'bad' if p['trips'] else ''}\"><td>{e(p['id'])}</td><td>{p['current_A']:.3f}</td><td>{p['rating_A'] or ''}</td>"
                        f"<td>{_pct(p['loading'])}</td><td>{_sec(p['trip_s'])}</td></tr>"

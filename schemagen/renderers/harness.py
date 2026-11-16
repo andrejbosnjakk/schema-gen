@@ -121,7 +121,7 @@ def build(pr, net, cards, H, lengths=None, part=None):
         dev, c, p = w[f"p{f}"], w[f"p{f}c"], w[f"p{f}p"]
         if pr.role(dev) in ("splice", "bus"): continue
         if not p: pid = pr.strip(c) or c or "terminal"
-        elif len(pr.dev_conns[dev]) > 1: pid = f"{pr.strip(c)} {p}"
+        elif len(pr.dev_conns[dev]) > 1: pid = f"{pr.strip(c)} {p}".strip()
         else: pid = p
         lab = cards.pin(pr.code(dev), c, p) or clean_func(w["func"], 30) or clean_func(w["name"], 30)
         devpins[dev].setdefault(pid, lab)

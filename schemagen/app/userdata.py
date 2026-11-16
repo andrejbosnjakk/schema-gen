@@ -66,10 +66,15 @@ def add_recent(name: str, path: Path) -> None:
     save_settings(recent=[dict(name=name, path=str(path), opened=now)] + rec[:9])
 
 
+def remove_recent(path: str) -> None:
+    """Forget one recent project (the folder is not touched)."""
+    save_settings(recent=[r for r in settings()["recent"] if isinstance(r, dict) and r.get("path") != str(path)])
+
+
 def example_source() -> Path:
     """The shipped example: SCHEMAGEN_EXAMPLE, the desktop build's copy, the repository's (aircraft, else demo)."""
     if os.environ.get("SCHEMAGEN_EXAMPLE"): return Path(os.environ["SCHEMAGEN_EXAMPLE"])
-    cands = [Path(sys._MEIPASS) / "examples" / "aircraft"] if getattr(sys, "_MEIPASS", None) else []
+    cands = [Path(getattr(sys, "_MEIPASS", "")) / "examples" / "aircraft"] if getattr(sys, "_MEIPASS", None) else []
     cands += [REPO / "examples" / "aircraft", REPO / "examples" / "demo"]
     return next((p for p in cands if (p / "schemagen.yml").is_file()), cands[-1])
 

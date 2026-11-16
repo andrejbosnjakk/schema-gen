@@ -124,7 +124,7 @@ def test_workspace_shape(ac):
     assert len(w["conductors"]) == 121 and all(n["id"] and n["rank"] in range(5) for n in w["components"])
     wire = next(x for x in w["conductors"] if x["id"] == "W045")
     assert wire["gauge"].startswith("22") and wire["from"] and wire["to"] and wire["hex"].startswith("#")
-    assert any("×" in e["label"] for e in w["edges"]) and all(e["wires"] for e in w["edges"])
+    assert any(e["label"] == f"{len(e['wires'])} wires" for e in w["edges"]) and all(e["wires"] for e in w["edges"])
     assert all(i["title"] for i in w["issues"])
     assert c.post("/api/positions", json={"positions": {"CB-XPDR": [10, 20.5]}}).json() == {"ok": True}
     assert (d / "layout.json").is_file() and c.get("/api/workspace").json()["positions"]["CB-XPDR"] == [10, 20.5]
@@ -155,10 +155,9 @@ def test_overlay_tells_the_three_mistakes_apart(ac):
     c, _ = ac
     o = c.post("/api/simulate", json={}).json()
     it = o["items"]
-    assert it["conductor:W045"]["status"] == "error" and "too small" in it["conductor:W045"]["reason"]
-    assert "10 A" in it["conductor:W045"]["reason"]
-    assert it["component:CB-XPDR"]["status"] == "error" and "too big" in it["component:CB-XPDR"]["reason"]
-    assert it["component:BB-CABIN-BUS"]["status"] == "error" and "no source" in it["component:BB-CABIN-BUS"]["reason"]
+    assert it["conductor:W045"]["status"] == "error" and "W045" in it["conductor:W045"]["reason"] and "10 A LANDING LT breaker" in it["conductor:W045"]["reason"]
+    assert it["component:CB-XPDR"]["status"] == "error" and "15 A XPDR breaker is above" in it["component:CB-XPDR"]["reason"]
+    assert it["component:BB-CABIN-BUS"]["status"] == "error" and "no source" in it["component:BB-CABIN-BUS"]["reason"].lower()
     assert o["ok"] is False and o["summary"]["unpowered"] >= 1 and o["summary"]["text"]
     cabin = next(b for b in o["buses"] if b["id"] == "BB-CABIN-BUS")
     assert cabin["powered"] is False and cabin["voltage_V"] < 0.5
@@ -181,7 +180,7 @@ def test_source_powers_the_cabin_bus(ac):
 # ---------------------------------------------------------------- export
 def test_export_files(ac):
     c, d = ac
-    for kind, name in (("pinout", "pinout.xlsx"), ("wirelist", "wirelist.xlsx")):
+    for kind, name in (("pinout", "checklist.xlsx"), ("pinout", "checklist.html"), ("wirelist", "wirelist.xlsx")):
         r = c.post("/api/export", json={"kind": kind}).json()
         assert name in r["files"] and (d / "out" / name).is_file() and r["folder"] == str(d / "out")
     r = c.post("/api/export", json={"kind": "faults"}).json()
@@ -192,7 +191,8 @@ def test_export_files(ac):
 def test_export_drawings(ac):
     c, _ = ac
     r = c.post("/api/export", json={"kind": "drawings"})
-    assert r.status_code == 200 and any(f.endswith((".svg", ".png")) for f in r.json()["files"])
+    assert r.status_code == 200, r.text
+    assert any(f.endswith((".svg", ".png")) for f in r.json()["files"])
 
 
 def test_export_drawings_without_graphviz(ac, monkeypatch):

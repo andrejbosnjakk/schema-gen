@@ -1,5 +1,5 @@
 // The Issues panel (left) and the Wires drawer (bottom).
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import type { Issue, Wire } from "./types";
 import { drawn, useTheme } from "./diagram/colour";
@@ -7,7 +7,7 @@ import { Glyph } from "./ui";
 
 const GROUPS: [Issue["severity"], string][] = [["error", "Errors"], ["warning", "Warnings"], ["info", "Notes"]];
 
-export function Issues({ issues, loading, onPick, onClose }: { issues: Issue[] | null; loading: boolean; onPick: (i: Issue) => void; onClose: () => void }) {
+export function Issues({ issues, loading, sel, onPick, onClose }: { issues: Issue[] | null; loading: boolean; sel: number | null; onPick: (i: Issue) => void; onClose: () => void }) {
   return (
     <aside className="issues anim-panel" data-tour="issues" aria-labelledby="issues-h">
       <header className="panel-head">
@@ -22,7 +22,7 @@ export function Issues({ issues, loading, onPick, onClose }: { issues: Issue[] |
             return <section key={sev} className="issue-group" aria-label={`${name}: ${list.length}`}>
               <h3><span className={`dot ${sev}`} aria-hidden="true" />{name}<span className="count">{list.length}</span></h3>
               <ul>{list.map((i) => <li key={i.k}>
-                <button className="issue" onClick={() => onPick(i)} disabled={!i.objects.length} title={i.objects.length ? "Show on the diagram" : undefined}>
+                <button className={`issue${i.k === sel ? " sel" : ""}`} aria-pressed={i.objects.length ? i.k === sel : undefined} onClick={() => onPick(i)} disabled={!i.objects.length} title={i.objects.length ? "Show on the diagram" : undefined}>
                   <span className="issue-title">{i.title || i.message}</span>
                   {i.title && i.message && <span className="issue-msg">{i.message}</span>}
                 </button></li>)}</ul>
@@ -49,8 +49,9 @@ function useDrawerHeight() {
   return [h, set, save] as const;
 }
 
-export function Wires({ wires, legend, open, loading, sel, onToggle, onPick }: {
-  wires: Wire[] | null; legend?: React.ReactNode; open: boolean; loading: boolean; sel: string | null; onToggle: () => void; onPick: (w: Wire) => void }) {
+export function Wires({ wires, legend, open, loading, sel, reveal, onToggle, onPick, onOpen }: {
+  wires: Wire[] | null; legend?: React.ReactNode; open: boolean; loading: boolean; sel: string | null; reveal: { id: string; n: number } | null;
+  onToggle: () => void; onPick: (w: Wire) => void; onOpen: (id: string) => void }) {
   const [q, setQ] = useState("");
   const theme = useTheme(), [h, setH, saveH] = useDrawerHeight();
   const drag = useRef<{ y: number; h: number } | null>(null);
@@ -69,10 +70,25 @@ export function Wires({ wires, legend, open, loading, sel, onToggle, onPick }: {
     return wires.filter((w) => { const s = `${w.label} ${w.name} ${w.from} ${w.to} ${w.gauge} ${w.voltage}`.toLowerCase(); return ws.every((x) => s.includes(x)); });
   }, [wires, q]);
   const scroller = useRef<HTMLDivElement>(null);
+  const box = useRef<HTMLElement>(null);
+  useEffect(() => {   // toasts sit above the drawer: tell the page how tall it is
+    const el = box.current; if (!el) return;
+    const ro = new ResizeObserver(() => document.documentElement.style.setProperty("--wires-h", `${el.offsetHeight}px`));
+    ro.observe(el);
+    return () => { ro.disconnect(); document.documentElement.style.removeProperty("--wires-h"); };
+  }, []);
   const v = useVirtualizer({ count: rows.length, getScrollElement: () => scroller.current, estimateSize: () => 33, overscan: 12 });
+  useEffect(() => {   // the tour asks to see one wire: scroll it into the middle of the list
+    if (!reveal) return;
+    const i = rows.findIndex((w) => w.id === reveal.id);
+    if (i < 0) { setQ(""); return; }
+    v.scrollToIndex(i, { align: "center" });
+    const t = setTimeout(() => v.scrollToIndex(i, { align: "center" }), 150);   // again once the drawer has laid out
+    return () => clearTimeout(t);
+  }, [reveal]);  // eslint-disable-line react-hooks/exhaustive-deps
   const count = wires && !loading ? (q ? `${rows.length.toLocaleString()} of ${wires.length.toLocaleString()}` : wires.length.toLocaleString()) : "";
   return (
-    <section className={`wires${open ? " open anim-drawer" : ""}`} aria-label="Wires" style={open ? { height: h } : undefined}>
+    <section ref={box} className={`wires${open ? " open anim-drawer" : ""}`} aria-label="Wires" style={open ? { height: h } : undefined}>
       {open && <div className="drawer-grip" role="separator" aria-orientation="horizontal" aria-label="Resize the wire list" aria-valuemin={112} aria-valuenow={h} aria-valuemax={Math.round(innerHeight * 0.6)} tabIndex={0} {...grip} />}
       <header className="drawer-head">
         <button className="drawer-handle" onClick={onToggle} aria-expanded={open} data-tour="wires">
@@ -91,8 +107,9 @@ export function Wires({ wires, legend, open, loading, sel, onToggle, onPick }: {
                 const w = rows[it.index];
                 return <div key={w.id} ref={v.measureElement} data-index={it.index} data-id={w.id} role="row" tabIndex={0}
                   className={`tr${w.id === sel ? " sel" : ""}`} style={{ transform: `translateY(${it.start}px)` }} aria-rowindex={it.index + 2}
-                  onClick={() => onPick(w)} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onPick(w); } }}>
-                  <span role="cell" className="c-label">{w.sev && <span className={`dot ${w.sev}`} aria-label={w.sev} role="img" />}{w.label || w.id}</span>
+                  onClick={() => onPick(w)} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); onPick(w); } }}>
+                  <span role="cell" className="c-label">{w.sev && <span className={`dot ${w.sev}`} aria-label={w.sev} role="img" />}
+                    <button className="link" onClick={(e) => { e.stopPropagation(); onOpen(w.id); }} title={`Open wire ${w.label || w.id}`}>{w.label || w.id}</button></span>
                   <span role="cell" title={w.name}>{w.name}</span>
                   <span role="cell" title={w.from}>{w.from}</span>
                   <span role="cell" title={w.to}>{w.to}</span>

@@ -44,7 +44,8 @@ def main(out: Path) -> None:
         txt = lambda e: " ".join(x for x in (st.dname(e[0]), e[1], e[2]) if x)  # noqa: E731
         wires.append(dict(id=c["id"], label=c["label"], name=c["name"], **{"from": txt(c["f"])}, to=txt(c["t"]), a=ends[0], b=ends[1],
                           gauge=f"{c['gauge']} AWG" if re.fullmatch(r"\d+", str(c["gauge"] or "")) else str(c["gauge"] or ""),
-                          voltage=c["bus"] or "", current=c["current"], cls=cls if cls in ix["palette"] else hex_cls.get(c["hex"], cls), hex=c["hex"], length=c["length"],
+                          voltage=c["bus"] or "", current=c["current"], cls=cls if cls in ix["palette"] else hex_cls.get(c["hex"], cls), hex=c["hex"],
+                          length=c["length"],
                           harness=c["harness"], protection=c["protection"], status=c["status"], notes="", sev=c["sev"]))
     used = {w[k] for w in wires for k in "ab"}
     sev: dict[str, str] = defaultdict(str)
@@ -59,7 +60,8 @@ def main(out: Path) -> None:
         if i["rule"] == "gauge-protection":  # a plain title, as the server's Issue.title will be
             w = next(w for w in wires if f"conductor:{w['id']}" in i["objects"])
             title = f"{w['name']} ({w['label']}) is too thin for its breaker"
-        elif i["rule"] == "direction-unknown": title, msg = "3 antenna cables have no known signal direction", "An antenna and a radio have no one-way signal; nothing to fix."
+        elif i["rule"] == "direction-unknown": title, msg = ("3 antenna cables have no known signal direction",
+                                                     "An antenna and a radio have no one-way signal; nothing to fix.")
         issues.append(dict(k=i["k"], rule=i["rule"], severity=i["severity"], title=title, message=msg if msg != title else "",
                            fix=i["fix"] or "", objects=i["objects"]))
     nodes = [dict(id=k, name=c["name"] or k, kind=c["kind"], zone=c.get("zone") or "", subsystem=c.get("zone") or "", pins=len(pins[k]),

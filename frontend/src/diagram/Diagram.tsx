@@ -7,12 +7,12 @@ import { KindIcon } from "../theme/icons";
 import { act, post } from "../api";
 import { voltText, type CardSim, useSim } from "../simulate";
 import type { Node, Overlay, Workspace } from "../types";
-import { at, CH, CW, layout, placeLabels, regions, rounded, route } from "./layout";
+import { at, CH, CW, layout, placeBeside, placeLabels, regions, rounded, route } from "./layout";
 import { drawn, useTheme } from "./colour";
 import { Glyph } from "../ui";
 
 type CardData = { n: Node; hl?: boolean; pulse?: boolean; first?: boolean; sim?: CardSim };
-const FIT = { top: "12px", left: "12px", bottom: "12px", right: "64px" } as const;  // room for the zoom buttons on the right
+const FIT = { top: "28px", left: "12px", bottom: "4px", right: "64px" } as const;  // room for + Source (top right) and the zoom buttons (right)
 const NEAR = 0.9;  // below this zoom bundle labels are hidden (they would be unreadable)
 type ZoneData = { name: string; w: number; h: number };
 type EdgeData = { label: string; n: number; colour: string; ground: boolean; t: number | null; hl?: boolean; dim?: boolean; sim?: "warn" | "error"; pick?: (id: string, x: number, y: number) => void };
@@ -62,9 +62,9 @@ function ZoomFlag({ host }: { host: React.RefObject<HTMLDivElement> }) {
 }
 
 export interface Focus { ids: string[]; wire?: string; nonce: number }
-interface Props { ws: Workspace; focus: Focus | null; selWire: string | null; onCard: (n: Node) => void; onWire: (id: string) => void; overlay: { o: Overlay; stale: boolean } | null; picking: boolean }
+interface Props { ws: Workspace; focus: Focus | null; selWire: string | null; onCard: (n: Node) => void; onWire: (id: string) => void; onLink: (a: string, b: string) => void; onClear: () => void; overlay: { o: Overlay; stale: boolean } | null; picking: boolean }
 
-function Flow({ ws, focus, selWire, onCard, onWire, overlay, picking }: Props) {
+function Flow({ ws, focus, selWire, onCard, onWire, onLink, onClear, overlay, picking }: Props) {
   const rf = useReactFlow();
   const host = useRef<HTMLDivElement>(null);
   const theme = useTheme();
@@ -84,12 +84,9 @@ function Flow({ ws, focus, selWire, onCard, onWire, overlay, picking }: Props) {
     for (const n of ws.components) {
       const old = pos.get(n.id);
       if (old) { q.set(n.id, old); continue; }
-      const e = ws.edges.find((x) => x.a === n.id || x.b === n.id), nb = e && pos.get(e.a === n.id ? e.b : e.a);
-      const free = (x: number, y: number) => ![...q.values(), ...pos.values()].some((o) => Math.abs(o.x - x) < CW + 8 && Math.abs(o.y - y) < CH + 8);
-      const [bx, by] = [nb?.x ?? 0, nb?.y ?? 0], spots: [number, number][] = [];   // the free spot nearest to what it is wired to
-      for (const dx of [-1, 1, -2, 2]) for (let k = -8; k <= 8; k++) spots.push([bx + dx * (CW + 40), by + k * (CH + 12)]);
-      const d = (t: [number, number]) => (t[0] - bx) ** 2 + (t[1] - by) ** 2, best = spots.filter(([x, y]) => free(x, y)).sort((u, v) => d(u) - d(v))[0] ?? [bx - CW - 80, by + 20 * (CH + 12)];
-      q.set(n.id, { x: best[0], y: best[1] });
+      const e = ws.edges.find((x) => x.a === n.id || x.b === n.id), other = e && (e.a === n.id ? e.b : e.a), nb = other ? q.get(other) ?? pos.get(other) : undefined;
+      const all = new Map([...pos, ...q]), own = ws.zones.find((z) => z.members.includes(other ?? ""))?.id;
+      q.set(n.id, placeBeside(nb ?? { x: 0, y: 0 }, own, all, ws.edges, regions(ws.zones, all)));
     }
     setPos(q);
   }
@@ -145,7 +142,20 @@ function Flow({ ws, focus, selWire, onCard, onWire, overlay, picking }: Props) {
   const wireEdge = useMemo(() => { const m = new Map<string, string>(); for (const e of ws.edges) for (const w of e.wires) m.set(w, e.id); return m; }, [ws.edges]);
   const hlEdge = selWire ? wireEdge.get(selWire) ?? null : null;
   const hlNodes = useMemo(() => { const e = ws.edges.find((x) => x.id === hlEdge); return new Set(e ? [e.a, e.b] : []); }, [hlEdge, ws.edges]);
-  const near = useMemo(() => new Set(hoverNode ? ws.edges.filter((e) => e.a === hoverNode || e.b === hoverNode).map((e) => e.id) : []), [hoverNode, ws.edges]);  // bundles of the hovered card
+  // the hovered card's own lines, and its circuit: the power lines that feed it (back to the sources) and those it feeds
+  const near = useMemo(() => {
+    const out = new Set<string>();
+    if (!hoverNode) return out;
+    const power = (e: (typeof ws.edges)[number]) => e.cls.some((c) => /\d\s*V|HV/.test(c));
+    for (const e of ws.edges) if (e.a === hoverNode || e.b === hoverNode) out.add(e.id);
+    const walk = (n: string, up: boolean, seen: Set<string>) => {
+      if (seen.has(n)) return;
+      seen.add(n);
+      for (const e of ws.edges) if (power(e) && (up ? e.b : e.a) === n) { out.add(e.id); walk(up ? e.a : e.b, up, seen); }
+    };
+    walk(hoverNode, true, new Set()); walk(hoverNode, false, new Set());
+    return out;
+  }, [hoverNode, ws.edges]);
   const [pulse, setPulse] = useState<Set<string>>(new Set());
   const sim = useSim(overlay?.o ?? null);
   useEffect(() => {
@@ -166,22 +176,13 @@ function Flow({ ws, focus, selWire, onCard, onWire, overlay, picking }: Props) {
     return [...zs, ...cs] as RFNode[];
   }, [zones, cards, hlNodes, pulse, sim]);
 
-  // clicking a bundle opens its wire's card; a bundle of several wires asks which
-  const [menu, setMenu] = useState<{ wires: string[]; x: number; y: number } | null>(null);
-  const edgeWires = useRef(new Map<string, string[]>());
-  edgeWires.current = new Map(ws.edges.map((e) => [e.id, e.wires]));
-  const pickEdge = useCallback((id: string, x: number, y: number) => {
-    const w = edgeWires.current.get(id) ?? [];
-    if (w.length === 1) onWire(w[0]); else if (w.length > 1) setMenu({ wires: w, x, y });
-  }, [onWire]);
-  useEffect(() => {
-    if (!menu) return;
-    const off = (e: MouseEvent) => { if (!(e.target as Element).closest(".edge-menu")) setMenu(null); };
-    const key = (e: KeyboardEvent) => { if (e.key === "Escape") setMenu(null); };
-    document.addEventListener("mousedown", off); document.addEventListener("keydown", key);
-    return () => { document.removeEventListener("mousedown", off); document.removeEventListener("keydown", key); };
-  }, [menu]);
-  const wireOf = useMemo(() => new Map(ws.conductors.map((w) => [w.id, w])), [ws.conductors]);
+  // clicking a line opens the card of that connection (a single wire: the wire's card)
+  const edgeOf = useRef(new Map<string, { a: string; b: string; wires: string[] }>());
+  edgeOf.current = new Map(ws.edges.map((e) => [e.id, e]));
+  const pickEdge = useCallback((id: string) => {
+    const e = edgeOf.current.get(id);
+    if (e?.wires.length === 1) onWire(e.wires[0]); else if (e) onLink(e.a, e.b);
+  }, [onWire, onLink]);
 
   const edges = useMemo<RFEdge<EdgeData>[]>(() => ws.edges.filter((e) => comp.has(e.a) && comp.has(e.b)).map((e) => {
     const main = e.cls.find((c) => c !== "GND") ?? e.cls[0] ?? "";
@@ -195,18 +196,14 @@ function Flow({ ws, focus, selWire, onCard, onWire, overlay, picking }: Props) {
   const moved = useRef(0);
 
   return (
-    <div className={`flow${picking ? " picking" : ""}${overlay?.stale ? " stale" : ""}`} ref={host} data-tour="diagram" role="region" aria-label="System diagram: components left to right in power order">
+    <div className={`flow${picking ? " picking" : ""}${overlay?.stale ? " stale" : ""}`} ref={host} data-tour="diagram" role="region" aria-label="System diagram">
       <ReactFlow nodes={nodes} edges={edges} nodeTypes={NODE_TYPES} edgeTypes={EDGE_TYPES} onNodesChange={onChange as never}
-        onNodeDragStop={onDragStop} onNodeMouseEnter={(_, n) => { if (n.type === "card") setHoverNode(n.id); }} onNodeMouseLeave={() => setHoverNode(null)} onNodeClick={(_, n) => { if (n.type === "card") onCard((n.data as CardData).n); }}
+        onNodeDragStop={onDragStop} onNodeMouseEnter={(_, n) => { if (n.type === "card") setHoverNode(n.id); }} onNodeMouseLeave={() => setHoverNode(null)} onNodeClick={(_, n) => { if (n.type === "card") onCard((n.data as CardData).n); else onClear(); }} onPaneClick={onClear}
         onMoveEnd={(e) => { if (e && Date.now() - moved.current > 400) { moved.current = Date.now(); act("zoom"); } }}
         fitView fitViewOptions={{ padding: FIT }} minZoom={0.05} maxZoom={2} onlyRenderVisibleElements nodesConnectable={false}
         elementsSelectable={false} zoomOnDoubleClick={false} proOptions={{ hideAttribution: false }}>
         <ZoomFlag host={host} />
       </ReactFlow>
-      {menu && <div className="edge-menu menu anim-pop" role="menu" aria-label="Wires in this bundle" style={{ left: Math.min(menu.x, innerWidth - 300), top: Math.min(menu.y, innerHeight - 280) }}>
-        {menu.wires.map((id) => { const w = wireOf.get(id); return <button key={id} role="menuitem" className="menu-item" onClick={() => { setMenu(null); onWire(id); }}>
-          <span className="swatch" style={{ "--c": drawn(w?.hex ?? "", "--surface", theme) } as React.CSSProperties} aria-hidden="true" /><strong>{w?.label || id}</strong><span className="menu-hint edge-menu-name">{w?.name}</span></button>; })}
-      </div>}
       <div className="zoom-controls" role="group" aria-label="Zoom">
         <button className="btn btn-ghost btn-icon" onClick={() => rf.zoomIn({ duration: 200 })} aria-label="Zoom in" title="Zoom in"><Glyph name="plus" /></button>
         <button className="btn btn-ghost btn-icon" onClick={() => rf.zoomOut({ duration: 200 })} aria-label="Zoom out" title="Zoom out"><Glyph name="minus" /></button>

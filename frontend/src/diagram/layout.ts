@@ -64,7 +64,7 @@ export function layout(nodes: Node[], edges: Edge[], zones: Zone[], view = { w: 
     }
     return { w: bw, h: bh };
   };
-  const zoomOf = (w: number, h: number) => Math.min((view.w - 76) / w, (view.h - 24) / h);
+  const zoomOf = (w: number, h: number) => Math.min((view.w - 76) / w, (view.h - 32) / h);
 
   // the row limit (first one for all blocks, then per block) and strip width whose packed box has the largest fit zoom (then the smaller area)
   const maxG = Math.max(1, ...blocks.flatMap((b) => b.groups.map((g) => g.length)));
@@ -124,16 +124,17 @@ export function regions(zones: Zone[], pos: Map<string, XY>) {
  *  (or, when the target is not further right, round the right side and into the target's right edge). Points, corners rounded by `rounded`. */
 export type Pts = [number, number][];
 export function route(sx: number, sy: number, tx: number, ty: number): Pts {
-  if (tx >= sx + 24) { const m = tx - 22; return sy === ty ? [[sx, sy], [tx, ty]] : [[sx, sy], [m, sy], [m, ty], [tx, ty]]; }
-  const ex = tx + CW, m = Math.max(sx, ex) + 22;
-  return [[sx, sy], [m, sy], [m, ty], [ex, ty]];
+  let p: Pts;
+  if (tx >= sx + 24) { const m = tx - 22; p = [[sx, sy], [m, sy], [m, ty], [tx, ty]]; }
+  else { const ex = tx + CW, m = Math.max(sx, ex) + 22; p = [[sx, sy], [m, sy], [m, ty], [ex, ty]]; }
+  return p.filter((q, i) => i === 0 || q[0] !== p[i - 1][0] || q[1] !== p[i - 1][1]);   // no zero-length run (two cards in one row would give NaN corners)
 }
 /** SVG path through the points with corners rounded to radius r. */
 export function rounded(p: Pts, r = 8): string {
   let d = `M${p[0][0]},${p[0][1]}`;
   for (let i = 1; i < p.length - 1; i++) {
     const [x0, y0] = p[i - 1], [x1, y1] = p[i], [x2, y2] = p[i + 1];
-    const a = Math.hypot(x1 - x0, y1 - y0), b = Math.hypot(x2 - x1, y2 - y1), k = Math.min(r, a / 2, b / 2);
+    const a = Math.hypot(x1 - x0, y1 - y0) || 1, b = Math.hypot(x2 - x1, y2 - y1) || 1, k = Math.min(r, a / 2, b / 2);
     d += ` L${x1 - ((x1 - x0) / a) * k},${y1 - ((y1 - y0) / a) * k} Q${x1},${y1} ${x1 + ((x2 - x1) / b) * k},${y1 + ((y2 - y1) / b) * k}`;
   }
   return d + ` L${p[p.length - 1][0]},${p[p.length - 1][1]}`;
@@ -176,4 +177,34 @@ export function placeLabels(edges: Edge[], pos: Map<string, XY>, zones: { x: num
     }
   }
   return out;
+}
+
+/** Rectangles of the labels as they are placed now (the new card must keep clear of them). */
+function labelRects(edges: Edge[], pos: Map<string, XY>, zones: { x: number; y: number; w: number }[]) {
+  const t = placeLabels(edges, pos, zones), out: number[][] = [];
+  for (const e of edges) {
+    const a = pos.get(e.a), b = pos.get(e.b), f = t.get(e.id);
+    if (!a || !b || f === null || f === undefined) continue;
+    const m = at(ends(a, b), f), { w, h } = labelSize(e.label);
+    out.push([m.x - w / 2 - 3, m.y - h / 2 - 3, m.x + w / 2 + 3, m.y + h / 2 + 3]);
+  }
+  return out;
+}
+
+/** Where a new card goes next to the card `base` it is wired to: the free spot nearest to it (a little further when it would sit on another zone's
+ *  box or to its right), clear of every card, label and zone heading. Left at the same height is the usual answer when there is room. */
+export function placeBeside(base: XY, own: string | undefined, pos: Map<string, XY>, edges: Edge[], zones: { id: string; x: number; y: number; w: number; h: number }[]): XY {
+  const cards = [...pos.values()].map((p) => [p.x - 6, p.y - 6, p.x + CW + 6, p.y + CH + 6]), labels = labelRects(edges, pos, zones);
+  const hit = (r: number[], o: number[]) => r[0] < o[2] && r[2] > o[0] && r[1] < o[3] && r[3] > o[1];
+  const heads = zones.map((z) => [z.x, z.y, z.x + z.w, z.y + HEAD - 4]), obstacles = [...cards, ...labels, ...heads];
+  let best: XY | null = null, bestCost = Infinity;
+  for (let dx = -3 * (CW + GX); dx <= 3 * (CW + GX); dx += 16) for (let dy = -16 * (CH + GY); dy <= 16 * (CH + GY); dy += (CH + GY) / 2) {
+    const x = base.x + dx, y = base.y + dy, r = [x, y, x + CW, y + CH];
+    const gap = Math.max(0, Math.abs(dx) - CW);   // clear space between the two cards' sides
+    const cost = Math.hypot(gap, dy) + (dx > 0 ? 150 : 0) + (gap < 40 && Math.abs(dy) < CH ? 400 : 0);
+    if (cost >= bestCost || obstacles.some((o) => hit(r, o))) continue;
+    const other = zones.some((z) => z.id !== own && hit(r, [z.x, z.y, z.x + z.w, z.y + z.h]));
+    if (cost + (other ? 40 : 0) < bestCost) { bestCost = cost + (other ? 40 : 0); best = { x, y }; }
+  }
+  return best ?? { x: Math.min(...[...pos.values()].map((p) => p.x)) - CW - 64, y: base.y };
 }

@@ -273,6 +273,7 @@ class Issue(Base):
     message: str
     objects: list[str] = Field(default_factory=list)  # object refs: conductor:W1, component:ECU, pin:X-BH/3 ...
     fix: str = ""
+    title: str = ""  # short sentence for this finding; empty: the app uses the rule's title
     file: str = ""
     row: int | None = None
     column: str = ""

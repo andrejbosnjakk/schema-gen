@@ -8,9 +8,12 @@ from collections import Counter, defaultdict
 from typing import Any
 
 from .. import __version__
+from ..core import tables
+from ..core.context import infer_spec
 from ..core.model import Component
 from ..core.rules import RULES
 from ..exporters.palette import HEX
+from ..exporters.pinout import where
 
 SEV = {"error": 0, "warning": 1, "info": 2}
 RANK = {"battery": 0, "dcdc": 0, "breaker": 1, "fuse": 1, "switch": 1, "relay": 1, "bus": 2, "harness": 3}
@@ -18,8 +21,18 @@ RANK = {"battery": 0, "dcdc": 0, "breaker": 1, "fuse": 1, "switch": 1, "relay": 
 
 def rank(st: Any, c: Component) -> int:
     """Power-flow column: 0 sources, 1 protection and switching, 2 buses, 3 harness connectors, 4 loads."""
-    if c.kind in RANK: return RANK[c.kind]
-    return 0 if st.ctx.is_source(c) else 4
+    k = kind_of(st, c)
+    return RANK[k] if k in RANK else 4
+
+
+def kind_of(st: Any, c: Component) -> str:
+    """The kind shown for a component: battery or dcdc when the simulation treats it as a source (part data, else the
+    sim.sources name match), else its model kind. The model's own kinds are not changed."""
+    if c.kind in ("battery", "dcdc") or not st.ctx.is_source(c): return c.kind
+    p = st.ctx.part_of(c.raw)
+    spec = infer_spec(c, tables.table("sim", st.cfg))
+    k = p.kind if p and p.kind in ("battery", "dcdc") else (spec or {}).get("kind")
+    return k if k in ("battery", "dcdc") else "battery"
 
 
 def _worst(a: str, b: str) -> str:
@@ -41,7 +54,7 @@ def severities(st: Any) -> tuple[dict[str, str], dict[str, str]]:
 
 def issue(k: int, i: Any) -> dict[str, Any]:
     r = RULES.get(i.rule)
-    return dict(k=k, rule=i.rule, severity=i.severity, title=r.title if r else i.rule.replace("-", " ").capitalize(), message=i.message,
+    return dict(k=k, rule=i.rule, severity=i.severity, title=i.title or (r.title if r else i.rule.replace("-", " ").capitalize()), message=i.message,
                 fix=i.fix, objects=i.objects)
 
 
@@ -95,7 +108,7 @@ def workspace(st: Any) -> dict[str, Any]:
         if cd.subsystem:
             for e in (1, 2): subs[st.cid(cd.end(e).device)][cd.subsystem] += 1
     sub_of = {k: v.most_common(1)[0][0] for k, v in subs.items()}
-    nodes = [dict(id=c.id, name=c.name or c.id, kind=c.kind, zone=c.zone, subsystem=sub_of.get(c.id, ""), pins=hpins.get(c.id) or pins[c.id],
+    nodes = [dict(id=c.id, name=c.name or c.id, kind=kind_of(st, c), zone=c.zone, subsystem=sub_of.get(c.id, ""), pins=hpins.get(c.id) or pins[c.id],
                   rank=rk[c.id], sev=csev.get(c.id, "")) for c in m.components if c.kind != "splice"]
     ab = ends(st, rk)
     wires, bundles = [], defaultdict(list)
@@ -112,7 +125,7 @@ def workspace(st: Any) -> dict[str, Any]:
     for (a, b), idx in sorted(bundles.items()):
         cnt = Counter(wire_cls(m.conductors[i]) for i in idx)
         edges.append(dict(id=f"{a}~{b}", a=a, b=b, wires=[m.conductors[i].id for i in idx], cls=[k for k, _ in cnt.most_common()],
-                          label=", ".join(f"{v} × {k}" for k, v in cnt.most_common())))
+                          label=f"{len(idx)} wires" if len(idx) > 1 else m.conductors[idx[0]].label))  # the map counts; the card of the line draws them
     for s in st.sources:
         nodes.append(dict(id=s["id"], name=s.get("name") or s["id"], kind=s.get("type", "battery"), zone="", subsystem="", pins=0, rank=0, sev=""))
         edges.append(dict(id=f"{s['id']}~{s['attach']}", a=s["id"], b=s["attach"], wires=[], cls=[], label=f"{float(s['nominal_V']):g} V"))
@@ -168,10 +181,12 @@ def component_card(st: Any, cid: str) -> dict[str, Any] | None:
     for i, e in ctx.net.by_dev[c.raw]:
         cd, t = conds[i], conds[i].end(e)
         d = ctx.pin(t)
-        other = "; ".join(sorted({st.pin_text(x) for x, _ in ctx.net.reach(i, 3 - e)}))
-        by_con[t.connector].append(dict(pin=t.pin, wire=cd.id, wire_label=cd.label, name=d.name if d and d.name else "", other=other, gauge=cd.gauge))
-    connectors = [dict(id=k, pins=sorted(v, key=lambda p: (_natural(p["pin"]), p["wire_label"]))) for k, v in sorted(by_con.items(), key=lambda kv: _natural(kv[0]))]
-    out = dict(id=c.id, name=c.name or c.id, kind=c.kind, location=c.zone, rating_A=pd.rating_a if pd else None, connectors=connectors,
+        other = "; ".join(sorted({where(ctx, x) for x, _ in ctx.net.reach(i, 3 - e)}))  # display text, no codes
+        by_con[t.connector].append(dict(pin=t.pin or t.connector, wire=cd.id, wire_label=cd.label, wire_name=cd.name, name=d.name if d and d.name else "",
+                                        pin_name=d.name if d and d.name else "", other=other, gauge=cd.gauge))
+    connectors: list[dict[str, Any]] = [{"id": k, "pins": sorted(by_con[k], key=lambda p: (_natural(p["pin"]), p["wire_label"]))}
+                                         for k in sorted(by_con, key=_natural)]
+    out = dict(id=c.id, name=c.name or c.id, kind=kind_of(st, c), location=c.zone, rating_A=pd.rating_a if pd else None, connectors=connectors,
                issues=_issues_for(st, {f"component:{cid}", f"connector:{cid}", f"protective:{cid}"}, cid))
     sim = (st.overlay or {}).get("items", {}).get(f"component:{cid}")
     if sim: out["sim"] = sim

@@ -27,6 +27,8 @@ export function cardTests(open: (p: Page) => Promise<void>, kind: string) {
     await expect(dlg.locator(".kind-chip")).toContainText("breaker");
     await expect(dlg.locator(".pin").first()).toBeVisible();   // pins, with the skeleton gone
     await expect(dlg.locator(".card-issues li").first()).toBeVisible();
+    await expect(dlg.getByLabel("Name")).toHaveCount(0);        // read first: the fields come with Edit
+    await dlg.getByRole("button", { name: "Edit" }).click();
     await expect(dlg.getByLabel("Rating (A)")).toHaveValue("15");
     const name = dlg.getByLabel("Name");
     await name.fill("Transponder breaker");
@@ -67,17 +69,19 @@ export function cardTests(open: (p: Page) => Promise<void>, kind: string) {
   test(`${kind}: a wire row opens the wire card; fields save`, async ({ page }) => {
     const row = page.locator("[role=row][data-id]").nth(2);
     const id = await row.getAttribute("data-id");
-    await row.click();
+    await row.locator(".link").click();   // the label opens the card (the row itself only selects)
     const dlg = page.getByRole("dialog");
-    await expect(dlg.getByLabel("Gauge")).toBeVisible();
+    await expect(dlg.locator(".meta")).toContainText("Gauge");
+    await expect(dlg.getByLabel("Gauge")).toHaveCount(0);
     await expect(dlg.locator(".kind-chip")).toHaveText("wire");
+    await dlg.getByRole("button", { name: "Edit" }).click();
     await dlg.getByLabel("Notes").fill("checked on the bench");
     await dlg.getByRole("button", { name: "Save" }).click();
     await expect(dlg).toHaveCount(0);
-    await row.click();
-    await expect(page.getByRole("dialog").getByLabel("Notes")).toHaveValue("checked on the bench");
+    await row.locator(".link").click();
+    await expect(page.getByRole("dialog").locator(".meta")).toContainText("checked on the bench");
     await page.keyboard.press("Escape");
-    await expect(page.locator(`[role=row][data-id="${id}"]`)).toBeFocused();   // focus is back where it was
+    await expect(page.locator(`[role=row][data-id="${id}"] .link`)).toBeFocused();   // focus is back where it was
   });
 
   test(`${kind}: clicking an edge on the diagram opens a wire card`, async ({ page }) => {
@@ -93,9 +97,8 @@ export function cardTests(open: (p: Page) => Promise<void>, kind: string) {
     });
     expect(pt).not.toBeNull();
     await page.mouse.click(pt!.x, pt!.y);
-    const menu = page.locator(".edge-menu");
-    if (await menu.isVisible().catch(() => false)) await menu.getByRole("menuitem").first().click();
-    await expect(page.getByRole("dialog").locator(".kind-chip")).toHaveText("wire");
+    // one wire: its card; several: the card of the connection, with its drawing
+    await expect(page.getByRole("dialog").locator(".kind-chip, .drawing").first()).toBeVisible();
   });
 
   test(`${kind}: simulate overlays badges, bars, rings and a summary; a group click zooms; Clear removes it`, async ({ page }) => {
@@ -132,7 +135,8 @@ export function cardTests(open: (p: Page) => Promise<void>, kind: string) {
     const sum = page.getByRole("region", { name: "Simulation results" });
     await expect(sum).toBeVisible({ timeout: 30_000 });
     await expect(sum).not.toContainText("out of date");
-    await page.locator("[role=row][data-id]").nth(1).click();
+    await page.locator("[role=row][data-id]").nth(1).locator(".link").click();
+    await page.getByRole("dialog").getByRole("button", { name: "Edit" }).click();
     await page.getByRole("dialog").getByLabel("Notes").fill("edited after simulating");
     await page.getByRole("dialog").getByRole("button", { name: "Save" }).click();
     await expect(sum).toContainText("Results are out of date, simulate again");
@@ -187,15 +191,15 @@ export function cardTests(open: (p: Page) => Promise<void>, kind: string) {
     await expect(dlg.locator(".pin").first()).toBeVisible();
     const b = (await dlg.boundingBox())!;
     expect(b.y).toBeGreaterThanOrEqual(0); expect(b.y + b.height).toBeLessThanOrEqual(768); expect(b.x + b.width).toBeLessThanOrEqual(1366);
-    for (const sel of ["html", ".dialog", ".dialog > section", ".pins", ".wires"]) expect(await fits(page, sel), sel).toBe(true);
+    for (const sel of ["html", ".dialog", ".dialog > section", ".pin-table", ".wires"]) expect(await fits(page, sel), sel).toBe(true);
     for (const t of ["light", "dark"]) {
       await page.evaluate((x) => { document.documentElement.dataset.theme = x; }, t);
       await page.waitForTimeout(500);
       expect(serious(await new AxeBuilder({ page }).analyze()), `card ${t}`).toEqual([]);
     }
     await page.keyboard.press("Escape");
-    await page.locator("[role=row][data-id]").first().click();
-    await expect(page.getByRole("dialog").getByLabel("Gauge")).toBeVisible();
+    await page.locator("[role=row][data-id]").first().locator(".link").click();
+    await expect(page.getByRole("dialog").locator(".meta")).toContainText("Gauge");
     await page.waitForTimeout(400);
     expect(serious(await new AxeBuilder({ page }).analyze()), "wire card dark").toEqual([]);
     expect(await fits(page, ".dialog"), "wire card").toBe(true);

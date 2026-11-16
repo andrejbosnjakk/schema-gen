@@ -1,10 +1,11 @@
 """1.0 example project (examples/aircraft): a fictional electric aircraft whose readable sheet has exactly three
-deliberate mistakes (examples/aircraft/README.md)."""
+deliberate mistakes (examples/aircraft/README.md), all three shown by `check` (the app's Issues) as well as by Simulate."""
 import shutil
 from collections import Counter
 from pathlib import Path
 
 import pytest
+import yaml
 from openpyxl import load_workbook
 
 from schemagen.cli import main
@@ -54,12 +55,21 @@ def test_exactly_the_deliberate_mistakes(issues):
     assert sorted(bad) == [
         ("gauge-protection", ["conductor:W045", "protective:CB-LANDING-LT"]),  # 1: 22 AWG under a 10 A breaker (6 A landing light)
         ("gauge-protection", ["conductor:W058", "protective:CB-XPDR"]),        # 2: 15 A breaker on a 1.5 A transponder, 20 AWG
+        ("no-power-source", ["component:BB-CABIN-BUS"]),                       # 3: no feed into the cabin bus
     ]
+    titles = {i.rule: i.title for i in issues if i.rule == "no-power-source"}
+    assert titles == {"no-power-source": "Cabin bus has no power source"}
+    msg = next(i.message for i in issues if i.rule == "no-power-source")
+    assert all(x in msg for x in ("Cabin fan", "Cabin light", "USB charger"))
+    thin = next(i for i in issues if i.objects[0] == "conductor:W045")
+    big = next(i for i in issues if i.objects[0] == "conductor:W058")
+    assert thin.title == "W045 is too thin for the 10 A LANDING LT breaker" and "FAA AC 43.13-1B" in thin.message
+    assert big.title == "The 15 A XPDR breaker is too big for wire W058 (20 AWG, max 7.5 A)" and "FAA AC 43.13-1B" in big.message
 
 
 def test_unpowered_cabin_bus():
-    """Mistake 3: no source or feed reaches the cabin bus, so its three loads see no voltage. No `check` rule finds
-    this yet; the simulation shows it."""
+    """Mistake 3: no source or feed reaches the cabin bus, so its three loads see no voltage (`check` reports it too:
+    the no-power-source rule)."""
     L = load(AIRCRAFT)
     op = api.operating_point(L.model, L.cfg)
     v = {b["id"]: b["voltage_V"] for b in op.buses}
@@ -75,9 +85,30 @@ def test_draw_without_render(tmp_path):
     assert (d / "out").is_dir()
 
 
+@pytest.mark.parametrize("name", ["aircraft", "demo"])
+def test_wireviz_connections_use_listed_pins(tmp_path, name):
+    """Every [designator, pin] a drawing connects exists in that connector's pin list and has no stray whitespace (WireViz: "X:pin not found")."""
+    d = tmp_path / name
+    shutil.copytree(AIRCRAFT.parent / name, d, ignore=shutil.ignore_patterns("out"))
+    assert main(["draw", str(d), "--all", "--no-render"]) == 0
+    for f in (d / "out").glob("*.yml"):
+        doc = yaml.safe_load(f.read_text(encoding="utf-8"))
+        if not isinstance(doc, dict) or "connectors" not in doc: continue
+        for row in doc.get("connections", []):
+            for part in row:
+                for des, pins in (part.items() if isinstance(part, dict) else []):
+                    if des not in doc["connectors"]: continue  # a cable
+                    have = doc["connectors"][des].get("pins")
+                    for p in pins:
+                        assert (have is None or p in have) and str(p) == str(p).strip(), f"{f.name}: {des}:{p!r} not a clean listed pin of {have}"
+
+
 def test_sheet_is_reproducible(tmp_path):
     import importlib.util
     spec = importlib.util.spec_from_file_location("make_sheet", AIRCRAFT / "make_sheet.py")
     ms = importlib.util.module_from_spec(spec); spec.loader.exec_module(ms)
     ms.write(tmp_path / "w.xlsx")
-    assert (tmp_path / "w.xlsx").read_bytes() == (AIRCRAFT / "wires.xlsx").read_bytes()
+    import zipfile
+    parts = lambda f: {i.filename: z.read(i) for z in [zipfile.ZipFile(f)] for i in z.infolist()}  # noqa: E731
+    # the unpacked parts, not the file bytes: the compressed stream depends on the zlib build (zlib or zlib-ng)
+    assert parts(tmp_path / "w.xlsx") == parts(AIRCRAFT / "wires.xlsx")

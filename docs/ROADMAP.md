@@ -32,8 +32,25 @@ simulation), with checks built in and every value traceable to its source.
 - Windows support (CI on Ubuntu and Windows), tuple tables in row modules, `sim --infer`, pinout reintegration
   checklist, direction and CAN checks without part data, display names in the app, `docs/citations.md`
 
-**Next (0.7):** readable-sheet importer, Blueprint workspace shell, system canvas, schematic and connector views
-with sheet output, import wizard, revisions, desktop packaging spike.
+**0.7** (see CHANGELOG.md; never released on its own)
+- Readable-sheet importer and exporter, fixes from a real sheet, workspace shell, system canvas
+
+**1.0** (built, reviewed and merged into main; the post-review fixes are on dev/1.1)
+- One screen: start, import, one diagram of the system, issues, wires drawer
+- Cards with edits as change sets, Simulate drawn on the cards, + Source, quickstart tour, example project
+- Windows desktop app and per-user installer (no WireViz, no Graphviz inside)
+
+**Now: 1.1, the drawing engine** (branch dev/1.1, decision D106)
+- Done so far: the map counts wires per line, hover lights a circuit, a first drawing inside the component card
+  (`/api/drawing/{id}`), a connection card, print to PDF
+- Next: our own engine in `schemagen/drawing/`: aircraft-style wiring diagrams on A3 / A4 sheets with a title block,
+  per component, connection, harness connector and selection; one geometry JSON, SVG in the app, SVG and PDF export;
+  accuracy checked by a netlist round trip from the geometry
+- Order: a symbol sheet and six reference drawings, then a **review stop**, then integration into the app
+- Then: WireViz becomes an optional extra (it is a hard dependency today), so the default install and the installer
+  have no GPL code; the cut list and continuity list move into the checklist export first
+- Not in 1.1: selecting several components, "this circuit / this subsystem" presets, folding breakers into one card;
+  full-harness and whole-system exports follow later
 
 Still open: KiCad netlist import, label-printer / harness-tester / CATIA exporters, zones with route segments and
 service loops for lengths, transients, a 2D vehicle map, change-set review/approve, an assistant panel.

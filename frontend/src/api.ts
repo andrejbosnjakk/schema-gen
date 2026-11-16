@@ -81,3 +81,6 @@ export const canRetry = (e: unknown) => !(e instanceof ApiError) || e.retry;
 
 /** Tell the tour (docs/tour.md) what the user just did. */
 export const act = (action: string) => window.dispatchEvent(new CustomEvent("schemagen:action", { detail: { action } }));
+
+/** The tour asks the app to do something on screen (docs/tour.md): "close" (cards and dialogs), "show-wire" (open the drawer, mark a wire). */
+export const tourDo = (what: string, arg?: string) => window.dispatchEvent(new CustomEvent("schemagen:tour", { detail: { what, arg } }));

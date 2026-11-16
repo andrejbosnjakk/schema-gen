@@ -21,7 +21,7 @@ export function Glyph({ name, size = 16 }: { name: keyof typeof G | string; size
 
 /** A button that opens a small menu; closes on a pick, Escape or a click elsewhere. */
 export function MenuButton({ label, icon, items, tour, align = "right", iconOnly }: {
-  label: string; icon?: string; items: { label: string; hint?: string; run: () => void }[]; tour?: string; align?: "left" | "right"; iconOnly?: boolean }) {
+  label: string; icon?: string; items: { label: string; hint?: string; run: () => void; disabled?: boolean; title?: string }[]; tour?: string; align?: "left" | "right"; iconOnly?: boolean }) {
   const [open, setOpen] = useState(false);
   const box = useRef<HTMLDivElement>(null), id = useId();
   useEffect(() => {
@@ -45,7 +45,8 @@ export function MenuButton({ label, icon, items, tour, align = "right", iconOnly
         {icon && <Glyph name={icon} />}{!iconOnly && <>{label}<Glyph name="down" size={14} /></>}
       </button>
       {open && <div className={`menu anim-pop ${align}`} role="menu" id={id} aria-label={label}>
-        {items.map((it) => <button key={it.label} role="menuitem" className="menu-item" onClick={() => { setOpen(false); it.run(); }}>
+        {items.map((it) => <button key={it.label} role="menuitem" className="menu-item" aria-disabled={it.disabled || undefined} title={it.title}
+          onClick={() => { if (it.disabled) return; setOpen(false); it.run(); }}>
           <span>{it.label}</span>{it.hint && <span className="menu-hint">{it.hint}</span>}</button>)}
       </div>}
     </div>);

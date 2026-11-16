@@ -24,8 +24,10 @@ Any non-2xx answer has this body, and the server never crashes or returns a bare
 
 | method | path | body | returns |
 |---|---|---|---|
-| GET | `/api/health` | | `{ready, version, graphviz: {found, version, message}}` |
-| GET | `/api/session` | | `{project: ProjectInfo \| null, recent: [{name, path, opened}], tour_done, theme}` |
+| GET | `/api/health` | | `{ready, version, graphviz: {found, version, message}, drawings: {available, message}, error}` |
+| GET | `/api/session` | | `{project: ProjectInfo \| null, recent: [{name, path, opened}], tour_done, theme}` (recent entries whose folder no longer exists are left out) |
+| POST | `/api/close` | | `{ok: true}`: closes the open project; `/api/session` then has `project: null` (start screen) |
+| POST | `/api/recent/remove` | `{path}` | `{ok: true}`: forgets one recent entry (the folder is not deleted) |
 | POST | `/api/settings` | `{tour_done?, theme?: "light"\|"dark"}` | `{ok: true}` (stored in the user settings file, not the project) |
 | POST | `/api/open` | `{path}` or `{example: true}` | `Workspace` |
 | POST | `/api/import` | multipart, field `file` (.xlsx or .csv) | `Workspace` |
@@ -36,7 +38,12 @@ Any non-2xx answer has this body, and the server never crashes or returns a bare
   read-only and edits write change sets.
 - `/api/import` makes a project folder next to the example (named after the file), copies the sheet in, writes a
   `schemagen.yml` that points at it (readable layout detected by the existing importer) and opens it. Import problems
-  are findings in `Workspace.issues`, never an error, unless the file cannot be read at all (`import-failed`).
+  are findings in `Workspace.issues`, never an error, unless the file cannot be read at all or has no wires
+  (`import-failed`, `retry: false`): "<file> has no wires schemagen can read. A wire sheet needs at least the columns Label, From and To."
+  In that case the folder it made is removed and nothing is added to `recent`.
+- `drawings.available` is true when both Graphviz `dot` and the `wireviz` command are found; `drawings.message` is then `""`, else
+  "Harness drawings need Graphviz and WireViz, two free programs that are not part of schemagen. The diagram, Simulate and the
+  other exports work without them." `graphviz` is kept as it was.
 
 ## Workspace (everything the main screen needs, in one call)
 
@@ -52,7 +59,8 @@ interface Workspace {
   sources: Source[];             // sources added in the app (see below)
   palette: Record<string, string>;  // function class -> hex
 }
-interface Node { id: string; name: string; kind: string; zone: string; subsystem: string; pins: number;
+interface Node { id: string; name: string; kind: string;   // "battery" / "dcdc" also for components the simulation treats as sources (part data or sim.sources name match)
+                 zone: string; subsystem: string; pins: number;
                  rank: number;   // power-flow column: 0 sources, 1 protection, 2 buses, 3 harness connectors, 4 loads
                  sev: "" | "error" | "warning" | "info" }
 interface Edge { id: string; a: string; b: string; wires: string[]; cls: string[]; label: string }  // a -> b in power order; label e.g. "3 × 14 V"
@@ -69,11 +77,34 @@ interface Issue { k: number; rule: string; severity: "error" | "warning" | "info
 
 | method | path | returns |
 |---|---|---|
-| GET | `/api/card/component/{id}` | `{id, name, kind, location, rating_A, connectors: [{id, pins: [{pin, wire, wire_label, name, other, gauge}]}], issues: Issue[], sim?: OverlayItem}` |
+| GET | `/api/card/component/{id}` | `{id, name, kind, location, rating_A, connectors: [{id, pins: [{pin, pin_name, wire, wire_label, wire_name, name, other, gauge}]}], issues: Issue[], sim?: OverlayItem}` |
 | GET | `/api/card/wire/{id}` | `{id, label, name, from, to, gauge, voltage, current, length, colour, hex, harness, protection, status, notes, issues: Issue[], sim?: OverlayItem}` |
-| POST | `/api/component/{id}` | body `{name?, kind?, rating_A?}` → `Workspace`; stored as a change set |
+| POST | `/api/component/{id}` | body `{name?, kind?, rating_A?}` → `Workspace`; stored as a change set. A new `rating_A` also renames the component when its name contains the old rating as "<old> A" ("Breaker 'XPDR' 15 A" becomes "... 10 A"), in the same change set |
 | POST | `/api/wire/{id}` | body `{label?, name?, gauge?, current?, notes?}` → `Workspace`; stored as a change set |
 | POST | `/api/positions` | body `{positions: {id: [x, y]}}` → `{ok}`; stored in `<project>/layout.json` (view state, not wire data) |
+
+Pin rows: `pin` is the pin number, or the sheet's text when there is none ("red lead", "line stud"); `pin_name` the pin's name from part
+data ("" if none; `name` is the same, kept for older callers); `wire_name` the wire's name ("BMS supply"); `other` is display text for the
+far end(s), without codes ("Breaker 'DCDC' 30 A LINE"; several ends joined by "; ").
+
+## Drawing (inside a card)
+
+| method | path | returns |
+|---|---|---|
+| GET | `/api/drawing/{id}` | `Drawing` of that component: every pin, and each wire's run through connector pins and splices to where it lands |
+| GET | `/api/drawing/{id}?to={other}` | only the runs that reach `other` (the card of a line on the map) |
+
+```ts
+interface Drawing { id: string; name: string; kind: string; to: {id: string; name: string} | null; project: string;
+  sides: string[];              // a harness connector: its two halves, drawn left and right of each pin; else []
+  groups: {name: string; rows: {pin: string; pin_name: string; left: Seg[]; right: Seg[]}[]}[];   // one row per run, outward from the pin
+  wires: number; cut: number }  // cut: runs left out above 600 rows
+interface Seg { wire: string; label: string; name: string; gauge: string; colour: string; hex: string; sev: string; reason: string;
+  at: string; comp: string; role: "device" | "breaker" | "bus" | "splice" | "harness" }   // the wire, then where it lands
+```
+
+A run ends on a device, breaker or bus; splices and harness pins are passed through. An edge's `label` on the map is the wire
+count ("6 wires"), or the wire's own label when it is a single wire.
 
 ## Simulate
 
@@ -81,7 +112,10 @@ interface Issue { k: number; rule: string; severity: "error" | "warning" | "info
 |---|---|---|---|
 | POST | `/api/simulate` | `{}` | `Overlay` |
 
-Runs the DC operating point with sources and loads inferred where part data is missing (and the app-added sources).
+Runs the DC operating point with sources and loads inferred where part data is missing (and the app-added sources). A switch or
+relay without part data is taken as closed (its two power terminals joined; with any other number of terminals it stays open), and
+each such assumption is listed in `assumptions` in words ("Battery contactor (relay): no part data, so it is taken as closed (assumed)").
+A part's data or a scenario state wins over the assumption.
 
 ```ts
 interface Overlay {
@@ -93,17 +127,26 @@ interface Overlay {
   items: Record<string, OverlayItem>;   // key "component:ID" or "conductor:ID"; only objects with something to say
   assumptions: string[];
 }
-interface OverlayItem { status: "ok" | "warn" | "error"; reason: string }  // reason: one line, e.g. "22 AWG is too small for 10 A breaker CB-AV (max 5 A)"
+interface OverlayItem { status: "ok" | "warn" | "error"; reason: string }  // reason: one line with its subject, e.g. "W045 is 22 AWG and carries 6 A, more than the 5 A it may carry behind the 10 A LANDING LT breaker"
 ```
 
 Problems are counted as groups, one per root cause: a wire and the breaker it does not fit; a bus with no source together
 with the loads that lack supply only because of it ("no supply: Cabin bus has no source"); a trip. The text adds
 ", K unpowered bus(es)" only when K > 0; an unpowered bus is also one of the problems.
 
-Flags (status and reason): wire too small for its breaker or current (error); wire far heavier than needed (warn: the gauge two
-steps thinner would still be allowed for its breaker, or for its current times `heavy_margin` when unprotected);
-breaker oversized for its wire (error) or undersized for its load (warn/error); component below its minimum voltage
+Flags (status and reason): wire too thin for its breaker or current (error); wire far heavier than needed (warn: the gauge two
+steps thinner would still be allowed for its breaker; a wire without a protective device is never flagged for weight);
+breaker too big for its wire (error) or undersized for its load (warn/error); component below its minimum voltage
 (error); breaker trips (error); bus with loads and no source (error).
+
+The wire-versus-breaker fault is one sentence in the `gauge-protection` issue and here (`core/fit.py`), framed from the sheet only:
+the wire's listed current above what its gauge may carry behind that device (FAA AC 43.13-1B Table 11-3) means "W045 is too thin for
+the 10 A LANDING LT breaker"; otherwise "The 15 A XPDR breaker is too big for wire W058 (20 AWG, max 7.5 A)". Titles use display names;
+the standard is named in the issue's message.
+
+Issues also include `no-power-source` (error): a bus with loads that no source reaches with every breaker, fuse, switch and relay
+closed ("Cabin bus has no power source", objects `component:<bus>`); when the project has no recognisable source at all, one
+warning "No power source found" instead of one per bus. Sources added in the app count.
 
 ## Sources added in the app
 
@@ -119,10 +162,12 @@ the project folder and survives reloads) and used by `/api/simulate`. It appears
 
 | method | path | body | returns |
 |---|---|---|---|
-| POST | `/api/export` | `{kind: "drawings"\|"pinout"\|"faults"\|"wirelist"}` | `{folder, files: string[]}` |
+| POST | `/api/export` | `{kind: "drawings"\|"pinout"\|"faults"\|"wirelist"}` | `{folder, files: string[]}` (`pinout` writes `checklist.html` and `checklist.xlsx`: the wiring checklist) |
 | POST | `/api/reveal` | `{path}` | `{ok}`: opens the folder in the file manager |
 
-Drawings need Graphviz; without it the answer is the `graphviz-missing` error. The diagram never needs Graphviz.
+Drawings need Graphviz and WireViz. Both are checked before anything is written; if either is missing the answer is the
+`graphviz-missing` error with the `drawings.message` sentence and `retry: false`. Drawings are rendered aside and moved into the out
+folder only when all of them rendered, so a failed render leaves nothing behind. The diagram never needs them.
 
 ## Kept from 0.7
 

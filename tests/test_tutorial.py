@@ -41,7 +41,8 @@ def test_tutorial_runs(tmp_path):
         if arg == "expect-fail": assert r.returncode == 1, r.stdout + r.stderr
         else: assert r.returncode == 0, r.stdout + r.stderr
     first = out[0]
-    assert "error   gauge-protection   L04: 22 AWG is protected by CB-2 10 A; at most 5 A per FAA AC 43.13-1B, Table 11-3" in first.stdout
+    assert "error   gauge-protection   The 10 A CB-2 breaker is above the 5 A that L04 (22 AWG) may be protected with. " \
+           "Limit per FAA AC 43.13-1B, Table 11-3" in first.stdout
     assert "fix: use a breaker of 5 A or less, or a heavier gauge" in first.stdout
     assert out[1].stdout.strip().endswith("0 error(s), 0 warning(s), 0 info")
     assert "expectation failed: LP-1: drop 1.058 V (max 1.0 V)" in out[3].stdout

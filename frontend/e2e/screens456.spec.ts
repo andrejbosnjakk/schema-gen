@@ -26,8 +26,8 @@ for (const [w, h] of [[1366, 768], [1920, 1080]]) for (const theme of ["light", 
       await shot("4-card", "-component");
       await page.keyboard.press("Escape");
       await page.getByLabel("Filter wires").fill("W045");
-      await page.locator("[role=row][data-id=W045]").click();
-      await expect(page.getByRole("dialog").getByLabel("Gauge")).toBeVisible();
+      await page.locator("[role=row][data-id=W045]").locator(".link").click();
+      await expect(page.getByRole("dialog").locator(".meta")).toContainText("Gauge");
       await page.waitForTimeout(500);
       await shot("4-card", "-wire");
       await page.keyboard.press("Escape");

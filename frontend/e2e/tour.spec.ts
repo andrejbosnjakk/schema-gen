@@ -37,23 +37,32 @@ async function walk(page: Page, shot?: (n: number) => Promise<void>) {
   if (shot) await shot(2);
   await page.locator('[data-tour-node="CB-XPDR"]').click();
   await at("Everything about one part");
-  await page.getByRole("button", { name: "Close" }).click();
+  await page.locator(".scrim .dialog").getByRole("button", { name: "Close" }).click();
   await at("What is wrong");
   if (shot) await shot(4);
   await page.locator(".issue:not([disabled])").first().click();
   await at("The sheet you know");
-  // the drawer starts open: the step then asks for a click on a row, otherwise for opening it
-  if (await page.locator("[data-tour=wires][aria-expanded=true]").count()) await page.locator("[role=row][data-id]").nth(1).click();
-  else await page.locator("[data-tour=wires]").click();
-  if (await page.getByRole("dialog").count()) await page.keyboard.press("Escape");  // a wire row opens its card
+  // the drawer is open with W045 marked, and no card is open; a row click selects and moves on
+  await expect(page.locator(".scrim .dialog")).toHaveCount(0);
+  await expect(page.locator("[role=row][data-id=W045]")).toHaveClass(/sel/);
+  await page.locator("[role=row][data-id]").nth(1).click();
   await at("Does it work with power on?");
+  await expect(page.locator(".scrim .dialog")).toHaveCount(0);
   if (shot) await shot(6);
   await page.locator("[data-tour=simulate]").click();
+  await at("What the simulation shows");                 // the same step, now on the result; it waits for Next
+  await expect(count(page)).toHaveText(/^6 of /);
+  if (shot) await shot(7);
+  await pop(page).getByRole("button", { name: "Next" }).click();
   if (await present(page, "add-source")) { await at("Try a fix"); await page.locator("[data-tour=add-source]").click();
-    // the tour steps aside while the source is placed: pick the cabin bus, add a battery; the tour then moves on by itself
+    // the tour steps aside while the source is placed: pick the cabin bus, add a battery; the tour then asks to simulate again
     await expect(page.locator(".driver-popover.sg-tour")).toBeHidden();
     await page.locator('[data-tour-node="BB-CABIN-BUS"]').click();
-    await page.getByRole("dialog").getByRole("button", { name: "Add source" }).click(); }
+    await page.locator(".scrim .dialog").getByRole("button", { name: "Add source" }).click();
+    await at("Press Simulate again");
+    await page.locator("[data-tour=simulate]").click();
+    await at("The cabin bus has power");
+    await pop(page).getByRole("button", { name: "Next" }).click(); }
   await at("Now your own wiring");
   return seen;
 }
@@ -118,7 +127,7 @@ for (const [w, h] of [[1366, 768], [1920, 1080]]) for (const theme of ["light", 
     await openProject(page);
     await page.getByRole("button", { name: "Help" }).click();
     await page.getByRole("menuitem", { name: "Replay the tour" }).click();
-    const names: Record<number, string> = { 1: "1-diagram", 2: "2-component", 4: "4-issues", 6: "6-simulate" };
+    const names: Record<number, string> = { 1: "1-diagram", 2: "2-component", 4: "4-issues", 6: "6-simulate", 7: "7-result" };
     await walk(page, async (n) => { await page.mouse.move(5, h - 5); await page.waitForTimeout(400); await page.screenshot({ path: path.join(OUT, `${names[n]}-${w}-${theme}.png`) }); });
     await pop(page).getByRole("button", { name: "Done" }).click();
   });

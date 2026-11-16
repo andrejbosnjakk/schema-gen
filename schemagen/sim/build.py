@@ -201,6 +201,8 @@ def build(m: Model, cfg: Any = None, measured: dict[str, float] | None = None, s
                 if st in ("energized", "energised", "on"): c.off.update(nc)
                 elif st in ("de-energized", "de-energised", "off"): c.off.update(no)
                 else: c.relays.append(Relay(comp.id, cn, p.coil.v_pickup, p.coil.v_dropout, no, nc))
+        elif infer and p is None and comp.kind in ("switch", "relay") and comp.raw in by_dev and st not in ("open", "off", "de-energized", "de-energised"):
+            _closed_contact(sm, comp, d, N)
         spec = None
         if infer and st not in ("off", "failed", "fail") and not (p and (p.source or p.supply_out or p.load)) and comp.raw in by_dev \
                 and comp.kind not in ("relay", "switch", "breaker", "fuse", "bus", "splice", "harness"):
@@ -209,7 +211,7 @@ def build(m: Model, cfg: Any = None, measured: dict[str, float] | None = None, s
         if p and st not in ("off", "failed", "fail") and comp.raw in by_dev:
             _sources_and_loads(sm, comp, p, terms, N, used)
         elif p is None and comp.kind in ("device", "load", "sensor", "controller") and st not in ("off",):
-            if not _assumed_loads(sm, comp, N) and infer and not spec and d.get("default_load_A"):
+            if not spec and not _assumed_loads(sm, comp, N) and infer and d.get("default_load_A"):
                 counts["load"] += _default_load(sm, comp, float(d["default_load_A"]), N)
     for what, cnt in counts.items():
         sm.assumptions.append(Assumption(what, "assumed", f"{cnt} device(s) without part data or a current value: {d['default_load_A']} A each "
@@ -231,6 +233,21 @@ def build(m: Model, cfg: Any = None, measured: dict[str, float] | None = None, s
     if not sm.sources: sm.missing.append("no source: no battery or DC/DC part data (source: v_oc / v_out)" + hint)
     if not sm.loads: sm.missing.append("no load: no load part data and no conductor with a current value")
     return sm
+
+
+def _closed_contact(sm: SimModel, comp: Component, d: dict[str, Any], N: Any) -> None:
+    """--infer: a switch or relay without part data is taken as closed: its two power terminals (not a coil, not ground) are
+    joined by a closed contact. With any other number of terminals it is left open, and the assumption says so."""
+    ctx, net = sm.ctx, sm.ctx.net
+    ts = [Terminal(device=k[0], connector=k[1], pin=k[2]) for k in sorted(sm.ctx.by_terminal) if k[0] == comp.raw]
+    ts = [t for t in ts if t.connector.strip().lower() != "coil" and ctx.pin_type(t) != "ground"]
+    nodes = sorted({net.node_of(t) for t in ts})
+    name = f"{comp.name or comp.id} ({comp.kind})"
+    if len(nodes) != 2:
+        sm.assumptions.append(Assumption(name, "assumed", f"no part data and {len(nodes)} power terminals, so it is left open"))
+        return
+    sm.circuit.r(f"sw:{comp.id}:0", N(nodes[0]), N(nodes[1]), float(d["switch_resistance_ohm"]), "switch", f"component:{comp.id}")
+    sm.assumptions.append(Assumption(name, "assumed", "no part data, so it is taken as closed"))
 
 
 POWER = re.compile(r"\d\s*V\b")  # a supply function class: "14 V", "24 V", "5 V"
