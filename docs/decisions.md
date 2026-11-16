@@ -758,3 +758,34 @@ may show again next launch. Replay from the help menu works at any time and reco
 - Not in 1.1: selecting several components, "this circuit / this subsystem" presets, folding breakers into one card.
 - Constraint: the drawings must be good enough to rewire the aircraft from, and full-harness and whole-system exports follow
   later, so the drawing takes its scope (component, connection, harness, subsystem) as an input from the start.
+
+## D107. WireViz is an optional extra
+- Choice: `wireviz==0.4.1` is no longer in `dependencies`; it is the extra `schema-gen[wireviz]` and part of `dev` (CI and the
+  tests still render the demo). Without it `schemagen draw` and the drawings export fail with one plain sentence naming
+  `pip install "schema-gen[wireviz]"` (the app shows the D101 message); `--no-render` needs neither WireViz nor Graphviz.
+  `render_many` raises `wireviz-missing` for it. Still only ever run as a command, never imported (D72).
+
+## D108. What a drawing of a scope contains
+- Choice: `schemagen/drawing/scope.py` builds the scene of a scope (component, connection A~B, harness, selection, subsystem,
+  system). Every run is walked in full from the pins of the scope's components through splices and harness connector pins to
+  where it lands (one walk, `walk`, also behind the app's first drawing), so nothing between a component and the far device is
+  skipped. Components outside the scope where runs land are partial blocks (touched pins only). Every other conductor on a
+  drawn core/net.py node (a bus, a splice, a device pin) is drawn when its other end is also drawn, else an off-sheet flag on
+  that node naming where it goes; nothing is cut silently. Breakers, fuses, switches and relays stay elements: a run stops at
+  their terminal. A connection walks only the runs from A that reach B; B is their far end.
+- Also: a subsystem is the components most of whose conductors carry it (splices and harness connectors come in through the
+  runs); anchor ids are the issue pin refs `pin:<component>/<connector>/<pin>`; line weights are four classes by AWG.
+- Why: the drawings must be good enough to rewire from (D106), so a drawing can omit only what it says it omits.
+
+## D109. The geometry is the only thing renderers read
+- Choice: the engine's output is one JSON geometry (docs/drawing-model.md): mm, top-left origin, A3/A4 landscape sheets, 5 mm
+  grid, symbols with anchors and a closed set of prims, orthogonal wires, texts with bounding boxes, off-sheet and
+  continuation flags; every element names the model object it stands for. SVG, PDF and the app render from it and nothing else.
+- Why: one place to check, several renderers, and the renderer stays replaceable (as with WireViz before).
+
+## D110. A drawing is checked by rebuilding its netlist
+- Choice: `schemagen/drawing/verify.py` rebuilds (conductor, end, end, label, gauge, colour) from the geometry alone (wire
+  model, the anchors' model, the flags' target) and compares it with the model for the same scope, found by an independent
+  node closure; `scene_netlist` runs the same check before a layout exists. `validate` checks the contract (grid, orthogonal
+  wires, ends on what they reference, text >= 2.5 mm, no overlapping texts, flags used once).
+- Why: every later accuracy claim of a drawing rests on this check, not on looking at the picture.

@@ -38,7 +38,7 @@ def convert(e: BaseException, where: str = "") -> AppError:
         return e
     if isinstance(e, RenderError):
         lg.warning("%s %s: %s\n%s", where, e.code, e.message, e.detail)
-        if e.code == "graphviz-missing": return AppError(e.code, DRAWINGS_MISSING)  # the pip hint stays in the log
+        if e.code in ("graphviz-missing", "wireviz-missing"): return AppError("graphviz-missing", DRAWINGS_MISSING)  # the pip hint stays in the log
         return AppError(e.code, e.message, retry=e.code == "render-failed")
     if isinstance(e, ModelError):
         lg.warning("%s project input problems:\n%s", where, e)

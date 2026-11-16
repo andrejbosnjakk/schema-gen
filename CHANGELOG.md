@@ -4,7 +4,7 @@
 
 Real wiring drawings, made by schemagen itself (decision D106). Planned, not done: the drawing engine in
 `schemagen/drawing/` (geometry JSON, SVG in the app, SVG and PDF export, A3 / A4 sheets with a title block, a netlist
-round trip as the accuracy check) and WireViz as an optional extra instead of a hard dependency. On the branch so far
+round trip as the accuracy check). WireViz is now an optional extra (done, D107). On the branch so far
 (commit 0113927):
 
 - The map labels a line with its wire count ("6 wires"); a single wire shows its own label. Hovering a card lights its

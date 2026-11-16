@@ -51,3 +51,14 @@ def test_graphviz_missing_when_wireviz_cannot_run_dot(tmp_path, monkeypatch):
     monkeypatch.setattr(wv, "wireviz_cmd", lambda: [sys.executable, str(fake)])
     with pytest.raises(wv.RenderError) as e: wv.render_many([tmp_path / "a.yml"], tmp_path)
     assert e.value.code == "graphviz-missing"
+
+
+def test_missing_wireviz_is_plain(demo, monkeypatch, capsys):
+    monkeypatch.setattr(wv, "find_dot", lambda: sys.executable)
+    monkeypatch.setattr(wv, "wireviz_cmd", lambda: None)
+    with pytest.raises(wv.RenderError) as e: wv.render_many([demo / "x.yml"], demo)
+    assert e.value.code == "wireviz-missing" and 'pip install "schema-gen[wireviz]"' in e.value.message
+    assert main(["draw", str(demo)]) == 1
+    err = capsys.readouterr().err
+    assert 'schema-gen[wireviz]' in err and "Traceback" not in err and "graphviz.org" not in err
+    assert main(["draw", str(demo), "--no-render"]) == 0

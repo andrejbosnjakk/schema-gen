@@ -32,7 +32,7 @@ sends nothing anywhere, and bundles its assets.
 - **+ Source**: click a bus and add a battery to it to try a fix. This is a change set; the sheet is not touched.
 - **Wires**: a drawer with every row of the sheet; click a row to see the wire on the map.
 - **Export**: the project as a workbook or JSON, a printable wiring checklist (one table per component with tick
-  boxes), and harness drawings. Harness drawings need Graphviz and WireViz installed separately (see below).
+  boxes), and harness drawings (needs Graphviz and the optional `wireviz` extra, see below).
 - **Quickstart tour**: eight steps on the fictional example (`examples/aircraft`, the Kestrel E2, 121 wires, three
   deliberate mistakes). Skippable and replayable from the Help menu. See [docs/tour.md](docs/tour.md).
 - **Edits are change sets** (`changes/*.json`): applied on every load, undoable, never silent rewrites of your input files.
@@ -54,9 +54,8 @@ This is a plan, not something that is done. Decision D106 in [docs/decisions.md]
   with a title block. One Python engine produces a geometry JSON; the app renders it as SVG and exports SVG and PDF.
   The drawings must be good enough to rewire from, so the scope (component, connection, harness, selection) is an
   input of the engine from the start.
-- **WireViz becomes an optional extra.** Today it is a hard dependency in `pyproject.toml` (`wireviz==0.4.1`) and
-  `schemagen draw` and the harness-drawings export use it. 1.1 moves it out of the default install, so the default
-  install and the installer contain no GPL code. The cut list and continuity list move into the checklist export first.
+- **WireViz is an optional extra** (`pip install "schema-gen[wireviz]"`; done). `schemagen draw` and the harness-drawings
+  export use it; the default install and the installer contain no GPL code. The cut list and continuity list move into the checklist export first.
 - **Accuracy** is checked by a netlist round trip: the netlist read back from the geometry must equal the project's.
 - **Order**: a symbol sheet and six reference drawings first, then a review stop, then integration into the app.
 
@@ -76,8 +75,8 @@ pytest
 ```
 
 - Harness drawings (`schemagen draw`, and the Export menu's drawings) need Graphviz's `dot` on the PATH
-  (`sudo apt-get install graphviz`, or the Windows installer from graphviz.org) in addition to the `wireviz` package
-  that `pip install` brings in. Everything else works without Graphviz.
+  (`sudo apt-get install graphviz`, or the Windows installer from graphviz.org) and the optional WireViz extra
+  (`pip install "schema-gen[wireviz]"`). Everything else works without them.
 - **Windows installer**: `packaging/build.ps1` builds `packaging/dist/schemagen-setup-<version>.exe`
   (pywebview window, PyInstaller, per-user Inno Setup installer, no admin rights). CI builds it for pushes to
   `dev/1.0*` and for `v*` tags ([.github/workflows/installer.yml](.github/workflows/installer.yml)). It is not
@@ -285,12 +284,12 @@ served for tests and power users; the 1.0 frontend does not call them.
 
 ## Why WireViz 0.4.1 (and not Filare)
 
-This is about the current `draw` command; 1.1 plans its own drawing engine and makes WireViz optional (see above).
+This is about the current `draw` command; WireViz is an optional extra, and 1.1 plans its own drawing engine (see above).
 Short version: WireViz renders everything this needs; Filare 1.6.0 (its fork) drops notes on simple nodes and
 wires without a length from the BOM, and does not install cleanly. Details in [docs/wireviz-evaluation.md](docs/wireviz-evaluation.md).
 The generator emits plain WireViz YAML, so the renderer stays replaceable.
 
 ## Licence
 
-MIT (see `LICENSE`). WireViz is GPL-3.0, so schemagen never imports it: it writes WireViz YAML and runs the separate
+MIT (see `LICENSE`). WireViz (GPL-3.0, the optional `wireviz` extra) is never imported by schemagen: it writes WireViz YAML and runs the separate
 `wireviz` command (a test checks this). The Windows installer does not contain WireViz or Graphviz (D72).

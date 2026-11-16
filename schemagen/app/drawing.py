@@ -9,31 +9,10 @@ from collections import defaultdict
 from itertools import zip_longest
 from typing import Any
 
-from ..exporters.palette import HEX
-from ..exporters.pinout import where
+from ..drawing.scope import _paths
 from .workspace import _natural, kind_of, severities
 
 MAX_ROWS = 600  # a drawing is cut here (and says so); the checklist export has no limit
-
-
-def _seg(st: Any, i: int, e: int, wsev: dict[str, str]) -> dict[str, Any]:
-    """Conductor i walked away from its end e: the wire and where it lands."""
-    ctx, c = st.ctx, st.m.conductors[i]
-    o = c.end(3 - e)
-    oc = ctx.comp.get(o.device)
-    sim = (st.overlay or {}).get("items", {}).get(f"conductor:{c.id}")
-    return dict(wire=c.id, label=c.label, name=c.name, gauge=c.gauge, colour=c.colour_code or c.colour, hex=HEX.get((c.colour_code or "")[:2], "#888"),
-                sev=wsev.get(c.id, ""), reason=sim["reason"] if sim and sim["status"] != "ok" else "",
-                at=where(ctx, o), comp=oc.id if oc else "", role=ctx.net.role(o.device))
-
-
-def _paths(st: Any, i: int, e: int, wsev: dict[str, str], seen: frozenset[int] = frozenset()) -> list[list[dict[str, Any]]]:
-    """Every run from end e of conductor i to a terminal that is not a splice or a harness pin (one list of segments each)."""
-    net = st.ctx.net
-    seg = _seg(st, i, e, wsev)
-    if seg["role"] not in ("splice", "harness"): return [[seg]]
-    nxt = [(j, k) for j, k in net.at[net.node(i, 3 - e)] if j != i and j not in seen]
-    return [[seg] + p for j, k in nxt for p in _paths(st, j, k, wsev, seen | {i})] or [[seg]]
 
 
 def drawing(st: Any, cid: str, to: str = "") -> dict[str, Any] | None:

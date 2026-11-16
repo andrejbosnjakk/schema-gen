@@ -15,14 +15,15 @@ from pathlib import Path
 from typing import Any
 
 GRAPHVIZ_MISSING = "Graphviz is not installed, so harness drawings cannot be made. The diagram and simulation still work."
-WIREVIZ_MISSING = "The WireViz command is not installed (pip install wireviz==0.4.1), so drawings cannot be made."
+WIREVIZ_MISSING = ("WireViz is not installed, so harness drawings cannot be made. Install it with: pip install \"schema-gen[wireviz]\" "
+                   "(and Graphviz), or use --no-render.")
 # what an end user of the app sees when either tool is missing (no pip: the app is not a Python environment to them)
 DRAWINGS_MISSING = ("Harness drawings need Graphviz and WireViz, two free programs that are not part of schemagen. "
                     "The diagram, Simulate and the other exports work without them.")
 
 
 class RenderError(Exception):
-    """A drawing could not be made: `code` is graphviz-missing or render-failed, `detail` the full stderr (for the log)."""
+    """A drawing could not be made: `code` is graphviz-missing, wireviz-missing or render-failed, `detail` the full stderr (for the log)."""
 
     def __init__(self, code: str, message: str, detail: str = ""):
         super().__init__(message)
@@ -97,7 +98,7 @@ def render_many(ymls: list[Path], out: Path, fmt: str = "hpst", jobs: int | None
     dot = find_dot()
     if not dot: raise RenderError("graphviz-missing", GRAPHVIZ_MISSING)
     cmd = wireviz_cmd()
-    if not cmd: raise RenderError("graphviz-missing", WIREVIZ_MISSING, WIREVIZ_MISSING)
+    if not cmd: raise RenderError("wireviz-missing", WIREVIZ_MISSING, WIREVIZ_MISSING)
     env = dict(os.environ, PATH=str(Path(dot).parent) + os.pathsep + os.environ.get("PATH", ""), PYTHONIOENCODING="utf-8")
     jobs = max(1, min(jobs or os.cpu_count() or 1, len(ymls)))
     chunks = [ymls[i::jobs] for i in range(jobs)]

@@ -13,7 +13,7 @@ def write_yaml(path, doc):
 def render(yml, out, name):
     """Render with the WireViz command-line tool. WireViz is GPL-3.0: it runs as a separate program, never imported."""
     exe = shutil.which("wireviz")
-    if not exe: raise SystemExit("wireviz command not found: pip install wireviz==0.4.1 (and Graphviz), or use --no-render")
+    if not exe: raise SystemExit('WireViz is not installed: pip install "schema-gen[wireviz]" (and Graphviz), or use --no-render')
     r = subprocess.run([exe, "-f", "hpst", "-o", str(out), "-O", name, str(yml)], capture_output=True, text=True)
     if r.returncode: raise SystemExit(f"wireviz failed on {yml}:\n{r.stderr or r.stdout}")  # see renderers.wireviz for batches
 

@@ -39,7 +39,7 @@ def _logging() -> Path:
 
 def _error(msg: str) -> None:
     log.error(msg)
-    if os.name == "nt":
+    if sys.platform == "win32":  # not os.name: mypy narrows on sys.platform, and windll exists only there
         import ctypes
         ctypes.windll.user32.MessageBoxW(None, msg, "schemagen", 0x10)  # MB_ICONERROR
     else: print(msg, file=sys.stderr)
