@@ -49,8 +49,8 @@ simulation), with checks built in and every value traceable to its source.
 - Order: a symbol sheet and six reference drawings, then a **review stop**, then integration into the app
 - Then: WireViz becomes an optional extra (it is a hard dependency today), so the default install and the installer
   have no GPL code; the cut list and continuity list move into the checklist export first
-- Not in 1.1: selecting several components, "this circuit / this subsystem" presets, folding breakers into one card;
-  full-harness and whole-system exports follow later
+- In the app (2026-11-16): the viewer for a component, a connection or a shift-click selection; export of every component as PDFs and one book
+- Not in 1.1: "this circuit / this subsystem" presets, folding breakers into one card
 
 Still open: KiCad netlist import, label-printer / harness-tester / CATIA exporters, zones with route segments and
 service loops for lengths, transients, a 2D vehicle map, change-set review/approve, an assistant panel.

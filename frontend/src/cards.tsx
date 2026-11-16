@@ -1,6 +1,6 @@
 // The popup card for one component or one wire: what it is, its pins, its issues, a few edit fields (docs/api.md, Cards).
 import { useEffect, useState } from "react";
-import { DrawingRows, PrintSheet } from "./drawing";
+import { DrawingRows } from "./drawing";
 import type { Drawing } from "./types";
 import { canRetry, del, get, post, say } from "./api";
 import { SkeletonRows } from "./panels";
@@ -12,7 +12,7 @@ const KINDS = ["device", "load", "sensor", "controller", "switch", "relay", "bat
 const text = (v: string | number | null | undefined) => (v === null || v === undefined ? "" : String(v));
 
 /** One fetch with a reload: the card for `path`, or the plain message that explains why not. */
-function useCard<T>(path: string) {
+export function useCard<T>(path: string) {
   const [s, set] = useState<{ data: T | null; err: unknown }>({ data: null, err: null });
   const [n, bump] = useState(0);
   useEffect(() => {
@@ -43,7 +43,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 interface Props {
   target: CardTarget; ws: Workspace; stale: boolean; onClose: () => void; onSwitch: (t: CardTarget) => void;
-  onSaved: (w: Workspace, what: string) => void; onError: (e: unknown, retry?: () => void) => void;
+  onSaved: (w: Workspace, what: string) => void; onError: (e: unknown, retry?: () => void) => void; onDiagram: (scope: string) => void;
 }
 
 export function CardDialog(p: Props) {
@@ -54,7 +54,7 @@ export function CardDialog(p: Props) {
   </Dialog>;
 }
 
-function Failed({ err, retry }: { err: unknown; retry: () => void }) {
+export function Failed({ err, retry }: { err: unknown; retry: () => void }) {
   return <div className="card-failed" role="alert"><p>{say(err)}</p>{canRetry(err) && <button className="btn" onClick={retry}>Retry</button>}</div>;
 }
 
@@ -72,15 +72,15 @@ function EditFooter({ edit, setEdit, reset, save, dirty, bad, busy }: { edit: bo
     : <><span className="spacer" /><button className="btn" onClick={() => setEdit(true)}>Edit</button></>;
 }
 
-function LinkView({ target, onSwitch }: Props) {
+function LinkView({ target, onSwitch, onDiagram }: Props) {
   const to = target.type === "link" ? target.to : "";
   const [d, err, reload] = useCard<Drawing>(`/api/drawing/${encodeURIComponent(target.id)}?to=${encodeURIComponent(to)}`);
-  return <Shell title={d ? `${d.name} to ${d.to?.name ?? to}` : titleSkel} footer={d && <><button className="btn" onClick={() => window.print()}>Save as PDF</button><span className="spacer" /></>}>
-    {err ? <Failed err={err} retry={reload} /> : !d ? <div className="card-skel" aria-busy="true"><SkeletonRows n={5} /></div> : <><DrawingRows d={d} onSwitch={onSwitch} /><PrintSheet d={d} /></>}
+  return <Shell title={d ? `${d.name} to ${d.to?.name ?? to}` : titleSkel} footer={d && <><button className="btn" onClick={() => onDiagram(`connection:${target.id}~${to}`)}>Wiring diagram</button><span className="spacer" /></>}>
+    {err ? <Failed err={err} retry={reload} /> : !d ? <div className="card-skel" aria-busy="true"><SkeletonRows n={5} /></div> : <DrawingRows d={d} onSwitch={onSwitch} />}
   </Shell>;
 }
 
-function ComponentView({ target, stale, onSwitch, onSaved, onError }: Props) {
+function ComponentView({ target, stale, onSwitch, onSaved, onError, onDiagram }: Props) {
   const [c, err, reload] = useCard<ComponentCard>(`/api/card/component/${encodeURIComponent(target.id)}`);
   const [d] = useCard<Drawing>(`/api/drawing/${encodeURIComponent(target.id)}`);   // its wiring, drawn: replaces the pin table
   const [name, setName] = useState(""), [kind, setKind] = useState(""), [rating, setRating] = useState("");
@@ -105,7 +105,7 @@ function ComponentView({ target, stale, onSwitch, onSaved, onError }: Props) {
   };
   const fixedKind = !!c && c.kind === "harness";
 
-  return <Shell title={c ? c.name || c.id : titleSkel} footer={c && <>{!edit && d && <button className="btn" onClick={() => window.print()}>Save as PDF</button>}<EditFooter {...{ edit, setEdit, reset, save, dirty, bad, busy }} /></>}>
+  return <Shell title={c ? c.name || c.id : titleSkel} footer={c && <>{!edit && d && <button className="btn" onClick={() => onDiagram(`component:${target.id}`)}>Wiring diagram</button>}<EditFooter {...{ edit, setEdit, reset, save, dirty, bad, busy }} /></>}>
     {err ? <Failed err={err} retry={reload} /> : !c ? <div className="card-skel" aria-busy="true"><SkeletonRows n={3} /><SkeletonRows n={5} /></div> : <>
       <p className="card-kind"><span className="kind-chip"><KindIcon kind={c.kind} size={14} />{c.kind}</span>
         <span className="faint">{c.id}{c.location ? ` · ${c.location}` : ""}</span></p>
@@ -117,7 +117,7 @@ function ComponentView({ target, stale, onSwitch, onSaved, onError }: Props) {
           {!KINDS.includes(c.kind) && <option value={c.kind}>{c.kind}</option>}{KINDS.map((k) => <option key={k} value={k}>{k}</option>)}</select></Field>
         {protective && <Field label="Rating (A)"><input className="input" inputMode="decimal" value={rating} onChange={(e) => setRating(e.target.value)} aria-invalid={ratingNum !== null && !(ratingNum > 0)} /></Field>}
       </div>}
-      {d ? <><DrawingRows d={d} onSwitch={onSwitch} /><PrintSheet d={d} /></> : <SkeletonRows n={5} />}
+      {d ? <DrawingRows d={d} onSwitch={onSwitch} /> : <SkeletonRows n={5} />}
     </>}
   </Shell>;
 }

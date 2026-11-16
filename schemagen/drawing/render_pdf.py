@@ -85,13 +85,15 @@ def _page(c: Canvas, sh: dict[str, Any], fonts: tuple[str, str]) -> None:
             path(pts, False, None, "k", WIRE[v["weight"]], bool(v.get("fault")))
 
 
-def pdf(geometry: Geometry, path: str | Path) -> int:
-    """Writes the geometry as a vector PDF, one page per sheet; returns the number of pages."""
+def pdf(geometry: Geometry | list[Geometry], path: str | Path) -> int:
+    """Writes the geometry (or a list of them: one book, in that order) as a vector PDF, one page per sheet; returns the number of pages."""
     fonts = _fonts()
+    gs = geometry if isinstance(geometry, list) else [geometry]
     c = Canvas(str(path), invariant=1, pageCompression=1)
-    c.setTitle(geometry["drawing"].get("title", "")); c.setCreator("schemagen")
-    for sh in geometry["sheets"]:
-        _page(c, dict(sh), fonts)
-        c.showPage()
+    c.setTitle(gs[0]["drawing"].get("title", "")); c.setCreator("schemagen")
+    for g in gs:
+        for sh in g["sheets"]:
+            _page(c, dict(sh), fonts)
+            c.showPage()
     c.save()
-    return len(geometry["sheets"])
+    return sum(len(g["sheets"]) for g in gs)

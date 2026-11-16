@@ -87,3 +87,44 @@ def test_frontend_is_bundled_without_cdn():
     assert "/assets/" in html and "http://" not in html and "https://" not in html
     js = "".join(p.read_text(errors="ignore", encoding="utf-8") for p in (static / "assets").glob("*.js"))
     assert "googleapis" not in js and "unpkg.com" not in js and "jsdelivr" not in js
+
+
+def test_diagram_route_draws_scopes(client):
+    c, _ = client
+    for scope in ("component:ECU", "connection:CB-ECU~ECU", "selection:ECU,CB-ECU"):
+        r = c.get("/api/diagram", params=dict(scope=scope))
+        assert r.status_code == 200, r.text
+        d = r.json()
+        assert d["scope"] == scope and d["title"] and d["sheets"] and all(s.startswith("<svg") and "</svg>" in s for s in d["sheets"])
+    assert "ECU" in c.get("/api/diagram", params=dict(scope="component:ECU")).json()["sheets"][0]
+    for bad in ("component:NOPE", "bogus:x", "component:"):
+        r = c.get("/api/diagram", params=dict(scope=bad))
+        assert r.status_code == 400 and r.json()["error"]["code"] == "bad-request" and r.json()["error"]["message"].endswith(".")
+
+
+def _pages(p):
+    import re
+    return len(re.findall(rb"/Type\s*/Page\b", p.read_bytes()))
+
+
+def test_export_one_diagram(client):
+    c, d = client
+    r = c.post("/api/export", json=dict(kind="diagram", scope="connection:CB-ECU~ECU"))
+    assert r.status_code == 200, r.text
+    assert r.json() == dict(folder=str(d / "out"), files=["drawings/connection-CB-ECU_ECU.pdf"])
+    assert _pages(d / "out" / "drawings" / "connection-CB-ECU_ECU.pdf") >= 1
+    assert c.post("/api/export", json=dict(kind="diagram")).status_code == 400
+    assert c.post("/api/export", json=dict(kind="diagram", scope="component:NOPE")).status_code == 400
+
+
+def test_export_all_drawings_makes_a_book(client):
+    from schemagen.drawing.sheet import symbol_sheet
+    c, d = client
+    r = c.post("/api/export", json=dict(kind="drawings"))
+    assert r.status_code == 200, r.text
+    files = r.json()["files"]
+    out = d / "out"
+    per = [f for f in files if f.startswith("drawings/")]
+    assert "wiring-diagrams.pdf" in files and "drawings/component-ECU.pdf" in per and "drawings/component-X-BH.pdf" in per
+    assert all((out / f).is_file() for f in files)
+    assert _pages(out / "wiring-diagrams.pdf") == len(symbol_sheet()["sheets"]) + sum(_pages(out / f) for f in per)

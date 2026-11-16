@@ -804,3 +804,12 @@ may show again next launch. Replay from the help menu works at any time and reco
 - Why: deterministic, fast (one drawing in milliseconds) and every rule is checkable on the geometry (`checks.report`). Known weak: crossings on big
   harness connectors, and a controller with many pins splits into unrelated mini-sheets.
 
+
+## D113. The app draws with its own engine; components are selected with shift-click
+- Choice: the app's wiring diagrams come from `schemagen/drawing/` (`GET /api/diagram?scope=`, SVG sheets in a viewer, always on white paper), not from
+  WireViz. A card's "Wiring diagram" button and a shift-click selection on the map (added at the owner's request on 2026-11-16; D106 had left selection
+  out of 1.1) open the viewer for `component:`, `connection:` or `selection:`. Export writes `drawings/<scope>.pdf` for one diagram, and for "Wiring
+  diagrams" one PDF per component and harness connector plus one book `wiring-diagrams.pdf` with the symbol sheet first. The WireViz export left the
+  app (the CLI `schemagen draw` keeps it), so the app no longer needs Graphviz.
+- Why: the drawings must serve a physical rewire (D106), the old row drawing and its print sheet did not, and one engine keeps the viewer, the PDFs and
+  the CLI identical.

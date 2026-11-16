@@ -24,7 +24,7 @@ Any non-2xx answer has this body, and the server never crashes or returns a bare
 
 | method | path | body | returns |
 |---|---|---|---|
-| GET | `/api/health` | | `{ready, version, graphviz: {found, version, message}, drawings: {available, message}, error}` |
+| GET | `/api/health` | | `{ready, version, graphviz: {found, version, message}, error}` |
 | GET | `/api/session` | | `{project: ProjectInfo \| null, recent: [{name, path, opened}], tour_done, theme}` (recent entries whose folder no longer exists are left out) |
 | POST | `/api/close` | | `{ok: true}`: closes the open project; `/api/session` then has `project: null` (start screen) |
 | POST | `/api/recent/remove` | `{path}` | `{ok: true}`: forgets one recent entry (the folder is not deleted) |
@@ -41,9 +41,6 @@ Any non-2xx answer has this body, and the server never crashes or returns a bare
   are findings in `Workspace.issues`, never an error, unless the file cannot be read at all or has no wires
   (`import-failed`, `retry: false`): "<file> has no wires schemagen can read. A wire sheet needs at least the columns Label, From and To."
   In that case the folder it made is removed and nothing is added to `recent`.
-- `drawings.available` is true when both Graphviz `dot` and the `wireviz` command are found; `drawings.message` is then `""`, else
-  "Harness drawings need Graphviz and WireViz, two free programs that are not part of schemagen. The diagram, Simulate and the
-  other exports work without them." `graphviz` is kept as it was.
 
 ## Workspace (everything the main screen needs, in one call)
 
@@ -86,6 +83,14 @@ interface Issue { k: number; rule: string; severity: "error" | "warning" | "info
 Pin rows: `pin` is the pin number, or the sheet's text when there is none ("red lead", "line stud"); `pin_name` the pin's name from part
 data ("" if none; `name` is the same, kept for older callers); `wire_name` the wire's name ("BMS supply"); `other` is display text for the
 far end(s), without codes ("Breaker 'DCDC' 30 A LINE"; several ends joined by "; ").
+
+## Wiring diagram (the viewer)
+
+| method | path | returns |
+|---|---|---|
+| GET | `/api/diagram?scope={scope}` | `{title, scope, sheets: [svg, ...]}`: the engine's A3 drawing of the scope (`component:ID`, `connection:A~B`, `selection:A,B,...`, see docs/drawing-model.md), one SVG string per sheet, black on white |
+
+An unknown scope or component is `bad-request` with a plain sentence. The SVG uses the page's Inter font; it embeds no font.
 
 ## Drawing (inside a card)
 
@@ -162,12 +167,13 @@ the project folder and survives reloads) and used by `/api/simulate`. It appears
 
 | method | path | body | returns |
 |---|---|---|---|
-| POST | `/api/export` | `{kind: "drawings"\|"pinout"\|"faults"\|"wirelist"}` | `{folder, files: string[]}` (`pinout` writes `checklist.html` and `checklist.xlsx`: the wiring checklist) |
+| POST | `/api/export` | `{kind: "diagram", scope}`, or `{kind: "drawings"\|"pinout"\|"faults"\|"wirelist"}` | `{folder, files: string[]}` (`pinout` writes `checklist.html` and `checklist.xlsx`: the wiring checklist) |
 | POST | `/api/reveal` | `{path}` | `{ok}`: opens the folder in the file manager |
 
-Drawings need Graphviz and WireViz. Both are checked before anything is written; if either is missing the answer is the
-`graphviz-missing` error with the `drawings.message` sentence and `retry: false`. Drawings are rendered aside and moved into the out
-folder only when all of them rendered, so a failed render leaves nothing behind. The diagram never needs them.
+`diagram` writes the one drawing as `drawings/<scope>.pdf` (`component-ECU.pdf`, `connection-A_B.pdf`, `selection-A+B.pdf`). `drawings` draws every
+component and harness connector that has wires (splices are drawn inside the runs through them) with schemagen's own engine: one PDF each in
+`drawings/` and `wiring-diagrams.pdf`, one book of all of them in the same order with the symbol sheet first. They are rendered aside and moved into
+the out folder only when all of them rendered, so a failed render leaves nothing behind. Neither needs Graphviz or WireViz.
 
 ## Kept from 0.7
 

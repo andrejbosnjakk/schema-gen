@@ -2,13 +2,11 @@
 import json
 import os
 import shutil
-import sys
 from pathlib import Path
 
 from openpyxl import load_workbook
 
 from schemagen.app import userdata
-from schemagen.renderers import wireviz
 from test_api import AIRCRAFT, ac, empty, err, home  # noqa: F401  (fixtures)
 
 
@@ -51,36 +49,16 @@ def test_import_not_a_wire_sheet(empty, home):  # noqa: F811
     assert e["message"] == "x.xlsx could not be read. Save it as .xlsx or .csv and try again." and ".." not in e["message"]
 
 
-def test_health_reports_drawing_tools(empty, monkeypatch):  # noqa: F811
+def test_health_reports_graphviz(empty):  # noqa: F811
     h = empty.get("/api/health").json()
-    assert h["drawings"].keys() == {"available", "message"} and h["graphviz"].keys() >= {"found", "version", "message"}
-    monkeypatch.setattr(wireviz, "wireviz_cmd", lambda: None)
-    h = empty.get("/api/health").json()
-    assert h["drawings"] == {"available": False, "message": wireviz.DRAWINGS_MISSING}
-    assert "pip" not in h["drawings"]["message"] and h["drawings"]["message"].startswith("Harness drawings need Graphviz and WireViz")
-    monkeypatch.setattr(wireviz, "wireviz_cmd", lambda: ["x"])
-    monkeypatch.setattr(wireviz, "find_dot", lambda: "dot")
-    assert empty.get("/api/health").json()["drawings"] == {"available": True, "message": ""}
+    assert h["graphviz"].keys() >= {"found", "version", "message"} and "drawings" not in h
 
 
-def test_export_drawings_without_wireviz_writes_nothing(ac, monkeypatch):  # noqa: F811
+def test_failed_drawings_export_leaves_no_files(ac, monkeypatch):  # noqa: F811
     c, d = ac
-    monkeypatch.setattr(wireviz, "find_dot", lambda: "dot")
-    monkeypatch.setattr(wireviz, "wireviz_cmd", lambda: None)
-    r = c.post("/api/export", json={"kind": "drawings"})
-    err(r, "graphviz-missing")
-    assert r.json()["error"]["message"] == wireviz.DRAWINGS_MISSING and r.json()["error"]["retry"] is False
-    assert not (d / "out").exists() or not list((d / "out").iterdir())
-
-
-def test_failed_render_leaves_no_files(ac, monkeypatch, tmp_path):  # noqa: F811
-    c, d = ac
-    fake = tmp_path / "fake.py"
-    fake.write_text("import sys\nsys.stderr.write('ValueError: boom\\n'); sys.exit(1)\n", encoding="utf-8")
-    monkeypatch.setattr(wireviz, "find_dot", lambda: sys.executable)
-    monkeypatch.setattr(wireviz, "wireviz_cmd", lambda: [sys.executable, str(fake)])
-    r = c.post("/api/export", json={"kind": "drawings"})
-    assert r.status_code >= 400 and r.json()["error"]["code"] == "render-failed"
+    def boom(*a, **k): raise RuntimeError("boom")
+    monkeypatch.setattr("schemagen.app.diagrams.pdf", boom)
+    assert c.post("/api/export", json={"kind": "drawings"}).status_code >= 400
     assert not (d / "out").exists() or not list((d / "out").iterdir())
 
 

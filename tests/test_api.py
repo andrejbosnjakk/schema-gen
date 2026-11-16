@@ -187,19 +187,12 @@ def test_export_files(ac):
     assert r["files"] and all((d / "out" / f).is_file() for f in r["files"])
 
 
-@pytest.mark.skipif(shutil.which("dot") is None, reason="Graphviz not installed")
 def test_export_drawings(ac):
-    c, _ = ac
+    c, d = ac
     r = c.post("/api/export", json={"kind": "drawings"})
     assert r.status_code == 200, r.text
-    assert any(f.endswith((".svg", ".png")) for f in r.json()["files"])
-
-
-def test_export_drawings_without_graphviz(ac, monkeypatch):
-    c, _ = ac
-    from schemagen.renderers import wireviz
-    monkeypatch.setattr(wireviz, "find_dot", lambda: None)
-    err(c.post("/api/export", json={"kind": "drawings"}), "graphviz-missing")
+    files = r.json()["files"]
+    assert "wiring-diagrams.pdf" in files and all((d / "out" / f).is_file() for f in files)
 
 
 # ---------------------------------------------------------------- speed

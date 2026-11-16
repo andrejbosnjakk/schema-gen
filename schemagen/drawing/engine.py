@@ -30,6 +30,17 @@ def draw(st: Any, scope: Any, size: str = "A3", meta: dict[str, str] | None = No
     return dict(version=1, drawing=info, sheets=sheets)  # type: ignore[return-value,typeddict-item]
 
 
+def stem(scope: str) -> str:
+    """The file name (without extension) of the drawing of `scope`: `component:ECU` -> `component-ECU`."""
+    return scope.replace(":", "-").replace("~", "_").replace(",", "+")
+
+
+def meta(source: str) -> dict[str, str]:
+    """The title block data every drawing of the CLI and the app carries (today's date, drawn by schemagen, `source` the project's name)."""
+    import datetime
+    return dict(date=datetime.date.today().isoformat(), drawn_by="schemagen", source=source)
+
+
 def export(geometry: Geometry, path: str | Path) -> list[Path]:
     """Writes the drawing: .pdf (one file, a page per sheet) or .svg (`name.svg`, or `name-1.svg`, `name-2.svg` ... for several sheets)."""
     p = Path(path)

@@ -1,7 +1,5 @@
 // The wiring drawing inside a card (docs/api.md, Drawing): one row per run, from the pin through each wire and everything it
 // passes (harness connector pins, splices) to where it lands. A harness connector shows both halves around its pin.
-// "Save as PDF" prints this sheet alone, with a title block.
-import { createPortal } from "react-dom";
 import { drawn, useTheme } from "./diagram/colour";
 import type { CardTarget, Drawing as D, DrawingSeg } from "./types";
 
@@ -24,7 +22,7 @@ function Land({ s, onSwitch }: { s: DrawingSeg; onSwitch?: Switch }) {
     : <span className={`dw-at${via ? " via" : ""}`}>{s.at}</span>;
 }
 
-/** The rows of a drawing; `onSwitch` makes wires and landings links (left out on the printed sheet). */
+/** The rows of a drawing; `onSwitch` makes wires and landings links. */
 export function DrawingRows({ d, onSwitch }: { d: D; onSwitch?: Switch }) {
   const theme = useTheme();
   const harness = d.sides.length > 0;
@@ -44,14 +42,4 @@ export function DrawingRows({ d, onSwitch }: { d: D; onSwitch?: Switch }) {
     {d.groups.length === 0 && <p className="faint">No wires here.</p>}
     {d.cut > 0 && <p className="faint">{d.cut} more runs are not shown. The wiring checklist export has all of them.</p>}
   </div>;
-}
-
-/** The sheet that "Save as PDF" prints: hidden on screen, the only thing on paper. */
-export function PrintSheet({ d }: { d: D }) {
-  const title = d.to ? `${d.name} to ${d.to.name}` : d.name;
-  return createPortal(<div className="print-sheet" data-theme="light">
-    <header className="ps-head"><div><h1>{title}</h1><p>Wiring diagram · {d.wires} {d.wires === 1 ? "wire" : "wires"}</p></div>
-      <div className="ps-block"><span>{d.project}</span><span>{new Date().toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })}</span><span>schemagen</span></div></header>
-    <DrawingRows d={d} />
-  </div>, document.body);
 }

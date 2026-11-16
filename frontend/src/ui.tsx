@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 const G: Record<string, ReactNode> = {
   plus: <path d="M8 3.5v9M3.5 8h9" />, minus: <path d="M3.5 8h9" />,
   fit: <path d="M3 6V3h3M10 3h3v3M13 10v3h-3M6 13H3v-3" />,
-  down: <path d="M4.5 6.5 8 10l3.5-3.5" />, up: <path d="M4.5 9.5 8 6l3.5 3.5" />, left: <path d="M9.5 4.5 6 8l3.5 3.5" />,
+  down: <path d="M4.5 6.5 8 10l3.5-3.5" />, up: <path d="M4.5 9.5 8 6l3.5 3.5" />, left: <path d="M9.5 4.5 6 8l3.5 3.5" />, right: <path d="M6.5 4.5 10 8l-3.5 3.5" />,
   sun: <><circle cx="8" cy="8" r="2.75" /><path d="M8 1.75v1.5M8 12.75v1.5M1.75 8h1.5M12.75 8h1.5M3.6 3.6l1 1M11.4 11.4l1 1M3.6 12.4l1-1M11.4 4.6l1-1" /></>,
   moon: <path d="M12.9 9.8A5.25 5.25 0 0 1 6.2 3.1a5.25 5.25 0 1 0 6.7 6.7Z" />,
   help: <><circle cx="8" cy="8" r="6.25" /><path d="M6.3 6.3a1.8 1.8 0 1 1 2.4 1.7c-.5.2-.7.6-.7 1.1v.3" /><circle cx="8" cy="11.4" r=".4" fill="currentColor" /></>,

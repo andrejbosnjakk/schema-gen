@@ -13,6 +13,10 @@ round trip as the accuracy check). WireViz is now an optional extra (done, D107)
   pin table. This first version is not the planned engine.
 - A line with several wires opens a connection card.
 - "Save as PDF" prints the card's drawing as a sheet with a title block.
+- The app uses the drawing engine: "Wiring diagram" on the component and connection cards, and shift-click on the map
+  (a selection bar), open a viewer (zoom, pan, sheets) with "Save as PDF" (`GET /api/diagram`). Export "Wiring diagrams"
+  writes a PDF per component and one book with the symbol sheet; it no longer needs Graphviz or WireViz (D113). The
+  print sheet of the cards is gone.
 - Not yet verified: the Playwright suite and printing in the desktop window.
 
 ## 1.0.0

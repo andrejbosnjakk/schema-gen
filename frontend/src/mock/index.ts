@@ -182,8 +182,7 @@ export function install(q: URLSearchParams) {
   const ok = (json: unknown, ms = 120) => new Promise<{ status: number; json: unknown }>((res) => setTimeout(() => res({ status: 200, json }), ms));
   const err = (status: number, code: string, message: string, retry = false) => ok({ error: { code, message, retry } }).then((r) => ({ ...r, status }));
   useMock(async (method, path, body) => {
-    if (path === "/api/health") return ok({ ready: true, version: "1.0.0", graphviz: { found: !q.has("nodrawings"), version: "", message: "" },
-      drawings: q.has("nodrawings") ? { available: false, message: "Harness drawings need Graphviz and WireViz, which are not part of schemagen." } : { available: true, message: "" } }, 10);
+    if (path === "/api/health") return ok({ ready: true, version: "1.0.0", graphviz: { found: true, version: "", message: "" }, error: "" }, 10);
     if (path === "/api/session") return ok({ ...session, project: ws?.project ?? null });
     if (path === "/api/close") { ws = null; overlay = null; return ok({ ok: true }, 20); }
     if (path === "/api/recent/remove") { session.recent = session.recent.filter((r) => r.path !== (body as { path: string }).path); return ok({ ok: true }, 20); }
@@ -204,6 +203,16 @@ export function install(q: URLSearchParams) {
     if (path === "/api/workspace") return ws ? ok(ws) : err(409, "no-project", "No project is open.");
     if (path === "/api/positions") { if (ws) Object.assign(ws.positions, (body as { positions: object }).positions); return ok({ ok: true }, 20); }
     if (path === "/api/simulate") { if (!ws) return err(409, "no-project", "No project is open."); overlay = simulate(ws); return ok(overlay, 600); }
+    const dg = /^\/api\/diagram\?scope=(.+)$/.exec(path);
+    if (dg && ws) {   // two small A3 sheets, one per page, whatever the scope
+      const scope = decodeURIComponent(dg[1]), id = scope.slice(scope.indexOf(":") + 1).split(/[~,]/)[0];
+      if (!ws.components.some((n) => n.id === id)) return err(400, "bad-request", `Unknown component '${id}'.`);
+      const sheet = (n: number) => `<svg xmlns="http://www.w3.org/2000/svg" width="420mm" height="297mm" viewBox="0 0 420 297"><rect width="420" height="297" fill="#fff"/>` +
+        `<rect x="10" y="10" width="400" height="277" fill="none" stroke="#000" stroke-width="0.5"/><rect x="150" y="100" width="40" height="30" fill="none" stroke="#000" stroke-width="0.5"/>` +
+        `<text x="170" y="117" font-size="4" text-anchor="middle">${id}</text><polyline points="190,115 260,115" fill="none" stroke="#000" stroke-width="0.35"/>` +
+        `<text x="20" y="280" font-size="3.5">Sheet ${n} of 2</text></svg>`;
+      return ok({ title: scope.startsWith("selection") ? "Selection" : id, scope, sheets: [sheet(1), sheet(2)] }, 200);
+    }
     const dr = /^\/api\/drawing\/(.+)$/.exec(path);
     if (dr && ws) {   // one run per wire end on the component (the real server also walks through connector pins and splices)
       const id = decodeURIComponent(dr[1]), to = q.get("to") ?? "", n = ws.components.find((x) => x.id === id);
@@ -257,7 +266,7 @@ export function install(q: URLSearchParams) {
       ws.sources = ws.sources.filter((x) => x.id !== id); ws.components = ws.components.filter((x) => x.id !== id); ws.edges = ws.edges.filter((x) => x.a !== id);
       return ok(structuredClone(ws), 150);
     }
-    if (path === "/api/export") return ok({ folder: `${ws?.project.root}\\out`, files: ["X-WING.svg", "X-TAIL.svg"] }, 400);
+    if (path === "/api/export") return ok({ folder: `${ws?.project.root}\\out`, files: { diagram: ["drawings/component-X-WING.pdf"], drawings: ["wiring-diagrams.pdf", "drawings/component-X-WING.pdf", "drawings/component-X-TAIL.pdf"] }[(body as { kind: string }).kind] ?? ["checklist.html", "checklist.xlsx"] }, 400);
     if (path === "/api/reveal") return ok({ ok: true });
     return err(404, "not-found", `Nothing at ${method} ${path}.`);
   }, q.has("slow") ? 500 : 40);

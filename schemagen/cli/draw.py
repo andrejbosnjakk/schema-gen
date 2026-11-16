@@ -32,14 +32,13 @@ def coverage(pr, drawings):
 
 def draw_scope(config, scope, sheet="A3", output=None):
     """One drawing of a scope with the built-in engine (docs/drawing-model.md); WireViz is not needed. Returns the exit code."""
-    import datetime
     from pathlib import Path
     from ..app.server import State
     from ..drawing import checks
-    from ..drawing.engine import draw as render, export
+    from ..drawing.engine import draw as render, export, meta, stem
     st = State(config)
-    g = render(st, scope, sheet, dict(date=datetime.date.today().isoformat(), drawn_by="schemagen", source=Path(config).name))
-    out = Path(output) if output else st.cfg.out / (scope.replace(":", "-").replace("~", "_").replace(",", "+") + ".pdf")
+    g = render(st, scope, sheet, meta(Path(config).name))
+    out = Path(output) if output else st.cfg.out / (stem(scope) + ".pdf")
     out.parent.mkdir(parents=True, exist_ok=True)
     files = export(g, out)
     r = checks.report(g)

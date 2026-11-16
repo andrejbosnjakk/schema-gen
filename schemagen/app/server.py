@@ -350,9 +350,7 @@ def create_app(project: str | Path | None = None, background: bool = False) -> F
     # ---------------------------------------------------------------- 1.0: session and projects
     @app.get("/api/health")
     def health() -> dict[str, Any]:
-        from ..renderers.wireviz import drawings
-        return dict(ready=S.st is None or S.st.ready.is_set(), version=__version__, graphviz=app.state.graphviz, drawings=drawings(),
-                    error=S.st.error if S.st else "")
+        return dict(ready=S.st is None or S.st.ready.is_set(), version=__version__, graphviz=app.state.graphviz, error=S.st.error if S.st else "")
 
     def info(st: State) -> dict[str, Any]:
         return dict(name=st.cfg.root.name, root=str(st.cfg.root), version=__version__, warnings=st.L.warnings if st.ready.is_set() and not st.failure else [])
@@ -427,6 +425,11 @@ def create_app(project: str | Path | None = None, background: bool = False) -> F
         out = ws.component_card(cur(), cid)
         if out is None: raise AppError("not-found", f"There is no component {cid}.")
         return out
+
+    @app.get("/api/diagram")
+    def diagram(scope: str) -> dict[str, Any]:
+        from . import diagrams as dg
+        return dg.sheets(cur(), scope)
 
     @app.get("/api/drawing/{cid:path}")
     def drawing_(cid: str, to: str = "") -> dict[str, Any]:
@@ -537,23 +540,14 @@ def create_app(project: str | Path | None = None, background: bool = False) -> F
     @app.post("/api/export")
     def export(body: dict[str, Any] = Body(...)) -> dict[str, Any]:  # noqa: B008
         st = cur()
-        b = _keys(body, {"kind"})
+        b = _keys(body, {"kind", "scope"})
         kind, out = b.get("kind"), st.cfg.out
-        import contextlib, io
-        if kind not in ("drawings", "pinout", "faults", "wirelist"): raise AppError("bad-request", "kind must be drawings, pinout, faults or wirelist.")
-        if kind == "drawings":
-            from ..renderers.wireviz import DRAWINGS_MISSING, drawings
-            if not drawings()["available"]: raise AppError("graphviz-missing", DRAWINGS_MISSING)  # before anything is written
-            from ..cli.draw import draw
-            import shutil, tempfile
-            stage = Path(tempfile.mkdtemp(prefix="schemagen-drawings-"))  # rendered aside: a failed render leaves nothing in out/
-            try:
-                with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()): draw(st.cfg.root, all_=True, out=stage)
-                files = sorted(str(p.relative_to(stage)).replace("\\", "/") for p in stage.rglob("*") if p.is_file())
-                for f in files:
-                    (out / f).parent.mkdir(parents=True, exist_ok=True)
-                    shutil.move(str(stage / f), str(out / f))
-            finally: shutil.rmtree(stage, ignore_errors=True)
+        if kind not in ("diagram", "drawings", "pinout", "faults", "wirelist"):
+            raise AppError("bad-request", "kind must be diagram, drawings, pinout, faults or wirelist.")
+        if kind in ("diagram", "drawings"):
+            from . import diagrams as dg
+            if kind == "diagram" and not isinstance(b.get("scope"), str): raise AppError("bad-request", "Give the scope of the diagram, such as component:ECU.")
+            files = dg.export_one(st, b["scope"], out) if kind == "diagram" else dg.export_all(st, out)
             return dict(folder=str(out), files=files)
         before = {p: p.stat().st_mtime for p in out.rglob("*") if p.is_file()} if out.exists() else {}
         out.mkdir(parents=True, exist_ok=True)

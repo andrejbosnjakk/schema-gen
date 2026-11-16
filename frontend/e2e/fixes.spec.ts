@@ -289,24 +289,15 @@ test("F: + Source lands near its bus, clear of cards and labels, with its edge d
 });
 
 // ---- G: export menu ----
-test("G: the Export menu order and wording; Harness drawings is disabled when Graphviz is missing", async ({ page }) => {
+test("G: the Export menu order and wording; Wiring diagrams is always there and saves the set", async ({ page }) => {
   await open(page);
   await page.getByRole("button", { name: "Export" }).click();
   const items = page.getByRole("menuitem");
-  expect(await items.allInnerTexts()).toEqual(["Wire sheet\nXLSX, your sheet written back", "Wiring checklist\nprintable, per component", "Fault sweep\nHTML report", "Harness drawings\nSVG"]);
-  await page.keyboard.press("Escape");
-  await page.goto("/?mock=1&open=1&nodrawings=1");
-  await expect(page.locator(".node-card").first()).toBeVisible();
-  await page.getByRole("button", { name: "Export" }).click();
-  const hd = page.getByRole("menuitem", { name: /Harness drawings/ });
-  await expect(hd).toHaveAttribute("aria-disabled", "true");
-  await expect(hd).toContainText("needs Graphviz and WireViz");
-  await expect(hd).toHaveAttribute("title", /not part of schemagen/);
-  await shot(page, "export-menu-nodrawings");
-  await hd.click({ force: true });
-  await expect(page.getByRole("menu")).toBeVisible();                // nothing happened
-  await page.waitForTimeout(500);
-  await expect(page.locator(".toast")).toHaveCount(0);
+  expect(await items.allInnerTexts()).toEqual(["Wire sheet\nXLSX, your sheet written back", "Wiring checklist\nprintable, per component", "Fault sweep\nHTML report", "Wiring diagrams\nPDF, every component"]);
+  await expect(items.last()).not.toHaveAttribute("aria-disabled", "true");
+  await shot(page, "export-menu");
+  await items.last().click();
+  await expect(page.locator(".toast.ok")).toContainText("Wiring diagrams: 3 files saved.");
 });
 
 // ---- H: back to the start screen ----
