@@ -8,7 +8,6 @@ import type { Edge, Issue, Node, Overlay, Session, Wire, Workspace } from "../ty
 const PALETTE: Record<string, string> = { "14 V": "#ff0000", "GND": "#000000", "CAN_H": "#00ff00", "CAN_L": "#00ff00",
   "HV": "#ff8000", "signal": "#0066ff", "5 V": "#8000ff" };
 const VOLT: Record<string, string> = { "14 V": "14 V", "GND": "0 V", "CAN_H": "CAN", "CAN_L": "CAN", "HV": "400 V", "signal": "signal", "5 V": "5 V" };
-const SHORT: Record<string, string> = { CAN_H: "CAN", CAN_L: "CAN", GND: "GND" };
 
 function rng(seed: number) { return () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296); }
 
@@ -136,7 +135,6 @@ export function build(target: number, name: string, extraIssues: Issue[] = []): 
   }
   const edges: Edge[] = [...groups].map(([k, g]) => {
     const [a, b] = k.split("~"), cls = [...new Set(g.map((x) => x.cls))];
-    const short = [...new Set(cls.map((c) => SHORT[c] ?? c))];
     return { id: k, a, b, wires: g.map((x) => x.id), cls, label: g.length > 1 ? `${g.length} wires` : g[0].label };
   });
   const zones = [...new Set(zone.values())].map((z) => ({ id: z.toLowerCase().replace(/\s+/g, "-"), name: z, members: [...zone].filter(([, v]) => v === z).map(([k]) => k) }));
@@ -213,7 +211,7 @@ export function install(q: URLSearchParams) {
       const sev = { error: "error", warning: "warning" } as Record<string, string>;
       const rows = ws.conductors.filter((w) => (w.a === id || w.b === id) && (!to || w.a === to || w.b === to)).map((w, i) => {
         const o = w.a === id ? w.b : w.a;
-        return { pin: q.has("nopins") ? "" : String(i + 1), pin_name: i % 3 ? "" : w.cls === "GND" ? "Return" : "Supply", left: [], right: [{ wire: w.id, label: w.label, name: w.name, gauge: w.gauge, colour: w.cls, hex: w.hex,
+        return { pin: q.has("nopins") ? "" : String(i + 1), pin_name: q.has("nopins") || i % 3 ? "" : w.cls === "GND" ? "Return" : "Supply", left: [], right: [{ wire: w.id, label: w.label, name: w.name, gauge: w.gauge, colour: w.cls, hex: w.hex,
           sev: sev[w.sev] ?? "", reason: overlay?.items[`conductor:${w.id}`]?.reason ?? "", at: w.a === id ? w.to : w.from, comp: o, role: "device" }] };
       });
       const t = ws.components.find((x) => x.id === to);

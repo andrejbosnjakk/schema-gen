@@ -188,7 +188,7 @@ test("D: an error with Retry stays until closed, and does not survive into the n
 
 // ---- E: cards ----
 for (const [w, h] of [[1366, 768], [1920, 1080]]) for (const t of ["light", "dark"]) {
-  test(`E: component cards read first, one scroll area, wrapped table (${w}x${h} ${t})`, async ({ page }) => {
+  test(`E: component cards read first, one scroll area, wrapped drawing (${w}x${h} ${t})`, async ({ page }) => {
     await page.setViewportSize({ width: w, height: h });
     await open(page);
     await theme(page, t);
@@ -196,12 +196,14 @@ for (const [w, h] of [[1366, 768], [1920, 1080]]) for (const t of ["light", "dar
     const dlg = page.getByRole("dialog");
     await expect(dlg.locator(".pin").first()).toBeVisible();
     const b = (await dlg.boundingBox())!;
-    expect(b.width).toBeGreaterThan(700); expect(b.width).toBeLessThanOrEqual(Math.min(720, w - 32) + 1); expect(b.height).toBeLessThanOrEqual(h * 0.85 + 1);
-    expect(await dlg.locator("th[scope=col]").allTextContents()).toEqual(["Pin", "Wire", "Name", "Gauge", "Goes to"]);
-    await expect(dlg.locator(".conn-row")).toHaveCount(2);              // the two sides stay as headings
+    expect(b.width).toBeGreaterThan(700); expect(b.width).toBeLessThanOrEqual(Math.min(920, w - 32) + 1); expect(b.height).toBeLessThanOrEqual(h * 0.85 + 1);
+    await expect(dlg.locator(".dw-group")).toHaveText("J1");              // the connector is the heading over its runs
+    await expect(dlg.locator(".dw-row .dw-pin strong").first()).toHaveText("1");
+    await expect(dlg.locator(".dw-row .dw-wire").first()).toBeVisible(); // the run: pin, wire, where it lands
+    await expect(dlg.locator(".dw-row .dw-at").first()).toBeVisible();
     await expect(dlg.locator(".pin-sub").first()).toBeVisible();
     await expect(dlg.getByRole("button", { name: "Edit" })).toBeVisible();
-    await expect(dlg.getByRole("button", { name: "Save" })).toHaveCount(0);
+    await expect(dlg.getByRole("button", { name: "Save", exact: true })).toHaveCount(0);
     await expect(dlg.getByLabel("Name")).toHaveCount(0);
     // header, then issues (when there are any), then the table
     const order = await dlg.evaluate((d) => ["header", ".card-kind", ".card-issues", ".pin-table"].map((s) => d.querySelector(s)?.getBoundingClientRect().top ?? -1));
@@ -209,7 +211,7 @@ for (const [w, h] of [[1366, 768], [1920, 1080]]) for (const t of ["light", "dar
     // one scroll area: nothing inside the section scrolls by itself, and text is not cut off
     const nested = await dlg.evaluate((d) => [...d.querySelectorAll("section *")].filter((e) => { const o = getComputedStyle(e).overflowY; return (o === "auto" || o === "scroll") && e.scrollHeight > e.clientHeight; }).length);
     expect(nested).toBe(0);
-    const cut = await dlg.evaluate((d) => [...d.querySelectorAll(".pin-table td, .pin-table td *")].filter((e) => e.scrollWidth > e.clientWidth + 1).length);
+    const cut = await dlg.evaluate((d) => [...d.querySelectorAll(".pin-table .dw-row, .pin-table .dw-row *")].filter((e) => e.scrollWidth > e.clientWidth + 1).length);
     expect(cut).toBe(0);
     expect(await dlg.evaluate((d) => d.scrollWidth <= d.clientWidth && document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     await shot(page, `card-xfw-${w}-${t}`);
@@ -238,12 +240,13 @@ for (const [w, h] of [[1366, 768], [1920, 1080]]) for (const t of ["light", "dar
   });
 }
 
-test("E: a component whose pins are all blank has no Pin column", async ({ page }) => {
+test("E: a component whose pins are all blank shows no pin numbers", async ({ page }) => {
   await open(page, "&nopins=1");
   await node(page, "CB-XPDR").click({ force: true });
   const dlg = page.getByRole("dialog");
   await expect(dlg.locator(".pin").first()).toBeVisible();
-  expect(await dlg.locator("th[scope=col]").allTextContents()).toEqual(["Wire", "Name", "Gauge", "Goes to"]);
+  await expect(dlg.locator(".dw-row .dw-wire").first()).toBeVisible();   // the drawing keeps its rows, with no pin numbers or names
+  expect((await dlg.locator(".dw-pin strong, .dw-pin .pin-sub").allTextContents()).join("")).toBe("");
 });
 
 // ---- F: edge paths and a new source ----
