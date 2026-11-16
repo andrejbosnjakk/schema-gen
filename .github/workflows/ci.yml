@@ -31,7 +31,11 @@ jobs:
       - run: pip install -e ".[dev]"
       - run: ruff check schemagen tests benchmarks tools frontend/e2e
       - run: python -m mypy schemagen
-      - run: python -m pytest -q -m "not perf" --cov=schemagen --cov-report=term
+      # failed tests also become annotations on the run, so the cause shows on the summary page without opening the log
+      - run: |
+          python -m pytest -q -rfE -m "not perf" --cov=schemagen --cov-report=term 2>&1 | tee pytest.log; s=${PIPESTATUS[0]}
+          grep -E "^(FAILED|ERROR) " pytest.log | cut -c1-900 | sed "s/^/::error::/" || true
+          exit $s
       - run: python -m pytest -q -m perf
       - run: schemagen draw examples/demo
       # the demo has one finding on purpose (D97: no source on its 24 V bus), so check exits 1; any other exit code fails
