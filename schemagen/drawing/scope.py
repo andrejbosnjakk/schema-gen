@@ -131,7 +131,7 @@ def scene(st: Any, scope: str | Scope) -> Scene:
     wsev = severities(st)[1] if hasattr(st, "issues") else {}
     overlay = (getattr(st, "overlay", None) or {}).get("items", {})
     wires = [_wire(st, conds[j], wsev, overlay) for j in drawn]
-    fl = _collapse(st, flags, [_flag(st, j, e) for j, e in flags.items()], {j: net.node(j, e) for j, e in flags.items()})
+    fl = _collapse(st, flags, [_flag(st, j, e) for j, e in flags.items()], {j: net.node(j, e) for j, e in flags.items()}, in_scope)
     return Scene(version=VERSION, scope=sc, title=_title(st, sc, S, to), project=st.cfg.root.name,
                  items=sorted(items, key=lambda x: (x["column"], _natural(x["code"]))),
                  wires=sorted(wires, key=lambda w: _natural(w["id"])), flags=sorted(fl, key=lambda f: _natural(f["id"])))
@@ -140,13 +140,14 @@ def scene(st: Any, scope: str | Scope) -> Scene:
 COLLAPSE = 4  # flags on one bus or ground node from here on become one summary flag (D111)
 
 
-def _collapse(st: Any, ends: dict[int, int], fl: list[SceneFlag], node: dict[int, NodeKey]) -> list[SceneFlag]:
-    """One summary flag per bus or ground node that carries COLLAPSE or more off-sheet flags; it lists the conductors it stands for."""
+def _collapse(st: Any, ends: dict[int, int], fl: list[SceneFlag], node: dict[int, NodeKey], in_scope: set[str]) -> list[SceneFlag]:
+    """One summary flag per bus or ground node that carries COLLAPSE or more off-sheet flags; it lists the conductors it stands for.
+    A bus or ground that is itself in scope keeps every flag: all its wires are drawn."""
     ctx, conds = st.ctx, st.m.conductors
     by: dict[NodeKey, list[int]] = defaultdict(list)
     for j, e in ends.items():
         c = ctx.comp.get(conds[j].end(e).device)
-        if c and symbol(st, c) in ("bus", "ground"): by[node[j]].append(j)
+        if c and c.raw not in in_scope and symbol(st, c) in ("bus", "ground"): by[node[j]].append(j)
     drop: set[str] = set()
     out: list[SceneFlag] = []
     for js in by.values():

@@ -22,3 +22,11 @@ The demo also gained P (ratings, panel labels), D and O tables.
 | docs/screens/drawings/*.svg (new) | the six reference drawings, compared byte for byte by tests/test_drawing_reference.py | regenerate with `python -m schemagen.drawing.reference` or `UPDATE_GOLDEN=1 pytest tests/test_drawing_reference.py`; change them only with a reason listed here |
 | symbol-sheet.svg / .pdf | terminator drawn upright, flag `side`, battery with both leads on one side | symbols needed by the layout |
 
+## Readable drawings, stage 1 (pagination and use of the sheet)
+
+| file | difference | why |
+|---|---|---|
+| docs/screens/drawings/*.svg, *.pdf | sheets are cut between columns by what fits (the scope's components first), rows stretched up to 2x and channels widened to use the sheet; fewer, fuller sheets (aircraft components: 115 -> 94 sheets) | a sheet is split only when the content does not fit; no near-empty sheets |
+| same | a block's name is left out when it only repeats the code (`BATTERY-MANAGEMENT-SYSTEM` / "Battery management system"); the same in flag texts | the repeat made blocks and flags needlessly wide |
+| same | flag text wraps at 60 mm (72 mm only when it would be cut off) | narrower flags, more fits on one sheet |
+| same | a bus or ground in scope has no "+ N more wires" flag | every wire of the part the sheet is about is drawn |

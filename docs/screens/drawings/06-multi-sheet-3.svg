@@ -4,7 +4,7 @@
 <g data-model=""><rect x="10" y="10" width="400" height="275" fill="none" stroke="#000" stroke-width="0.5"/><rect x="270" y="255" width="140" height="30" fill="none" stroke="#000" stroke-width="0.35"/><line x1="270" y1="265" x2="410" y2="265" fill="none" stroke="#000" stroke-width="0.18"/><line x1="270" y1="275" x2="410" y2="275" fill="none" stroke="#000" stroke-width="0.18"/><line x1="370" y1="255" x2="370" y2="265" fill="none" stroke="#000" stroke-width="0.18"/><line x1="340" y1="265" x2="340" y2="275" fill="none" stroke="#000" stroke-width="0.18"/><line x1="290" y1="275" x2="290" y2="285" fill="none" stroke="#000" stroke-width="0.18"/><line x1="320" y1="275" x2="320" y2="285" fill="none" stroke="#000" stroke-width="0.18"/><line x1="360" y1="275" x2="360" y2="285" fill="none" stroke="#000" stroke-width="0.18"/><rect x="10" y="255" width="135" height="30" fill="none" stroke="#000" stroke-width="0.35"/><rect x="145" y="255" width="125" height="30" fill="none" stroke="#000" stroke-width="0.35"/></g>
 <text x="271.5" y="261.75" font-size="4.811" text-anchor="start" font-weight="600" data-model="">EFIS</text>
 <text x="371.5" y="258.75" font-size="3.436" text-anchor="start" fill="#6b6b6b" data-model="">SHEET</text>
-<text x="371.5" y="263.25" font-size="3.436" text-anchor="start" data-model="">3 of 4</text>
+<text x="371.5" y="263.25" font-size="3.436" text-anchor="start" data-model="">3 of 3</text>
 <text x="271.5" y="268.75" font-size="3.436" text-anchor="start" fill="#6b6b6b" data-model="">PROJECT</text>
 <text x="271.5" y="273.25" font-size="3.436" text-anchor="start" data-model="">aircraft</text>
 <text x="341.5" y="268.75" font-size="3.436" text-anchor="start" fill="#6b6b6b" data-model="">SCOPE</text>
@@ -25,55 +25,55 @@
 <text x="25" y="268.75" font-size="3.436" text-anchor="start" data-model="">Splice</text>
 <g data-model=""><rect x="12" y="270.5" width="9" height="4" fill="none" stroke="#000" stroke-width="0.35"/><line x1="14.5" y1="270.5" x2="14.5" y2="274.5" fill="none" stroke="#000" stroke-width="0.18"/></g>
 <text x="25" y="273.75" font-size="3.436" text-anchor="start" data-model="">Continued</text>
-<g data-model="component:BATTERY-MANAGEMENT-SYSTEM"><polygon points="260,115 380,115 378.75,117.5 380,120 378.75,122.5 380,125 378.75,127.5 380,130 378.75,132.5 380,135 378.75,137.5 380,140 378.75,142.5 380,145 260,145" fill="#fff" stroke="#000" stroke-width="0.35" stroke-linejoin="round"/><rect x="262.5" y="127.5" width="115" height="15" fill="#fff" stroke="#000" stroke-width="0.35"/><line x1="262.5" y1="132.5" x2="377.5" y2="132.5" fill="none" stroke="#000" stroke-width="0.18"/><line x1="260" y1="135" x2="262.5" y2="135" fill="none" stroke="#000" stroke-width="0.35"/><line x1="260" y1="140" x2="262.5" y2="140" fill="none" stroke="#000" stroke-width="0.35"/></g>
-<g data-model="component:CAN-TERMINATOR-MOTOR-BAY"><line x1="260" y1="155" x2="290" y2="155" fill="none" stroke="#000" stroke-width="0.35"/><line x1="260" y1="165" x2="290" y2="165" fill="none" stroke="#000" stroke-width="0.35"/><polyline points="290,155 290,157 292,158 288,160 292,162 290,163 290,165" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round"/></g>
-<g data-model="component:MOTOR-CONTROLLER"><polygon points="260,80 335,80 333.75,82.5 335,85 333.75,87.5 335,90 333.75,92.5 335,95 333.75,97.5 335,100 333.75,102.5 335,105 333.75,107.5 335,110 260,110" fill="#fff" stroke="#000" stroke-width="0.35" stroke-linejoin="round"/><rect x="262.5" y="92.5" width="70" height="15" fill="#fff" stroke="#000" stroke-width="0.35"/><line x1="262.5" y1="97.5" x2="332.5" y2="97.5" fill="none" stroke="#000" stroke-width="0.18"/><line x1="260" y1="100" x2="262.5" y2="100" fill="none" stroke="#000" stroke-width="0.35"/><line x1="260" y1="105" x2="262.5" y2="105" fill="none" stroke="#000" stroke-width="0.35"/></g>
-<g data-model="component:SP-CAN1-H-SPLICE-MOTOR-BAY"><line x1="175" y1="112.5" x2="175" y2="127.5" fill="none" stroke="#000" stroke-width="0.35"/><line x1="175" y1="115" x2="145" y2="115" fill="none" stroke="#000" stroke-width="0.35"/><circle cx="175" cy="115" r="0.9" fill="#000" stroke="#000" stroke-width="0.35"/><line x1="175" y1="115" x2="205" y2="115" fill="none" stroke="#000" stroke-width="0.35"/><circle cx="175" cy="115" r="0.9" fill="#000" stroke="#000" stroke-width="0.35"/><line x1="175" y1="120" x2="205" y2="120" fill="none" stroke="#000" stroke-width="0.35"/><circle cx="175" cy="120" r="0.9" fill="#000" stroke="#000" stroke-width="0.35"/><line x1="175" y1="125" x2="205" y2="125" fill="none" stroke="#000" stroke-width="0.35"/><circle cx="175" cy="125" r="0.9" fill="#000" stroke="#000" stroke-width="0.35"/></g>
-<g data-model="component:SP-CAN1-L-SPLICE-MOTOR-BAY"><line x1="175" y1="142.5" x2="175" y2="157.5" fill="none" stroke="#000" stroke-width="0.35"/><line x1="175" y1="145" x2="145" y2="145" fill="none" stroke="#000" stroke-width="0.35"/><circle cx="175" cy="145" r="0.9" fill="#000" stroke="#000" stroke-width="0.35"/><line x1="175" y1="145" x2="205" y2="145" fill="none" stroke="#000" stroke-width="0.35"/><circle cx="175" cy="145" r="0.9" fill="#000" stroke="#000" stroke-width="0.35"/><line x1="175" y1="150" x2="205" y2="150" fill="none" stroke="#000" stroke-width="0.35"/><circle cx="175" cy="150" r="0.9" fill="#000" stroke="#000" stroke-width="0.35"/><line x1="175" y1="155" x2="205" y2="155" fill="none" stroke="#000" stroke-width="0.35"/><circle cx="175" cy="155" r="0.9" fill="#000" stroke="#000" stroke-width="0.35"/></g>
-<polyline points="205,115 240,115 240,100 260,100" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:W103"/>
-<polyline points="205,145 245,145 245,105 260,105" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:W110"/>
-<polyline points="205,120 255,120 255,135 260,135" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:W104"/>
-<polyline points="260,155 250,155 250,125 205,125" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:W105"/>
-<polyline points="205,150 255,150 255,140 260,140" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:W111"/>
-<polyline points="260,165 240,165 240,155 205,155" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:W112"/>
-<polyline points="145,115 105,115" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:W102"/>
-<polyline points="145,145 110,145" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:W109"/>
-<g data-model="conductor:W102"><rect x="40" y="110" width="65" height="10" fill="#fff" stroke="#000" stroke-width="0.35"/><line x1="47.5" y1="110" x2="47.5" y2="120" fill="none" stroke="#000" stroke-width="0.18"/></g>
-<text x="43.75" y="116.25" font-size="3.436" text-anchor="middle" font-weight="600" data-model="conductor:W102">2</text>
-<text x="76.25" y="114" font-size="3.436" text-anchor="middle" font-weight="600" data-model="conductor:W102">-&gt; X-FW motor side-11 (Firewall</text>
-<text x="76.25" y="118.5" font-size="3.436" text-anchor="middle" font-weight="600" data-model="conductor:W102">connector X-FW)</text>
-<g data-model="conductor:W109"><rect x="40" y="140" width="70" height="10" fill="#fff" stroke="#000" stroke-width="0.35"/><line x1="47.5" y1="140" x2="47.5" y2="150" fill="none" stroke="#000" stroke-width="0.18"/></g>
-<text x="43.75" y="146.25" font-size="3.436" text-anchor="middle" font-weight="600" data-model="conductor:W109">2</text>
-<text x="78.75" y="144" font-size="3.436" text-anchor="middle" font-weight="600" data-model="conductor:W109">-&gt; X-FW motor side-12 (Firewall</text>
-<text x="78.75" y="148.5" font-size="3.436" text-anchor="middle" font-weight="600" data-model="conductor:W109">connector X-FW)</text>
-<text x="262.5" y="120" font-size="3.436" text-anchor="start" font-weight="600" data-model="component:BATTERY-MANAGEMENT-SYSTEM">BATTERY-MANAGEMENT-SYSTEM</text>
-<text x="325.55" y="120" font-size="3.436" text-anchor="start" data-model="component:BATTERY-MANAGEMENT-SYSTEM">Battery management system</text>
-<text x="262.5" y="125" font-size="3.436" text-anchor="start" data-model="component:BATTERY-MANAGEMENT-SYSTEM">Kestrel BMS master</text>
-<text x="264" y="131.25" font-size="3.436" text-anchor="start" font-weight="600" data-model="component:BATTERY-MANAGEMENT-SYSTEM">J1</text>
-<text x="264" y="136.25" font-size="3.436" text-anchor="start" data-model="pin:BATTERY-MANAGEMENT-SYSTEM/J1/3">3</text>
-<text x="268.3" y="136.25" font-size="3.436" text-anchor="start" data-model="pin:BATTERY-MANAGEMENT-SYSTEM/J1/3">CAN_H</text>
-<text x="264" y="141.25" font-size="3.436" text-anchor="start" data-model="pin:BATTERY-MANAGEMENT-SYSTEM/J1/4">4</text>
-<text x="268.3" y="141.25" font-size="3.436" text-anchor="start" data-model="pin:BATTERY-MANAGEMENT-SYSTEM/J1/4">CAN_L</text>
-<text x="290" y="172.75" font-size="3.436" text-anchor="middle" font-weight="600" data-model="component:CAN-TERMINATOR-MOTOR-BAY">CAN-TERMINATOR-MOTOR-BAY</text>
-<text x="290" y="177.25" font-size="3.436" text-anchor="middle" data-model="component:CAN-TERMINATOR-MOTOR-BAY">120 Ω</text>
-<text x="262.5" y="85" font-size="3.436" text-anchor="start" font-weight="600" data-model="component:MOTOR-CONTROLLER">MOTOR-CONTROLLER</text>
-<text x="303.35" y="85" font-size="3.436" text-anchor="start" data-model="component:MOTOR-CONTROLLER">Motor controller</text>
-<text x="262.5" y="90" font-size="3.436" text-anchor="start" data-model="component:MOTOR-CONTROLLER">Kestrel 80 kW motor controller (LV side)</text>
-<text x="264" y="96.25" font-size="3.436" text-anchor="start" font-weight="600" data-model="component:MOTOR-CONTROLLER">J1</text>
-<text x="264" y="101.25" font-size="3.436" text-anchor="start" data-model="pin:MOTOR-CONTROLLER/J1/7">7</text>
-<text x="268.2" y="101.25" font-size="3.436" text-anchor="start" data-model="pin:MOTOR-CONTROLLER/J1/7">CAN_H</text>
-<text x="264" y="106.25" font-size="3.436" text-anchor="start" data-model="pin:MOTOR-CONTROLLER/J1/8">8</text>
-<text x="268.2" y="106.25" font-size="3.436" text-anchor="start" data-model="pin:MOTOR-CONTROLLER/J1/8">CAN_L</text>
-<text x="175" y="110" font-size="3.436" text-anchor="middle" font-weight="600" data-model="component:SP-CAN1-H-SPLICE-MOTOR-BAY">SP-CAN1-H-SPLICE-MOTOR-BAY</text>
-<text x="175" y="140" font-size="3.436" text-anchor="middle" font-weight="600" data-model="component:SP-CAN1-L-SPLICE-MOTOR-BAY">SP-CAN1-L-SPLICE-MOTOR-BAY</text>
-<text x="207.5" y="113.75" font-size="3.436" text-anchor="start" data-model="conductor:W103">W103  22 GN</text>
-<text x="207.5" y="143.75" font-size="3.436" text-anchor="start" data-model="conductor:W110">W110  22 GNWH</text>
-<text x="207.5" y="118.75" font-size="3.436" text-anchor="start" data-model="conductor:W104">W104  22 GN</text>
-<text x="207.5" y="123.75" font-size="3.436" text-anchor="start" data-model="conductor:W105">W105  22 GN</text>
-<text x="207.5" y="148.75" font-size="3.436" text-anchor="start" data-model="conductor:W111">W111  22 GNWH</text>
-<text x="207.5" y="153.75" font-size="3.436" text-anchor="start" data-model="conductor:W112">W112  22 GNWH</text>
-<text x="107.5" y="113.75" font-size="3.436" text-anchor="start" data-model="conductor:W102">W102  22 GN</text>
-<text x="112.5" y="143.75" font-size="3.436" text-anchor="start" data-model="conductor:W109">W109  22 GNWH</text>
+<g data-model="component:BATTERY-MANAGEMENT-SYSTEM"><polygon points="325,115 395,115 393.75,117.5 395,120 393.75,122.5 395,125 393.75,127.5 395,130 393.75,132.5 395,135 393.75,137.5 395,140 393.75,142.5 395,145 325,145" fill="#fff" stroke="#000" stroke-width="0.35" stroke-linejoin="round"/><rect x="327.5" y="127.5" width="65" height="15" fill="#fff" stroke="#000" stroke-width="0.35"/><line x1="327.5" y1="132.5" x2="392.5" y2="132.5" fill="none" stroke="#000" stroke-width="0.18"/><line x1="325" y1="135" x2="327.5" y2="135" fill="none" stroke="#000" stroke-width="0.35"/><line x1="325" y1="140" x2="327.5" y2="140" fill="none" stroke="#000" stroke-width="0.35"/></g>
+<g data-model="component:CAN-TERMINATOR-MOTOR-BAY"><line x1="325" y1="190" x2="355" y2="190" fill="none" stroke="#000" stroke-width="0.35"/><line x1="325" y1="200" x2="355" y2="200" fill="none" stroke="#000" stroke-width="0.35"/><polyline points="355,190 355,192 357,193 353,195 357,197 355,198 355,200" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round"/></g>
+<g data-model="component:MOTOR-CONTROLLER"><polygon points="325,45 400,45 398.75,47.5 400,50 398.75,52.5 400,55 398.75,57.5 400,60 398.75,62.5 400,65 398.75,67.5 400,70 398.75,72.5 400,75 325,75" fill="#fff" stroke="#000" stroke-width="0.35" stroke-linejoin="round"/><rect x="327.5" y="57.5" width="70" height="15" fill="#fff" stroke="#000" stroke-width="0.35"/><line x1="327.5" y1="62.5" x2="397.5" y2="62.5" fill="none" stroke="#000" stroke-width="0.18"/><line x1="325" y1="65" x2="327.5" y2="65" fill="none" stroke="#000" stroke-width="0.35"/><line x1="325" y1="70" x2="327.5" y2="70" fill="none" stroke="#000" stroke-width="0.35"/></g>
+<g data-model="component:SP-CAN1-H-SPLICE-MOTOR-BAY"><line x1="200" y1="102.5" x2="200" y2="117.5" fill="none" stroke="#000" stroke-width="0.35"/><line x1="200" y1="105" x2="170" y2="105" fill="none" stroke="#000" stroke-width="0.35"/><circle cx="200" cy="105" r="0.9" fill="#000" stroke="#000" stroke-width="0.35"/><line x1="200" y1="105" x2="230" y2="105" fill="none" stroke="#000" stroke-width="0.35"/><circle cx="200" cy="105" r="0.9" fill="#000" stroke="#000" stroke-width="0.35"/><line x1="200" y1="110" x2="230" y2="110" fill="none" stroke="#000" stroke-width="0.35"/><circle cx="200" cy="110" r="0.9" fill="#000" stroke="#000" stroke-width="0.35"/><line x1="200" y1="115" x2="230" y2="115" fill="none" stroke="#000" stroke-width="0.35"/><circle cx="200" cy="115" r="0.9" fill="#000" stroke="#000" stroke-width="0.35"/></g>
+<g data-model="component:SP-CAN1-L-SPLICE-MOTOR-BAY"><line x1="200" y1="162.5" x2="200" y2="177.5" fill="none" stroke="#000" stroke-width="0.35"/><line x1="200" y1="165" x2="170" y2="165" fill="none" stroke="#000" stroke-width="0.35"/><circle cx="200" cy="165" r="0.9" fill="#000" stroke="#000" stroke-width="0.35"/><line x1="200" y1="165" x2="230" y2="165" fill="none" stroke="#000" stroke-width="0.35"/><circle cx="200" cy="165" r="0.9" fill="#000" stroke="#000" stroke-width="0.35"/><line x1="200" y1="170" x2="230" y2="170" fill="none" stroke="#000" stroke-width="0.35"/><circle cx="200" cy="170" r="0.9" fill="#000" stroke="#000" stroke-width="0.35"/><line x1="200" y1="175" x2="230" y2="175" fill="none" stroke="#000" stroke-width="0.35"/><circle cx="200" cy="175" r="0.9" fill="#000" stroke="#000" stroke-width="0.35"/></g>
+<polyline points="230,105 265,105 265,65 325,65" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:W103"/>
+<polyline points="230,110 280,110 280,135 325,135" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:W104"/>
+<polyline points="325,190 275,190 275,115 230,115" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:W105"/>
+<polyline points="230,165 270,165 270,70 325,70" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:W110"/>
+<polyline points="230,170 280,170 280,140 325,140" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:W111"/>
+<polyline points="325,200 265,200 265,175 230,175" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:W112"/>
+<polyline points="170,105 125,105 125,110 85,110" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:W102"/>
+<polyline points="170,165 125,165 125,170 90,170" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:W109"/>
+<g data-model="conductor:W102"><rect x="20" y="105" width="65" height="10" fill="#fff" stroke="#000" stroke-width="0.35"/><line x1="27.5" y1="105" x2="27.5" y2="115" fill="none" stroke="#000" stroke-width="0.18"/></g>
+<text x="23.75" y="111.25" font-size="3.436" text-anchor="middle" font-weight="600" data-model="conductor:W102">2</text>
+<text x="56.25" y="109" font-size="3.436" text-anchor="middle" font-weight="600" data-model="conductor:W102">-&gt; X-FW motor side-11 (Firewall</text>
+<text x="56.25" y="113.5" font-size="3.436" text-anchor="middle" font-weight="600" data-model="conductor:W102">connector X-FW)</text>
+<g data-model="conductor:W109"><rect x="20" y="165" width="70" height="10" fill="#fff" stroke="#000" stroke-width="0.35"/><line x1="27.5" y1="165" x2="27.5" y2="175" fill="none" stroke="#000" stroke-width="0.18"/></g>
+<text x="23.75" y="171.25" font-size="3.436" text-anchor="middle" font-weight="600" data-model="conductor:W109">2</text>
+<text x="58.75" y="169" font-size="3.436" text-anchor="middle" font-weight="600" data-model="conductor:W109">-&gt; X-FW motor side-12 (Firewall</text>
+<text x="58.75" y="173.5" font-size="3.436" text-anchor="middle" font-weight="600" data-model="conductor:W109">connector X-FW)</text>
+<text x="327.5" y="120" font-size="3.436" text-anchor="start" font-weight="600" data-model="component:BATTERY-MANAGEMENT-SYSTEM">BATTERY-MANAGEMENT-SYSTEM</text>
+<text x="327.5" y="125" font-size="3.436" text-anchor="start" data-model="component:BATTERY-MANAGEMENT-SYSTEM">Kestrel BMS master</text>
+<text x="329" y="131.25" font-size="3.436" text-anchor="start" font-weight="600" data-model="component:BATTERY-MANAGEMENT-SYSTEM">J1</text>
+<text x="329" y="136.25" font-size="3.436" text-anchor="start" data-model="pin:BATTERY-MANAGEMENT-SYSTEM/J1/3">3</text>
+<text x="333.3" y="136.25" font-size="3.436" text-anchor="start" data-model="pin:BATTERY-MANAGEMENT-SYSTEM/J1/3">CAN_H</text>
+<text x="329" y="141.25" font-size="3.436" text-anchor="start" data-model="pin:BATTERY-MANAGEMENT-SYSTEM/J1/4">4</text>
+<text x="333.3" y="141.25" font-size="3.436" text-anchor="start" data-model="pin:BATTERY-MANAGEMENT-SYSTEM/J1/4">CAN_L</text>
+<text x="355" y="207.75" font-size="3.436" text-anchor="middle" font-weight="600" data-model="component:CAN-TERMINATOR-MOTOR-BAY">CAN-TERMINATOR-MOTOR-BAY</text>
+<text x="355" y="212.25" font-size="3.436" text-anchor="middle" data-model="component:CAN-TERMINATOR-MOTOR-BAY">120 Ω</text>
+<text x="327.5" y="50" font-size="3.436" text-anchor="start" font-weight="600" data-model="component:MOTOR-CONTROLLER">MOTOR-CONTROLLER</text>
+<text x="327.5" y="55" font-size="3.436" text-anchor="start" data-model="component:MOTOR-CONTROLLER">Kestrel 80 kW motor controller (LV side)</text>
+<text x="329" y="61.25" font-size="3.436" text-anchor="start" font-weight="600" data-model="component:MOTOR-CONTROLLER">J1</text>
+<text x="329" y="66.25" font-size="3.436" text-anchor="start" data-model="pin:MOTOR-CONTROLLER/J1/7">7</text>
+<text x="333.2" y="66.25" font-size="3.436" text-anchor="start" data-model="pin:MOTOR-CONTROLLER/J1/7">CAN_H</text>
+<text x="329" y="71.25" font-size="3.436" text-anchor="start" data-model="pin:MOTOR-CONTROLLER/J1/8">8</text>
+<text x="333.2" y="71.25" font-size="3.436" text-anchor="start" data-model="pin:MOTOR-CONTROLLER/J1/8">CAN_L</text>
+<text x="200" y="100" font-size="3.436" text-anchor="middle" font-weight="600" data-model="component:SP-CAN1-H-SPLICE-MOTOR-BAY">SP-CAN1-H-SPLICE-MOTOR-BAY</text>
+<text x="200" y="160" font-size="3.436" text-anchor="middle" font-weight="600" data-model="component:SP-CAN1-L-SPLICE-MOTOR-BAY">SP-CAN1-L-SPLICE-MOTOR-BAY</text>
+<text x="232.5" y="103.75" font-size="3.436" text-anchor="start" data-model="conductor:W103">W103  22 GN</text>
+<text x="232.5" y="108.75" font-size="3.436" text-anchor="start" data-model="conductor:W104">W104  22 GN</text>
+<text x="277.5" y="188.75" font-size="3.436" text-anchor="start" data-model="conductor:W105">W105  22 GN</text>
+<text x="232.5" y="113.75" font-size="3.436" text-anchor="start" data-model="conductor:W105">W105  22 GN</text>
+<text x="232.5" y="163.75" font-size="3.436" text-anchor="start" data-model="conductor:W110">W110  22 GNWH</text>
+<text x="272.5" y="68.75" font-size="3.436" text-anchor="start" data-model="conductor:W110">W110  22 GNWH</text>
+<text x="232.5" y="168.75" font-size="3.436" text-anchor="start" data-model="conductor:W111">W111  22 GNWH</text>
+<text x="267.5" y="198.75" font-size="3.436" text-anchor="start" data-model="conductor:W112">W112  22 GNWH</text>
+<text x="127.5" y="103.75" font-size="3.436" text-anchor="start" data-model="conductor:W102">W102  22 GN</text>
+<text x="127.5" y="163.75" font-size="3.436" text-anchor="start" data-model="conductor:W109">W109  22 GNWH</text>
 <text x="146.5" y="258.75" font-size="3.436" text-anchor="start" fill="#6b6b6b" data-model="">NOTES</text>
 <text x="146.5" y="263.75" font-size="3.436" text-anchor="start" data-model="">Wire text: label, gauge (AWG), colour code.</text>
 </svg>

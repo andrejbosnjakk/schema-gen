@@ -20,7 +20,7 @@ def draw(st: Any, scope: Any, size: str = "A3", meta: dict[str, str] | None = No
                 drawn_by=meta.get("drawn_by", ""), source=meta.get("source", ""))
     sheets: list[Any] = []
     for n, pg in enumerate(pages, 1):
-        sh = L.place(pg, size)
+        sh = L.place(pg, size, None, 1)
         kinds = list(dict.fromkeys([s["kind"] for s in sh["symbols"]] + (["spare"] if any(p["spare"] for it in pg["items"] for b in it["blocks"] for p in b["pins"]) else [])  # noqa: E501
                                    + [f["kind"] for f in sh["flags"]]))
         sheet: dict[str, Any] = dict(n=n, of=len(pages), size=size, w_mm=SHEETS[size][0], h_mm=SHEETS[size][1], grid_mm=5.0, symbols=sh["symbols"], wires=sh["wires"],  # noqa: E501

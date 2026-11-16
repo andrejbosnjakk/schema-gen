@@ -21,149 +21,149 @@
 <text x="25" y="258.75" font-size="3.436" text-anchor="start" data-model="">Component</text>
 <g data-model=""><rect x="12.5" y="260.5" width="8" height="4" fill="none" stroke="#000" stroke-width="0.35"/><line x1="16.5" y1="260.5" x2="16.5" y2="264.5" fill="none" stroke="#000" stroke-width="0.18"/></g>
 <text x="25" y="263.75" font-size="3.436" text-anchor="start" data-model="">Harness conn.</text>
-<g data-model="component:ACU"><polygon points="85,130 35,130 36.25,132.5 35,135 36.25,137.5 35,140 36.25,142.5 35,145 36.25,147.5 35,150 36.25,152.5 35,155 36.25,157.5 35,160 36.25,162.5 35,165 36.25,167.5 35,170 36.25,172.5 35,175 36.25,177.5 35,180 36.25,182.5 35,185 36.25,187.5 35,190 36.25,192.5 35,195 36.25,197.5 35,200 36.25,202.5 35,205 36.25,207.5 35,210 85,210" fill="#fff" stroke="#000" stroke-width="0.35" stroke-linejoin="round"/><rect x="37.5" y="137.5" width="45" height="70" fill="#fff" stroke="#000" stroke-width="0.35"/><line x1="37.5" y1="142.5" x2="82.5" y2="142.5" fill="none" stroke="#000" stroke-width="0.18"/><line x1="82.5" y1="145" x2="85" y2="145" fill="none" stroke="#000" stroke-width="0.35"/><line x1="82.5" y1="150" x2="85" y2="150" fill="none" stroke="#000" stroke-width="0.35"/><line x1="82.5" y1="155" x2="85" y2="155" fill="none" stroke="#000" stroke-width="0.35"/><line x1="82.5" y1="160" x2="85" y2="160" fill="none" stroke="#000" stroke-width="0.35"/><line x1="82.5" y1="165" x2="85" y2="165" fill="none" stroke="#000" stroke-width="0.35"/><line x1="82.5" y1="170" x2="85" y2="170" fill="none" stroke="#000" stroke-width="0.35"/><line x1="82.5" y1="175" x2="85" y2="175" fill="none" stroke="#000" stroke-width="0.35"/><line x1="82.5" y1="180" x2="85" y2="180" fill="none" stroke="#000" stroke-width="0.35"/><line x1="82.5" y1="185" x2="85" y2="185" fill="none" stroke="#000" stroke-width="0.35"/><line x1="82.5" y1="190" x2="85" y2="190" fill="none" stroke="#000" stroke-width="0.35"/><line x1="82.5" y1="195" x2="85" y2="195" fill="none" stroke="#000" stroke-width="0.35"/><line x1="82.5" y1="200" x2="85" y2="200" fill="none" stroke="#000" stroke-width="0.35"/><line x1="82.5" y1="205" x2="85" y2="205" fill="none" stroke="#000" stroke-width="0.35"/></g>
-<g data-model="component:FCU"><polygon points="90,45 35,45 36.25,47.5 35,50 36.25,52.5 35,55 36.25,57.5 35,60 36.25,62.5 35,65 36.25,67.5 35,70 36.25,72.5 35,75 36.25,77.5 35,80 36.25,82.5 35,85 36.25,87.5 35,90 36.25,92.5 35,95 36.25,97.5 35,100 36.25,102.5 35,105 36.25,107.5 35,110 36.25,112.5 35,115 36.25,117.5 35,120 36.25,122.5 35,125 90,125" fill="#fff" stroke="#000" stroke-width="0.35" stroke-linejoin="round"/><rect x="37.5" y="57.5" width="50" height="65" fill="#fff" stroke="#000" stroke-width="0.35"/><line x1="37.5" y1="62.5" x2="87.5" y2="62.5" fill="none" stroke="#000" stroke-width="0.18"/><line x1="87.5" y1="65" x2="90" y2="65" fill="none" stroke="#000" stroke-width="0.35"/><line x1="87.5" y1="70" x2="90" y2="70" fill="none" stroke="#000" stroke-width="0.35"/><line x1="87.5" y1="75" x2="90" y2="75" fill="none" stroke="#000" stroke-width="0.35"/><line x1="87.5" y1="80" x2="90" y2="80" fill="none" stroke="#000" stroke-width="0.35"/><line x1="87.5" y1="85" x2="90" y2="85" fill="none" stroke="#000" stroke-width="0.35"/><line x1="87.5" y1="90" x2="90" y2="90" fill="none" stroke="#000" stroke-width="0.35"/><line x1="87.5" y1="95" x2="90" y2="95" fill="none" stroke="#000" stroke-width="0.35"/><line x1="87.5" y1="100" x2="90" y2="100" fill="none" stroke="#000" stroke-width="0.35"/><line x1="87.5" y1="105" x2="90" y2="105" fill="none" stroke="#000" stroke-width="0.35"/><line x1="87.5" y1="110" x2="90" y2="110" fill="none" stroke="#000" stroke-width="0.35"/><line x1="87.5" y1="115" x2="90" y2="115" fill="none" stroke="#000" stroke-width="0.35"/><line x1="87.5" y1="120" x2="90" y2="120" fill="none" stroke="#000" stroke-width="0.35"/></g>
-<g data-model="component:SNS-A"><polygon points="330,20 380,20 378.75,22.5 380,25 378.75,27.5 380,30 378.75,32.5 380,35 378.75,37.5 380,40 378.75,42.5 380,45 378.75,47.5 380,50 378.75,52.5 380,55 378.75,57.5 380,60 330,60" fill="#fff" stroke="#000" stroke-width="0.35" stroke-linejoin="round"/><rect x="332.5" y="27.5" width="45" height="30" fill="#fff" stroke="#000" stroke-width="0.35"/><line x1="332.5" y1="32.5" x2="377.5" y2="32.5" fill="none" stroke="#000" stroke-width="0.18"/><line x1="330" y1="35" x2="332.5" y2="35" fill="none" stroke="#000" stroke-width="0.35"/><line x1="330" y1="40" x2="332.5" y2="40" fill="none" stroke="#000" stroke-width="0.35"/><line x1="330" y1="45" x2="332.5" y2="45" fill="none" stroke="#000" stroke-width="0.35"/><line x1="330" y1="50" x2="332.5" y2="50" fill="none" stroke="#000" stroke-width="0.35"/><line x1="330" y1="55" x2="332.5" y2="55" fill="none" stroke="#000" stroke-width="0.35"/></g>
-<g data-model="component:SNS-B"><polygon points="330,65 380,65 378.75,67.5 380,70 378.75,72.5 380,75 378.75,77.5 380,80 378.75,82.5 380,85 378.75,87.5 380,90 378.75,92.5 380,95 378.75,97.5 380,100 378.75,102.5 380,105 330,105" fill="#fff" stroke="#000" stroke-width="0.35" stroke-linejoin="round"/><rect x="332.5" y="72.5" width="45" height="30" fill="#fff" stroke="#000" stroke-width="0.35"/><line x1="332.5" y1="77.5" x2="377.5" y2="77.5" fill="none" stroke="#000" stroke-width="0.18"/><line x1="330" y1="80" x2="332.5" y2="80" fill="none" stroke="#000" stroke-width="0.35"/><line x1="330" y1="85" x2="332.5" y2="85" fill="none" stroke="#000" stroke-width="0.35"/><line x1="330" y1="90" x2="332.5" y2="90" fill="none" stroke="#000" stroke-width="0.35"/><line x1="330" y1="95" x2="332.5" y2="95" fill="none" stroke="#000" stroke-width="0.35"/><line x1="330" y1="100" x2="332.5" y2="100" fill="none" stroke="#000" stroke-width="0.35"/></g>
-<g data-model="component:SNS-C"><polygon points="330,110 380,110 378.75,112.5 380,115 378.75,117.5 380,120 378.75,122.5 380,125 378.75,127.5 380,130 378.75,132.5 380,135 378.75,137.5 380,140 378.75,142.5 380,145 378.75,147.5 380,150 330,150" fill="#fff" stroke="#000" stroke-width="0.35" stroke-linejoin="round"/><rect x="332.5" y="117.5" width="45" height="30" fill="#fff" stroke="#000" stroke-width="0.35"/><line x1="332.5" y1="122.5" x2="377.5" y2="122.5" fill="none" stroke="#000" stroke-width="0.18"/><line x1="330" y1="125" x2="332.5" y2="125" fill="none" stroke="#000" stroke-width="0.35"/><line x1="330" y1="130" x2="332.5" y2="130" fill="none" stroke="#000" stroke-width="0.35"/><line x1="330" y1="135" x2="332.5" y2="135" fill="none" stroke="#000" stroke-width="0.35"/><line x1="330" y1="140" x2="332.5" y2="140" fill="none" stroke="#000" stroke-width="0.35"/><line x1="330" y1="145" x2="332.5" y2="145" fill="none" stroke="#000" stroke-width="0.35"/></g>
-<g data-model="component:SNS-D"><polygon points="330,155 380,155 378.75,157.5 380,160 378.75,162.5 380,165 378.75,167.5 380,170 378.75,172.5 380,175 378.75,177.5 380,180 378.75,182.5 380,185 378.75,187.5 380,190 378.75,192.5 380,195 330,195" fill="#fff" stroke="#000" stroke-width="0.35" stroke-linejoin="round"/><rect x="332.5" y="162.5" width="45" height="30" fill="#fff" stroke="#000" stroke-width="0.35"/><line x1="332.5" y1="167.5" x2="377.5" y2="167.5" fill="none" stroke="#000" stroke-width="0.18"/><line x1="330" y1="170" x2="332.5" y2="170" fill="none" stroke="#000" stroke-width="0.35"/><line x1="330" y1="175" x2="332.5" y2="175" fill="none" stroke="#000" stroke-width="0.35"/><line x1="330" y1="180" x2="332.5" y2="180" fill="none" stroke="#000" stroke-width="0.35"/><line x1="330" y1="185" x2="332.5" y2="185" fill="none" stroke="#000" stroke-width="0.35"/><line x1="330" y1="190" x2="332.5" y2="190" fill="none" stroke="#000" stroke-width="0.35"/></g>
-<g data-model="component:SNS-E"><polygon points="330,200 375,200 373.75,202.5 375,205 373.75,207.5 375,210 373.75,212.5 375,215 373.75,217.5 375,220 373.75,222.5 375,225 373.75,227.5 375,230 373.75,232.5 375,235 373.75,237.5 375,240 330,240" fill="#fff" stroke="#000" stroke-width="0.35" stroke-linejoin="round"/><rect x="332.5" y="207.5" width="40" height="30" fill="#fff" stroke="#000" stroke-width="0.35"/><line x1="332.5" y1="212.5" x2="372.5" y2="212.5" fill="none" stroke="#000" stroke-width="0.18"/><line x1="330" y1="215" x2="332.5" y2="215" fill="none" stroke="#000" stroke-width="0.35"/><line x1="330" y1="220" x2="332.5" y2="220" fill="none" stroke="#000" stroke-width="0.35"/><line x1="330" y1="225" x2="332.5" y2="225" fill="none" stroke="#000" stroke-width="0.35"/><line x1="330" y1="230" x2="332.5" y2="230" fill="none" stroke="#000" stroke-width="0.35"/><line x1="330" y1="235" x2="332.5" y2="235" fill="none" stroke="#000" stroke-width="0.35"/></g>
+<g data-model="component:ACU"><polygon points="65,130 15,130 16.25,132.5 15,135 16.25,137.5 15,140 16.25,142.5 15,145 16.25,147.5 15,150 16.25,152.5 15,155 16.25,157.5 15,160 16.25,162.5 15,165 16.25,167.5 15,170 16.25,172.5 15,175 16.25,177.5 15,180 16.25,182.5 15,185 16.25,187.5 15,190 16.25,192.5 15,195 16.25,197.5 15,200 16.25,202.5 15,205 16.25,207.5 15,210 65,210" fill="#fff" stroke="#000" stroke-width="0.35" stroke-linejoin="round"/><rect x="17.5" y="137.5" width="45" height="70" fill="#fff" stroke="#000" stroke-width="0.35"/><line x1="17.5" y1="142.5" x2="62.5" y2="142.5" fill="none" stroke="#000" stroke-width="0.18"/><line x1="62.5" y1="145" x2="65" y2="145" fill="none" stroke="#000" stroke-width="0.35"/><line x1="62.5" y1="150" x2="65" y2="150" fill="none" stroke="#000" stroke-width="0.35"/><line x1="62.5" y1="155" x2="65" y2="155" fill="none" stroke="#000" stroke-width="0.35"/><line x1="62.5" y1="160" x2="65" y2="160" fill="none" stroke="#000" stroke-width="0.35"/><line x1="62.5" y1="165" x2="65" y2="165" fill="none" stroke="#000" stroke-width="0.35"/><line x1="62.5" y1="170" x2="65" y2="170" fill="none" stroke="#000" stroke-width="0.35"/><line x1="62.5" y1="175" x2="65" y2="175" fill="none" stroke="#000" stroke-width="0.35"/><line x1="62.5" y1="180" x2="65" y2="180" fill="none" stroke="#000" stroke-width="0.35"/><line x1="62.5" y1="185" x2="65" y2="185" fill="none" stroke="#000" stroke-width="0.35"/><line x1="62.5" y1="190" x2="65" y2="190" fill="none" stroke="#000" stroke-width="0.35"/><line x1="62.5" y1="195" x2="65" y2="195" fill="none" stroke="#000" stroke-width="0.35"/><line x1="62.5" y1="200" x2="65" y2="200" fill="none" stroke="#000" stroke-width="0.35"/><line x1="62.5" y1="205" x2="65" y2="205" fill="none" stroke="#000" stroke-width="0.35"/></g>
+<g data-model="component:FCU"><polygon points="70,45 15,45 16.25,47.5 15,50 16.25,52.5 15,55 16.25,57.5 15,60 16.25,62.5 15,65 16.25,67.5 15,70 16.25,72.5 15,75 16.25,77.5 15,80 16.25,82.5 15,85 16.25,87.5 15,90 16.25,92.5 15,95 16.25,97.5 15,100 16.25,102.5 15,105 16.25,107.5 15,110 16.25,112.5 15,115 16.25,117.5 15,120 16.25,122.5 15,125 70,125" fill="#fff" stroke="#000" stroke-width="0.35" stroke-linejoin="round"/><rect x="17.5" y="57.5" width="50" height="65" fill="#fff" stroke="#000" stroke-width="0.35"/><line x1="17.5" y1="62.5" x2="67.5" y2="62.5" fill="none" stroke="#000" stroke-width="0.18"/><line x1="67.5" y1="65" x2="70" y2="65" fill="none" stroke="#000" stroke-width="0.35"/><line x1="67.5" y1="70" x2="70" y2="70" fill="none" stroke="#000" stroke-width="0.35"/><line x1="67.5" y1="75" x2="70" y2="75" fill="none" stroke="#000" stroke-width="0.35"/><line x1="67.5" y1="80" x2="70" y2="80" fill="none" stroke="#000" stroke-width="0.35"/><line x1="67.5" y1="85" x2="70" y2="85" fill="none" stroke="#000" stroke-width="0.35"/><line x1="67.5" y1="90" x2="70" y2="90" fill="none" stroke="#000" stroke-width="0.35"/><line x1="67.5" y1="95" x2="70" y2="95" fill="none" stroke="#000" stroke-width="0.35"/><line x1="67.5" y1="100" x2="70" y2="100" fill="none" stroke="#000" stroke-width="0.35"/><line x1="67.5" y1="105" x2="70" y2="105" fill="none" stroke="#000" stroke-width="0.35"/><line x1="67.5" y1="110" x2="70" y2="110" fill="none" stroke="#000" stroke-width="0.35"/><line x1="67.5" y1="115" x2="70" y2="115" fill="none" stroke="#000" stroke-width="0.35"/><line x1="67.5" y1="120" x2="70" y2="120" fill="none" stroke="#000" stroke-width="0.35"/></g>
+<g data-model="component:SNS-A"><polygon points="350,20 400,20 398.75,22.5 400,25 398.75,27.5 400,30 398.75,32.5 400,35 398.75,37.5 400,40 398.75,42.5 400,45 398.75,47.5 400,50 398.75,52.5 400,55 398.75,57.5 400,60 350,60" fill="#fff" stroke="#000" stroke-width="0.35" stroke-linejoin="round"/><rect x="352.5" y="27.5" width="45" height="30" fill="#fff" stroke="#000" stroke-width="0.35"/><line x1="352.5" y1="32.5" x2="397.5" y2="32.5" fill="none" stroke="#000" stroke-width="0.18"/><line x1="350" y1="35" x2="352.5" y2="35" fill="none" stroke="#000" stroke-width="0.35"/><line x1="350" y1="40" x2="352.5" y2="40" fill="none" stroke="#000" stroke-width="0.35"/><line x1="350" y1="45" x2="352.5" y2="45" fill="none" stroke="#000" stroke-width="0.35"/><line x1="350" y1="50" x2="352.5" y2="50" fill="none" stroke="#000" stroke-width="0.35"/><line x1="350" y1="55" x2="352.5" y2="55" fill="none" stroke="#000" stroke-width="0.35"/></g>
+<g data-model="component:SNS-B"><polygon points="350,65 400,65 398.75,67.5 400,70 398.75,72.5 400,75 398.75,77.5 400,80 398.75,82.5 400,85 398.75,87.5 400,90 398.75,92.5 400,95 398.75,97.5 400,100 398.75,102.5 400,105 350,105" fill="#fff" stroke="#000" stroke-width="0.35" stroke-linejoin="round"/><rect x="352.5" y="72.5" width="45" height="30" fill="#fff" stroke="#000" stroke-width="0.35"/><line x1="352.5" y1="77.5" x2="397.5" y2="77.5" fill="none" stroke="#000" stroke-width="0.18"/><line x1="350" y1="80" x2="352.5" y2="80" fill="none" stroke="#000" stroke-width="0.35"/><line x1="350" y1="85" x2="352.5" y2="85" fill="none" stroke="#000" stroke-width="0.35"/><line x1="350" y1="90" x2="352.5" y2="90" fill="none" stroke="#000" stroke-width="0.35"/><line x1="350" y1="95" x2="352.5" y2="95" fill="none" stroke="#000" stroke-width="0.35"/><line x1="350" y1="100" x2="352.5" y2="100" fill="none" stroke="#000" stroke-width="0.35"/></g>
+<g data-model="component:SNS-C"><polygon points="350,110 400,110 398.75,112.5 400,115 398.75,117.5 400,120 398.75,122.5 400,125 398.75,127.5 400,130 398.75,132.5 400,135 398.75,137.5 400,140 398.75,142.5 400,145 398.75,147.5 400,150 350,150" fill="#fff" stroke="#000" stroke-width="0.35" stroke-linejoin="round"/><rect x="352.5" y="117.5" width="45" height="30" fill="#fff" stroke="#000" stroke-width="0.35"/><line x1="352.5" y1="122.5" x2="397.5" y2="122.5" fill="none" stroke="#000" stroke-width="0.18"/><line x1="350" y1="125" x2="352.5" y2="125" fill="none" stroke="#000" stroke-width="0.35"/><line x1="350" y1="130" x2="352.5" y2="130" fill="none" stroke="#000" stroke-width="0.35"/><line x1="350" y1="135" x2="352.5" y2="135" fill="none" stroke="#000" stroke-width="0.35"/><line x1="350" y1="140" x2="352.5" y2="140" fill="none" stroke="#000" stroke-width="0.35"/><line x1="350" y1="145" x2="352.5" y2="145" fill="none" stroke="#000" stroke-width="0.35"/></g>
+<g data-model="component:SNS-D"><polygon points="350,155 400,155 398.75,157.5 400,160 398.75,162.5 400,165 398.75,167.5 400,170 398.75,172.5 400,175 398.75,177.5 400,180 398.75,182.5 400,185 398.75,187.5 400,190 398.75,192.5 400,195 350,195" fill="#fff" stroke="#000" stroke-width="0.35" stroke-linejoin="round"/><rect x="352.5" y="162.5" width="45" height="30" fill="#fff" stroke="#000" stroke-width="0.35"/><line x1="352.5" y1="167.5" x2="397.5" y2="167.5" fill="none" stroke="#000" stroke-width="0.18"/><line x1="350" y1="170" x2="352.5" y2="170" fill="none" stroke="#000" stroke-width="0.35"/><line x1="350" y1="175" x2="352.5" y2="175" fill="none" stroke="#000" stroke-width="0.35"/><line x1="350" y1="180" x2="352.5" y2="180" fill="none" stroke="#000" stroke-width="0.35"/><line x1="350" y1="185" x2="352.5" y2="185" fill="none" stroke="#000" stroke-width="0.35"/><line x1="350" y1="190" x2="352.5" y2="190" fill="none" stroke="#000" stroke-width="0.35"/></g>
+<g data-model="component:SNS-E"><polygon points="350,200 395,200 393.75,202.5 395,205 393.75,207.5 395,210 393.75,212.5 395,215 393.75,217.5 395,220 393.75,222.5 395,225 393.75,227.5 395,230 393.75,232.5 395,235 393.75,237.5 395,240 350,240" fill="#fff" stroke="#000" stroke-width="0.35" stroke-linejoin="round"/><rect x="352.5" y="207.5" width="40" height="30" fill="#fff" stroke="#000" stroke-width="0.35"/><line x1="352.5" y1="212.5" x2="392.5" y2="212.5" fill="none" stroke="#000" stroke-width="0.18"/><line x1="350" y1="215" x2="352.5" y2="215" fill="none" stroke="#000" stroke-width="0.35"/><line x1="350" y1="220" x2="352.5" y2="220" fill="none" stroke="#000" stroke-width="0.35"/><line x1="350" y1="225" x2="352.5" y2="225" fill="none" stroke="#000" stroke-width="0.35"/><line x1="350" y1="230" x2="352.5" y2="230" fill="none" stroke="#000" stroke-width="0.35"/><line x1="350" y1="235" x2="352.5" y2="235" fill="none" stroke="#000" stroke-width="0.35"/></g>
 <g data-model="connector:X-25"><rect x="190" y="60" width="60" height="140" fill="#fff" stroke="#000" stroke-width="0.35"/><line x1="190" y1="72.5" x2="250" y2="72.5" fill="none" stroke="#000" stroke-width="0.18"/><line x1="190" y1="66" x2="250" y2="66" fill="none" stroke="#000" stroke-width="0.18"/><line x1="220" y1="66" x2="220" y2="200" fill="none" stroke="#000" stroke-width="0.18"/></g>
-<polyline points="250,75 305,75 305,35 330,35" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-01-E"/>
-<polyline points="90,65 180,65 180,75 190,75" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-01-F"/>
-<polyline points="250,80 285,80 285,40 330,40" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-02-E"/>
-<polyline points="90,70 175,70 175,80 190,80" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-02-F"/>
-<polyline points="250,85 290,85 290,45 330,45" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-03-E"/>
-<polyline points="90,75 170,75 170,85 190,85" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-03-F"/>
-<polyline points="250,90 295,90 295,50 330,50" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-04-E"/>
-<polyline points="90,80 165,80 165,90 190,90" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-04-F"/>
-<polyline points="250,95 300,95 300,55 330,55" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-05-E"/>
-<polyline points="90,85 160,85 160,95 190,95" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-05-F"/>
-<polyline points="250,100 305,100 305,80 330,80" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-06-E"/>
-<polyline points="90,90 155,90 155,100 190,100" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-06-F"/>
-<polyline points="250,105 310,105 310,85 330,85" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-07-E"/>
-<polyline points="90,95 150,95 150,105 190,105" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-07-F"/>
-<polyline points="250,110 315,110 315,90 330,90" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-08-E"/>
-<polyline points="90,100 145,100 145,110 190,110" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-08-F"/>
-<polyline points="250,115 320,115 320,95 330,95" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-09-E"/>
-<polyline points="90,105 140,105 140,115 190,115" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-09-F"/>
-<polyline points="250,120 325,120 325,100 330,100" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-10-E"/>
-<polyline points="90,110 135,110 135,120 190,120" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-10-F"/>
-<polyline points="250,125 330,125" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-11-E"/>
-<polyline points="90,115 130,115 130,125 190,125" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-11-F"/>
-<polyline points="250,130 330,130" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-12-E"/>
-<polyline points="90,120 125,120 125,130 190,130" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-12-F"/>
-<polyline points="250,135 330,135" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-13-E"/>
-<polyline points="85,145 125,145 125,135 190,135" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-13-F"/>
-<polyline points="250,140 330,140" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-14-E"/>
-<polyline points="85,150 130,150 130,140 190,140" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-14-F"/>
-<polyline points="250,145 330,145" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-15-E"/>
-<polyline points="85,155 135,155 135,145 190,145" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-15-F"/>
-<polyline points="250,150 325,150 325,170 330,170" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-16-E"/>
-<polyline points="85,160 140,160 140,150 190,150" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-16-F"/>
-<polyline points="250,155 320,155 320,175 330,175" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-17-E"/>
-<polyline points="85,165 145,165 145,155 190,155" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-17-F"/>
-<polyline points="250,160 315,160 315,180 330,180" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-18-E"/>
-<polyline points="85,170 150,170 150,160 190,160" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-18-F"/>
-<polyline points="250,165 310,165 310,185 330,185" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-19-E"/>
-<polyline points="85,175 155,175 155,165 190,165" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-19-F"/>
-<polyline points="250,170 305,170 305,190 330,190" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-20-E"/>
-<polyline points="85,180 160,180 160,170 190,170" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-20-F"/>
-<polyline points="250,175 300,175 300,215 330,215" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-21-E"/>
-<polyline points="85,185 165,185 165,175 190,175" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-21-F"/>
-<polyline points="250,180 295,180 295,220 330,220" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-22-E"/>
-<polyline points="85,190 170,190 170,180 190,180" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-22-F"/>
-<polyline points="250,185 290,185 290,225 330,225" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-23-E"/>
-<polyline points="85,195 175,195 175,185 190,185" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-23-F"/>
-<polyline points="250,190 285,190 285,230 330,230" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-24-E"/>
-<polyline points="85,200 180,200 180,190 190,190" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-24-F"/>
-<polyline points="250,195 305,195 305,235 330,235" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-25-E"/>
-<polyline points="85,205 185,205 185,195 190,195" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-25-F"/>
-<text x="37.5" y="135" font-size="3.436" text-anchor="start" font-weight="600" data-model="component:ACU">ACU</text>
-<text x="47.3" y="135" font-size="3.436" text-anchor="start" data-model="component:ACU">ACU aux control unit</text>
-<text x="39" y="141.25" font-size="3.436" text-anchor="start" font-weight="600" data-model="component:ACU">J1</text>
-<text x="81" y="146.25" font-size="3.436" text-anchor="end" data-model="pin:ACU/J1/1">1</text>
-<text x="81" y="151.25" font-size="3.436" text-anchor="end" data-model="pin:ACU/J1/2">2</text>
-<text x="81" y="156.25" font-size="3.436" text-anchor="end" data-model="pin:ACU/J1/3">3</text>
-<text x="81" y="161.25" font-size="3.436" text-anchor="end" data-model="pin:ACU/J1/4">4</text>
-<text x="81" y="166.25" font-size="3.436" text-anchor="end" data-model="pin:ACU/J1/5">5</text>
-<text x="81" y="171.25" font-size="3.436" text-anchor="end" data-model="pin:ACU/J1/6">6</text>
-<text x="81" y="176.25" font-size="3.436" text-anchor="end" data-model="pin:ACU/J1/7">7</text>
-<text x="81" y="181.25" font-size="3.436" text-anchor="end" data-model="pin:ACU/J1/8">8</text>
-<text x="81" y="186.25" font-size="3.436" text-anchor="end" data-model="pin:ACU/J1/9">9</text>
-<text x="81" y="191.25" font-size="3.436" text-anchor="end" data-model="pin:ACU/J1/10">10</text>
-<text x="81" y="196.25" font-size="3.436" text-anchor="end" data-model="pin:ACU/J1/11">11</text>
-<text x="81" y="201.25" font-size="3.436" text-anchor="end" data-model="pin:ACU/J1/12">12</text>
-<text x="81" y="206.25" font-size="3.436" text-anchor="end" data-model="pin:ACU/J1/13">13</text>
-<text x="37.5" y="50" font-size="3.436" text-anchor="start" font-weight="600" data-model="component:FCU">FCU</text>
-<text x="46.8" y="50" font-size="3.436" text-anchor="start" data-model="component:FCU">FCU flight control unit</text>
-<text x="37.5" y="55" font-size="3.436" text-anchor="start" data-model="component:FCU">FCU_card</text>
-<text x="39" y="61.25" font-size="3.436" text-anchor="start" font-weight="600" data-model="component:FCU">J1</text>
-<text x="86" y="61.25" font-size="3.436" text-anchor="end" data-model="component:FCU">fictional 40-pin plug</text>
-<text x="86" y="66.25" font-size="3.436" text-anchor="end" data-model="pin:FCU/J1/5">5</text>
-<text x="80.25" y="66.25" font-size="3.436" text-anchor="end" data-model="pin:FCU/J1/5">IO1</text>
-<text x="86" y="71.25" font-size="3.436" text-anchor="end" data-model="pin:FCU/J1/6">6</text>
-<text x="80.25" y="71.25" font-size="3.436" text-anchor="end" data-model="pin:FCU/J1/6">IO2</text>
-<text x="86" y="76.25" font-size="3.436" text-anchor="end" data-model="pin:FCU/J1/7">7</text>
-<text x="80.25" y="76.25" font-size="3.436" text-anchor="end" data-model="pin:FCU/J1/7">IO3</text>
-<text x="86" y="81.25" font-size="3.436" text-anchor="end" data-model="pin:FCU/J1/8">8</text>
-<text x="80.25" y="81.25" font-size="3.436" text-anchor="end" data-model="pin:FCU/J1/8">IO4</text>
-<text x="86" y="86.25" font-size="3.436" text-anchor="end" data-model="pin:FCU/J1/9">9</text>
-<text x="80.25" y="86.25" font-size="3.436" text-anchor="end" data-model="pin:FCU/J1/9">IO5</text>
-<text x="86" y="91.25" font-size="3.436" text-anchor="end" data-model="pin:FCU/J1/10">10</text>
-<text x="80.25" y="91.25" font-size="3.436" text-anchor="end" data-model="pin:FCU/J1/10">IO6</text>
-<text x="86" y="96.25" font-size="3.436" text-anchor="end" data-model="pin:FCU/J1/11">11</text>
-<text x="80.25" y="96.25" font-size="3.436" text-anchor="end" data-model="pin:FCU/J1/11">IO7</text>
-<text x="86" y="101.25" font-size="3.436" text-anchor="end" data-model="pin:FCU/J1/12">12</text>
-<text x="80.25" y="101.25" font-size="3.436" text-anchor="end" data-model="pin:FCU/J1/12">IO8</text>
-<text x="86" y="106.25" font-size="3.436" text-anchor="end" data-model="pin:FCU/J1/13">13</text>
-<text x="80.25" y="106.25" font-size="3.436" text-anchor="end" data-model="pin:FCU/J1/13">IO9</text>
-<text x="86" y="111.25" font-size="3.436" text-anchor="end" data-model="pin:FCU/J1/14">14</text>
-<text x="80.25" y="111.25" font-size="3.436" text-anchor="end" data-model="pin:FCU/J1/14">IO10</text>
-<text x="86" y="116.25" font-size="3.436" text-anchor="end" data-model="pin:FCU/J1/15">15</text>
-<text x="80.25" y="116.25" font-size="3.436" text-anchor="end" data-model="pin:FCU/J1/15">IO11</text>
-<text x="86" y="121.25" font-size="3.436" text-anchor="end" data-model="pin:FCU/J1/16">16</text>
-<text x="80.25" y="121.25" font-size="3.436" text-anchor="end" data-model="pin:FCU/J1/16">IO12</text>
-<text x="332.5" y="25" font-size="3.436" text-anchor="start" font-weight="600" data-model="component:SNS-A">SNS-A</text>
-<text x="346.05" y="25" font-size="3.436" text-anchor="start" data-model="component:SNS-A">SNS-A sensor A</text>
-<text x="334" y="31.25" font-size="3.436" text-anchor="start" font-weight="600" data-model="component:SNS-A">P1</text>
-<text x="334" y="36.25" font-size="3.436" text-anchor="start" data-model="pin:SNS-A/P1/1">1</text>
-<text x="334" y="41.25" font-size="3.436" text-anchor="start" data-model="pin:SNS-A/P1/2">2</text>
-<text x="334" y="46.25" font-size="3.436" text-anchor="start" data-model="pin:SNS-A/P1/3">3</text>
-<text x="334" y="51.25" font-size="3.436" text-anchor="start" data-model="pin:SNS-A/P1/4">4</text>
-<text x="334" y="56.25" font-size="3.436" text-anchor="start" data-model="pin:SNS-A/P1/5">5</text>
-<text x="332.5" y="70" font-size="3.436" text-anchor="start" font-weight="600" data-model="component:SNS-B">SNS-B</text>
-<text x="345.8" y="70" font-size="3.436" text-anchor="start" data-model="component:SNS-B">SNS-B sensor B</text>
-<text x="334" y="76.25" font-size="3.436" text-anchor="start" font-weight="600" data-model="component:SNS-B">P1</text>
-<text x="334" y="81.25" font-size="3.436" text-anchor="start" data-model="pin:SNS-B/P1/1">1</text>
-<text x="334" y="86.25" font-size="3.436" text-anchor="start" data-model="pin:SNS-B/P1/2">2</text>
-<text x="334" y="91.25" font-size="3.436" text-anchor="start" data-model="pin:SNS-B/P1/3">3</text>
-<text x="334" y="96.25" font-size="3.436" text-anchor="start" data-model="pin:SNS-B/P1/4">4</text>
-<text x="334" y="101.25" font-size="3.436" text-anchor="start" data-model="pin:SNS-B/P1/5">5</text>
-<text x="332.5" y="115" font-size="3.436" text-anchor="start" font-weight="600" data-model="component:SNS-C">SNS-C</text>
-<text x="346.05" y="115" font-size="3.436" text-anchor="start" data-model="component:SNS-C">SNS-C sensor C</text>
-<text x="334" y="121.25" font-size="3.436" text-anchor="start" font-weight="600" data-model="component:SNS-C">P1</text>
-<text x="334" y="126.25" font-size="3.436" text-anchor="start" data-model="pin:SNS-C/P1/1">1</text>
-<text x="334" y="131.25" font-size="3.436" text-anchor="start" data-model="pin:SNS-C/P1/2">2</text>
-<text x="334" y="136.25" font-size="3.436" text-anchor="start" data-model="pin:SNS-C/P1/3">3</text>
-<text x="334" y="141.25" font-size="3.436" text-anchor="start" data-model="pin:SNS-C/P1/4">4</text>
-<text x="334" y="146.25" font-size="3.436" text-anchor="start" data-model="pin:SNS-C/P1/5">5</text>
-<text x="332.5" y="160" font-size="3.436" text-anchor="start" font-weight="600" data-model="component:SNS-D">SNS-D</text>
-<text x="346" y="160" font-size="3.436" text-anchor="start" data-model="component:SNS-D">SNS-D sensor D</text>
-<text x="334" y="166.25" font-size="3.436" text-anchor="start" font-weight="600" data-model="component:SNS-D">P1</text>
-<text x="334" y="171.25" font-size="3.436" text-anchor="start" data-model="pin:SNS-D/P1/1">1</text>
-<text x="334" y="176.25" font-size="3.436" text-anchor="start" data-model="pin:SNS-D/P1/2">2</text>
-<text x="334" y="181.25" font-size="3.436" text-anchor="start" data-model="pin:SNS-D/P1/3">3</text>
-<text x="334" y="186.25" font-size="3.436" text-anchor="start" data-model="pin:SNS-D/P1/4">4</text>
-<text x="334" y="191.25" font-size="3.436" text-anchor="start" data-model="pin:SNS-D/P1/5">5</text>
-<text x="332.5" y="205" font-size="3.436" text-anchor="start" font-weight="600" data-model="component:SNS-E">SNS-E</text>
-<text x="345.6" y="205" font-size="3.436" text-anchor="start" data-model="component:SNS-E">SNS-E sensor E</text>
-<text x="334" y="211.25" font-size="3.436" text-anchor="start" font-weight="600" data-model="component:SNS-E">P1</text>
-<text x="334" y="216.25" font-size="3.436" text-anchor="start" data-model="pin:SNS-E/P1/1">1</text>
-<text x="334" y="221.25" font-size="3.436" text-anchor="start" data-model="pin:SNS-E/P1/2">2</text>
-<text x="334" y="226.25" font-size="3.436" text-anchor="start" data-model="pin:SNS-E/P1/3">3</text>
-<text x="334" y="231.25" font-size="3.436" text-anchor="start" data-model="pin:SNS-E/P1/4">4</text>
-<text x="334" y="236.25" font-size="3.436" text-anchor="start" data-model="pin:SNS-E/P1/5">5</text>
+<polyline points="250,75 305,75 305,35 350,35" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-01-E"/>
+<polyline points="70,65 160,65 160,75 190,75" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-01-F"/>
+<polyline points="250,80 285,80 285,40 350,40" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-02-E"/>
+<polyline points="70,70 155,70 155,80 190,80" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-02-F"/>
+<polyline points="250,85 290,85 290,45 350,45" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-03-E"/>
+<polyline points="70,75 150,75 150,85 190,85" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-03-F"/>
+<polyline points="250,90 295,90 295,50 350,50" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-04-E"/>
+<polyline points="70,80 145,80 145,90 190,90" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-04-F"/>
+<polyline points="250,95 300,95 300,55 350,55" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-05-E"/>
+<polyline points="70,85 140,85 140,95 190,95" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-05-F"/>
+<polyline points="250,100 305,100 305,80 350,80" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-06-E"/>
+<polyline points="70,90 135,90 135,100 190,100" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-06-F"/>
+<polyline points="250,105 310,105 310,85 350,85" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-07-E"/>
+<polyline points="70,95 130,95 130,105 190,105" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-07-F"/>
+<polyline points="250,110 315,110 315,90 350,90" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-08-E"/>
+<polyline points="70,100 125,100 125,110 190,110" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-08-F"/>
+<polyline points="250,115 320,115 320,95 350,95" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-09-E"/>
+<polyline points="70,105 120,105 120,115 190,115" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-09-F"/>
+<polyline points="250,120 325,120 325,100 350,100" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-10-E"/>
+<polyline points="70,110 115,110 115,120 190,120" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-10-F"/>
+<polyline points="250,125 350,125" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-11-E"/>
+<polyline points="70,115 110,115 110,125 190,125" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-11-F"/>
+<polyline points="250,130 350,130" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-12-E"/>
+<polyline points="70,120 105,120 105,130 190,130" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-12-F"/>
+<polyline points="250,135 350,135" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-13-E"/>
+<polyline points="65,145 105,145 105,135 190,135" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-13-F"/>
+<polyline points="250,140 350,140" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-14-E"/>
+<polyline points="65,150 110,150 110,140 190,140" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-14-F"/>
+<polyline points="250,145 350,145" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-15-E"/>
+<polyline points="65,155 115,155 115,145 190,145" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-15-F"/>
+<polyline points="250,150 325,150 325,170 350,170" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-16-E"/>
+<polyline points="65,160 120,160 120,150 190,150" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-16-F"/>
+<polyline points="250,155 320,155 320,175 350,175" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-17-E"/>
+<polyline points="65,165 125,165 125,155 190,155" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-17-F"/>
+<polyline points="250,160 315,160 315,180 350,180" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-18-E"/>
+<polyline points="65,170 130,170 130,160 190,160" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-18-F"/>
+<polyline points="250,165 310,165 310,185 350,185" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-19-E"/>
+<polyline points="65,175 135,175 135,165 190,165" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-19-F"/>
+<polyline points="250,170 305,170 305,190 350,190" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-20-E"/>
+<polyline points="65,180 140,180 140,170 190,170" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-20-F"/>
+<polyline points="250,175 300,175 300,215 350,215" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-21-E"/>
+<polyline points="65,185 145,185 145,175 190,175" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-21-F"/>
+<polyline points="250,180 295,180 295,220 350,220" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-22-E"/>
+<polyline points="65,190 150,190 150,180 190,180" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-22-F"/>
+<polyline points="250,185 290,185 290,225 350,225" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-23-E"/>
+<polyline points="65,195 155,195 155,185 190,185" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-23-F"/>
+<polyline points="250,190 285,190 285,230 350,230" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-24-E"/>
+<polyline points="65,200 160,200 160,190 190,190" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-24-F"/>
+<polyline points="250,195 305,195 305,235 350,235" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-25-E"/>
+<polyline points="65,205 165,205 165,195 190,195" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round" data-model="conductor:SIG-25-F"/>
+<text x="17.5" y="135" font-size="3.436" text-anchor="start" font-weight="600" data-model="component:ACU">ACU</text>
+<text x="27.3" y="135" font-size="3.436" text-anchor="start" data-model="component:ACU">ACU aux control unit</text>
+<text x="19" y="141.25" font-size="3.436" text-anchor="start" font-weight="600" data-model="component:ACU">J1</text>
+<text x="61" y="146.25" font-size="3.436" text-anchor="end" data-model="pin:ACU/J1/1">1</text>
+<text x="61" y="151.25" font-size="3.436" text-anchor="end" data-model="pin:ACU/J1/2">2</text>
+<text x="61" y="156.25" font-size="3.436" text-anchor="end" data-model="pin:ACU/J1/3">3</text>
+<text x="61" y="161.25" font-size="3.436" text-anchor="end" data-model="pin:ACU/J1/4">4</text>
+<text x="61" y="166.25" font-size="3.436" text-anchor="end" data-model="pin:ACU/J1/5">5</text>
+<text x="61" y="171.25" font-size="3.436" text-anchor="end" data-model="pin:ACU/J1/6">6</text>
+<text x="61" y="176.25" font-size="3.436" text-anchor="end" data-model="pin:ACU/J1/7">7</text>
+<text x="61" y="181.25" font-size="3.436" text-anchor="end" data-model="pin:ACU/J1/8">8</text>
+<text x="61" y="186.25" font-size="3.436" text-anchor="end" data-model="pin:ACU/J1/9">9</text>
+<text x="61" y="191.25" font-size="3.436" text-anchor="end" data-model="pin:ACU/J1/10">10</text>
+<text x="61" y="196.25" font-size="3.436" text-anchor="end" data-model="pin:ACU/J1/11">11</text>
+<text x="61" y="201.25" font-size="3.436" text-anchor="end" data-model="pin:ACU/J1/12">12</text>
+<text x="61" y="206.25" font-size="3.436" text-anchor="end" data-model="pin:ACU/J1/13">13</text>
+<text x="17.5" y="50" font-size="3.436" text-anchor="start" font-weight="600" data-model="component:FCU">FCU</text>
+<text x="26.8" y="50" font-size="3.436" text-anchor="start" data-model="component:FCU">FCU flight control unit</text>
+<text x="17.5" y="55" font-size="3.436" text-anchor="start" data-model="component:FCU">FCU_card</text>
+<text x="19" y="61.25" font-size="3.436" text-anchor="start" font-weight="600" data-model="component:FCU">J1</text>
+<text x="66" y="61.25" font-size="3.436" text-anchor="end" data-model="component:FCU">fictional 40-pin plug</text>
+<text x="66" y="66.25" font-size="3.436" text-anchor="end" data-model="pin:FCU/J1/5">5</text>
+<text x="60.25" y="66.25" font-size="3.436" text-anchor="end" data-model="pin:FCU/J1/5">IO1</text>
+<text x="66" y="71.25" font-size="3.436" text-anchor="end" data-model="pin:FCU/J1/6">6</text>
+<text x="60.25" y="71.25" font-size="3.436" text-anchor="end" data-model="pin:FCU/J1/6">IO2</text>
+<text x="66" y="76.25" font-size="3.436" text-anchor="end" data-model="pin:FCU/J1/7">7</text>
+<text x="60.25" y="76.25" font-size="3.436" text-anchor="end" data-model="pin:FCU/J1/7">IO3</text>
+<text x="66" y="81.25" font-size="3.436" text-anchor="end" data-model="pin:FCU/J1/8">8</text>
+<text x="60.25" y="81.25" font-size="3.436" text-anchor="end" data-model="pin:FCU/J1/8">IO4</text>
+<text x="66" y="86.25" font-size="3.436" text-anchor="end" data-model="pin:FCU/J1/9">9</text>
+<text x="60.25" y="86.25" font-size="3.436" text-anchor="end" data-model="pin:FCU/J1/9">IO5</text>
+<text x="66" y="91.25" font-size="3.436" text-anchor="end" data-model="pin:FCU/J1/10">10</text>
+<text x="60.25" y="91.25" font-size="3.436" text-anchor="end" data-model="pin:FCU/J1/10">IO6</text>
+<text x="66" y="96.25" font-size="3.436" text-anchor="end" data-model="pin:FCU/J1/11">11</text>
+<text x="60.25" y="96.25" font-size="3.436" text-anchor="end" data-model="pin:FCU/J1/11">IO7</text>
+<text x="66" y="101.25" font-size="3.436" text-anchor="end" data-model="pin:FCU/J1/12">12</text>
+<text x="60.25" y="101.25" font-size="3.436" text-anchor="end" data-model="pin:FCU/J1/12">IO8</text>
+<text x="66" y="106.25" font-size="3.436" text-anchor="end" data-model="pin:FCU/J1/13">13</text>
+<text x="60.25" y="106.25" font-size="3.436" text-anchor="end" data-model="pin:FCU/J1/13">IO9</text>
+<text x="66" y="111.25" font-size="3.436" text-anchor="end" data-model="pin:FCU/J1/14">14</text>
+<text x="60.25" y="111.25" font-size="3.436" text-anchor="end" data-model="pin:FCU/J1/14">IO10</text>
+<text x="66" y="116.25" font-size="3.436" text-anchor="end" data-model="pin:FCU/J1/15">15</text>
+<text x="60.25" y="116.25" font-size="3.436" text-anchor="end" data-model="pin:FCU/J1/15">IO11</text>
+<text x="66" y="121.25" font-size="3.436" text-anchor="end" data-model="pin:FCU/J1/16">16</text>
+<text x="60.25" y="121.25" font-size="3.436" text-anchor="end" data-model="pin:FCU/J1/16">IO12</text>
+<text x="352.5" y="25" font-size="3.436" text-anchor="start" font-weight="600" data-model="component:SNS-A">SNS-A</text>
+<text x="366.05" y="25" font-size="3.436" text-anchor="start" data-model="component:SNS-A">SNS-A sensor A</text>
+<text x="354" y="31.25" font-size="3.436" text-anchor="start" font-weight="600" data-model="component:SNS-A">P1</text>
+<text x="354" y="36.25" font-size="3.436" text-anchor="start" data-model="pin:SNS-A/P1/1">1</text>
+<text x="354" y="41.25" font-size="3.436" text-anchor="start" data-model="pin:SNS-A/P1/2">2</text>
+<text x="354" y="46.25" font-size="3.436" text-anchor="start" data-model="pin:SNS-A/P1/3">3</text>
+<text x="354" y="51.25" font-size="3.436" text-anchor="start" data-model="pin:SNS-A/P1/4">4</text>
+<text x="354" y="56.25" font-size="3.436" text-anchor="start" data-model="pin:SNS-A/P1/5">5</text>
+<text x="352.5" y="70" font-size="3.436" text-anchor="start" font-weight="600" data-model="component:SNS-B">SNS-B</text>
+<text x="365.8" y="70" font-size="3.436" text-anchor="start" data-model="component:SNS-B">SNS-B sensor B</text>
+<text x="354" y="76.25" font-size="3.436" text-anchor="start" font-weight="600" data-model="component:SNS-B">P1</text>
+<text x="354" y="81.25" font-size="3.436" text-anchor="start" data-model="pin:SNS-B/P1/1">1</text>
+<text x="354" y="86.25" font-size="3.436" text-anchor="start" data-model="pin:SNS-B/P1/2">2</text>
+<text x="354" y="91.25" font-size="3.436" text-anchor="start" data-model="pin:SNS-B/P1/3">3</text>
+<text x="354" y="96.25" font-size="3.436" text-anchor="start" data-model="pin:SNS-B/P1/4">4</text>
+<text x="354" y="101.25" font-size="3.436" text-anchor="start" data-model="pin:SNS-B/P1/5">5</text>
+<text x="352.5" y="115" font-size="3.436" text-anchor="start" font-weight="600" data-model="component:SNS-C">SNS-C</text>
+<text x="366.05" y="115" font-size="3.436" text-anchor="start" data-model="component:SNS-C">SNS-C sensor C</text>
+<text x="354" y="121.25" font-size="3.436" text-anchor="start" font-weight="600" data-model="component:SNS-C">P1</text>
+<text x="354" y="126.25" font-size="3.436" text-anchor="start" data-model="pin:SNS-C/P1/1">1</text>
+<text x="354" y="131.25" font-size="3.436" text-anchor="start" data-model="pin:SNS-C/P1/2">2</text>
+<text x="354" y="136.25" font-size="3.436" text-anchor="start" data-model="pin:SNS-C/P1/3">3</text>
+<text x="354" y="141.25" font-size="3.436" text-anchor="start" data-model="pin:SNS-C/P1/4">4</text>
+<text x="354" y="146.25" font-size="3.436" text-anchor="start" data-model="pin:SNS-C/P1/5">5</text>
+<text x="352.5" y="160" font-size="3.436" text-anchor="start" font-weight="600" data-model="component:SNS-D">SNS-D</text>
+<text x="366" y="160" font-size="3.436" text-anchor="start" data-model="component:SNS-D">SNS-D sensor D</text>
+<text x="354" y="166.25" font-size="3.436" text-anchor="start" font-weight="600" data-model="component:SNS-D">P1</text>
+<text x="354" y="171.25" font-size="3.436" text-anchor="start" data-model="pin:SNS-D/P1/1">1</text>
+<text x="354" y="176.25" font-size="3.436" text-anchor="start" data-model="pin:SNS-D/P1/2">2</text>
+<text x="354" y="181.25" font-size="3.436" text-anchor="start" data-model="pin:SNS-D/P1/3">3</text>
+<text x="354" y="186.25" font-size="3.436" text-anchor="start" data-model="pin:SNS-D/P1/4">4</text>
+<text x="354" y="191.25" font-size="3.436" text-anchor="start" data-model="pin:SNS-D/P1/5">5</text>
+<text x="352.5" y="205" font-size="3.436" text-anchor="start" font-weight="600" data-model="component:SNS-E">SNS-E</text>
+<text x="365.6" y="205" font-size="3.436" text-anchor="start" data-model="component:SNS-E">SNS-E sensor E</text>
+<text x="354" y="211.25" font-size="3.436" text-anchor="start" font-weight="600" data-model="component:SNS-E">P1</text>
+<text x="354" y="216.25" font-size="3.436" text-anchor="start" data-model="pin:SNS-E/P1/1">1</text>
+<text x="354" y="221.25" font-size="3.436" text-anchor="start" data-model="pin:SNS-E/P1/2">2</text>
+<text x="354" y="226.25" font-size="3.436" text-anchor="start" data-model="pin:SNS-E/P1/3">3</text>
+<text x="354" y="231.25" font-size="3.436" text-anchor="start" data-model="pin:SNS-E/P1/4">4</text>
+<text x="354" y="236.25" font-size="3.436" text-anchor="start" data-model="pin:SNS-E/P1/5">5</text>
 <text x="194.1" y="64.75" font-size="3.436" text-anchor="start" font-weight="600" data-model="connector:X-25">X-25</text>
 <text x="204.7" y="64.75" font-size="3.436" text-anchor="start" data-model="connector:X-25">Harness connector X-25</text>
 <text x="205" y="70" font-size="3.436" text-anchor="middle" font-weight="600" data-model="connector:X-25">Cabin half</text>
@@ -219,55 +219,55 @@
 <text x="248" y="191.25" font-size="3.436" text-anchor="end" data-model="pin:X-25/Engine half/24">24</text>
 <text x="248" y="196.25" font-size="3.436" text-anchor="end" data-model="pin:X-25/Engine half/25">25</text>
 <text x="252.5" y="73.75" font-size="3.436" text-anchor="start" data-model="conductor:SIG-01-E">SIG-01-E  22 BU</text>
-<text x="92.5" y="63.75" font-size="3.436" text-anchor="start" data-model="conductor:SIG-01-F">SIG-01-F  22 BU</text>
+<text x="72.5" y="63.75" font-size="3.436" text-anchor="start" data-model="conductor:SIG-01-F">SIG-01-F  22 BU</text>
 <text x="252.5" y="78.75" font-size="3.436" text-anchor="start" data-model="conductor:SIG-02-E">SIG-02-E  22 BU</text>
-<text x="92.5" y="68.75" font-size="3.436" text-anchor="start" data-model="conductor:SIG-02-F">SIG-02-F  22 BU</text>
+<text x="72.5" y="68.75" font-size="3.436" text-anchor="start" data-model="conductor:SIG-02-F">SIG-02-F  22 BU</text>
 <text x="252.5" y="83.75" font-size="3.436" text-anchor="start" data-model="conductor:SIG-03-E">SIG-03-E  22 BU</text>
-<text x="92.5" y="73.75" font-size="3.436" text-anchor="start" data-model="conductor:SIG-03-F">SIG-03-F  22 BU</text>
+<text x="72.5" y="73.75" font-size="3.436" text-anchor="start" data-model="conductor:SIG-03-F">SIG-03-F  22 BU</text>
 <text x="252.5" y="88.75" font-size="3.436" text-anchor="start" data-model="conductor:SIG-04-E">SIG-04-E  22 BU</text>
-<text x="92.5" y="78.75" font-size="3.436" text-anchor="start" data-model="conductor:SIG-04-F">SIG-04-F  22 BU</text>
+<text x="72.5" y="78.75" font-size="3.436" text-anchor="start" data-model="conductor:SIG-04-F">SIG-04-F  22 BU</text>
 <text x="252.5" y="93.75" font-size="3.436" text-anchor="start" data-model="conductor:SIG-05-E">SIG-05-E  22 BU</text>
-<text x="92.5" y="83.75" font-size="3.436" text-anchor="start" data-model="conductor:SIG-05-F">SIG-05-F  22 BU</text>
+<text x="72.5" y="83.75" font-size="3.436" text-anchor="start" data-model="conductor:SIG-05-F">SIG-05-F  22 BU</text>
 <text x="252.5" y="98.75" font-size="3.436" text-anchor="start" data-model="conductor:SIG-06-E">SIG-06-E  22 BU</text>
-<text x="92.5" y="88.75" font-size="3.436" text-anchor="start" data-model="conductor:SIG-06-F">SIG-06-F  22 BU</text>
+<text x="72.5" y="88.75" font-size="3.436" text-anchor="start" data-model="conductor:SIG-06-F">SIG-06-F  22 BU</text>
 <text x="252.5" y="103.75" font-size="3.436" text-anchor="start" data-model="conductor:SIG-07-E">SIG-07-E  22 BU</text>
-<text x="92.5" y="93.75" font-size="3.436" text-anchor="start" data-model="conductor:SIG-07-F">SIG-07-F  22 BU</text>
+<text x="72.5" y="93.75" font-size="3.436" text-anchor="start" data-model="conductor:SIG-07-F">SIG-07-F  22 BU</text>
 <text x="252.5" y="108.75" font-size="3.436" text-anchor="start" data-model="conductor:SIG-08-E">SIG-08-E  22 BU</text>
-<text x="92.5" y="98.75" font-size="3.436" text-anchor="start" data-model="conductor:SIG-08-F">SIG-08-F  22 BU</text>
+<text x="72.5" y="98.75" font-size="3.436" text-anchor="start" data-model="conductor:SIG-08-F">SIG-08-F  22 BU</text>
 <text x="252.5" y="113.75" font-size="3.436" text-anchor="start" data-model="conductor:SIG-09-E">SIG-09-E  22 BU</text>
-<text x="92.5" y="103.75" font-size="3.436" text-anchor="start" data-model="conductor:SIG-09-F">SIG-09-F  22 BU</text>
+<text x="72.5" y="103.75" font-size="3.436" text-anchor="start" data-model="conductor:SIG-09-F">SIG-09-F  22 BU</text>
 <text x="252.5" y="118.75" font-size="3.436" text-anchor="start" data-model="conductor:SIG-10-E">SIG-10-E  22 BU</text>
-<text x="92.5" y="108.75" font-size="3.436" text-anchor="start" data-model="conductor:SIG-10-F">SIG-10-F  22 BU</text>
+<text x="72.5" y="108.75" font-size="3.436" text-anchor="start" data-model="conductor:SIG-10-F">SIG-10-F  22 BU</text>
 <text x="252.5" y="123.75" font-size="3.436" text-anchor="start" data-model="conductor:SIG-11-E">SIG-11-E  22 BU</text>
-<text x="92.5" y="113.75" font-size="3.436" text-anchor="start" data-model="conductor:SIG-11-F">SIG-11-F  22 BU</text>
+<text x="72.5" y="113.75" font-size="3.436" text-anchor="start" data-model="conductor:SIG-11-F">SIG-11-F  22 BU</text>
 <text x="252.5" y="128.75" font-size="3.436" text-anchor="start" data-model="conductor:SIG-12-E">SIG-12-E  22 BU</text>
-<text x="92.5" y="118.75" font-size="3.436" text-anchor="start" data-model="conductor:SIG-12-F">SIG-12-F  22 BU</text>
+<text x="72.5" y="118.75" font-size="3.436" text-anchor="start" data-model="conductor:SIG-12-F">SIG-12-F  22 BU</text>
 <text x="252.5" y="133.75" font-size="3.436" text-anchor="start" data-model="conductor:SIG-13-E">SIG-13-E  22 BU</text>
-<text x="87.5" y="143.75" font-size="3.436" text-anchor="start" data-model="conductor:SIG-13-F">SIG-13-F  22 BU</text>
+<text x="67.5" y="143.75" font-size="3.436" text-anchor="start" data-model="conductor:SIG-13-F">SIG-13-F  22 BU</text>
 <text x="252.5" y="138.75" font-size="3.436" text-anchor="start" data-model="conductor:SIG-14-E">SIG-14-E  22 BU</text>
-<text x="87.5" y="148.75" font-size="3.436" text-anchor="start" data-model="conductor:SIG-14-F">SIG-14-F  22 BU</text>
+<text x="67.5" y="148.75" font-size="3.436" text-anchor="start" data-model="conductor:SIG-14-F">SIG-14-F  22 BU</text>
 <text x="252.5" y="143.75" font-size="3.436" text-anchor="start" data-model="conductor:SIG-15-E">SIG-15-E  22 BU</text>
-<text x="87.5" y="153.75" font-size="3.436" text-anchor="start" data-model="conductor:SIG-15-F">SIG-15-F  22 BU</text>
+<text x="67.5" y="153.75" font-size="3.436" text-anchor="start" data-model="conductor:SIG-15-F">SIG-15-F  22 BU</text>
 <text x="252.5" y="148.75" font-size="3.436" text-anchor="start" data-model="conductor:SIG-16-E">SIG-16-E  22 BU</text>
-<text x="87.5" y="158.75" font-size="3.436" text-anchor="start" data-model="conductor:SIG-16-F">SIG-16-F  22 BU</text>
+<text x="67.5" y="158.75" font-size="3.436" text-anchor="start" data-model="conductor:SIG-16-F">SIG-16-F  22 BU</text>
 <text x="252.5" y="153.75" font-size="3.436" text-anchor="start" data-model="conductor:SIG-17-E">SIG-17-E  22 BU</text>
-<text x="87.5" y="163.75" font-size="3.436" text-anchor="start" data-model="conductor:SIG-17-F">SIG-17-F  22 BU</text>
+<text x="67.5" y="163.75" font-size="3.436" text-anchor="start" data-model="conductor:SIG-17-F">SIG-17-F  22 BU</text>
 <text x="252.5" y="158.75" font-size="3.436" text-anchor="start" data-model="conductor:SIG-18-E">SIG-18-E  22 BU</text>
-<text x="87.5" y="168.75" font-size="3.436" text-anchor="start" data-model="conductor:SIG-18-F">SIG-18-F  22 BU</text>
+<text x="67.5" y="168.75" font-size="3.436" text-anchor="start" data-model="conductor:SIG-18-F">SIG-18-F  22 BU</text>
 <text x="252.5" y="163.75" font-size="3.436" text-anchor="start" data-model="conductor:SIG-19-E">SIG-19-E  22 BU</text>
-<text x="87.5" y="173.75" font-size="3.436" text-anchor="start" data-model="conductor:SIG-19-F">SIG-19-F  22 BU</text>
+<text x="67.5" y="173.75" font-size="3.436" text-anchor="start" data-model="conductor:SIG-19-F">SIG-19-F  22 BU</text>
 <text x="252.5" y="168.75" font-size="3.436" text-anchor="start" data-model="conductor:SIG-20-E">SIG-20-E  22 BU</text>
-<text x="87.5" y="178.75" font-size="3.436" text-anchor="start" data-model="conductor:SIG-20-F">SIG-20-F  22 BU</text>
+<text x="67.5" y="178.75" font-size="3.436" text-anchor="start" data-model="conductor:SIG-20-F">SIG-20-F  22 BU</text>
 <text x="252.5" y="173.75" font-size="3.436" text-anchor="start" data-model="conductor:SIG-21-E">SIG-21-E  22 BU</text>
-<text x="87.5" y="183.75" font-size="3.436" text-anchor="start" data-model="conductor:SIG-21-F">SIG-21-F  22 BU</text>
+<text x="67.5" y="183.75" font-size="3.436" text-anchor="start" data-model="conductor:SIG-21-F">SIG-21-F  22 BU</text>
 <text x="252.5" y="178.75" font-size="3.436" text-anchor="start" data-model="conductor:SIG-22-E">SIG-22-E  22 BU</text>
-<text x="87.5" y="188.75" font-size="3.436" text-anchor="start" data-model="conductor:SIG-22-F">SIG-22-F  22 BU</text>
+<text x="67.5" y="188.75" font-size="3.436" text-anchor="start" data-model="conductor:SIG-22-F">SIG-22-F  22 BU</text>
 <text x="252.5" y="183.75" font-size="3.436" text-anchor="start" data-model="conductor:SIG-23-E">SIG-23-E  22 BU</text>
-<text x="87.5" y="193.75" font-size="3.436" text-anchor="start" data-model="conductor:SIG-23-F">SIG-23-F  22 BU</text>
+<text x="67.5" y="193.75" font-size="3.436" text-anchor="start" data-model="conductor:SIG-23-F">SIG-23-F  22 BU</text>
 <text x="252.5" y="188.75" font-size="3.436" text-anchor="start" data-model="conductor:SIG-24-E">SIG-24-E  22 BU</text>
-<text x="87.5" y="198.75" font-size="3.436" text-anchor="start" data-model="conductor:SIG-24-F">SIG-24-F  22 BU</text>
+<text x="67.5" y="198.75" font-size="3.436" text-anchor="start" data-model="conductor:SIG-24-F">SIG-24-F  22 BU</text>
 <text x="252.5" y="193.75" font-size="3.436" text-anchor="start" data-model="conductor:SIG-25-E">SIG-25-E  22 BU</text>
-<text x="87.5" y="203.75" font-size="3.436" text-anchor="start" data-model="conductor:SIG-25-F">SIG-25-F  22 BU</text>
+<text x="67.5" y="203.75" font-size="3.436" text-anchor="start" data-model="conductor:SIG-25-F">SIG-25-F  22 BU</text>
 <text x="146.5" y="258.75" font-size="3.436" text-anchor="start" fill="#6b6b6b" data-model="">NOTES</text>
 <text x="146.5" y="263.75" font-size="3.436" text-anchor="start" data-model="">Wire text: label, gauge (AWG), colour code.</text>
 </svg>

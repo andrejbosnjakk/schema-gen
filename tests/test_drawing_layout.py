@@ -60,8 +60,8 @@ def test_crossings_reported(states):
     assert r["crossings"]["total"] >= 0 and set(r["crossings"]["by_sheet"]) == {1, 2}
 
 
-@pytest.mark.xfail(reason="not met: most crossings on a single-component aircraft drawing are 37 (X-FW, a 38-wire harness connector over 9 sheets) and 23 (X-WR);"
-                   " every other component has at most 7 (MOTOR-CONTROLLER 5, EFIS 4)", strict=True)
+@pytest.mark.xfail(reason="not met: most crossings on a single-component aircraft drawing are 27 (MOTOR-CONTROLLER, 23 on its first sheet) and 19 (X-FW, a 38-wire"
+                   " harness connector over 5 sheets); every other component has at most 6 (X-WR 6, EFIS 6)", strict=True)
 def test_crossings_at_most_5(states):
     st = states["aircraft"]
     worst = {c.id: checks.crossings(draw(st, f"component:{c.id}")) for c in st.m.components}

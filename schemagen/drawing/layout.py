@@ -11,6 +11,7 @@ Everything is deterministic: stable sorts with full tie-break keys, no randomnes
 from __future__ import annotations
 
 import heapq
+import math
 from collections import Counter, defaultdict, deque
 from typing import Any
 
@@ -141,9 +142,9 @@ def _taps(it: Elem, ends: list[tuple[str, str, Elem, str]], pos: dict[str, float
     return out
 
 
-def place(page: Elem, size: str = "A3", fside: dict[str, str] | None = None) -> Elem:
-    """Lays out and routes one page: returns the sheet's symbols, wires, texts, flags, the extent used (`w`, `h`) and `bad` (pairs of
-    wires in one channel that need a dogleg: should be 0)."""
+def place(page: Elem, size: str = "A3", fside: dict[str, str] | None = None, spread: int = 0) -> Elem:
+    """Lays out and routes one page: returns the sheet's symbols, wires, texts, flags, the natural extent (`w`, `h`, before `spread`) and `bad`
+    (pairs of wires in one channel that need a dogleg: should be 0). spread 1: use the sheet, rows stretched up to 2x and channels widened (2: channels only)."""
     col, lvl, flip = columns(page)
     items = {i["id"]: i for i in page["items"]}
     owner = {p["anchor"]: i["id"] for i in items.values() for b in i["blocks"] for p in b["pins"]}
@@ -244,13 +245,13 @@ def place(page: Elem, size: str = "A3", fside: dict[str, str] | None = None) -> 
         if n.kind == "item": build(n, {})
     wrongside = {f["id"]: nodes[owner[f["at"]]].act[k] for f, k in ((f, f["at"]) for f in page["flags"]) if k in nodes[owner[f["at"]]].act
                  and nodes[owner[f["at"]]].act[k] != ("R" if nodes[f["id"]].col > nodes[owner[f["at"]]].col else "L")}
-    if wrongside: return place(page, size, dict(fside or {}, **wrongside))   # a flag on the side where the symbol's terminal is not
+    if wrongside: return place(page, size, dict(fside or {}, **wrongside), spread)   # a flag on the side where the symbol's terminal is not
     ring = [w for w, ns, k0, k1, rev in paths if w in page["wires"] and any(m.act.get(k, "") not in ("", "R" if o.col > m.col else "L") for m, k, o in ((ns[0], k0, ns[-1]), (ns[-1], k1, ns[0])))]  # noqa: E501
     if ring:   # a wire that would have to run back through a symbol (a loop in the wiring): two off-sheet flags instead, each naming the other end
         ids = {w["id"] for w in ring}
         stubs: list[Elem] = [dict(id=f"flag:{w['id']}:{e}", model=w["model"], kind="off_sheet", at=at, target=to, target_item="", text="→ " + _words(page, to), label=w["label"], gauge=w["gauge"],  # noqa: E501
                    colour=w["colour"], hex=w["hex"], cls=w["cls"], weight=w["weight"], stub=e) for w in ring for e, at, to in ((1, w["a"], w["b"]), (2, w["b"], w["a"]))]  # noqa: E501
-        return place(dict(page, wires=[w for w in page["wires"] if w["id"] not in ids], flags=page["flags"] + stubs), size)
+        return place(dict(page, wires=[w for w in page["wires"] if w["id"] not in ids], flags=page["flags"] + stubs), size, None, spread)
     # ---- rows
     focus = [n for n in nodes.values() if n.kind == "item" and n.item and n.item["role"] == "in_scope"] or [n for n in nodes.values() if n.kind == "item"]
     c0 = max(focus, key=lambda n: (len(nb[n.id]), -n.col)).col if focus else 0
@@ -305,8 +306,24 @@ def place(page: Elem, size: str = "A3", fside: dict[str, str] | None = None) -> 
             if x < best[0]: best = (x, {c: list(v) for c, v in cols.items()}, dict(ypos))
     for c, v in best[1].items(): cols[c][:] = v
     ypos.update(best[2])
-    for n in nodes.values():
-        if n.kind == "item" and n.item["symbol"] in BARS: build(n, {ka: ypos[m.id] + m.off[kb][1] for ka, m, kb in nb[n.id]})  # type: ignore[index]
+    def rebar() -> None:
+        for n in nodes.values():
+            if n.kind == "item" and n.item["symbol"] in BARS: build(n, {ka: ypos[m.id] + m.off[kb][1] for ka, m, kb in nb[n.id]})  # type: ignore[index]
+
+    def extent() -> tuple[float, float]:
+        return min(ypos[n.id] for n in nodes.values()), max(ypos[n.id] + n.h for n in nodes.values())
+    rebar()
+    ax, ay, aw, ah = areas(size)["area"]
+    top, bottom = extent() if nodes else (0.0, 0.0)
+    nat_h = bottom - top
+    stretched = False
+    if spread == 1 and nodes and (f := min(2.0, ah / max(1.0, nat_h))) >= 1.2:    # stretch the rows; undone when anything would overlap
+        keep = dict(ypos)
+        for n in nodes.values(): ypos[n.id] = top + math.floor((ypos[n.id] - top) * f / GRID + 1e-9) * GRID
+        rebar()
+        if any(ypos[b.id] < ypos[a.id] + a.h + (0.0 if a.kind == b.kind == "dummy" else GAP) - 1e-9 for ns in cols.values() for a, b in zip(ns, ns[1:])):
+            ypos.update(keep); rebar()
+        else: stretched = True
     for n in nodes.values(): n.y = ypos[n.id]
     # ---- channels: tracks and widths
     tr: dict[tuple[int, str], int] = {}
@@ -327,14 +344,16 @@ def place(page: Elem, size: str = "A3", fside: dict[str, str] | None = None) -> 
         tr |= {(c, k): v for k, v in t.items()}
         dog |= {(c, k): v for k, v in dg.items()}
         ntr[c] = max(t.values(), default=-1) + 1
-    colw = [ceil_to(max((n.w for n in cols[c]), default=0.0)) for c in range(ncol)]
     chw = [max(10.0, ceil_to(room[c]) + GRID * ntr[c]) for c in range(ncol - 1)]
+    colw = [ceil_to(max((n.w for n in cols[c]), default=0.0)) for c in range(ncol)]
+    nat_w = sum(colw) + sum(chw)
+    if stretched and nat_w > aw: return place(page, size, fside, 2)      # the stretch cost tracks and the page no longer fits: do without
+    if spread and ncol > 1: chw = [w + min(40.0, max(0.0, (aw - nat_w) // (ncol - 1) // GRID * GRID)) for w in chw]
     cx = [0.0]
     for c in range(ncol - 1): cx.append(cx[-1] + colw[c] + chw[c])
     total_w = cx[-1] + colw[-1] if ncol else 0.0
     y0 = min((n.y for n in nodes.values()), default=0.0)
     total_h = max((n.y + n.h for n in nodes.values()), default=0.0) - y0
-    ax, ay, aw, ah = areas(size)["area"]
     ox = ax + max(0.0, (aw - total_w) // 2 // GRID * GRID)
     oy = ay + max(0.0, (ah - total_h) // 2 // GRID * GRID) - y0
     for n in nodes.values(): n.x, n.y = ox + cx[n.col], n.y + oy
@@ -375,7 +394,7 @@ def place(page: Elem, size: str = "A3", fside: dict[str, str] | None = None) -> 
     sh: dict[str, Any] = dict(symbols=syms, wires=wires, texts=texts, flags=flags)
     sh["texts"] = texts + R.labels(sh)
     for w in wires: w.pop("silent", None)
-    return dict(sh, w=total_w, h=total_h, bad=nbad)
+    return dict(sh, w=nat_w, h=nat_h, bad=nbad)
 
 
 # ---------------------------------------------------------------- pages
@@ -385,7 +404,7 @@ def _words(sc: Elem, ref: str) -> str:
         for b in it["blocks"]:
             for p in b["pins"]:
                 if p["anchor"] == ref:
-                    nm = f" ({it['name']})" if it["name"] and not it["name"].startswith(it["code"]) and len(it["name"]) <= 24 else ""
+                    nm = f" ({it['name']})" if it["name"] and S.flat(it["name"]) != S.flat(it["code"]) and not it["name"].startswith(it["code"]) and len(it["name"]) <= 24 else ""  # noqa: E501
                     pin = "-".join(x for x in (b["id"] if b["id"] and (len(it["blocks"]) > 1 or p["n"]) else "", p["n"]) if x)
                     return f"{it['code']} {pin}{nm}".strip()
     return ref.removeprefix("pin:")
@@ -443,7 +462,7 @@ def _page(sc: Elem, elems: list[tuple[str, Elem]], nums: dict[str, list[int]] | 
         lst.sort(key=lambda t: (_nat(_cid(t[1])), t[0]))
         sheet = lambda e: min((n for n in nums.get(_cid(e), []) if n != me), default=None)  # noqa: E731
         mk = [_flag(sc, e, a, o, sheet(e), e["text"].removeprefix("→ ") if "a" not in e else None) for a, e, o in lst]
-        if it["symbol"] in ("bus", "ground") and len(mk) >= 4:
+        if it["symbol"] in ("bus", "ground") and it["role"] != "in_scope" and len(mk) >= 4:
             cov = [dict(id=_cid(e), at=a, target=o, label=e["label"], gauge=e["gauge"], colour=e["colour"]) for a, e, o in lst if "covers" not in e]
             cov += [c for _, e, _ in lst for c in e.get("covers", [])]
             sh = sorted({m["sheet"] for m in mk if m["sheet"]})
@@ -466,31 +485,66 @@ def paginate(sc: Elem, size: str = "A3") -> list[Elem]:
                 for p in b["pins"]: group[p["anchor"]] = f"{it['id']}/{b['id']}"
     eg = lambda e: group.get(e[1].get("a", "") if e[0] == "w" else e[1]["at"]) or group.get(e[1].get("b", "")) or ""  # noqa: E731
 
-    def cut(es: list[tuple[str, Elem]]) -> list[list[tuple[str, Elem]]] | None:
-        """The best cut of the page between two columns, or None."""
+    memo: dict[Any, Elem] = {}
+
+    def fit(es: list[tuple[str, Elem]]) -> Elem:
+        """The natural layout of a page of elements (kept: a page is measured several times)."""
+        key = tuple((k, e["id"], e.get("own", "")) for k, e in es)
+        if key not in memo: memo[key] = place(_page(sc, es), size)
+        return memo[key]
+
+    def across(es: list[tuple[str, Elem]]) -> list[list[tuple[str, Elem]]] | None:
+        """The page cut between columns into sheets: the first holds the scope's components and as many neighbouring columns as fit the width,
+        then the columns to the right, then those to the left, each as wide as fits. A cut conductor ends in a continuation flag on both sides."""
         pg = _page(sc, es)
         col, _, _ = columns(pg)
         owner = {p["anchor"]: i["id"] for i in pg["items"] for b in i["blocks"] for p in b["pins"]}
-        best: tuple[float, list[list[tuple[str, Elem]]]] | None = None
-        for k in range(max(col.values(), default=0)):
-            sides: list[list[tuple[str, Elem]]] = [[], []]
+        top = max(col.values(), default=0)
+        if top < 1: return None
+        x0: dict[int, float] = {}
+        x1: dict[int, float] = {}
+        for s_ in fit(es)["symbols"]:
+            c = col[s_["id"]]
+            x0[c], x1[c] = min(x0.get(c, s_["x"]), s_["x"]), max(x1.get(c, 0.0), s_["x"] + s_["w"])
+        for c in range(top + 1):
+            x0.setdefault(c, next((x0[k] for k in range(c, top + 1) if k in x0), 0.0)); x1.setdefault(c, next((x1[k] for k in range(c, -1, -1) if k in x1), 0.0))
+
+        def mk(a: int, b: int, start: Any) -> list[tuple[str, Elem]]:
+            out: list[tuple[str, Elem]] = []
             for kind, e in es:
-                if kind == "f": sides[col[owner[e["at"]]] > k].append((kind, e)); continue
-                ca, cb = col[owner[e["a"]]] > k, col[owner[e["b"]]] > k
-                if ca == cb: sides[ca].append((kind, e)); continue
-                for side, a, o in ((ca, e["a"], e["b"]), (cb, e["b"], e["a"])):
-                    sides[side].append(("f", dict(_flag(sc, e, a, o, None), peer=_cid(e) + "|" + str(int(not side)), own=_cid(e) + "|" + str(int(side)),
-                                                  pair=e["pair"], shield=e["shield"], fault=e["fault"])))
-            if not sides[0] or not sides[1]: continue
-            rs = [place(_page(sc, x), size) for x in sides]
-            score = max(r["w"] / aw + (r["h"] > ah) for r in rs)
-            if best is None or score < best[0] - 1e-9: best = (score, sides)
-        return best[1] if best else None
+                ends: list[tuple[str, Any]] = [(e["at"], None)] if kind == "f" else [(e["a"], e["b"]), (e["b"], e["a"])]
+                ins = [(x, o) for x, o in ends if a <= col[owner[x]] <= b]
+                if len(ins) == len(ends): out.append((kind, e))
+                for x, o in ins if len(ends) > len(ins) else []:
+                    out.append(("f", dict(_flag(sc, e, x, o, None), peer=f"{_cid(e)}|{start(col[owner[o]])}", own=f"{_cid(e)}|{start(col[owner[x]])}",
+                                          pair=e["pair"], shield=e["shield"], fault=e["fault"])))
+            return out
+        ok = lambda a, b: x1[b] - x0[a] <= aw and fit(mk(a, b, lambda c: c))["w"] <= aw  # noqa: E731
+        mine = lambda i: i["role"] == "in_scope" or (i["role"] == "harness" and (sc["scope"]["kind"] == "system" or i["code"] in sc["scope"]["ids"]))  # noqa: E731
+        foc = [col[i["id"]] for i in pg["items"] if mine(i)]
+        lo, hi = (min(foc), max(foc)) if foc else (0, top)
+        if not ok(lo, hi): return None
+        while hi < top and ok(lo, hi + 1): hi += 1
+        while lo > 0 and ok(lo - 1, hi): lo -= 1
+        rs = [(lo, hi)]
+        a = hi + 1
+        while a <= top:
+            b = a
+            while b < top and ok(a, b + 1): b += 1
+            rs.append((a, b)); a = b + 1
+        b = lo - 1
+        while b >= 0:
+            a = b
+            while a > 0 and ok(a - 1, b): a -= 1
+            rs.append((a, b)); b = a - 1
+        if len(rs) < 2: return None
+        start = lambda c: next(r[0] for r in rs if r[0] <= c <= r[1])  # noqa: E731
+        return [mk(a, b, start) for a, b in rs]
 
     def split(es: list[tuple[str, Elem]]) -> list[list[tuple[str, Elem]]]:
-        r = place(_page(sc, es), size)
+        r = fit(es)
         if (r["w"] <= aw and r["h"] <= ah) or len(es) < 2: return [es]
-        if len({eg(e) for e in es} - {""}) < 2 and r["h"] <= ah and (c := cut(es)): return split(c[0]) + split(c[1])
+        if r["w"] > aw and (ps := across(es)): return [q for p in ps for q in split(p)]
         y = {w["id"]: min(p[1] for p in w["points"]) for w in r["wires"]}
         ey = lambda e: y.get(_cid(e[1]) if e[0] == "f" else e[1]["id"], 0.0)  # noqa: E731
         named = [(ey(e), eg(e)) for e in es if eg(e)]

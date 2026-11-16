@@ -796,11 +796,15 @@ may show again next launch. Replay from the help menu works at any time and reco
   the same node on another sheet (pagination) uses the same rule for its continuation flags. `verify` reads `covers`, so the round trip still counts every
   conductor; the node's own drawing lists them.
 - Why: a load on the aircraft's ground bus got 15 to 25 flags, which hid the wires that matter.
+- Amendment (stage 1 of the readable drawings): a bus or ground that is itself in scope (or in a selection) gets no summary flag; every one of its wires
+  is drawn.
 
 ## D112. Layout, pagination and routing of the built-in engine
 - Choice: purpose-built layered layout, no graph library (`layout.py`, `route.py`): columns from the walk out of the scope, rows by barycentre and
   pool-adjacent-violators on the 5 mm grid, tracks per channel with a dogleg for exact row swaps, wires through symbols are never allowed (a loop becomes two
-  off-sheet flags). Pagination cuts between columns (continuation flags) when too wide, between connectors or through the middle when too tall.
+  off-sheet flags). Pagination cuts between columns when too wide (continuation flags): the first sheet takes the scope's components and as many neighbouring columns as fit the
+  width, then the columns to the right and to the left, each as wide as fits; between connectors or through the middle when too tall. A sheet is drawn
+  with its rows stretched up to 2x and its channels widened to use the area (the grid and the 2.5 mm text stay).
 - Why: deterministic, fast (one drawing in milliseconds) and every rule is checkable on the geometry (`checks.report`). Known weak: crossings on big
   harness connectors, and a controller with many pins splits into unrelated mini-sheets.
 

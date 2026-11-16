@@ -83,9 +83,14 @@ def _rating(it: Item) -> str:
     return f"{r:g} A" if isinstance(r, (int, float)) else ""
 
 
+def flat(t: str) -> str:
+    """t in lower case without punctuation, to tell whether a name only repeats a code."""
+    return "".join(c for c in t.lower() if c.isalnum())
+
+
 def _head(it: Item) -> tuple[str, str]:
-    """Code and display name (the name only when it says more than the code)."""
-    return it["code"], it["name"] if it["name"] and it["name"] != it["code"] else ""
+    """Code and display name (the name only when it says more than the code: not the code again in words)."""
+    return it["code"], it["name"] if it["name"] and flat(it["name"]) != flat(it["code"]) else ""
 
 
 def _two(it: Item, sides: dict[str, str]) -> list[tuple[dict[str, Any], dict[str, Any], str]]:
@@ -470,11 +475,15 @@ def size(item: Item, sides: dict[str, str] | None = None) -> tuple[float, float]
 FLAG_H = 10.0
 FLAG_TIP = 5.0     # the pointed ends of an off-sheet flag
 FLAG_TAB = 7.5     # the sheet-number cell of a continuation flag
-FLAG_CHARS = 72.0  # mm of text per line (two lines at most)
+FLAG_CHARS = 60.0  # mm of text per line (two lines at most)
 
 
 def _flag_lines(kind: str, text: str) -> list[str]:
-    return wrap(text, FLAG_CHARS, SIZE, True, 2)
+    """The flag's text on at most two lines: as narrow as FLAG_CHARS lets it, wider only when it would be cut off."""
+    for w in (FLAG_CHARS, FLAG_CHARS + 12):
+        lines = wrap(text, w, SIZE, True, 2)
+        if not lines or not lines[-1].endswith("..") or text.endswith(".."): break
+    return lines
 
 
 def flag(id: str, model: str, kind: str, text: str, target: str, sheet: int | None = None, x: float = 0.0, y: float = 0.0, side: str = "L") -> Flag:
