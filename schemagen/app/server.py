@@ -428,6 +428,13 @@ def create_app(project: str | Path | None = None, background: bool = False) -> F
         if out is None: raise AppError("not-found", f"There is no component {cid}.")
         return out
 
+    @app.get("/api/drawing/{cid:path}")
+    def drawing_(cid: str, to: str = "") -> dict[str, Any]:
+        from .drawing import drawing
+        out = drawing(cur(), cid, to)
+        if out is None: raise AppError("not-found", f"There is no component {cid}.")
+        return out
+
     @app.get("/api/card/wire/{wid:path}")
     def card_wire(wid: str) -> dict[str, Any]:
         out = ws.wire_card(cur(), wid)

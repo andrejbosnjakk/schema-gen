@@ -5,7 +5,7 @@
 @keyframes sg-fade { from { opacity: 0; } to { opacity: 1; } }
 .dialog.anim-pop { transform-origin: center; animation-duration: var(--dur); }
 .card-dialog, .source-dialog { display: flex; flex-direction: column; width: min(560px, calc(100vw - 2 * var(--s2))); max-height: calc(100vh - 2 * var(--s2)); }
-.dialog.card-dialog { width: min(720px, calc(100vw - 2 * var(--s2))); max-width: calc(100vw - 2 * var(--s2)); max-height: min(85vh, calc(100vh - 2 * var(--s2))); }
+.dialog.card-dialog { width: min(920px, calc(100vw - 2 * var(--s2))); max-width: calc(100vw - 2 * var(--s2)); max-height: min(85vh, calc(100vh - 2 * var(--s2))); }
 .source-dialog { width: min(440px, calc(100vw - 2 * var(--s2))); }
 .card-dialog > header, .card-dialog > footer, .source-dialog > header, .source-dialog > footer { flex: none; }
 .card-dialog > section, .source-dialog > section { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; display: flex; flex-direction: column; gap: 12px; }
@@ -86,9 +86,35 @@
 .pick-hint > svg { color: var(--accent); }
 .flow.picking .node-card, .flow.picking .react-flow__pane { cursor: crosshair; }
 .bundle-hit { cursor: pointer; }
-.edge-menu { position: fixed; z-index: var(--z-menu); width: 280px; max-height: 260px; overflow-y: auto; }
-.edge-menu .menu-item { justify-content: flex-start; }
-.edge-menu-name { margin-left: auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 
 @media (prefers-reduced-motion: reduce) { .scrim, .sim-panel.anim-slide { animation: none; } }
 .issue-more { display: block; }
+
+/* the wiring drawing in a card (drawing.tsx): pin, then wire, landing, wire, landing; a harness connector has a run on both sides of its pin */
+.drawing { display: flex; flex-direction: column; gap: 0; flex: none; }
+.dw-group, .dw-sides { margin: 12px 0 4px; color: var(--text-2); font-size: var(--fs-xs); font-weight: var(--fw-med); text-transform: uppercase; letter-spacing: 0.06em; }
+.dw-sides { display: grid; grid-template-columns: 1fr 56px 1fr; gap: 8px; } .dw-sides span:nth-child(2) { text-align: center; } .dw-sides span:last-child { text-align: right; }
+.dw-row { display: flex; align-items: center; gap: 0; padding: 6px 0; border-bottom: var(--border-w) solid var(--border); min-height: 44px; }
+.drawing.both .dw-row { display: grid; grid-template-columns: 1fr 56px 1fr; }
+.dw-left, .dw-right, .dw-hop { display: flex; align-items: center; min-width: 0; flex: 1; } .dw-left { justify-content: flex-end; } .dw-hop { flex: 1 1 0; }
+.dw-pin { flex: none; width: 56px; display: flex; flex-direction: column; align-items: center; padding: 4px 2px; border: var(--border-w) solid var(--border-strong); border-radius: var(--radius-sm); background: var(--surface-2); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; text-align: center; }
+.dw-pin.same { visibility: hidden; } .dw-pin span { color: var(--text-2); font-size: var(--fs-xs); }
+.dw-wire { flex: 1 1 96px; min-width: 96px; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 0 4px; }
+.drawing .dw-label { display: inline-flex; flex-wrap: wrap; justify-content: center; gap: 0 6px; font-size: var(--fs-sm); text-align: center; } .dw-label span { color: var(--text-2); }
+.dw-line { align-self: stretch; height: 3px; border-radius: 2px; background: var(--c); }
+.dw-wire.bad .dw-line { box-shadow: 0 0 0 2px var(--err); } .dw-wire.warn .dw-line { box-shadow: 0 0 0 2px var(--warn); }
+.dw-name { color: var(--text-2); font-size: var(--fs-xs); text-align: center; overflow-wrap: anywhere; }
+.dw-at { flex: 0 1 auto; max-width: 200px; padding: 4px 8px; border: var(--border-w) solid var(--border-strong); border-radius: var(--radius-sm); background: var(--surface); color: var(--text); font: inherit; font-size: var(--fs-sm); text-align: left; overflow-wrap: anywhere; }
+button.dw-at { cursor: pointer; } button.dw-at:hover { border-color: var(--accent); }
+.dw-at.via { border-style: dashed; color: var(--text-2); }
+/* Save as PDF: the sheet alone, black on white, with its title block */
+.print-sheet { display: none; }
+@media print {
+  @page { size: A4 landscape; margin: 12mm; }
+  body > *:not(.print-sheet) { display: none !important; }
+  .print-sheet { display: block; color: #111418; background: #fff; font-size: 10pt; }
+  .ps-head { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 1.5pt solid #111418; padding-bottom: 6pt; margin-bottom: 8pt; }
+  .ps-head h1 { font-size: 15pt; margin: 0; } .ps-head p { margin: 2pt 0 0; }
+  .ps-block { display: flex; flex-direction: column; text-align: right; font-size: 9pt; }
+  .print-sheet .dw-row { break-inside: avoid; } .print-sheet .dw-group { break-after: avoid; }
+}

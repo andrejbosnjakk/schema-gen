@@ -125,7 +125,7 @@ def workspace(st: Any) -> dict[str, Any]:
     for (a, b), idx in sorted(bundles.items()):
         cnt = Counter(wire_cls(m.conductors[i]) for i in idx)
         edges.append(dict(id=f"{a}~{b}", a=a, b=b, wires=[m.conductors[i].id for i in idx], cls=[k for k, _ in cnt.most_common()],
-                          label=", ".join(f"{v} × {k}" for k, v in cnt.most_common())))
+                          label=f"{len(idx)} wires" if len(idx) > 1 else m.conductors[idx[0]].label))  # the map counts; the card of the line draws them
     for s in st.sources:
         nodes.append(dict(id=s["id"], name=s.get("name") or s["id"], kind=s.get("type", "battery"), zone="", subsystem="", pins=0, rank=0, sev=""))
         edges.append(dict(id=f"{s['id']}~{s['attach']}", a=s["id"], b=s["attach"], wires=[], cls=[], label=f"{float(s['nominal_V']):g} V"))

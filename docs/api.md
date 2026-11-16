@@ -87,6 +87,25 @@ Pin rows: `pin` is the pin number, or the sheet's text when there is none ("red 
 data ("" if none; `name` is the same, kept for older callers); `wire_name` the wire's name ("BMS supply"); `other` is display text for the
 far end(s), without codes ("Breaker 'DCDC' 30 A LINE"; several ends joined by "; ").
 
+## Drawing (inside a card)
+
+| method | path | returns |
+|---|---|---|
+| GET | `/api/drawing/{id}` | `Drawing` of that component: every pin, and each wire's run through connector pins and splices to where it lands |
+| GET | `/api/drawing/{id}?to={other}` | only the runs that reach `other` (the card of a line on the map) |
+
+```ts
+interface Drawing { id: string; name: string; kind: string; to: {id: string; name: string} | null; project: string;
+  sides: string[];              // a harness connector: its two halves, drawn left and right of each pin; else []
+  groups: {name: string; rows: {pin: string; pin_name: string; left: Seg[]; right: Seg[]}[]}[];   // one row per run, outward from the pin
+  wires: number; cut: number }  // cut: runs left out above 600 rows
+interface Seg { wire: string; label: string; name: string; gauge: string; colour: string; hex: string; sev: string; reason: string;
+  at: string; comp: string; role: "device" | "breaker" | "bus" | "splice" | "harness" }   // the wire, then where it lands
+```
+
+A run ends on a device, breaker or bus; splices and harness pins are passed through. An edge's `label` on the map is the wire
+count ("6 wires"), or the wire's own label when it is a single wire.
+
 ## Simulate
 
 | method | path | body | returns |

@@ -223,7 +223,7 @@ export function App() {
       <main className="canvas" aria-busy={busy}>
         {!issuesOpen && counts && <button className="issues-chip" onClick={() => setIssuesOpen(true)} data-tour="issues">
           {counts.error > 0 && <span className="dot error" aria-hidden="true" />}Issues <span className="count">{counts.all}</span></button>}
-        {ws && !busy ? <Diagram ws={ws} focus={focus} selWire={selWire} onCard={openCard} onWire={(id) => { if (!pick) openWire(id); }} onClear={clearSel} overlay={sim} picking={pick} /> : <DiagramSkeleton />}
+        {ws && !busy ? <Diagram ws={ws} focus={focus} selWire={selWire} onCard={openCard} onWire={(id) => { if (!pick) openWire(id); }} onLink={(a, b) => { if (!pick) { setCard({ type: "link", id: a, to: b }); act("card-open"); } }} onClear={clearSel} overlay={sim} picking={pick} /> : <DiagramSkeleton />}
         {ws && !busy && <div className="canvas-tools">
           <button className="btn" data-tour="add-source" aria-pressed={pick} onClick={() => setPick((p) => !p)}><Glyph name="plus" />Source</button></div>}
         {pick && <div className="pick-hint anim-pop" role="status"><Glyph name="plus" size={14} />Click a bus or component to attach the source<span className="kbd">Esc</span></div>}

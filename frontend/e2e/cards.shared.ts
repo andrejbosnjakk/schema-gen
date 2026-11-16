@@ -97,9 +97,8 @@ export function cardTests(open: (p: Page) => Promise<void>, kind: string) {
     });
     expect(pt).not.toBeNull();
     await page.mouse.click(pt!.x, pt!.y);
-    const menu = page.locator(".edge-menu");
-    if (await menu.isVisible().catch(() => false)) await menu.getByRole("menuitem").first().click();
-    await expect(page.getByRole("dialog").locator(".kind-chip")).toHaveText("wire");
+    // one wire: its card; several: the card of the connection, with its drawing
+    await expect(page.getByRole("dialog").locator(".kind-chip, .drawing").first()).toBeVisible();
   });
 
   test(`${kind}: simulate overlays badges, bars, rings and a summary; a group click zooms; Clear removes it`, async ({ page }) => {

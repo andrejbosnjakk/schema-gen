@@ -124,7 +124,7 @@ def test_workspace_shape(ac):
     assert len(w["conductors"]) == 121 and all(n["id"] and n["rank"] in range(5) for n in w["components"])
     wire = next(x for x in w["conductors"] if x["id"] == "W045")
     assert wire["gauge"].startswith("22") and wire["from"] and wire["to"] and wire["hex"].startswith("#")
-    assert any("×" in e["label"] for e in w["edges"]) and all(e["wires"] for e in w["edges"])
+    assert any(e["label"] == f"{len(e['wires'])} wires" for e in w["edges"]) and all(e["wires"] for e in w["edges"])
     assert all(i["title"] for i in w["issues"])
     assert c.post("/api/positions", json={"positions": {"CB-XPDR": [10, 20.5]}}).json() == {"ok": True}
     assert (d / "layout.json").is_file() and c.get("/api/workspace").json()["positions"]["CB-XPDR"] == [10, 20.5]

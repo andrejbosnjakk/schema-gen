@@ -40,4 +40,7 @@ export interface WireCard {
   length: number | null; colour: string; hex: string; harness: string; protection: string; status: string; notes: string;
   issues: Issue[]; sim?: OverlayItem;
 }
-export type CardTarget = { type: "component" | "wire"; id: string };
+export type CardTarget = { type: "component" | "wire"; id: string } | { type: "link"; id: string; to: string };   // link: the connection between two components
+export interface DrawingSeg { wire: string; label: string; name: string; gauge: string; colour: string; hex: string; sev: string; reason: string; at: string; comp: string; role: string }
+export interface Drawing { id: string; name: string; kind: string; to: { id: string; name: string } | null; project: string; sides: string[];
+  groups: { name: string; rows: { pin: string; pin_name: string; left: DrawingSeg[]; right: DrawingSeg[] }[] }[]; wires: number; cut: number }

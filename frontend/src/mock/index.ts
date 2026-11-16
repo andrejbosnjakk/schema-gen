@@ -137,7 +137,7 @@ export function build(target: number, name: string, extraIssues: Issue[] = []): 
   const edges: Edge[] = [...groups].map(([k, g]) => {
     const [a, b] = k.split("~"), cls = [...new Set(g.map((x) => x.cls))];
     const short = [...new Set(cls.map((c) => SHORT[c] ?? c))];
-    return { id: k, a, b, wires: g.map((x) => x.id), cls, label: short.length === 1 ? `${g.length} × ${short[0]}` : `${g.length} wires` };
+    return { id: k, a, b, wires: g.map((x) => x.id), cls, label: g.length > 1 ? `${g.length} wires` : g[0].label };
   });
   const zones = [...new Set(zone.values())].map((z) => ({ id: z.toLowerCase().replace(/\s+/g, "-"), name: z, members: [...zone].filter(([, v]) => v === z).map(([k]) => k) }));
   return { project: { name, root: `C:\\Users\\you\\AppData\\Local\\schemagen\\projects\\${name}`, version: "1.0.0", warnings: [] },
@@ -206,6 +206,19 @@ export function install(q: URLSearchParams) {
     if (path === "/api/workspace") return ws ? ok(ws) : err(409, "no-project", "No project is open.");
     if (path === "/api/positions") { if (ws) Object.assign(ws.positions, (body as { positions: object }).positions); return ok({ ok: true }, 20); }
     if (path === "/api/simulate") { if (!ws) return err(409, "no-project", "No project is open."); overlay = simulate(ws); return ok(overlay, 600); }
+    const dr = /^\/api\/drawing\/(.+)$/.exec(path);
+    if (dr && ws) {   // one run per wire end on the component (the real server also walks through connector pins and splices)
+      const id = decodeURIComponent(dr[1]), to = q.get("to") ?? "", n = ws.components.find((x) => x.id === id);
+      if (!n) return err(404, "not-found", `There is no component ${id}.`);
+      const sev = { error: "error", warning: "warning" } as Record<string, string>;
+      const rows = ws.conductors.filter((w) => (w.a === id || w.b === id) && (!to || w.a === to || w.b === to)).map((w, i) => {
+        const o = w.a === id ? w.b : w.a;
+        return { pin: q.has("nopins") ? "" : String(i + 1), pin_name: i % 3 ? "" : w.cls === "GND" ? "Return" : "Supply", left: [], right: [{ wire: w.id, label: w.label, name: w.name, gauge: w.gauge, colour: w.cls, hex: w.hex,
+          sev: sev[w.sev] ?? "", reason: overlay?.items[`conductor:${w.id}`]?.reason ?? "", at: w.a === id ? w.to : w.from, comp: o, role: "device" }] };
+      });
+      const t = ws.components.find((x) => x.id === to);
+      return ok({ id, name: n.name, kind: n.kind, to: t ? { id: t.id, name: t.name } : null, project: ws.project.name, sides: [], groups: rows.length ? [{ name: "J1", rows }] : [], wires: rows.length, cut: 0 }, 200);
+    }
     const card = /^\/api\/card\/(component|wire)\/(.+)$/.exec(path);
     if (card && ws) {
       const id = decodeURIComponent(card[2]);
