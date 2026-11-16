@@ -5,6 +5,7 @@ from collections import Counter
 from pathlib import Path
 
 import pytest
+import yaml
 from openpyxl import load_workbook
 
 from schemagen.cli import main
@@ -82,6 +83,24 @@ def test_draw_without_render(tmp_path):
     shutil.copytree(AIRCRAFT, d, ignore=shutil.ignore_patterns("out"))
     assert main(["draw", str(d), "--no-render"]) == 0
     assert (d / "out").is_dir()
+
+
+@pytest.mark.parametrize("name", ["aircraft", "demo"])
+def test_wireviz_connections_use_listed_pins(tmp_path, name):
+    """Every [designator, pin] a drawing connects exists in that connector's pin list and has no stray whitespace (WireViz: "X:pin not found")."""
+    d = tmp_path / name
+    shutil.copytree(AIRCRAFT.parent / name, d, ignore=shutil.ignore_patterns("out"))
+    assert main(["draw", str(d), "--all", "--no-render"]) == 0
+    for f in (d / "out").glob("*.yml"):
+        doc = yaml.safe_load(f.read_text("utf-8"))
+        if not isinstance(doc, dict) or "connectors" not in doc: continue
+        for row in doc.get("connections", []):
+            for part in row:
+                for des, pins in (part.items() if isinstance(part, dict) else []):
+                    if des not in doc["connectors"]: continue  # a cable
+                    have = doc["connectors"][des].get("pins")
+                    for p in pins:
+                        assert (have is None or p in have) and str(p) == str(p).strip(), f"{f.name}: {des}:{p!r} not a clean listed pin of {have}"
 
 
 def test_sheet_is_reproducible(tmp_path):

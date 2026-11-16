@@ -43,7 +43,7 @@ def pick_items(pr: Any, wires: list[dict[str, Any]]) -> list[tuple[str, list[dic
 
 def _pid(pr: Any, dev: str, c: str, p: str) -> str:
     if not p: return pr.strip(c) or c or "terminal"
-    if len(pr.dev_conns[dev]) > 1: return f"{pr.strip(c)} {p}"
+    if len(pr.dev_conns[dev]) > 1: return f"{pr.strip(c)} {p}".strip()
     return p
 
 
