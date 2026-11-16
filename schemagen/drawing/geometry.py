@@ -79,7 +79,16 @@ class SceneWire(TypedDict):
     fault: Fault | None
 
 
-class SceneFlag(TypedDict):
+class Cover(TypedDict):
+    id: str                       # a conductor a summary flag stands for
+    at: str                       # its end on the drawn node
+    target: str                   # its other end
+    label: str
+    gauge: str
+    colour: str
+
+
+class _SceneFlag(TypedDict):
     id: str                       # flag:<conductor id>
     model: str                    # conductor:ID
     kind: Literal["off_sheet"]
@@ -93,6 +102,10 @@ class SceneFlag(TypedDict):
     hex: str
     cls: str
     weight: str
+
+
+class SceneFlag(_SceneFlag, total=False):
+    covers: list[Cover]           # summary flag: the conductors it stands for (D111); `at`, `target`, label ... are the first one's
 
 
 class Scene(TypedDict):
@@ -168,7 +181,7 @@ class Text(TypedDict):
     role: str
 
 
-class Flag(TypedDict):
+class _Flag(TypedDict):
     id: str
     model: str
     x: float
@@ -179,6 +192,11 @@ class Flag(TypedDict):
     target: str
     sheet: int | None
     kind: Literal["off_sheet", "continuation"]
+
+
+class Flag(_Flag, total=False):
+    side: Literal["L", "R"]       # the edge the wire enters (middle of the edge)
+    covers: list[Cover]           # summary flag: the conductors it stands for
 
 
 class Sheet(TypedDict):
@@ -273,6 +291,7 @@ def validate(g: Geometry) -> list[str]:
             if f.get("kind") == "continuation" and not (isinstance(to, int) and 1 <= to <= len(sheets) and to != sh.get("n")):
                 out.append(f"{p}: continuation flag {f['id']} points at sheet {f.get('sheet')!r}")
             if not f.get("model", "").startswith("conductor:"): out.append(f"{p}: flag {f['id']} model {f.get('model')!r} is not a conductor")
+            if "side" in f and f["side"] not in ("L", "R"): out.append(f"{p}: flag {f['id']} side {f['side']!r}")
         used: dict[str, int] = {}
         for w in sh.get("wires", []):
             uid(w["id"], "wire")
@@ -291,6 +310,8 @@ def validate(g: Geometry) -> list[str]:
                     used[ref] = used.get(ref, 0) + 1
                     if flags[ref]["model"] != w["model"]: out.append(f"{p}: wire {w['id']} ends on flag {ref} of {flags[ref]['model']}")
                     if not _inside(pt[0], pt[1], flags[ref]): out.append(f"{p}: wire {w['id']} end {end} is not on flag {ref}")
+                    elif flags[ref].get("side") and (pt[0], pt[1]) != ((flags[ref]["x"] + (flags[ref]["w"] if flags[ref]["side"] == "R" else 0)), flags[ref]["y"] + flags[ref]["h"] / 2):  # noqa: E501
+                        out.append(f"{p}: wire {w['id']} end {end} is not at the middle of the {flags[ref]['side']} edge of flag {ref}")
                 else: out.append(f"{p}: wire {w['id']} end {end} references {ref!r}, which is not an anchor or flag on this sheet")
         for fid in flags:
             if used.get(fid, 0) != 1: out.append(f"{p}: flag {fid} is the end of {used.get(fid, 0)} wires, expected 1")

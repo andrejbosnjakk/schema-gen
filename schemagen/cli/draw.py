@@ -30,6 +30,24 @@ def coverage(pr, drawings):
     return dict(total=len(pr.wires), covered=len(ids), uncovered=unc, drawings=per)
 
 
+def draw_scope(config, scope, sheet="A3", output=None):
+    """One drawing of a scope with the built-in engine (docs/drawing-model.md); WireViz is not needed. Returns the exit code."""
+    import datetime
+    from pathlib import Path
+    from ..app.server import State
+    from ..drawing import checks
+    from ..drawing.engine import draw as render, export
+    st = State(config)
+    g = render(st, scope, sheet, dict(date=datetime.date.today().isoformat(), drawn_by="schemagen", source=Path(config).name))
+    out = Path(output) if output else st.cfg.out / (scope.replace(":", "-").replace("~", "_").replace(",", "+") + ".pdf")
+    out.parent.mkdir(parents=True, exist_ok=True)
+    files = export(g, out)
+    r = checks.report(g)
+    print(f"{scope}: {len(g['sheets'])} sheet(s) {sheet}, {r['crossings']['total']} crossing(s), {len(r['findings'])} layout finding(s)")
+    for f in files: print(f"wrote {f}")
+    return 0
+
+
 def draw(cfg_path, harnesses=(), all_=False, no_render=False, out=None, split=None, interfaces=True):
     from pathlib import Path
     cfg = load_config(cfg_path)

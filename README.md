@@ -96,6 +96,7 @@ The CLI predates the app and still works on its own. `schemagen draw examples/de
 | command | does |
 |---|---|
 | `schemagen draw <project> [X-BH ...] [--all] [--split none\|side\|function\|auto] [--no-render] [--no-interfaces]` | harness drawings (WireViz), interface drawings for every conductor no harness drawing reaches, coverage report, cut list, continuity / insulation test sheet, `index.html`; `--no-render` skips WireViz |
+| `schemagen draw <project> --scope component:VCU [--sheet A3\|A4] -o vcu.pdf\|.svg` | one drawing of a scope (component, connection, harness, selection, subsystem, system) with the built-in engine; no WireViz or Graphviz needed |
 | `schemagen check <project> [--format text\|json\|sarif] [-o FILE] [--rule ID]` | the rules (severity, objects, fix hint); exits 1 on an error |
 | `schemagen fix direction\|names <project> [--apply]` | a reviewable change set (JSON + diff); `direction` makes every wire follow the direction convention; `--apply` stores it in `changes/` |
 | `schemagen pinout <project> [--page-breaks]` | pinout and reintegration checklist per component and harness connector (XLSX + HTML), spares included |

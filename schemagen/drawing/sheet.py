@@ -117,7 +117,7 @@ def symbol_sheet() -> Geometry:
                 blocks=[_blk("J1", [_pin("ECU", "J1", "1", "PWR 12 V")], "MS27-12")])
     s2, t2 = S.build(far2, ax + 110, ay + 20)
     a1 = s2["anchors"][0]
-    g2 = S.flag("flag:W004", "conductor:W004", "continuation", "pin:BB1/Stud/3", "pin:BB1/Stud/3", 1, ax + 20, a1["y"] - 5)
+    g2 = S.flag("flag:W004", "conductor:W004", "continuation", "pin:BB1/Stud/3", "pin:BB1/Stud/3", 1, ax + 20, a1["y"] - 5, "R")
     w2 = dict(id="W004", model="conductor:W004", label="24 RD", gauge="", colour="", hex="#888", weight="fine",
               points=[[g2["x"] + g2["w"], a1["y"]], [a1["x"], a1["y"]]],
               a=g2["id"], b=a1["id"], pair="", shield="", fault=None)

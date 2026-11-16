@@ -1,0 +1,13 @@
+# Fixture for the drawing tests (fictional): a 40-pin controller and a 25-pin harness connector.
+wirelist: wirelist
+cards: cards
+out: out
+
+buses: [GNDB, BB1]
+breaker_prefixes: [CB-]
+splice_prefix: SP-
+sides:
+  X-25: {Cabin half: near, Engine half: far}
+near_words: [cabin]
+harnesses:
+  X-25: [Harness connector X-25, X-25, engine]

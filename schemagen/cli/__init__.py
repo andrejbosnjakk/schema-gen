@@ -43,6 +43,9 @@ def main(argv=None):
     d.add_argument("--split", choices=["none", "side", "function", "auto"], help="split wide harnesses into parts")
     d.add_argument("--no-render", action="store_true", help="skip WireViz (YAML, CSV and checks only)")
     d.add_argument("--no-interfaces", action="store_true", help="no interface drawings for conductors outside the harness drawings")
+    d.add_argument("--scope", help="one drawing of a scope with the built-in engine (no WireViz): component:ID, connection:A~B, harness:ID, selection:A,B, subsystem:NAME, system")  # noqa: E501
+    d.add_argument("--sheet", choices=["A3", "A4"], default="A3", help="with --scope: sheet size (landscape)")
+    d.add_argument("-o", "--output", help="with --scope: .pdf or .svg file (default: <out>/<scope>.pdf)")
     c = sub.add_parser("check", help="run the rules")
     c.add_argument("config"); c.add_argument("--format", choices=["text", "json", "sarif"], default="text"); c.add_argument("-o", "--output")
     c.add_argument("--rule", action="append", help="only these rule ids")
@@ -86,6 +89,10 @@ def main(argv=None):
     sc.add_argument("-o", "--output", default="schemas")
     a = ap.parse_args(argv)
     from . import commands
+    if a.cmd == "draw" and a.scope:
+        from .draw import draw_scope
+        try: return draw_scope(a.config, a.scope, a.sheet, a.output)
+        except ValueError as e: print(f"error: {e}", file=sys.stderr); return 1
     if a.cmd == "draw":
         from ..renderers.wireviz import RenderError
         try: draw(a.config, a.harness, a.all, a.no_render, split=a.split, interfaces=not a.no_interfaces)

@@ -789,3 +789,18 @@ may show again next launch. Replay from the help menu works at any time and reco
   node closure; `scene_netlist` runs the same check before a layout exists. `validate` checks the contract (grid, orthogonal
   wires, ends on what they reference, text >= 2.5 mm, no overlapping texts, flags used once).
 - Why: every later accuracy claim of a drawing rests on this check, not on looking at the picture.
+
+## D111. Many wires on a bus or ground become one summary flag
+- Choice: when a drawn bus or ground node carries 4 or more conductors whose other end is not drawn, the scene has one off-sheet flag for the node
+  ("+ 22 more wires on GND-BUS (see its own drawing)") with `covers`, the list of the conductors it stands for. Splice flags stay individual. A drawing of
+  the same node on another sheet (pagination) uses the same rule for its continuation flags. `verify` reads `covers`, so the round trip still counts every
+  conductor; the node's own drawing lists them.
+- Why: a load on the aircraft's ground bus got 15 to 25 flags, which hid the wires that matter.
+
+## D112. Layout, pagination and routing of the built-in engine
+- Choice: purpose-built layered layout, no graph library (`layout.py`, `route.py`): columns from the walk out of the scope, rows by barycentre and
+  pool-adjacent-violators on the 5 mm grid, tracks per channel with a dogleg for exact row swaps, wires through symbols are never allowed (a loop becomes two
+  off-sheet flags). Pagination cuts between columns (continuation flags) when too wide, between connectors or through the middle when too tall.
+- Why: deterministic, fast (one drawing in milliseconds) and every rule is checkable on the geometry (`checks.report`). Known weak: crossings on big
+  harness connectors, and a controller with many pins splits into unrelated mini-sheets.
+

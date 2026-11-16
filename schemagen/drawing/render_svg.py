@@ -96,7 +96,8 @@ def svg(geometry: Geometry, sheet: int = 0, colour: bool = False, embed_font: bo
         else:
             pts = " ".join(f"{num(x)},{num(y)}" for x, y in v["points"])
             wd = WIRE[v["weight"]]
-            out.append(f'<polyline points="{pts}" fill="none" stroke="#000" stroke-width="{num(wd)}" stroke-linejoin="round" data-model="{escape(model)}"/>')
+            dash = ' stroke-dasharray="1.5 1"' if v.get("fault") else ""
+            out.append(f'<polyline points="{pts}" fill="none" stroke="#000" stroke-width="{num(wd)}" stroke-linejoin="round"{dash} data-model="{escape(model)}"/>')  # noqa: E501
             if colour and v.get("hex"):
                 out.append(f'<polyline points="{pts}" fill="none" stroke="{escape(v["hex"])}" stroke-width="{num(max(0.12, wd / 2))}" stroke-linejoin="round"/>')
     out.append("</svg>")

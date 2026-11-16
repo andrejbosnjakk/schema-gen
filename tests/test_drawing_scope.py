@@ -41,7 +41,7 @@ def check(st, sc):
     bad = []
     anchors = [p["anchor"] for it in sc["items"] for b in it["blocks"] for p in b["pins"]]
     ids = [it["id"] for it in sc["items"]]
-    wires, flags = [w["id"] for w in sc["wires"]], [f["model"].removeprefix("conductor:") for f in sc["flags"]]
+    wires, flags = [w["id"] for w in sc["wires"]], [c["id"] for f in sc["flags"] for c in f.get("covers") or [dict(id=f["model"].removeprefix("conductor:"))]]
     for name, xs in (("items", ids), ("anchors", anchors), ("wires", wires), ("flags", flags)):
         if len(xs) != len(set(xs)): bad.append(f"duplicate {name}")
     if set(wires) & set(flags): bad.append(f"wire and flag: {sorted(set(wires) & set(flags))}")
@@ -96,7 +96,8 @@ def test_connection_and_flags(states):
     assert {it["code"] for it in g["items"] if it["role"] == "far_end"} >= {"LANDING-LIGHT", "NAV-LIGHT-LEFT"}
     t = scene(st, "component:TRANSPONDER")
     gnd = [f for f in t["flags"] if f["at"].startswith("pin:BB-GROUND-BUS/")]
-    assert gnd and all(f["text"].startswith("→ ") and f["target"] for f in gnd)  # the ground bus's other wires: flags, not wires
+    assert len(gnd) == 1 and gnd[0]["text"].startswith("+ ") and len(gnd[0]["covers"]) >= 4  # the ground bus's other wires: one summary flag (D111)
+    assert all(c["target"] and c["at"].startswith("pin:BB-GROUND-BUS/") for c in gnd[0]["covers"])
     assert next(it for it in t["items"] if it["code"] == "TRANSPONDER")["role"] == "in_scope"
     k = next(it for it in scene(st, "component:K-BATTERY-CONTACTOR")["items"] if it["code"] == "K-BATTERY-CONTACTOR")
     assert k["symbol"] == "relay" and k["attrs"]["contacts"][0]["no"].endswith("/87") and k["attrs"]["coil"]
@@ -139,7 +140,7 @@ def naive(sc):
     flags = []
     for k, f in enumerate(sc["flags"]):
         x, y = 5.0 + 5 * (k % 80), 250.0 + 5 * (k // 80)
-        flags.append(dict(id=f["id"], model=f["model"], x=x, y=y, w=5, h=5, text=f["text"], target=f["target"], sheet=None, kind="off_sheet"))
+        flags.append(dict(id=f["id"], model=f["model"], x=x, y=y, w=5, h=5, text=f["text"], target=f["target"], sheet=None, kind="off_sheet", **({"covers": f["covers"]} if "covers" in f else {})))  # noqa: E501
         wires.append(wire(f, f["at"], f["id"], [pos[f["at"]], [x, pos[f["at"]][1]], [x, y]]) | {"id": "stub:" + f["id"]})
     sheet = dict(n=1, of=1, size="A3", w_mm=420.0, h_mm=297.0, grid_mm=5.0, symbols=symbols, wires=wires, texts=[], flags=flags, notes=[], legend=[], title_block={})
     info = dict(title=sc["title"], scope=sc["scope"]["text"], project=sc["project"], revision="", date="", drawn_by="", source="")

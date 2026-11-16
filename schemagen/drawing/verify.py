@@ -28,7 +28,12 @@ def netlist(g: Geometry) -> set[Entry]:
     facts: dict[str, set[tuple[str, str, str]]] = defaultdict(set)
     for sh in g["sheets"]:
         ref = {a["id"]: a["model"] for s in sh["symbols"] for a in s["anchors"]} | {f["id"]: f["target"] for f in sh["flags"]}
+        cover = {f["id"]: f["covers"] for f in sh["flags"] if f.get("covers")}
         for w in sh["wires"]:
+            if w["a"] in cover or w["b"] in cover:  # a summary flag: every conductor it stands for, by its own ends
+                for c in cover[w["a"] if w["a"] in cover else w["b"]]:
+                    ends[c["id"]] |= {c["at"], c["target"]}; facts[c["id"]].add((c["label"], c["gauge"], c["colour"]))
+                continue
             cid = w["model"].removeprefix("conductor:")
             ends[cid] |= {ref.get(w["a"], "?" + w["a"]), ref.get(w["b"], "?" + w["b"])}
             facts[cid].add((w["label"], w["gauge"], w["colour"]))
@@ -45,6 +50,9 @@ def scene_netlist(sc: Scene) -> set[Entry]:
         ends[cid] |= {x if x in anchors else "?" + x for x in (w["a"], w["b"])}
         facts[cid].add((w["label"], w["gauge"], w["colour"]))
     for f in sc["flags"]:
+        for c in f.get("covers", []):
+            ends[c["id"]] |= {c["at"] if c["at"] in anchors else "?" + c["at"], c["target"]}; facts[c["id"]].add((c["label"], c["gauge"], c["colour"]))
+        if "covers" in f: continue
         cid = f["model"].removeprefix("conductor:")
         ends[cid] |= {f["at"] if f["at"] in anchors else "?" + f["at"], f["target"]}
         facts[cid].add((f["label"], f["gauge"], f["colour"]))

@@ -34,6 +34,7 @@ class _B:
     def __init__(s, it: Item, x: float, y: float) -> None:
         s.it, s.ox, s.oy, s.model = it, x, y, it["model"]
         s.prims: list[Prim] = []; s.texts: list[Text] = []; s.anchors: list[Anchor] = []
+        s.taps: list[dict[str, str]] = []
 
     def line(s, x1: float, y1: float, x2: float, y2: float, st: str = N, dash: bool = False) -> None:
         p: Prim = dict(kind="line", stroke=st, x1=_r(s.ox + x1), y1=_r(s.oy + y1), x2=_r(s.ox + x2), y2=_r(s.oy + y2))  # type: ignore[typeddict-item]
@@ -60,8 +61,8 @@ class _B:
         top = cy - (baseline_dy(size) - size / 2)
         s.texts.append(Text(s=t, x=_r(s.ox + left), y=_r(s.oy + top), w=w, h=h, size_mm=size, align=align, model=model or s.model, role=role))  # type: ignore[typeddict-item]
 
-    def anchor(s, aid: str, x: float, y: float, side: str) -> None:
-        s.anchors.append(Anchor(id=aid, model=aid, x=_r(s.ox + x), y=_r(s.oy + y), side=side))  # type: ignore[typeddict-item]
+    def anchor(s, aid: str, x: float, y: float, side: str, model: str = "") -> None:
+        s.anchors.append(Anchor(id=aid, model=model or aid, x=_r(s.ox + x), y=_r(s.oy + y), side=side))  # type: ignore[typeddict-item]
 
 
 def _tw(t: str, role: str = "pin", size: float = SIZE) -> float:
@@ -163,11 +164,11 @@ def _block(it: Item, B: _B, sides: dict[str, str]) -> tuple[float, float]:
             s = sides.get(p["anchor"], dflt)
             sp = "spare" if p["spare"] else "pin"
             if s == "R":
-                B.text(p["n"], W - 4, y, "right", sp, model=p["anchor"])
-                B.text(lab, W - 4 - nw - (2 if nw else 0), y, "right", sp, model=p["anchor"])
+                B.text(p["n"], W - 4, y, "right", sp, model=B.model if p["spare"] else p["anchor"])
+                B.text(lab, W - 4 - nw - (2 if nw else 0), y, "right", sp, model=B.model if p["spare"] else p["anchor"])
             else:
-                B.text(p["n"], 4, y, "left", sp, model=p["anchor"])
-                B.text(lab, 4 + nw + (2 if nw else 0), y, "left", sp, model=p["anchor"])
+                B.text(p["n"], 4, y, "left", sp, model=B.model if p["spare"] else p["anchor"])
+                B.text(lab, 4 + nw + (2 if nw else 0), y, "left", sp, model=B.model if p["spare"] else p["anchor"])
             if not p["spare"]:
                 B.line(*((W - 2.5, y, W, y) if s == "R" else (0, y, 2.5, y)))
                 B.anchor(p["anchor"], W if s == "R" else 0, y, s)
@@ -206,13 +207,41 @@ def _harness(it: Item, B: _B, sides: dict[str, str]) -> tuple[float, float]:
             y = 5 * k + 5 + 5 * i
             s = sd[c]
             sp = "spare" if p["spare"] else "pin"
-            B.text(p["n"], 2 if s == "L" else W - 2, y, "left" if s == "L" else "right", sp, model=p["anchor"])
+            B.text(p["n"], 2 if s == "L" else W - 2, y, "left" if s == "L" else "right", sp, model=B.model if p["spare"] else p["anchor"])
             if not p["spare"]: B.anchor(p["anchor"], 0 if s == "L" else W, y, s)
     return W, H
 
 
 # ---------------------------------------------------------------- distribution parts
+def _bartaps(it: Item, B: _B) -> tuple[float, float]:
+    """Splice, bus or ground with one anchor per wire (taps) along a vertical bar: the i-th tap on the left and the i-th on the right share a row,
+    so a wire can run straight through. A tap is {id, model, side, text}; its anchor id is the tap's id, its model the pin ref it stands for."""
+    k = it["symbol"]
+    cls = it["attrs"].get("function_class") or "" if k == "bus" else ""
+    sd = {s: [t for t in B.taps if t["side"] == s] for s in "LR"}
+    labs = [t["text"] for t in B.taps if t.get("text")]
+    half = ceil_to(max([5.0, (_tw(it["code"], "name") + 2) / 2, (_tw(cls) + 2) / 2, *(_tw(t) + 3 for t in labs)]))
+    W, hdr = 2 * half, 5 * (1 + bool(cls)) if k != "splice" else 5
+    rows = max(1, len(sd["L"]), len(sd["R"]))
+    y0 = hdr + 5
+    B.text(it["code"], half, 3.75, "centre", "name")
+    if cls: B.text(cls, half, 8.25, "centre", "pin")
+    yb = y0 + 5 * (rows - 1) + 2.5
+    B.line(half, y0 - 2.5, half, yb, K if k == "bus" else N)
+    for s, ts in sd.items():
+        for i, t in enumerate(ts):
+            y = y0 + 5 * i
+            B.line(half, y, 0 if s == "L" else W, y); B.circle(half, y, 0.9, N, "black")
+            B.text(t.get("text", ""), half + 1.5 if s == "L" else half - 1.5, y - 2.5, "left" if s == "L" else "right", "pin", model=t["model"])
+            B.anchor(t["id"], 0 if s == "L" else W, y, s, t["model"])
+    if k == "ground":
+        B.line(half, yb, half, yb + 2.5); B.line(half - 5, yb + 2.5, half + 5, yb + 2.5); B.line(half - 3, yb + 5, half + 3, yb + 5); B.line(half - 1, yb + 7.5, half + 1, yb + 7.5)  # noqa: E501
+        yb += 7.5
+    return W, ceil_to(yb + 2.5)
+
+
 def _splice(it: Item, B: _B, sides: dict[str, str]) -> tuple[float, float]:
+    if B.taps: return _bartaps(it, B)
     code = it["code"]
     W = ceil_to(4 + _tw(code, "name"))
     pins = _pins(it)
@@ -225,6 +254,7 @@ def _splice(it: Item, B: _B, sides: dict[str, str]) -> tuple[float, float]:
 
 
 def _ground(it: Item, B: _B, sides: dict[str, str]) -> tuple[float, float]:
+    if B.taps: return _bartaps(it, B)
     W = ceil_to(max(10.0, _tw(it["code"], "name") + 2), 10)
     c = W / 2
     B.line(c, 0, c, 5); B.line(c - 5, 5, c + 5, 5); B.line(c - 3, 7.5, c + 3, 7.5); B.line(c - 1, 10, c + 1, 10)
@@ -234,6 +264,7 @@ def _ground(it: Item, B: _B, sides: dict[str, str]) -> tuple[float, float]:
 
 
 def _bus(it: Item, B: _B, sides: dict[str, str]) -> tuple[float, float]:
+    if B.taps: return _bartaps(it, B)
     pins = _pins(it) or [({}, {"n": "", "name": "", "anchor": ""})]
     cls = it["attrs"].get("function_class") or ""
     rows = 1 + bool(cls)
@@ -271,12 +302,17 @@ def _breaker(it: Item, B: _B, sides: dict[str, str]) -> tuple[float, float]:
 
 
 def _terminator(it: Item, B: _B, sides: dict[str, str]) -> tuple[float, float]:
+    """A resistor drawn upright between its two terminals, which are both on one side (default L): it closes a bus from the side."""
     rows = [(it["code"], "name"), *[(t, "pin") for t in (it["attrs"].get("value") or "",) if t]]
     W = _inline_w(rows)
     c = W / 2
-    _leads(B, W, 5, c - 6, c + 6, _two(it, sides))
-    B.poly([(c - 6, 5), (c - 5, 5), (c - 4, 2), (c - 2, 8), (c, 2), (c + 2, 8), (c + 4, 2), (c + 5, 5), (c + 6, 5)])
-    return W, _labels(B, rows, W, 10.5)
+    ts = _pins(it)[:2]
+    s = sides.get(ts[0][1]["anchor"], "L") if ts else "L"
+    e = 0 if s == "L" else W
+    B.line(e, 5, c, 5); B.line(e, 15, c, 15)
+    B.poly([(c, 5), (c, 7), (c + 2, 8), (c - 2, 10), (c + 2, 12), (c, 13), (c, 15)])
+    for y, (_, p) in zip((5, 15), ts): B.anchor(p["anchor"], e, y, s)
+    return W, _labels(B, rows, W, 21.5)
 
 
 def _battery(it: Item, B: _B, sides: dict[str, str]) -> tuple[float, float]:
@@ -289,6 +325,13 @@ def _battery(it: Item, B: _B, sides: dict[str, str]) -> tuple[float, float]:
            for t in (f"{b['id']} {p['n']} {p['name']} {p['type']}".lower() for b, p in ts)]
     if len(ts) == 2 and pol[0] == "+" and pol[1] != "+": ts, pol = ts[::-1], pol[::-1]   # minus first (L), plus second (R)
     two = [(b, p, sides.get(p["anchor"], "L" if i == 0 else "R")) for i, (b, p) in enumerate(ts)]
+    if len(two) == 2 and two[0][2] == two[1][2] and all(p["anchor"] in sides for _, p, _ in two):   # both leads on one side: the cell drawn upright
+        s, (pl, mi) = two[0][2], (two[0], two[1]) if pol[0] == "+" else (two[1], two[0])
+        e = 0 if s == "L" else W
+        B.line(c, 5, c, 8.5); B.line(c, 11.5, c, 15); B.line(c - 3, 8.5, c + 3, 8.5); B.line(c - 1.5, 11.5, c + 1.5, 11.5, K)
+        for (_, p, _), y, q in ((pl, 5, "+"), (mi, 15, "−")):
+            B.line(c, y, e, y); B.anchor(p["anchor"], e, y, s); B.text(q, e + (3.5 if s == "L" else -3.5), y - 2.5, "centre", "pin")
+        return W, _labels(B, rows, W, 21.5)
     if len(two) == 2 and two[0][2] == two[1][2]: two[1] = (two[1][0], two[1][1], _OPP[two[0][2]])
     plus_r = next((s == "R" for (_, _, s), q in zip(two, pol) if q == "+"), next((s == "L" for (_, _, s), q in zip(two, pol) if q == "-"), True))
     a, b2 = (c + 1.5, c - 1.5) if plus_r else (c - 1.5, c + 1.5)   # x of the long plate, of the short plate
@@ -357,7 +400,7 @@ def _switch(it: Item, B: _B, sides: dict[str, str]) -> tuple[float, float]:
 
     def term(ref: str, y: float, s: str) -> None:
         if not ref: return
-        B.text(tn(ref), 1.5 if s == "L" else W - 1.5, y - 2.5, "left" if s == "L" else "right", "pin", model=ref)
+        B.text(tn(ref), 1.5 if s == "L" else W - 1.5, y - 2.5, "left" if s == "L" else "right", "pin", model=ref if ref in look else B.model)
         if ref in look: B.anchor(ref, 0 if s == "L" else W, y, s)
 
     def sidepair(r1: str, r2: str) -> tuple[str, str]:
@@ -406,11 +449,13 @@ def text(s: str, x: float, cy: float, align: str = "left", role: str = "pin", si
     return B.texts[0]
 
 
-def build(item: Item, x: float = 0.0, y: float = 0.0, sides: dict[str, str] | None = None) -> tuple[Symbol, list[Text]]:
-    """The symbol of a scene item with its top left at (x, y) (multiples of GRID), and its texts. `sides` maps anchor ids to "L"/"R"."""
+def build(item: Item, x: float = 0.0, y: float = 0.0, sides: dict[str, str] | None = None, taps: list[dict[str, str]] | None = None) -> tuple[Symbol, list[Text]]:
+    """The symbol of a scene item with its top left at (x, y) (multiples of GRID), and its texts. `sides` maps anchor ids to "L"/"R".
+    `taps` (splice, bus, ground only): one anchor per wire, see _bartaps."""
     f = _BUILD.get(item["symbol"])
     if f is None: raise ValueError(f"no symbol for {item['symbol']!r}")
     B = _B(item, x, y)
+    B.taps = (taps or []) if item["symbol"] in ("splice", "bus", "ground") else []
     w, h = f(item, B, sides or {})
     return Symbol(id=item["id"], kind=item["symbol"], model=item["model"], x=x, y=y, w=_r(w), h=_r(h), anchors=B.anchors, prims=B.prims), B.texts
 
@@ -425,21 +470,21 @@ def size(item: Item, sides: dict[str, str] | None = None) -> tuple[float, float]
 FLAG_H = 10.0
 FLAG_TIP = 5.0     # the pointed ends of an off-sheet flag
 FLAG_TAB = 7.5     # the sheet-number cell of a continuation flag
-FLAG_CHARS = 42.0  # mm of text per line (two lines at most)
+FLAG_CHARS = 72.0  # mm of text per line (two lines at most)
 
 
 def _flag_lines(kind: str, text: str) -> list[str]:
     return wrap(text, FLAG_CHARS, SIZE, True, 2)
 
 
-def flag(id: str, model: str, kind: str, text: str, target: str, sheet: int | None = None, x: float = 0.0, y: float = 0.0) -> Flag:
+def flag(id: str, model: str, kind: str, text: str, target: str, sheet: int | None = None, x: float = 0.0, y: float = 0.0, side: str = "L") -> Flag:
     """A flag at (x, y) on the grid, sized to its text. The wire attaches at the middle of its left or right edge (a grid point,
     (x, y + 5) or (x + w, y + 5)). off_sheet: a pennant with pointed ends (text = where it leads); continuation: a box with a cell
-    for the sheet number (text = the pin it continues to). `sheet` is the continuation's sheet number."""
+    for the sheet number (text = the pin it continues to). `sheet` is the continuation's sheet number. `side` is the edge the wire enters."""
     lines = _flag_lines(kind, text)
     pad = 2 * FLAG_TIP + 1 if kind == "off_sheet" else FLAG_TAB + 3
     w = ceil_to(max([_tw(t, "flag") for t in lines] or [0.0]) + pad)
-    return Flag(id=id, model=model, x=x, y=y, w=max(w, 15.0), h=FLAG_H, text=text, target=target, sheet=sheet, kind=kind)  # type: ignore[typeddict-item]
+    return Flag(id=id, model=model, x=x, y=y, w=max(w, 15.0), h=FLAG_H, text=text, target=target, sheet=sheet, kind=kind, side=side)  # type: ignore[typeddict-item]
 
 
 def flag_shapes(f: Flag) -> tuple[list[Prim], list[Text]]:

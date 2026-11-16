@@ -13,7 +13,7 @@ from ..core.model import Component, Contact, Terminal
 from ..core.net import Net, NodeKey
 from ..exporters.palette import HEX
 from ..exporters.pinout import far_text, where
-from .geometry import VERSION, Block, Fault, Item, Pin, Scene, SceneFlag, SceneWire, Scope
+from .geometry import VERSION, Block, Cover, Fault, Item, Pin, Scene, SceneFlag, SceneWire, Scope
 
 SCOPES = ("component", "connection", "harness", "selection", "subsystem", "system")
 SYMBOLS = {"device": "block", "load": "block", "sensor": "block", "controller": "block", "harness": "harness", "splice": "splice",
@@ -131,10 +131,34 @@ def scene(st: Any, scope: str | Scope) -> Scene:
     wsev = severities(st)[1] if hasattr(st, "issues") else {}
     overlay = (getattr(st, "overlay", None) or {}).get("items", {})
     wires = [_wire(st, conds[j], wsev, overlay) for j in drawn]
-    fl = [_flag(st, j, e) for j, e in flags.items()]
+    fl = _collapse(st, flags, [_flag(st, j, e) for j, e in flags.items()], {j: net.node(j, e) for j, e in flags.items()})
     return Scene(version=VERSION, scope=sc, title=_title(st, sc, S, to), project=st.cfg.root.name,
                  items=sorted(items, key=lambda x: (x["column"], _natural(x["code"]))),
                  wires=sorted(wires, key=lambda w: _natural(w["id"])), flags=sorted(fl, key=lambda f: _natural(f["id"])))
+
+
+COLLAPSE = 4  # flags on one bus or ground node from here on become one summary flag (D111)
+
+
+def _collapse(st: Any, ends: dict[int, int], fl: list[SceneFlag], node: dict[int, NodeKey]) -> list[SceneFlag]:
+    """One summary flag per bus or ground node that carries COLLAPSE or more off-sheet flags; it lists the conductors it stands for."""
+    ctx, conds = st.ctx, st.m.conductors
+    by: dict[NodeKey, list[int]] = defaultdict(list)
+    for j, e in ends.items():
+        c = ctx.comp.get(conds[j].end(e).device)
+        if c and symbol(st, c) in ("bus", "ground"): by[node[j]].append(j)
+    drop: set[str] = set()
+    out: list[SceneFlag] = []
+    for js in by.values():
+        if len(js) < COLLAPSE: continue
+        js.sort(key=lambda j: _natural(conds[j].id))
+        f0 = next(f for f in fl if f["model"] == f"conductor:{conds[js[0]].id}")
+        cov = [Cover(id=conds[j].id, at=ctx.ref(conds[j].end(ends[j])), target=ctx.ref(conds[j].end(3 - ends[j])), label=conds[j].label, gauge=conds[j].gauge,
+                     colour=conds[j].colour_code or conds[j].colour) for j in js]
+        name = ctx.comp[conds[js[0]].end(ends[js[0]]).device]
+        out.append(dict(f0, id=f"flag:+{conds[js[0]].id}", target_item="", text=f"+ {len(js)} more wires on {name.id} (see its own drawing)", covers=cov))  # type: ignore[arg-type]
+        drop |= {f"conductor:{conds[j].id}" for j in js}
+    return [f for f in fl if f["model"] not in drop] + out
 
 
 def _title(st: Any, sc: Scope, S: list[Component], to: Component | None) -> str:

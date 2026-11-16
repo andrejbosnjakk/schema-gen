@@ -82,7 +82,7 @@ def _page(c: Canvas, sh: dict[str, Any], fonts: tuple[str, str]) -> None:
         else:
             pts = v["points"]
             c.setStrokeColorRGB(0, 0, 0)
-            path(pts, False, None, "k", WIRE[v["weight"]])
+            path(pts, False, None, "k", WIRE[v["weight"]], bool(v.get("fault")))
 
 
 def pdf(geometry: Geometry, path: str | Path) -> int:

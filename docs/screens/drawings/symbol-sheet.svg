@@ -52,7 +52,7 @@
 <g data-model="component:X-BH"><rect x="115" y="75" width="45" height="45" fill="#fff" stroke="#000" stroke-width="0.35"/><line x1="115" y1="87.5" x2="160" y2="87.5" fill="none" stroke="#000" stroke-width="0.18"/><line x1="115" y1="81" x2="160" y2="81" fill="none" stroke="#000" stroke-width="0.18"/><line x1="137.5" y1="81" x2="137.5" y2="120" fill="none" stroke="#000" stroke-width="0.18"/></g>
 <g data-model="component:SP-1"><circle cx="115" cy="145" r="1.25" fill="#000" stroke="#000" stroke-width="0.35"/></g>
 <g data-model="component:GNDB"><line x1="155" y1="140" x2="155" y2="145" fill="none" stroke="#000" stroke-width="0.35"/><line x1="150" y1="145" x2="160" y2="145" fill="none" stroke="#000" stroke-width="0.35"/><line x1="152" y1="147.5" x2="158" y2="147.5" fill="none" stroke="#000" stroke-width="0.35"/><line x1="154" y1="150" x2="156" y2="150" fill="none" stroke="#000" stroke-width="0.35"/></g>
-<g data-model="component:R-1"><line x1="265" y1="90" x2="269" y2="90" fill="none" stroke="#000" stroke-width="0.35"/><line x1="281" y1="90" x2="285" y2="90" fill="none" stroke="#000" stroke-width="0.35"/><polyline points="269,90 270,90 271,87 273,93 275,87 277,93 279,87 280,90 281,90" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round"/></g>
+<g data-model="component:R-1"><line x1="265" y1="90" x2="275" y2="90" fill="none" stroke="#000" stroke-width="0.35"/><line x1="265" y1="100" x2="275" y2="100" fill="none" stroke="#000" stroke-width="0.35"/><polyline points="275,90 275,92 277,93 273,95 277,97 275,98 275,100" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round"/></g>
 <g data-model="component:SW-1"><line x1="180" y1="30" x2="189" y2="30" fill="none" stroke="#000" stroke-width="0.35"/><line x1="201" y1="30" x2="210" y2="30" fill="none" stroke="#000" stroke-width="0.35"/><circle cx="189" cy="30" r="0.9" fill="#fff" stroke="#000" stroke-width="0.35"/><circle cx="201" cy="30" r="0.9" fill="#fff" stroke="#000" stroke-width="0.35"/><line x1="189" y1="30" x2="200" y2="26.5" fill="none" stroke="#000" stroke-width="0.35"/></g>
 <g data-model="component:K-1"><line x1="180" y1="80" x2="191.5" y2="80" fill="none" stroke="#000" stroke-width="0.35"/><line x1="203.5" y1="75" x2="215" y2="75" fill="none" stroke="#000" stroke-width="0.35"/><line x1="203.5" y1="85" x2="215" y2="85" fill="none" stroke="#000" stroke-width="0.35"/><circle cx="191.5" cy="80" r="0.9" fill="#fff" stroke="#000" stroke-width="0.35"/><circle cx="203.5" cy="75" r="0.9" fill="#fff" stroke="#000" stroke-width="0.35"/><circle cx="203.5" cy="85" r="0.9" fill="#fff" stroke="#000" stroke-width="0.35"/><line x1="191.5" y1="80" x2="203.5" y2="85" fill="none" stroke="#000" stroke-width="0.35"/><line x1="180" y1="100" x2="191.5" y2="100" fill="none" stroke="#000" stroke-width="0.35"/><line x1="203.5" y1="100" x2="215" y2="100" fill="none" stroke="#000" stroke-width="0.35"/><rect x="191.5" y="97.5" width="12" height="5" fill="#fff" stroke="#000" stroke-width="0.35"/><line x1="197.5" y1="97.5" x2="197.5" y2="82.5" fill="none" stroke="#000" stroke-width="0.18" stroke-dasharray="1.5 1"/></g>
 <g data-model="component:F-1"><line x1="180" y1="155" x2="185" y2="155" fill="none" stroke="#000" stroke-width="0.35"/><line x1="195" y1="155" x2="200" y2="155" fill="none" stroke="#000" stroke-width="0.35"/><rect x="185" y="152.5" width="10" height="5" fill="#fff" stroke="#000" stroke-width="0.35"/><line x1="185" y1="155" x2="195" y2="155" fill="none" stroke="#000" stroke-width="0.35"/></g>
@@ -84,8 +84,8 @@
 <text x="70.3" y="61.25" font-size="3.436" text-anchor="end" data-model="pin:ECU/J1/3">CAN H</text>
 <text x="76" y="66.25" font-size="3.436" text-anchor="end" data-model="pin:ECU/J1/4">4</text>
 <text x="70.3" y="66.25" font-size="3.436" text-anchor="end" data-model="pin:ECU/J1/4">CAN L</text>
-<text x="76" y="71.25" font-size="3.436" text-anchor="end" fill="#6b6b6b" data-model="pin:ECU/J1/5">5</text>
-<text x="70.3" y="71.25" font-size="3.436" text-anchor="end" fill="#6b6b6b" data-model="pin:ECU/J1/5">Spare input (spare)</text>
+<text x="76" y="71.25" font-size="3.436" text-anchor="end" fill="#6b6b6b" data-model="component:ECU">5</text>
+<text x="70.3" y="71.25" font-size="3.436" text-anchor="end" fill="#6b6b6b" data-model="component:ECU">Spare input (spare)</text>
 <text x="76" y="76.25" font-size="3.436" text-anchor="end" data-model="pin:ECU/J1/6">6</text>
 <text x="70.3" y="76.25" font-size="3.436" text-anchor="end" data-model="pin:ECU/J1/6">Fuel pump</text>
 <text x="76" y="81.25" font-size="3.436" text-anchor="end" data-model="pin:ECU/J1/7">7</text>
@@ -96,8 +96,8 @@
 <text x="70.3" y="91.25" font-size="3.436" text-anchor="end" data-model="pin:ECU/J1/9">Coil 1</text>
 <text x="76" y="96.25" font-size="3.436" text-anchor="end" data-model="pin:ECU/J1/10">10</text>
 <text x="70.3" y="96.25" font-size="3.436" text-anchor="end" data-model="pin:ECU/J1/10">Coil 2</text>
-<text x="76" y="101.25" font-size="3.436" text-anchor="end" fill="#6b6b6b" data-model="pin:ECU/J1/11">11</text>
-<text x="70.3" y="101.25" font-size="3.436" text-anchor="end" fill="#6b6b6b" data-model="pin:ECU/J1/11">Spare output (spare)</text>
+<text x="76" y="101.25" font-size="3.436" text-anchor="end" fill="#6b6b6b" data-model="component:ECU">11</text>
+<text x="70.3" y="101.25" font-size="3.436" text-anchor="end" fill="#6b6b6b" data-model="component:ECU">Spare output (spare)</text>
 <text x="76" y="106.25" font-size="3.436" text-anchor="end" data-model="pin:ECU/J1/12">12</text>
 <text x="70.3" y="106.25" font-size="3.436" text-anchor="end" data-model="pin:ECU/J1/12">Tacho</text>
 <text x="24" y="116.25" font-size="3.436" text-anchor="start" font-weight="600" data-model="component:ECU">J2</text>
@@ -129,21 +129,21 @@
 <text x="117" y="101.25" font-size="3.436" text-anchor="start" data-model="pin:X-BH/Cabin half/3">3</text>
 <text x="117" y="106.25" font-size="3.436" text-anchor="start" data-model="pin:X-BH/Cabin half/4">4</text>
 <text x="117" y="111.25" font-size="3.436" text-anchor="start" data-model="pin:X-BH/Cabin half/5">5</text>
-<text x="117" y="116.25" font-size="3.436" text-anchor="start" fill="#6b6b6b" data-model="pin:X-BH/Cabin half/6">6</text>
+<text x="117" y="116.25" font-size="3.436" text-anchor="start" fill="#6b6b6b" data-model="component:X-BH">6</text>
 <text x="148.75" y="85" font-size="3.436" text-anchor="middle" font-weight="600" data-model="component:X-BH">Wing half</text>
 <text x="158" y="91.25" font-size="3.436" text-anchor="end" data-model="pin:X-BH/Wing half/1">1</text>
 <text x="158" y="96.25" font-size="3.436" text-anchor="end" data-model="pin:X-BH/Wing half/2">2</text>
 <text x="158" y="101.25" font-size="3.436" text-anchor="end" data-model="pin:X-BH/Wing half/3">3</text>
 <text x="158" y="106.25" font-size="3.436" text-anchor="end" data-model="pin:X-BH/Wing half/4">4</text>
 <text x="158" y="111.25" font-size="3.436" text-anchor="end" data-model="pin:X-BH/Wing half/5">5</text>
-<text x="158" y="116.25" font-size="3.436" text-anchor="end" fill="#6b6b6b" data-model="pin:X-BH/Wing half/6">6</text>
+<text x="158" y="116.25" font-size="3.436" text-anchor="end" fill="#6b6b6b" data-model="component:X-BH">6</text>
 <text x="115" y="68.75" font-size="3.436" text-anchor="start" fill="#6b6b6b" data-model="component:X-BH">harness connector</text>
 <text x="118" y="146.25" font-size="3.436" text-anchor="start" font-weight="600" data-model="component:SP-1">SP-1</text>
 <text x="115" y="133.75" font-size="3.436" text-anchor="start" fill="#6b6b6b" data-model="component:SP-1">splice</text>
 <text x="155" y="154.15" font-size="3.436" text-anchor="middle" font-weight="600" data-model="component:GNDB">GNDB</text>
 <text x="145" y="133.75" font-size="3.436" text-anchor="start" fill="#6b6b6b" data-model="component:GNDB">ground</text>
-<text x="275" y="96.75" font-size="3.436" text-anchor="middle" font-weight="600" data-model="component:R-1">R-1</text>
-<text x="275" y="101.25" font-size="3.436" text-anchor="middle" data-model="component:R-1">120 Ω</text>
+<text x="275" y="107.75" font-size="3.436" text-anchor="middle" font-weight="600" data-model="component:R-1">R-1</text>
+<text x="275" y="112.25" font-size="3.436" text-anchor="middle" data-model="component:R-1">120 Ω</text>
 <text x="265" y="78.75" font-size="3.436" text-anchor="start" fill="#6b6b6b" data-model="component:R-1">terminator</text>
 <text x="181.5" y="28.75" font-size="3.436" text-anchor="start" data-model="pin:SW-1/A/">A</text>
 <text x="208.5" y="28.75" font-size="3.436" text-anchor="end" data-model="pin:SW-1/B/">B</text>

@@ -14,3 +14,11 @@ them byte for byte. Every later difference is listed here with its reason.
 | wires.csv | plain column names and the new columns (sides, sources, ...) | M1 neutral table (D4 in decisions.md) |
 
 The demo also gained P (ratings, panel labels), D and O tables.
+
+## 1.1 drawing engine (stream C)
+
+| file | difference | why |
+|---|---|---|
+| docs/screens/drawings/*.svg (new) | the six reference drawings, compared byte for byte by tests/test_drawing_reference.py | regenerate with `python -m schemagen.drawing.reference` or `UPDATE_GOLDEN=1 pytest tests/test_drawing_reference.py`; change them only with a reason listed here |
+| symbol-sheet.svg / .pdf | terminator drawn upright, flag `side`, battery with both leads on one side | symbols needed by the layout |
+
