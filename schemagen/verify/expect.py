@@ -34,6 +34,17 @@ class Expected:
     conns: dict[str, set[str]]                # component id -> connector names its conductors use
     ctx: Any
     source: dict[str, str] = field(default_factory=dict)   # name, sha256 of the source file(s)
+    names: list[tuple[str, str]] = field(default_factory=list)   # (lower-case printed form, component id), longest first: id, display name, both, raw device string
+
+    def lead(self, text: str) -> tuple[str | None, str]:
+        """The component a text starts with (its id or display name, longest match; a leading `ground bus`, `bus` or `splice` is skipped) and the rest of the text."""
+        t = re.sub(r"^(ground bus|bus|splice)\s+", "", text.strip(), flags=re.I)
+        t = " ".join(t.split())
+        low = t.lower()
+        for k, cid in self.names:
+            if low == k: return cid, ""
+            if low.startswith(k) and not low[len(k)].isalnum() and not (low[len(k)] == "-" and low[len(k) + 1:len(k) + 2].isalnum()): return cid, t[len(k):].strip(" ,")
+        return None, t
 
     def scope(self, text: str) -> set[int] | None:
         """Indices of the conductors a drawing of `text` must show (a wire or an off-sheet flag); None for a scope kind the verifier does not know."""
@@ -103,4 +114,8 @@ def read(project: str | Path) -> Expected:
     conns: dict[str, set[str]] = {}
     for c in conds:
         for t in (c.a, c.b): conns.setdefault(t[0], set()).add(t[1])
-    return Expected(conds, {c.id: c.kind for c in L.model.components}, conns, ctx, source_digest(cfg))
+    names: dict[str, str] = {}
+    for c in L.model.components:
+        for k in (c.id, c.name, f"{c.id} {c.name}", c.raw): names.setdefault(" ".join(k.lower().split()), c.id)
+    names.pop("", None)
+    return Expected(conds, {c.id: c.kind for c in L.model.components}, conns, ctx, source_digest(cfg), sorted(names.items(), key=lambda kv: -len(kv[0])))

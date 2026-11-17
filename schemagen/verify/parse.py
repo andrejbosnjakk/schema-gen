@@ -22,6 +22,17 @@ RGB = {"BK": (0, 0, 0), "WH": (1, 1, 1), "GY": (.6, .6, .6), "PK": (1, .4, .8), 
        "IV": (.96, .94, .82), "SL": (.44, .5, .56), "CU": (.84, .47, .37), "SN": (.67, .67, .67), "SR": (.52, .53, .55), "GD": (1, .81, .5)}
 
 
+COLOUR = re.compile("^(?:%s)(?:%s)?$" % ("|".join(RGB), "|".join(RGB)))
+
+
+def split_label(s: str) -> tuple[str, str, str] | None:
+    """Wire text `L05 22 AWG RD` / `P52 22 shielded BU` / `L9 TBD` as (label, gauge without unit word, colour code); None if it is a single word."""
+    t = s.split()
+    if len(t) < 2: return None
+    colour = t[-1] if len(t) >= 3 and COLOUR.match(t[-1]) else ""
+    return t[0], re.sub(r"\s*AWG\s*", " ", " ".join(t[1:-1] if colour else t[1:])).strip(), colour
+
+
 def colour_of(rgb: tuple[float, float, float]) -> str:
     """The nearest colour code to a drawn colour (the code's usual colour, by eye, not the engine's palette)."""
     return min(RGB, key=lambda k: sum((a - b) ** 2 for a, b in zip(RGB[k], rgb)))
@@ -173,8 +184,8 @@ def _label_of(run: Run) -> re.Match[str] | None:
     return LABEL.match(re.sub(r"\s+", " ", run.s))
 
 
-def parse_sheet(page: Sheet, ids: set[str], conns: dict[str, set[str]]) -> SheetObs:
-    """Reads a sheet. `ids`: the component ids of the project (the vocabulary of component names); `conns`: connector names by component id."""
+def parse_sheet(page: Sheet, lead: Any, conns: dict[str, set[str]]) -> SheetObs:
+    """Reads a sheet. `lead(text)`: the component a text starts with, by any of its names, and the rest; `conns`: connector names by component id."""
     ob = SheetObs(page.n, page)
     ob.title = title_fields(page)
     ob.frame, ob.strip = _areas(page)
@@ -189,17 +200,19 @@ def parse_sheet(page: Sheet, ids: set[str], conns: dict[str, set[str]]) -> Sheet
     nets, wend, anomalies = _nets(page, ob.strip)
     ob.anomalies = anomalies
     # wires: labels
-    lab_runs = [(r, m) for r in free if (m := _label_of(r)) and r.s.count(" ") >= 1 and (m.group("colour") or "AWG" in r.s or "mm" in r.s)]
+    lab_runs = []
+    for r in free:
+        j = _wire_under(r, wires)
+        if j is not None and (sl := split_label(r.s)): lab_runs.append((r, j, sl))
+        elif (m := _label_of(r)) and (m.group("colour") or "AWG" in r.s or "mm" in r.s): ob.orphan_labels.append(r)
     used: set[int] = set()
     obs: list[WireObs] = []
     for j, w in enumerate(wires):
         obs.append(WireObs(j, w.pts, [], "", "", w.rgb, []))
-    for r, m in lab_runs:
-        j = _wire_under(r, wires)
-        if j is None: ob.orphan_labels.append(r); continue
+    for r, j, (lab, gauge, colour) in lab_runs:
         o = obs[j]
-        o.labels.append(m.group("label")); o.label_runs.append(r)
-        o.gauge = re.sub(r"\s*(awg)\s*", "", m.group("gauge"), flags=re.I).strip(); o.colour = m.group("colour") or ""
+        o.labels.append(lab); o.label_runs.append(r)
+        o.gauge, o.colour = gauge, colour
         used.add(id(r))
     for fo in flags:
         for j, w in enumerate(wires):
@@ -210,7 +223,7 @@ def parse_sheet(page: Sheet, ids: set[str], conns: dict[str, set[str]]) -> Sheet
                     obs[j].ends.append(End("flag", p, text=fo.text, net=wend[(j, e)]))
     ob.flags = flags
     # the rest of the ends
-    _ends(page, free, flags, nets, wend, ids, conns, obs)
+    _ends(page, [r for r in free if id(r) not in used], flags, nets, wend, lead, conns, obs)
     ob.wires = obs
     ob.crossings = _crossings(wires)
     return ob
@@ -319,7 +332,7 @@ def _nets(page: Sheet, strip: tuple[float, float, float, float]) -> tuple[_UF, d
     return uf, wend, an
 
 
-def _ends(page: Sheet, free: list[Run], flags: list[FlagObs], uf: _UF, wend: dict[tuple[int, int], Any], ids: set[str], conns: dict[str, set[str]],
+def _ends(page: Sheet, free: list[Run], flags: list[FlagObs], uf: _UF, wend: dict[tuple[int, int], Any], lead: Any, conns: dict[str, set[str]],
           obs: list[WireObs]) -> None:
     """Resolves every wire end that is not at a flag: a node (it shares a net with a dot) or a pin. Appends to each wire's `ends` in point order."""
     net_dots: dict[Any, list[Pt]] = {}
@@ -330,7 +343,7 @@ def _ends(page: Sheet, free: list[Run], flags: list[FlagObs], uf: _UF, wend: dic
         for j, w in enumerate(page.wires):
             for e in (0, 1):
                 if _eq(d, w.pts[0] if e == 0 else w.pts[-1]): net_dots.setdefault(uf.find(("w", j, e)), []).append(d)
-    cand = [r for r in free if r.s.split(" ")[0] in ids and not _label_of(r)] + [r for r in free if r.s in ids]
+    cand = [(r, c) for r in free if (c := lead(r.s)[0])]
     outs = sorted((o for o in page.outlines if o.x1 - o.x0 >= 6 and o.y1 - o.y0 >= 6), key=lambda o: -(o.x1 - o.x0) * (o.y1 - o.y0))
     flag_outs = {id(f.outline) for f in flags}
     outs = [o for o in outs if id(o) not in flag_outs]
@@ -344,26 +357,30 @@ def _ends(page: Sheet, free: list[Run], flags: list[FlagObs], uf: _UF, wend: dic
             q = w.pts[1] if e == 0 else w.pts[-2]
             nid = wend[(j, e)]
             if nid in net_dots:
-                ends.append(_node(p, nid, net_dots[nid], cand, uf))
+                ends.append(_node(p, nid, net_dots[nid], cand, free, uf))
             else:
-                ends.append(_pin(p, q, nid, lines, free, outs, cand, conns, uf, ids))
+                ends.append(_pin(p, q, nid, lines, free, outs, cand, conns, uf))
         obs[j].ends = sorted(obs[j].ends + ends, key=lambda x: (x.p[0], x.p[1]))
 
 
 def _which(w: Any, p: Pt) -> int: return 0 if _eq(w.pts[0], p) else 1
 
 
-def _node(p: Pt, nid: Any, dots: list[Pt], cand: list[Run], uf: _UF) -> End:
-    """A splice, bus or ground: the component whose name stands nearest the net's dots."""
+def _node(p: Pt, nid: Any, dots: list[Pt], cand: list[tuple[Run, str]], free: list[Run], uf: _UF) -> End:
+    """A splice, bus or ground, or a pin that several wires share (they meet at dots): the component whose name stands nearest the net's dots, and what is
+    printed right beside a dot (a pin name)."""
     best, bd = None, 1e9
-    for r in cand:
+    for r, c in cand:
         d = min(max(r.x0 - q[0], 0, q[0] - r.x1) ** 2 + max(r.top - q[1], 0, q[1] - r.bot) ** 2 for q in dots) ** .5
-        if d < bd: best, bd = r, d
-    if best is None or bd > 14: return End("node", p, "?", net=nid)
-    return End("node", p, best.s.split(" ")[0], net=nid)
+        if d < bd: best, bd = c, d
+    near = sorted((min(abs(r.x0 - q[0]) if r.x0 > q[0] else abs(q[0] - r.x1) for q in dots if abs(r.cy - q[1]) <= 1.4 and -0.5 <= (r.x0 - q[0]) <= 8 or -0.5 <= (q[0] - r.x1) <= 8), r.s)
+                  for r in free if any(abs(r.cy - q[1]) <= 1.4 and (-0.5 <= r.x0 - q[0] <= 8 or -0.5 <= q[0] - r.x1 <= 8) for q in dots))
+    toks = [s for _, s in near if not any(c == s for _, c in cand)]
+    if best is None or bd > 14: return End("node", p, "?", net=nid, toks=toks)
+    return End("node", p, best, net=nid, toks=toks)
 
 
-def _pin(p: Pt, q: Pt, nid: Any, lines: list[Any], free: list[Run], outs: list[Outline], cand: list[Run], conns: dict[str, set[str]], uf: _UF, ids: set[str]) -> End:
+def _pin(p: Pt, q: Pt, nid: Any, lines: list[Any], free: list[Run], outs: list[Outline], cand: list[tuple[Run, str]], conns: dict[str, set[str]], uf: _UF) -> End:
     """A pin: which symbol is behind the end of the wire (the outline it points into, else the nearest name), the connector header above it and the
     pin number or name standing next to it."""
     # direction into the symbol: along the stub that ends here, else against the wire
@@ -381,14 +398,14 @@ def _pin(p: Pt, q: Pt, nid: Any, lines: list[Any], free: list[Run], outs: list[O
     comp, box = "", None
     for o in outs:
         if _inside(probe, o):
-            heads = [r for r in cand if o.x0 - .2 <= r.x0 and r.x1 <= o.x1 + .2 and o.y0 - .2 <= r.top and r.bot <= o.y1 + .2 and r.top - o.y0 < 12]
-            if heads: comp, box = min(heads, key=lambda r: (r.top, r.x0)).s.split(" ")[0], o; break
+            heads = [(r, c) for r, c in cand if o.x0 - .2 <= r.x0 and r.x1 <= o.x1 + .2 and o.y0 - .2 <= r.top and r.bot <= o.y1 + .2 and r.top - o.y0 < 12]
+            if heads: comp, box = min(heads, key=lambda x: (x[0].top, x[0].x0))[1], o; break
     if not comp:
-        near = [(min(max(r.x0 - p[0], 0, p[0] - r.x1) ** 2 + max(r.top - p[1], 0, p[1] - r.bot) ** 2, 1e9) ** .5, r) for r in cand]
+        near = [(min(max(r.x0 - p[0], 0, p[0] - r.x1) ** 2 + max(r.top - p[1], 0, p[1] - r.bot) ** 2, 1e9) ** .5, c) for r, c in cand]
         near = [x for x in near if x[0] <= 20]
-        if near: comp = min(near, key=lambda x: x[0])[1].s.split(" ")[0]
+        if near: comp = min(near, key=lambda x: x[0])[1]
     # tokens on the pin's row, nearest first, on the symbol's side
-    row = [r for r in free if abs(r.cy - p[1]) <= 1.4 and not _label_of(r)] if abs(uy) < .5 else [r for r in free if abs(r.cx - p[0]) <= 1.4 and not _label_of(r)]
+    row = [r for r in free if abs(r.cy - p[1]) <= 1.4] if abs(uy) < .5 else [r for r in free if abs(r.cx - p[0]) <= 1.4]
     toks: list[tuple[float, str]] = []
     for r in row:
         if abs(uy) < .5:
@@ -409,7 +426,6 @@ def _pin(p: Pt, q: Pt, nid: Any, lines: list[Any], free: list[Run], outs: list[O
             top = max(r.bot for r in hs)
             row_h = [r for r in hs if top - r.bot < 1.0]
             conn = min(row_h, key=lambda r: abs(r.cx - p[0])).s
-        else: conn = "?"
     pin = toks[0][1] if toks else ("?" if box is not None else None)
     return End("pin", p, comp or "?", conn, pin, net=nid, toks=[t for _, t in toks])
 

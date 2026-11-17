@@ -19,7 +19,7 @@ from .pdfread import read
 
 HARD = ("missing", "extra", "ends", "gauge", "colour", "label", "net", "table", "junction", "book", "unread", "flag", "title")   # the PDF disagrees with the wire list
 SOFT_FLAG = ("flag_no_target", "flag_no_drawing", "flag_no_sheet")
-LEGIBILITY = ("text_overlaps_text", "text_on_line", "text_outside_frame", "text_too_small", "graphics_in_furniture")
+LEGIBILITY = ("text_truncated", "text_overlaps_text", "text_on_line", "text_outside_frame", "text_too_small", "graphics_in_furniture", "graphics_outside_frame")
 FILES = "*.pdf"
 
 

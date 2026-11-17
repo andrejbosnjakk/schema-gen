@@ -18,7 +18,7 @@ from .workspace import _natural
 
 def geometry(st: Any, scope: str) -> Any:
     """The A3 drawing of `scope`; a scope the engine does not know becomes a plain message."""
-    try: return draw(st, scope, "A3", meta(st.cfg.root.name))
+    try: return draw(st, scope, "A3", meta(st.cfg))
     except ValueError as e: raise AppError("bad-request", f"{str(e).rstrip('.').capitalize()}.") from None
 
 
@@ -47,7 +47,7 @@ def export_all(st: Any, out: Path) -> tuple[list[str], list[str]]:
         for c in sorted(st.m.components, key=lambda c: _natural(c.id)):
             if c.kind == "splice": continue  # a splice is drawn inside the runs that pass through it
             try:
-                g = draw(st, f"component:{c.id}", "A3", meta(st.cfg.root.name))
+                g = draw(st, f"component:{c.id}", "A3", meta(st.cfg))
                 if not any(sh["wires"] or sh["flags"] for sh in g["sheets"]): continue
                 export(g, stage / "drawings" / f"{stem(g['drawing']['scope'])}.pdf")
             except Exception:

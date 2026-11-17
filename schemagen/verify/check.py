@@ -37,27 +37,37 @@ def end_matches(e: End, t: X.Term, ex: X.Expected) -> bool:
     """A resolved wire end is the model's terminal `t` (component, connector, pin)."""
     comp, conn, pin = t
     node = ex.kind.get(comp) in ("splice", "bus")
-    if e.kind == "node": return node and e.comp == comp
+    if e.kind == "node":   # dots: a splice or bus, or a pin that several wires share (then the pin is printed beside the dots)
+        if e.comp != comp: return False
+        return node or (not pin and not e.toks) or (bool(pin) and (not e.toks or pin in e.toks)) or (not pin and conn in e.toks)
     if e.kind != "pin" or node or e.comp != comp: return False
     if conn and e.conn not in (None, conn) and not (e.pin is None and e.conn == "?"): return False
     if conn and e.conn == "?": return False
     if pin: return e.pin is None or e.pin == pin
-    return not e.toks or conn in e.toks or e.pin in (None, "") or e.toks[0] == conn
+    return not e.toks or conn in e.toks   # the terminal is the connector itself: nothing is printed beside it, or its name
 
 
-def describes(text: str, e: End | None, t: X.Term | None = None) -> bool:
-    """A table cell or flag text names a wire end (the component, the pin, the connector)."""
-    tk = _toks(text)
+def describes(ex: X.Expected, text: str, e: End | None = None, t: X.Term | None = None) -> bool:
+    """A table cell or flag text names a wire end (the component by id or display name, then the connector and pin)."""
+    comp, rest = ex.lead(text)
     if e is not None and e.kind in ("node", "pin"):
-        if e.comp not in tk: return False
-        if e.kind == "pin":
-            if e.pin not in (None, "?") and e.pin not in tk: return False
-            if e.conn not in (None, "?", "") and e.conn not in text: return False
+        if comp is None or comp != e.comp: return False
+        if e.kind == "pin" or (e.kind == "node" and e.toks and ex.kind.get(e.comp) not in ("splice", "bus")):
+            if e.kind == "node": return not e.toks or _has_pin(rest, e.toks[0])
+            if e.pin not in (None, "?") and not _has_pin(rest, e.pin): return False
+            if e.conn not in (None, "?", "") and e.conn.lower() not in rest.lower(): return False
         return True
     if t is not None:
-        comp, conn, pin = t
-        return comp in tk and (not pin or pin in tk or any(x.endswith("-" + pin) for x in tk)) and (not conn or conn in text or conn.replace(" ", "") in text.replace(" ", ""))
+        c, conn, pin = t
+        if ex.kind.get(c) in ("splice", "bus"): return comp == c   # a splice or bus is named, not its terminal
+        return comp == c and (not pin or _has_pin(rest, pin)) and (not conn or conn.lower() in rest.lower() or conn.replace(" ", "").lower() in rest.replace(" ", "").lower())
     return False
+
+
+def _has_pin(rest: Any, pin: str) -> bool:
+    """The pin stands in the text as a word of its own, or after the connector's hyphen (`J1-14`); a pin may have spaces (`V_in 5 V`, `- / case`)."""
+    s = " ".join(rest) if isinstance(rest, list) else rest
+    return re.search(r"(?<![\w])" + re.escape(pin) + r"(?![\w])", s) is not None or re.search(r"-" + re.escape(pin) + r"(?![\w])", s) is not None
 
 
 class Drawing:
@@ -66,10 +76,12 @@ class Drawing:
     def __init__(self, path: Path, ex: X.Expected):
         self.path, self.ex = path, ex
         self.name = path.stem
-        ids, conns = set(ex.kind), ex.conns
         self.pages = read(path)
-        self.sheets: list[SheetObs] = [parse_sheet(p, ids, conns) for p in self.pages]
+        self.sheets: list[SheetObs] = [parse_sheet(p, ex.lead, ex.conns) for p in self.pages]
         self.scope = self.sheets[0].title.get("scope", "") if self.sheets else ""
+        if self.scope and ex.scope(self.scope) is None or self.scope.endswith(".."):   # a long id is cut short in the title block: the file name says it
+            self.scope_cut = self.scope
+            self.scope = next((f"component:{i}" for i in ex.kind if f"component-{i}" == self.name), self.scope)
         self.findings: list[dict[str, Any]] = []
         self.recs: dict[str, list[tuple[int, WireObs]]] = defaultdict(list)
         for sh in self.sheets:
@@ -98,6 +110,7 @@ def check_drawing(d: Drawing, source: dict[str, str] | None = None, others: dict
 
 def _title(d: Drawing, source: dict[str, str] | None) -> None:
     m = len(d.sheets)
+    if getattr(d, "scope_cut", ""): d.add("title_truncated", f"title block scope '{d.scope_cut}' is cut short")
     for sh in d.sheets:
         t = sh.title
         if t.get("sheet") != f"{sh.n} of {m}": d.add("title", f"title block says sheet '{t.get('sheet')}' on page {sh.n} of {m}", sh.n)
@@ -118,6 +131,8 @@ def _terms(w: list[tuple[int, WireObs]]) -> tuple[list[End], list[End], list[End
     t, f, c = [], [], []
     for _, p in w:
         for e in p.ends: (c if _is_cont(e) else f if e.kind == "flag" else t if e.kind in ("pin", "node") else f).append(e)
+    seen: set[tuple[Any, ...]] = set()
+    t = [e for e in t if (k := (e.kind, e.comp, e.conn, e.pin)) not in seen and not seen.add(k)]   # a splice drawn on two sheets is one end
     return t, f, c
 
 
@@ -131,7 +146,9 @@ def _wires(d: Drawing) -> None:
     for sh in d.sheets:
         c: dict[str, list[WireObs]] = defaultdict(list)
         for w in sh.wires:
-            if not w.labels: d.add("label", "a wire has no label text on it", sh.n); continue
+            if not w.labels:
+                if not any(e.kind == "flag" and re.match(r"^\+\s*\d+ more wires", e.text) for e in w.ends): d.add("label", "a wire has no label text on it", sh.n)
+                continue
             if len(set(w.labels)) > 1: d.add("label", f"a wire carries two labels {w.labels}", sh.n)
             c[w.labels[0]].append(w)
         for k, ws in c.items():   # one label on several wires is a loop drawn as two flags: each piece must end in a flag
@@ -179,13 +196,19 @@ def _ends(d: Drawing, c: X.Cond, t: list[End], f: list[End], pieces: list[tuple[
     else: d.add("ends", f"wire {c.label}: {len(t)} pin/node ends and {len(f)} flags found, expected two ends", sheet, conductor=c.id)
 
 
+def _run_names(d: Drawing, text: str, c: X.Cond, end: int) -> bool:
+    """A text (a flag, a table cell) names where the run behind end 1 or 2 of conductor c goes: each `->` step is a component on that run."""
+    reach = d.ex.reach(c, end)
+    ids = [d.ex.lead(seg)[0] for seg in re.split(r"\s*->\s*", text)]
+    return bool(ids) and all(i in reach for i in ids)
+
+
 def _names_end(d: Drawing, far: str, c: X.Cond, t: X.Term, end: int) -> bool:
     """A flag's text names where the far end of conductor c is: every component it mentions is on the run that leaves that end, and when it names the
     terminal's own component it gives the connector and pin."""
-    ids = [x for x in _toks(far) if x in d.ex.kind]
-    reach = d.ex.reach(c, end)
-    if not ids or not all(i in reach for i in ids): return False
-    return describes(far, None, t) if t[0] in ids else True
+    if not _run_names(d, far, c, end): return False
+    seg = re.split(r"\s*->\s*", far)[0]
+    return describes(d.ex, seg, None, t) if d.ex.lead(seg)[0] == t[0] else True
 
 
 def _show(e: End) -> str:
@@ -245,10 +268,10 @@ def _tables(d: Drawing) -> None:
                 continue
             w = ws[0]
             if r.wire:
-                m = re.match(r"(.*?)(?: AWG)? ([a-z][a-z /]*)$", r.wire)
-                gtxt, ctxt = (m.group(1), m.group(2)) if m else (r.wire, "")
+                cw = words(w.colour) if w.colour else ""
+                gtxt = r.wire[:-len(cw)] if cw and r.wire.endswith(cw) else r.wire
+                if cw and not r.wire.endswith(cw): d.add("table", f"table row {r.label}: '{r.wire}' but the wire is {w.colour} ({cw})", k)
                 if re.sub(r"\s*AWG", "", gtxt).strip() != w.gauge: d.add("table", f"table row {r.label}: gauge '{r.wire}' but the wire is {w.gauge}", k)
-                if w.colour and ctxt != words(w.colour): d.add("table", f"table row {r.label}: colour '{ctxt}' but the wire is {w.colour}", k)
             _row_vs_wire(d, r, ws, k)
         for lab, w in drawn.items():
             if lab not in seen: d.add("table", f"wire {lab} has no row in the wire table of sheet {k}", k)
@@ -261,26 +284,29 @@ def _row_vs_wire(d: Drawing, r: TableRow, ws: list[WireObs], k: int) -> None:
     for first in (0, 1):
         ok = True
         for e, text in zip(ends, [texts[first], texts[1 - first]]):
-            ok = ok and _row_end(e, text)
+            ok = ok and _row_end(d.ex, e, text)
         if ok and len(ends) == 2: return
     d.add("table", f"table row {r.label}: '{r.frm}' -> '{r.to}' does not match the ends drawn ({', '.join(_show(e) if e.kind != 'flag' else e.text for e in ends)})", k)
 
 
-def _row_end(e: End, text: str) -> bool:
+def _row_end(ex: X.Expected, e: End, text: str) -> bool:
     if e.kind == "flag":
-        far = re.sub(r"^(?:\d+ )?(?:continues on sheet \d+:?|to|->|→)\s*", "", e.text).strip()
-        t = re.sub(r"\s*\(sheet \d+\)$", "", text).strip()
-        return far == t or far.startswith(t) or t.startswith(far) or not far
-    return describes(text, e)
+        far = " ".join(re.sub(r"^(?:\d+ )?(?:continues on sheet \d+:?|to|->|→)\s*", "", e.text).split())
+        t = " ".join(re.sub(r"\s*\(sheet \d+\)$", "", text).split())
+        if far.endswith(".."): return t.startswith(far[:-2].rstrip())   # a flag text cut short by the drawing: the table has all of it
+        return far == t or not far or t.startswith(far) or far.startswith(t)   # the table may add the long name in brackets
+    return describes(ex, text, e)
 
 
 def _row_vs_model(d: Drawing, r: TableRow, c: X.Cond, k: int) -> None:
     """Rows of wires covered by a summary flag: the lines say nothing, so the row is held against the wire list."""
     for first in (c.a, c.b):
         other = c.b if first is c.a else c.a
-        if describes(r.frm, None, first) and (describes(r.to, None, other) or _toks(r.to)[:1] and _toks(r.to)[0] in d.ex.reach(c, 2 if other is c.b else 1)): break
+        if describes(d.ex, r.frm, None, first) and (describes(d.ex, r.to, None, other) or _run_names(d, r.to, c, 2 if other is c.b else 1)): break
     else: d.add("table", f"table row {r.label}: '{r.frm}' -> '{r.to}' is not {_term(c.a)} -> {_term(c.b)}", k)
-    if r.wire and re.sub(r"\s*AWG", "", r.wire.split(" ")[0]).strip() != c.gauge.split(" ")[0]: d.add("table", f"table row {r.label}: gauge '{r.wire}' but the wire list says {c.gauge}", k)
+    cw = words(c.colour) if c.colour else ""
+    gtxt = r.wire[:-len(cw)] if cw and r.wire.endswith(cw) else r.wire
+    if r.wire and re.sub(r"\s*AWG", "", gtxt).strip() != c.gauge: d.add("table", f"table row {r.label}: '{r.wire}' but the wire list says {c.gauge} {cw}", k)
     d.table_only = getattr(d, "table_only", 0) + 1   # type: ignore[attr-defined]
 
 
@@ -304,9 +330,26 @@ def _flags(d: Drawing, others: dict[str, Drawing]) -> None:
             if target is None or not 1 <= tn <= len(target.sheets): d.add("flag", f"flag '{f.text}': sheet {tn} does not exist", sh.n); continue
             there = [x for n, x in target.recs.get(lab, []) if n == tn]
             if not there: d.add("flag", f"flag '{f.text}': wire {lab} is not on sheet {tn}", sh.n); continue
-            if f.kind == "continuation" and target is d:
-                back = [e for x in there for e in x.ends if _is_cont(e) and re.search(rf"sheet {sh.n}\b", e.text)]
-                if not back: d.add("flag", f"flag '{f.text}': wire {lab} on sheet {tn} does not continue back to sheet {sh.n}", sh.n)
+            if f.kind == "continuation" and target is d and not _reaches(d, lab, tn, sh.n, w):
+                d.add("flag", f"flag '{f.text}': wire {lab} on sheet {tn} does not lead on to the other end of the wire", sh.n)
+
+
+def _reaches(d: Drawing, lab: str, n: int, here: int, mine: WireObs) -> bool:
+    """The wire `lab` on sheet n, or on the sheets its own continuation flags lead to, ends at the end of the conductor that this piece (`mine`, on sheet `here`) does not."""
+    cs = [c for c in d.ex.conds if c.label == lab]
+    mt = [e for e in mine.ends if e.kind in ("pin", "node")]
+    if len(cs) != 1 or not mt: return True   # not decidable here (unknown or loop-split label); the other checks report it
+    c = cs[0]
+    other = c.b if end_matches(mt[0], c.a, d.ex) else c.a
+    seen, todo = {here}, [n]
+    while todo:
+        k = todo.pop()
+        if k in seen or not 1 <= k <= len(d.sheets): continue
+        seen.add(k)
+        for x in [x for m, x in d.recs.get(lab, []) if m == k]:
+            if any(e.kind in ("pin", "node") and end_matches(e, other, d.ex) for e in x.ends): return True
+            todo += [int(m.group(1)) for e in x.ends if _is_cont(e) and (m := re.search(r"sheet (\d+)", e.text))]
+    return False
 
 
 def _digest(p: Path) -> str: return hashlib.sha256(p.read_bytes()).hexdigest()[:12]

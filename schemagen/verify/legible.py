@@ -44,6 +44,7 @@ def findings(ob: SheetObs) -> list[dict[str, Any]]:
         if tb and tb[1] - 0.3 <= r.top <= tb[3]: return "table"
         return "drawing"
     for r in runs:
+        if r.s.endswith("..") and len(r.s) > 4: out.append(dict(kind="text_truncated", msg=f"'{r.s}' is cut short"))
         if r.cap * scale < MIN_CAP_MM - 1e-6: out.append(dict(kind="text_too_small", msg=f"'{r.s}' letters {r.cap * scale:.2f} mm high at A3"))
         if r.x0 < fx0 - 0.01 or r.x1 > fx1 + 0.01 or r.top < fy0 - 0.01 or r.bot > fy1 + 0.01: out.append(dict(kind="text_outside_frame", msg=f"'{r.s}' leaves the frame"))
     # text on text
@@ -75,6 +76,11 @@ def findings(ob: SheetObs) -> list[dict[str, Any]]:
             if _hit_seg(b, a, z, half):
                 out.append(dict(kind="text_on_line", msg=f"'{r.s}' sits on a " + ("wire" if j >= 0 else "symbol line") + (f" ({'/'.join(ob.wires[j].labels)})" if j >= 0 else "")))
                 break
+    for j, w in enumerate(pg.wires):
+        if any(x < fx0 - 0.1 or x > fx1 + 0.1 or y < fy0 - 0.1 or y > fy1 + 0.1 for x, y in w.pts):
+            out.append(dict(kind="graphics_outside_frame", msg=f"wire {'/'.join(ob.wires[j].labels) or '?'} leaves the frame"))
+    for o in pg.outlines:
+        if o.x1 - o.x0 >= 6 and (o.x0 < fx0 - 0.1 or o.x1 > fx1 + 0.1 or o.y0 < fy0 - 0.1 or o.y1 > fy1 + 0.1): out.append(dict(kind="graphics_outside_frame", msg="a symbol or flag leaves the frame"))
     # drawing content inside the strip or the table
     furniture = [("title block, legend or notes", (fx0, sy0, fx1, fy1))] + ([("wire table", tb)] if tb else [])
     for name, (x0, y0, x1, y1) in furniture:

@@ -53,9 +53,14 @@ def stem(scope: str) -> str:
     return scope.replace(":", "-").replace("~", "_").replace(",", "+")
 
 
-def meta(source: str) -> dict[str, str]:
-    """The title block data every drawing of the CLI and the app carries (today's date, drawn by schemagen, `source` the project's name)."""
+def meta(source: Any) -> dict[str, str]:
+    """The title block data every drawing of the CLI and the app carries (today's date, drawn by schemagen). `source` is the project's Config: the title block
+    then names the wire list's source file with the start of its sha256 (`#1a2b3c4d name.xlsx`); a plain string is shown as given."""
     import datetime
+    if not isinstance(source, str):
+        from ..core.load import source_digest
+        name, sha = source_digest(source)
+        source = f"#{sha[:8]} {name}"
     return dict(date=datetime.date.today().isoformat(), drawn_by="schemagen", source=source)
 
 
