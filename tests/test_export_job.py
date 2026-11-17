@@ -28,7 +28,7 @@ def test_fixture_is_current(tmp_path):
     """The committed fixture is what the generator writes (it is deterministic), and has the size the tests and measurements rely on."""
     subprocess.run([sys.executable, str(ROOT / "tools" / "make_large_fixture.py"), str(tmp_path)], check=True)
     for f in ("schemagen.yml", "cards/BATX_card.md", "wirelist/ss01_large.py"):
-        assert (tmp_path / f).read_bytes() == (LARGE / f).read_bytes(), f
+        assert (tmp_path / f).read_bytes() == (LARGE / f).read_bytes().replace(b"\r\n", b"\n"), f  # a Windows checkout may convert line ends
     from collections import Counter
 
     from schemagen.app.server import State
