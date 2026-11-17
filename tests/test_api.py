@@ -7,6 +7,7 @@ import time
 from pathlib import Path
 
 import pytest
+from conftest import run_export
 from fastapi.testclient import TestClient
 
 from schemagen.app.server import create_app
@@ -181,15 +182,15 @@ def test_source_powers_the_cabin_bus(ac):
 def test_export_files(ac):
     c, d = ac
     for kind, name in (("pinout", "checklist.xlsx"), ("pinout", "checklist.html"), ("wirelist", "wirelist.xlsx")):
-        r = c.post("/api/export", json={"kind": kind}).json()
+        r = run_export(c, kind=kind).json()
         assert name in r["files"] and (d / "out" / name).is_file() and r["folder"] == str(d / "out")
-    r = c.post("/api/export", json={"kind": "faults"}).json()
+    r = run_export(c, kind="faults").json()
     assert r["files"] and all((d / "out" / f).is_file() for f in r["files"])
 
 
 def test_export_drawings(ac):
     c, d = ac
-    r = c.post("/api/export", json={"kind": "drawings"})
+    r = run_export(c, kind="drawings")
     assert r.status_code == 200, r.text
     files = r.json()["files"]
     assert "wiring-diagrams.pdf" in files and all((d / "out" / f).is_file() for f in files)

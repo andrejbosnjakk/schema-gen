@@ -27,7 +27,7 @@ export interface Overlay {
   breakers: { id: string; current_A: number; rating_A: number | null; loading: number | null; trips: boolean }[];
   items: Record<string, OverlayItem>; assumptions: string[];
 }
-export interface ExportResult { folder: string; files: string[]; failed?: string[] }
+export interface ExportStatus { job: string; state: "running" | "done" | "failed" | "cancelled"; n: number; N: number; current: string; failed: string[]; folder?: string; files?: string[]; error?: string }   // /api/export and /api/export/{job}
 export interface DiagramSheets { title: string; scope: string; sheets: string[] }   // /api/diagram: one SVG per sheet
 
 export interface Pin { pin: string; wire: string; wire_label: string; name: string; other: string; gauge: string; pin_name?: string; wire_name?: string }

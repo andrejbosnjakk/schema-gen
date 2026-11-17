@@ -1,6 +1,7 @@
 // Small shared pieces: UI glyphs, a menu button, toasts, a dialog.
 import { createContext, useContext, useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
+import type { ExportStatus } from "./types";
 
 const G: Record<string, ReactNode> = {
   plus: <path d="M8 3.5v9M3.5 8h9" />, minus: <path d="M3.5 8h9" />,
@@ -53,13 +54,23 @@ export function MenuButton({ label, icon, items, tour, align = "right", iconOnly
 }
 
 export interface Toast { id: number; tone: "info" | "ok" | "err"; text: string; action?: { label: string; run: () => void } }
-export function Toasts({ list, close }: { list: Toast[]; close: (id: number) => void }) {
+export function Toasts({ list, close, children }: { list: Toast[]; close: (id: number) => void; children?: ReactNode }) {
   return <div className="toasts" role="status" aria-live="polite">
+    {children}
     {list.map((t) => <div key={t.id} className={`toast anim-pop ${t.tone}`}>
       <span className="toast-text">{t.text}</span>
       {t.action && <button className="btn btn-sm" onClick={() => { close(t.id); t.action!.run(); }}>{t.action.label}</button>}
       <button className="btn btn-ghost btn-icon btn-sm" onClick={() => close(t.id)} aria-label="Dismiss"><Glyph name="x" size={14} /></button>
     </div>)}
+  </div>;
+}
+
+/** The running export: what, how far (n of N drawings, the one being drawn), and Cancel. */
+export function ExportProgress({ what, s, cancel }: { what: string; s: ExportStatus; cancel: () => void }) {
+  return <div className="toast export-progress">
+    <span className="toast-text">{what}{s.N > 1 ? `: ${s.n} of ${s.N}${s.current ? ` (${s.current})` : ""}` : "…"}
+      <span className={`bar${s.N > 1 ? "" : " indeterminate"}`}><span style={s.N > 1 ? { width: `${(100 * s.n) / s.N}%` } : undefined} /></span></span>
+    <button className="btn btn-sm" onClick={cancel}>Cancel</button>
   </div>;
 }
 

@@ -537,33 +537,40 @@ def create_app(project: str | Path | None = None, background: bool = False) -> F
         return ws.workspace(st)
 
     # ---------------------------------------------------------------- 1.0: export
-    @app.post("/api/export")
+    jobs: dict[str, Any] = {}
+
+    @app.post("/api/export", status_code=202)
     def export(body: dict[str, Any] = Body(...)) -> dict[str, Any]:  # noqa: B008
+        """Starts the export as a job and answers at once with its id; GET /api/export/{job} shows the progress."""
         st = cur()
         b = _keys(body, {"kind", "scope"})
         kind, out = b.get("kind"), st.cfg.out
         if kind not in ("diagram", "drawings", "pinout", "faults", "wirelist"):
             raise AppError("bad-request", "kind must be diagram, drawings, pinout, faults or wirelist.")
-        if kind in ("diagram", "drawings"):
-            from . import diagrams as dg
-            if kind == "diagram" and not isinstance(b.get("scope"), str): raise AppError("bad-request", "Give the scope of the diagram, such as component:ECU.")
-            if kind == "diagram": return dict(folder=str(out), files=dg.export_one(st, b["scope"], out))
-            files, failed = dg.export_all(st, out)
-            return dict(folder=str(out), files=files, failed=failed)
-        before = {p: p.stat().st_mtime for p in out.rglob("*") if p.is_file()} if out.exists() else {}
-        out.mkdir(parents=True, exist_ok=True)
-        if kind == "pinout":
-            from ..exporters import pinout as po
-            po.write_xlsx(st.m, out / "checklist.xlsx", st.ctx); po.write_html(st.m, out / "checklist.html", st.ctx, st.cfg.root.name)
-        elif kind == "faults":
-            from ..sim import report
-            report.run(st.cfg.root, faults=True, out=out / "faults", infer=True)
-        elif kind == "wirelist":
-            from ..exporters.views import wirelist_xlsx
-            from ..renderers.project import Project
-            wirelist_xlsx(Project(st.cfg), out / "wirelist.xlsx")
-        files = sorted(str(p.relative_to(out)).replace("\\", "/") for p in out.rglob("*") if p.is_file() and before.get(p) != p.stat().st_mtime)
-        return dict(folder=str(out), files=files)
+        if kind == "diagram" and not isinstance(b.get("scope"), str): raise AppError("bad-request", "Give the scope of the diagram, such as component:ECU.")
+        if any(j.state == "running" for j in jobs.values()): raise AppError("busy", "An export is already running. Wait for it or cancel it.")
+        from . import diagrams as dg
+        if kind == "diagram":
+            from ..drawing.scope import members, parse
+            try: members(st, parse(b["scope"]))  # an unknown scope is refused now, not by the job (drawing it is the slow part)
+            except ValueError as e: raise AppError("bad-request", f"{str(e).rstrip('.').capitalize()}.") from None
+        job = dg.Job(lambda j: _export_work(st, kind, b.get("scope"), out, j), out)
+        jobs.clear(); jobs[job.id] = job
+        return job.status()
+
+    def _job(jid: str) -> Any:
+        if jid not in jobs: raise AppError("not-found", "There is no such export.")
+        return jobs[jid]
+
+    @app.get("/api/export/{jid}")
+    def export_status(jid: str) -> dict[str, Any]:
+        return _job(jid).status()
+
+    @app.post("/api/export/{jid}/cancel")
+    def export_cancel(jid: str) -> dict[str, Any]:
+        j = _job(jid)
+        j.cancel()
+        return j.status()
 
     @app.post("/api/reveal")
     def reveal(body: dict[str, Any] = Body(...)) -> dict[str, Any]:  # noqa: B008
@@ -688,6 +695,28 @@ def create_app(project: str | Path | None = None, background: bool = False) -> F
         def nopage() -> HTMLResponse:
             return HTMLResponse("<!doctype html><title>schemagen</title><p>The frontend is not built: run <code>npm run build</code> in frontend/.</p>")
     return app
+
+
+def _export_work(st: State, kind: str, scope: str | None, out: Path, job: Any) -> tuple[list[str], list[str]]:
+    """What an export job does (docs/api.md, Export): the files written (relative to `out`) and the components that could not be drawn."""
+    if kind in ("diagram", "drawings"):
+        from . import diagrams as dg
+        if kind == "drawings": return dg.export_all(st, out, job.progress)
+        job.progress(0, 1, str(scope))
+        return dg.export_one(st, str(scope), out), []
+    before = {p: p.stat().st_mtime for p in out.rglob("*") if p.is_file()} if out.exists() else {}
+    out.mkdir(parents=True, exist_ok=True)
+    if kind == "pinout":
+        from ..exporters import pinout as po
+        po.write_xlsx(st.m, out / "checklist.xlsx", st.ctx); po.write_html(st.m, out / "checklist.html", st.ctx, st.cfg.root.name)
+    elif kind == "faults":
+        from ..sim import report
+        report.run(st.cfg.root, faults=True, out=out / "faults", infer=True)
+    elif kind == "wirelist":
+        from ..exporters.views import wirelist_xlsx
+        from ..renderers.project import Project
+        wirelist_xlsx(Project(st.cfg), out / "wirelist.xlsx")
+    return sorted(str(p.relative_to(out)).replace("\\", "/") for p in out.rglob("*") if p.is_file() and before.get(p) != p.stat().st_mtime), []
 
 
 def bus_tree(st: State, op: Any) -> list[dict[str, Any]]:

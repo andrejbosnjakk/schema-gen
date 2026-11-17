@@ -266,7 +266,7 @@ export function install(q: URLSearchParams) {
       ws.sources = ws.sources.filter((x) => x.id !== id); ws.components = ws.components.filter((x) => x.id !== id); ws.edges = ws.edges.filter((x) => x.a !== id);
       return ok(structuredClone(ws), 150);
     }
-    if (path === "/api/export") return ok({ folder: `${ws?.project.root}\\out`, files: { diagram: ["drawings/component-X-WING.pdf"], drawings: ["wiring-diagrams.pdf", "drawings/component-X-WING.pdf", "drawings/component-X-TAIL.pdf"] }[(body as { kind: string }).kind] ?? ["checklist.html", "checklist.xlsx"] }, 400);
+    if (path === "/api/export") return ok({ job: "mock", state: "done", n: 1, N: 1, current: "", failed: [], folder: `${ws?.project.root}\\out`, files: { diagram: ["drawings/component-X-WING.pdf"], drawings: ["wiring-diagrams.pdf", "drawings/component-X-WING.pdf", "drawings/component-X-TAIL.pdf"] }[(body as { kind: string }).kind] ?? ["checklist.html", "checklist.xlsx"] }, 400);
     if (path === "/api/reveal") return ok({ ok: true });
     return err(404, "not-found", `Nothing at ${method} ${path}.`);
   }, q.has("slow") ? 500 : 40);

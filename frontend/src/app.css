@@ -25,6 +25,7 @@ body { overflow: hidden; }
          border-left: 3px solid var(--accent); border-radius: var(--radius); box-shadow: var(--shadow-pop); }
 .toast.ok { border-left-color: var(--ok); } .toast.err { border-left-color: var(--err); }
 .toast-text { flex: 1; min-width: 0; }
+.export-progress .bar { display: block; width: 100%; margin-top: 6px; }
 .scrim { position: fixed; inset: 0; z-index: var(--z-dialog); display: grid; place-items: center; padding: var(--s2); background: var(--scrim); }
 .card-kind { display: flex; align-items: center; gap: var(--s1); }
 .kind-chip { padding: 1px 8px; border-radius: var(--radius-sm); background: var(--surface-2); color: var(--text-2); font-size: var(--fs-sm); }

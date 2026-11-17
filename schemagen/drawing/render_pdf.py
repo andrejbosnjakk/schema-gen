@@ -88,15 +88,28 @@ def _page(c: Canvas, sh: dict[str, Any], fonts: tuple[str, str]) -> None:
                 path(pts, False, None, "k", core(v))
 
 
+class Book:
+    """A PDF written drawing by drawing: `add` puts a drawing's pages in and the caller may drop the geometry at once; `close` saves."""
+
+    def __init__(self, path: str | Path, title: str = ""):
+        self.fonts, self.pages = _fonts(), 0
+        self.c = Canvas(str(path), invariant=1, pageCompression=1)
+        self.c.setTitle(title); self.c.setCreator("schemagen")
+
+    def add(self, g: Geometry) -> None:
+        for sh in g["sheets"]:
+            _page(self.c, dict(sh), self.fonts)
+            self.c.showPage()
+            self.pages += 1
+
+    def close(self) -> int:
+        self.c.save()
+        return self.pages
+
+
 def pdf(geometry: Geometry | list[Geometry], path: str | Path) -> int:
     """Writes the geometry (or a list of them: one book, in that order) as a vector PDF, one page per sheet; returns the number of pages."""
-    fonts = _fonts()
     gs = geometry if isinstance(geometry, list) else [geometry]
-    c = Canvas(str(path), invariant=1, pageCompression=1)
-    c.setTitle(gs[0]["drawing"].get("title", "")); c.setCreator("schemagen")
-    for g in gs:
-        for sh in g["sheets"]:
-            _page(c, dict(sh), fonts)
-            c.showPage()
-    c.save()
-    return sum(len(g["sheets"]) for g in gs)
+    b = Book(path, gs[0]["drawing"].get("title", ""))
+    for g in gs: b.add(g)
+    return b.close()

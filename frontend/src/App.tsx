@@ -8,8 +8,8 @@ import { SimSummary } from "./simulate";
 import { classVoltage, SourceDialog } from "./source";
 import { Logo } from "./theme/icons";
 import { startTour, stopTour, Tour } from "./tour";
-import type { CardTarget, ExportResult, Issue, Node, Overlay, Session, SimGroup, Wire, Workspace } from "./types";
-import { Glyph, MenuButton, Toasts, type Toast } from "./ui";
+import type { CardTarget, ExportStatus, Issue, Node, Overlay, Session, SimGroup, Wire, Workspace } from "./types";
+import { ExportProgress, Glyph, MenuButton, Toasts, type Toast } from "./ui";
 import { DiagramViewer } from "./viewer";
 
 type Theme = "light" | "dark";
@@ -23,6 +23,7 @@ export function App() {
   const [importing, setImporting] = useState<{ name: string; p: number } | null>(null);
   const [theme, setTheme] = useState<Theme>("light");
   const [toasts, setToasts] = useState<Toast[]>([]);
+  const [job, setJob] = useState<{ what: string; s: ExportStatus } | null>(null);   // the export running in the background
   const [issuesOpen, setIssuesOpen] = useState(true);
   const [wiresOpen, setWiresOpen] = useState(true);
   const [selWire, setSelWire] = useState<string | null>(null), [selIssue, setSelIssue] = useState<number | null>(null);
@@ -111,10 +112,21 @@ export function App() {
       (e) => fail(e, simulate)).finally(() => setSimulating(false));
   };
   const clearSim = () => { setSim(null); act("simulate-clear"); };
+  /** An export runs on the server as a job: start it, show its progress (the app stays usable), and say what it made when it is done. */
   const exportAs = (kind: string, what: string, scope?: string) => {
-    toast({ tone: "info", text: `Exporting ${what.toLowerCase()}…` });
-    post<ExportResult>("/api/export", { kind, scope }).then((r) => toast({ tone: "ok", text: `${what}: ${r.files.length} ${r.files.length === 1 ? "file" : "files"} saved.${r.failed?.length ? ` ${r.failed.length} could not be drawn: ${r.failed.join(", ")}.` : ""}`,
-      action: { label: "Show folder", run: () => { post("/api/reveal", { path: r.folder }).catch((e) => fail(e)); } } }), (e) => fail(e, () => exportAs(kind, what, scope)));
+    post<ExportStatus>("/api/export", { kind, scope }).then(async (s0) => {
+      let s = s0;
+      while (s.state === "running") { setJob({ what, s }); await new Promise((r) => setTimeout(r, 500)); s = await get<ExportStatus>(`/api/export/${s.job}`); }
+      setJob(null);
+      if (s.state === "cancelled") toast({ tone: "info", text: `${what}: cancelled, nothing was saved.` });
+      else if (s.state === "failed") toast({ tone: "err", text: s.error || `${what} could not be saved.` });
+      else {
+        const files = s.files ?? [], show = () => { post("/api/reveal", { path: s.folder }).catch((e) => fail(e)); };
+        toast({ tone: "ok", text: `${what}: ${files.length} ${files.length === 1 ? "file" : "files"} saved.${s.failed.length ? ` ${s.failed.length} could not be drawn: ${s.failed.join(", ")}.` : ""}`,
+          action: { label: "Show folder", run: show } });
+        if (kind === "drawings") show();   // a long export: the folder opens by itself
+      }
+    }).catch((e) => { setJob(null); fail(e, () => exportAs(kind, what, scope)); });
   };
 
   /** Zoom to and pulse the objects a list of typed refs ("component:ID", "conductor:ID", "pin:ID/C/P") names. */
@@ -191,7 +203,9 @@ export function App() {
   const overlays = <>
     {dragging && <div className="drop-overlay" aria-hidden="true"><div className="drop-card anim-pop"><Glyph name="upload" size={24} /><strong>Drop to import the wire sheet</strong><span>.xlsx or .csv</span></div></div>}
     {importing && <ImportBar name={importing.name} p={importing.p} />}
-    <Toasts list={toasts} close={(id) => setToasts((l) => l.filter((t) => t.id !== id))} />
+    <Toasts list={toasts} close={(id) => setToasts((l) => l.filter((t) => t.id !== id))}>
+      {job && <ExportProgress what={job.what} s={job.s} cancel={() => { post(`/api/export/${job.s.job}/cancel`).catch((e) => fail(e)); }} />}
+    </Toasts>
     <Tour />
   </>;
 

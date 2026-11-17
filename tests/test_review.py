@@ -4,6 +4,7 @@ import os
 import shutil
 from pathlib import Path
 
+from conftest import run_export
 from openpyxl import load_workbook
 
 from schemagen.app import userdata
@@ -57,14 +58,14 @@ def test_health_reports_graphviz(empty):  # noqa: F811
 def test_failed_drawings_export_leaves_no_files(ac, monkeypatch):  # noqa: F811
     c, d = ac
     def boom(*a, **k): raise RuntimeError("boom")
-    monkeypatch.setattr("schemagen.app.diagrams.pdf", boom)
-    assert c.post("/api/export", json={"kind": "drawings"}).status_code >= 400
+    monkeypatch.setattr("schemagen.app.diagrams.Book", boom)
+    assert run_export(c, kind="drawings").status_code >= 400
     assert not (d / "out").exists() or not list((d / "out").iterdir())
 
 
 def test_checklist_export(ac):  # noqa: F811
     c, d = ac
-    r = c.post("/api/export", json={"kind": "pinout"}).json()
+    r = run_export(c, kind="pinout").json()
     assert sorted(r["files"]) == ["checklist.html", "checklist.xlsx"]
     h = (d / "out" / "checklist.html").read_text(encoding="utf-8")
     assert "<title>Wiring checklist</title>" in h and "<h1>Wiring checklist</h1>" in h and "aircraft" in h

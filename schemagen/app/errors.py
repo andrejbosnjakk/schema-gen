@@ -13,7 +13,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from . import userdata
 
-STATUS = {"no-project": 409, "bad-request": 400, "not-found": 404, "import-failed": 422, "graphviz-missing": 503, "render-failed": 500,
+STATUS = {"no-project": 409, "busy": 409, "bad-request": 400, "not-found": 404, "import-failed": 422, "graphviz-missing": 503, "render-failed": 500,
           "sim-failed": 500, "internal": 500}
 INTERNAL = "Something went wrong. The details are in the log file; please try again."
 

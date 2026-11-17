@@ -29,7 +29,7 @@ schemagen = ["templates/*.html", "core/data/*.yml", "drawing/fonts/*", "app/stat
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-markers = ["perf: timing limits (CI runs them without coverage tracing)"]
+markers = ["perf: timing limits (CI runs them without coverage tracing)", "slow: takes about a minute or more (CI runs it; `-m \"not slow\"` skips it)"]
 
 [tool.ruff]
 line-length = 165

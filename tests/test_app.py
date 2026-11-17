@@ -5,6 +5,7 @@ import subprocess
 from pathlib import Path
 
 import pytest
+from conftest import run_export
 from fastapi.testclient import TestClient
 
 from schemagen.app.server import create_app
@@ -109,18 +110,18 @@ def _pages(p):
 
 def test_export_one_diagram(client):
     c, d = client
-    r = c.post("/api/export", json=dict(kind="diagram", scope="connection:CB-ECU~ECU"))
+    r = run_export(c, kind="diagram", scope="connection:CB-ECU~ECU")
     assert r.status_code == 200, r.text
     assert r.json() == dict(folder=str(d / "out"), files=["drawings/connection-CB-ECU_ECU.pdf"])
     assert _pages(d / "out" / "drawings" / "connection-CB-ECU_ECU.pdf") >= 1
-    assert c.post("/api/export", json=dict(kind="diagram")).status_code == 400
-    assert c.post("/api/export", json=dict(kind="diagram", scope="component:NOPE")).status_code == 400
+    assert run_export(c, kind="diagram").status_code == 400
+    assert run_export(c, kind="diagram", scope="component:NOPE").status_code == 400
 
 
 def test_export_all_drawings_makes_a_book(client):
     from schemagen.drawing.sheet import symbol_sheet
     c, d = client
-    r = c.post("/api/export", json=dict(kind="drawings"))
+    r = run_export(c, kind="drawings")
     assert r.status_code == 200, r.text
     files = r.json()["files"]
     out = d / "out"
@@ -140,10 +141,10 @@ def test_export_all_survives_one_failed_drawing(client, monkeypatch):
         if scope == "component:ECU": raise KeyError("pin:ECU//3")
         return real(st, scope, *a, **k)
     monkeypatch.setattr(diagrams, "draw", draw)
-    r = c.post("/api/export", json=dict(kind="drawings"))
+    r = run_export(c, kind="drawings")
     assert r.status_code == 200, r.text
     j = r.json()
     assert j["failed"] == ["ECU"] and "wiring-diagrams.pdf" in j["files"] and "drawings/component-X-BH.pdf" in j["files"]
     assert "drawings/component-ECU.pdf" not in j["files"] and (d / "out" / "wiring-diagrams.pdf").is_file()
     monkeypatch.setattr(diagrams, "draw", lambda *a, **k: (_ for _ in ()).throw(KeyError("x")))
-    assert c.post("/api/export", json=dict(kind="drawings")).status_code == 400
+    assert run_export(c, kind="drawings").status_code == 400
