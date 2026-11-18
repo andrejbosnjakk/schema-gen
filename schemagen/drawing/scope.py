@@ -247,7 +247,7 @@ def _wire(st: Any, c: Any, wsev: dict[str, str], overlay: dict[str, Any]) -> Sce
                      fault=Fault(status=sim["status"], reason=sim.get("reason", "")) if sim and sim.get("status") != "ok" else None)
 
 
-def short(words: str, limit: int = 72) -> str:
+def short(words: str, limit: int = 50) -> str:
     """The words of a far end, shortened for a flag when they are long: the bracket after a name (what the part is) goes first, then the `via` part."""
     if len(words) > limit: words = re.sub(r"\s*\([^)]*\)", "", words)
     return re.sub(r"\s+via .*$", "", words) if len(words) > limit else words

@@ -43,7 +43,7 @@ def end_matches(e: End, t: X.Term, ex: X.Expected) -> bool:
     if e.kind != "pin" or node or e.comp != comp: return False
     if conn and e.conn not in (None, conn) and not (e.pin is None and e.conn == "?"): return False
     if conn and e.conn == "?": return False
-    if pin: return e.pin is None or e.pin == pin
+    if pin: return e.pin == pin   # an end that stands on no pin row names no pin: not a match
     return not e.toks or conn in e.toks   # the terminal is the connector itself: nothing is printed beside it, or its name
 
 

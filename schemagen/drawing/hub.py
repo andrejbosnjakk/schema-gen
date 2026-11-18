@@ -87,15 +87,15 @@ def _bar(sc: Elem, key: str, u: Elem) -> Elem:
     return dict(it, id=f"node:{key}", model=u["rows"][0]["e"]["model"], symbol="splice", kind="splice", code=head, name="", attrs={})
 
 
-def _taps(key: str, it: Elem, rows: list[Elem], one: bool) -> list[dict[str, Any]]:
-    """The taps of one chunk of a bar, alternately left and right (all on the right when `one`), in the order of the rows; a bus names the stud a wire is on."""
-    return [dict(id=f"{r['at']}#{r['cid']}", model=r["at"], side="R" if one else "LR"[i % 2],
+def _taps(key: str, it: Elem, rows: list[Elem], tall: bool) -> list[dict[str, Any]]:
+    """The taps of one chunk of a bar, alternately left and right, in the order of the rows (10 mm apart when the flags have two lines); a bus names the stud a wire is on."""
+    return [dict(id=f"{r['at']}#{r['cid']}", model=r["at"], side="LR"[i % 2], pitch=S.FLAG_H if tall else FLAT,
                  text=next((p["n"] for b in it["blocks"] for p in b["pins"] if p["anchor"] == r["at"]), "") if key == it["id"] and it["symbol"] == "bus" else "") for i, r in enumerate(rows)]
 
 
-def _block(it: Elem, rows: list[Elem]) -> tuple[Elem, dict[tuple[str, str], str]]:
-    """The part with the pins these rows use (and the spare ones between them), a row per conductor where a pin carries several: the item to draw and the
-    anchor id of every (pin ref, conductor)."""
+def _block(it: Elem, rows: list[Elem], tall: bool) -> tuple[Elem, dict[str, str], dict[tuple[str, str], str]]:
+    """The part with the pins these rows use (and the spare ones between them), a row per conductor where a pin carries several: the item to draw, the sides to
+    draw the anchors on (tall: alternately left and right, so two-line flags do not meet) and the anchor id of every (pin ref, conductor)."""
     used = Counter(r["at"] for r in rows)
     tid = {(r["at"], r["cid"]): (f"{r['at']}#{r['cid']}" if used[r["at"]] > 1 else r["at"]) for r in rows}
     nums = [_natural(p["n"]) for b in it["blocks"] for p in b["pins"] if p["anchor"] in used]
@@ -109,18 +109,18 @@ def _block(it: Elem, rows: list[Elem]) -> tuple[Elem, dict[tuple[str, str], str]
         if pins: blocks.append(dict(b, pins=pins))
     item = dict(it, blocks=blocks, role="in_scope", symbol="block" if it["symbol"] in ("breaker", "fuse", "switch", "relay", "terminator", "battery", "dcdc") else it["symbol"],
                 partial=it["partial"] or sum(len(b["pins"]) for b in blocks) < sum(len(b["pins"]) for b in it["blocks"]))     # a part with terminals on two sides is drawn as a box, its terminals in a column
-    return item, tid
+    return item, ({t: "LR"[i % 2] for i, t in enumerate(tid[(r["at"], r["cid"])] for r in rows)} if tall and it["symbol"] != "harness" else {}), tid
 
 
-def _chunk(sc: Elem, key: str, u: Elem, rows: list[Elem], one: bool, x: float, y: float) -> tuple[Elem, list[Elem], dict[int, Elem]]:
+def _chunk(sc: Elem, key: str, u: Elem, rows: list[Elem], tall: bool, x: float, y: float) -> tuple[Elem, list[Elem], dict[int, Elem]]:
     """The symbol of a unit holding these rows at (x, y), its texts, and for every row (by position) the anchor its stub starts at."""
     if u["kind"] == "bar":
-        taps = _taps(key, u["item"], rows, one)
+        taps = _taps(key, u["item"], rows, tall)
         sy, tx = S.build(_bar(sc, key, u), x, y, None, taps)
         by = {a["id"]: a for a in sy["anchors"]}
         return sy, tx, {i: by[t["id"]] for i, t in enumerate(taps)}
-    item, tid = _block(u["item"], rows)
-    sy, tx = S.build(item, x, y)
+    item, sides, tid = _block(u["item"], rows, tall)
+    sy, tx = S.build(dict(item, id=item["id"] if key == item["id"] else f"{item['id']}#{key}"), x, y, sides)     # a pin's box has an id of its own
     back = {t: ref for (ref, _), t in tid.items()}
     for a in sy["anchors"]: a["model"] = back.get(a["model"], a["model"])
     for t in tx: t["model"] = back.get(t["model"], t["model"])
@@ -138,19 +138,19 @@ def _text(sc: Elem, r: Elem, where: I.Where, own_id: str, sheet: int) -> str:
 
 
 def _layout(sc: Elem, units: dict[str, Elem], cur: list[tuple[str, Elem]], flatw: dict[tuple[str, str, str], float], zone: float, aw: float) -> tuple[bool, float]:
-    """(one-sided, height of the strip) of a page holding these rows: flags on both sides, flat, when they fit the width of the sheet, else all on the right."""
+    """(tall, height of the strip) of a page holding these rows: flat one-line flags when they fit the width of the sheet, else two-line flags at a 10 mm pitch."""
     ch: dict[str, list[Elem]] = defaultdict(list)
     for k, r in cur: ch[k].append(r)
-    for one in (False, True):
-        sy = [_chunk(sc, k, units[k], rs, one, 0.0, 0.0)[0] for k, rs in ch.items()]
+    for tall in (False, True):
+        sy = [_chunk(sc, k, units[k], rs, tall, 0.0, 0.0)[0] for k, rs in ch.items()]
         right = max(flatw[(k, r["cid"], r["at"])] for k, r in cur)
         both = any(units[k]["kind"] == "bar" or units[k]["item"]["symbol"] == "harness" for k in ch)     # a bar or a harness connector has stubs on both sides, a box only on its right
-        if one or (2 if both else 1) * (zone + right) + max(y["w"] for y in sy) <= aw: break
-    return one, sum(y["h"] + GRID for y in sy)
+        if tall or (2 if both else 1) * (zone + right) + max(y["w"] for y in sy) <= aw: break
+    return tall, sum(y["h"] + GRID for y in sy)
 
 
 def _plan(sc: Elem, units: dict[str, Elem], size: str, inline: bool, flatw: dict[tuple[str, str, str], float], zone: float) -> list[tuple[list[tuple[str, Elem]], bool]]:
-    """The rows in order cut into pages (rows, one-sided): filled while the strip (and, when inline, its wire table) fits the sheet, then evened out."""
+    """The rows in order cut into pages (rows, tall): filled while the strip (and, when inline, its wire table) fits the sheet, then evened out."""
     ax, ay, aw, ah = areas(size)["area"]
     order = sorted(units, key=lambda k: (not _mine(sc, units[k]["item"]), _natural(k)))
     seq = [(k, r) for k in order for r in units[k]["rows"]]
@@ -188,7 +188,7 @@ def pages(sc: Elem, size: str, where: I.Where) -> list[Elem]:
     pgs = plans[0] if len(plans[0]) <= len(plans[1]) + tab(plans[1]) else plans[1]
     where_row = {(k, r["cid"], r["at"]): n for n, (pg, _) in enumerate(pgs, 1) for k, r in pg}
     out = []
-    for n, (pg, one) in enumerate(pgs, 1):
+    for n, (pg, tall) in enumerate(pgs, 1):
         ch: dict[str, list[Elem]] = defaultdict(list)
         for k, r in pg: ch[k].append(r)
         used = {r["at"] for _, r in pg}
@@ -201,24 +201,21 @@ def pages(sc: Elem, size: str, where: I.Where) -> list[Elem]:
             flags.append(f)
         items = [dict(it, blocks=[dict(b, pins=[p for p in b["pins"] if p["anchor"] in used]) for b in it["blocks"] if any(p["anchor"] in used for p in b["pins"])])
                  for it in sc["items"] if any(p["anchor"] in used for b in it["blocks"] for p in b["pins"])]
-        out.append(dict(scope=sc["scope"], title=sc["title"], project=sc["project"], items=items, wires=[], flags=flags, n=n, hub=True, one=one,
+        out.append(dict(scope=sc["scope"], title=sc["title"], project=sc["project"], items=items, wires=[], flags=flags, n=n, hub=True, tall=tall,
                         chunks=[(k, units[k], rs) for k, rs in ch.items()]))
     return out
 
 
 def place(page: Elem, size: str, reserve: float = 0.0) -> Elem:
-    """Draws a strip page: the units stacked at the top of the area, a stub and a flat flag per row (a harness pin's, which has a row on each side, in two lines
-    when the page is one-sided); flags stand in a column on each side."""
+    """Draws a strip page: the units stacked at the top of the area, a stub and a flat flag (two lines when `tall`) per row; flags stand in a column on each side."""
     ax, ay, aw, ah = areas(size)["area"]
-    one = page["one"]
+    tall, h = page["tall"], (S.FLAG_H if page["tall"] else FLAT)
     flags_by = {f["tap"]: f for f in page["flags"]}
-    sym = {k: u["item"]["symbol"] for k, u, _ in page["chunks"]}
-    hh = {t: (S.FLAG_H if one and sym[t[0]] == "harness" else FLAT) for t in flags_by}
-    fl = {t: S.flag("", f["model"], "off_sheet", f["text"], f["target"], None, h=hh[t]) for t, f in flags_by.items()}
+    fl = {t: S.flag("", f["model"], "off_sheet", f["text"], f["target"], None, h=h) for t, f in flags_by.items()}
     zone = ceil_to(max([text_w(label_text(r["e"]), SIZE) for _, _, rs in page["chunks"] for r in rs] + [0.0]) + ZONE)
     built = []
     for key, u, rs in page["chunks"]:
-        sy, _, anc = _chunk(page, key, u, rs, one, 0.0, 0.0)
+        sy, _, anc = _chunk(page, key, u, rs, tall, 0.0, 0.0)
         built.append((key, u, rs, sy["w"], [anc[i]["side"] if anc[i]["side"] in "LR" else "R" for i in range(len(rs))]))
     wide = max([b[3] for b in built] + [0.0])
     side_w = {s: max([fl[(k, r["cid"], r["at"])]["w"] for k, _, rs, _, sd in built for r, q in zip(rs, sd) if q == s] + [0.0]) for s in "LR"}
@@ -227,13 +224,12 @@ def place(page: Elem, size: str, reserve: float = 0.0) -> Elem:
     syms, texts, flags, wires = [], [], [], []
     y = ay
     for key, u, rs, w0, sd in built:
-        sy, tx, anc = _chunk(page, key, u, rs, one, x0, y)
+        sy, tx, anc = _chunk(page, key, u, rs, tall, x0, y)
         syms.append(sy); texts += tx
         for i, (r, s) in enumerate(zip(rs, sd)):
             a = anc[i]
             f0, w = flags_by[(key, r["cid"], r["at"])], fl[(key, r["cid"], r["at"])]["w"]
             fx = (x0 - zone - w) if s == "L" else x0 + wide + zone
-            h = hh[(key, r["cid"], r["at"])]
             flags.append(S.flag(f0["id"], f0["model"], "off_sheet", f0["text"], f0["target"], None, fx, a["y"] - h / 2, "R" if s == "L" else "L", h=h))
             if f0.get("covers"): flags[-1]["covers"] = f0["covers"]
             ex = fx + w if s == "L" else fx
