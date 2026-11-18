@@ -69,6 +69,7 @@ class WireObs:
     rgb: tuple[float, float, float]
     ends: list[End]
     label_runs: list[Run] = field(default_factory=list)
+    conflict: str = ""            # the wire's labels (it may carry several) disagree
 
 
 @dataclass
@@ -211,6 +212,7 @@ def parse_sheet(page: Sheet, lead: Any, conns: dict[str, set[str]]) -> SheetObs:
         obs.append(WireObs(j, w.pts, [], "", "", w.rgb, []))
     for r, j, (lab, gauge, colour) in lab_runs:
         o = obs[j]
+        if o.labels and (o.gauge, o.colour, o.labels[0]) != (gauge, colour, lab): o.conflict = f"{o.labels[0]} {o.gauge} {o.colour} / {lab} {gauge} {colour}"
         o.labels.append(lab); o.label_runs.append(r)
         o.gauge, o.colour = gauge, colour
         used.add(id(r))
@@ -294,11 +296,11 @@ def _nets(page: Sheet, strip: tuple[float, float, float, float]) -> tuple[_UF, d
     three or more ends without a dot are joined and reported; a crossing, or an end on the side of another line, joins nothing (a dot there is reported)."""
     uf = _UF()
     an: list[str] = []
-    wends = [(("w", j, e), (w.pts[0] if e == 0 else w.pts[-1])) for j, w in enumerate(page.wires) for e in (0, 1)]
-    lines = [(("s", i), a, b) for i, (a, b, w, st) in enumerate(page.segs) if st and (abs(a[0] - b[0]) <= TOL or abs(a[1] - b[1]) <= TOL) and a[1] < strip[1] - 0.5]
-    for k, _ in wends: uf.find(k)
-    for k, a, b in lines: uf.find(k)
-    ends: list[tuple[Any, Pt]] = list(wends) + [(k, a) for k, a, b in lines] + [(k, b) for k, a, b in lines]
+    wends: list[tuple[Any, Pt]] = [(("w", j, e), (w.pts[0] if e == 0 else w.pts[-1])) for j, w in enumerate(page.wires) for e in (0, 1)]
+    lines: list[tuple[Any, Pt, Pt]] = [(("s", i), a, b) for i, (a, b, w, st) in enumerate(page.segs) if st and (abs(a[0] - b[0]) <= TOL or abs(a[1] - b[1]) <= TOL) and a[1] < strip[1] - 0.5]
+    for wk, _ in wends: uf.find(wk)
+    for lk, _a, _b in lines: uf.find(lk)
+    ends: list[tuple[Any, Pt]] = [*wends, *((k, a) for k, a, b in lines), *((k, b) for k, a, b in lines)]
     dots = [d for d in page.dots if d[1] < strip[1] - 0.5]
     # group the end points
     groups: list[tuple[Pt, list[Any]]] = []
@@ -344,6 +346,8 @@ def _ends(page: Sheet, free: list[Run], flags: list[FlagObs], uf: _UF, wend: dic
             for e in (0, 1):
                 if _eq(d, w.pts[0] if e == 0 else w.pts[-1]): net_dots.setdefault(uf.find(("w", j, e)), []).append(d)
     cand = [(r, c) for r in free if (c := lead(r.s)[0])]
+    ends_pts = [pt for w in page.wires for pt in (w.pts[0], w.pts[-1])]
+    touch = lambda p: any(_eq(a, p) or _eq(b, p) for _, a, b in lines) or any(_dist_edge(p, o.pts) <= 0.35 for o in page.outlines)  # noqa: E731
     outs = sorted((o for o in page.outlines if o.x1 - o.x0 >= 6 and o.y1 - o.y0 >= 6), key=lambda o: -(o.x1 - o.x0) * (o.y1 - o.y0))
     flag_outs = {id(f.outline) for f in flags}
     outs = [o for o in outs if id(o) not in flag_outs]
@@ -359,7 +363,7 @@ def _ends(page: Sheet, free: list[Run], flags: list[FlagObs], uf: _UF, wend: dic
             if nid in net_dots:
                 ends.append(_node(p, nid, net_dots[nid], cand, free, uf))
             else:
-                ends.append(_pin(p, q, nid, lines, free, outs, cand, conns, uf))
+                ends.append(_pin(p, q, nid, lines, free, outs, cand, conns, uf, ends_pts) if touch(p) else End("pin", p, "?", net=nid))   # an end on nothing is a pin of nothing
         obs[j].ends = sorted(obs[j].ends + ends, key=lambda x: (x.p[0], x.p[1]))
 
 
@@ -380,7 +384,7 @@ def _node(p: Pt, nid: Any, dots: list[Pt], cand: list[tuple[Run, str]], free: li
     return End("node", p, best, net=nid, toks=toks)
 
 
-def _pin(p: Pt, q: Pt, nid: Any, lines: list[Any], free: list[Run], outs: list[Outline], cand: list[tuple[Run, str]], conns: dict[str, set[str]], uf: _UF) -> End:
+def _pin(p: Pt, q: Pt, nid: Any, lines: list[Any], free: list[Run], outs: list[Outline], cand: list[tuple[Run, str]], conns: dict[str, set[str]], uf: _UF, ends_pts: list[Pt]) -> End:
     """A pin: which symbol is behind the end of the wire (the outline it points into, else the nearest name), the connector header above it and the
     pin number or name standing next to it."""
     # direction into the symbol: along the stub that ends here, else against the wire
@@ -402,7 +406,7 @@ def _pin(p: Pt, q: Pt, nid: Any, lines: list[Any], free: list[Run], outs: list[O
             if heads: comp, box = min(heads, key=lambda x: (x[0].top, x[0].x0))[1], o; break
     if not comp:
         near = [(min(max(r.x0 - p[0], 0, p[0] - r.x1) ** 2 + max(r.top - p[1], 0, p[1] - r.bot) ** 2, 1e9) ** .5, c) for r, c in cand]
-        near = [x for x in near if x[0] <= 20]
+        near = [x for x in near if x[0] <= 30]
         if near: comp = min(near, key=lambda x: x[0])[1]
     # tokens on the pin's row, nearest first, on the symbol's side
     row = [r for r in free if abs(r.cy - p[1]) <= 1.4] if abs(uy) < .5 else [r for r in free if abs(r.cx - p[0]) <= 1.4]
@@ -421,7 +425,7 @@ def _pin(p: Pt, q: Pt, nid: Any, lines: list[Any], free: list[Run], outs: list[O
     names = conns.get(comp, set())
     conn = None
     if box is not None and names - {""}:
-        hs = [r for r in free if r.s in names and box.x0 - .2 <= r.x0 and r.x1 <= box.x1 + .2 and box.y0 <= r.top and r.bot <= p[1] + .5]
+        hs = [r for r in free if r.s in names and not any(abs(q[1] - r.cy) <= 1.4 and r.x0 - 8 <= q[0] <= r.x1 + 8 for q in ends_pts) and box.x0 - .2 <= r.x0 and r.x1 <= box.x1 + .2 and box.y0 <= r.top and r.bot <= p[1] + .5]
         if hs:
             top = max(r.bot for r in hs)
             row_h = [r for r in hs if top - r.bot < 1.0]

@@ -161,7 +161,7 @@ def targets(kind, g):
                 if s["kind"] in ("bus", "ground", "splice") and n >= (3 if s["kind"] == "splice" else 2):
                     for pi, pr in enumerate(s["prims"]):
                         if pr["kind"] == "circle" and pr.get("fill") == "black":
-                            out.append((f"sheet {si + 1}: dot of {s['id']} removed", lambda h, si=si, yi=yi, pi=pi: h["sheets"][si]["symbols"][yi]["prims"].pop(pi)))
+                            out.append((f"sheet {si + 1}: dot of {s['id']} removed", lambda h, si=si, pr=pr: _undot(h["sheets"][si], pr["cx"], pr["cy"])))
         elif kind == "add_dot_at_crossing":
             for (x, y) in _crossings(sh):
                 out.append((f"sheet {si + 1}: dot at the crossing {x},{y}", lambda h, si=si, x=x, y=y: h["sheets"][si].setdefault("rules", []).append(
@@ -184,6 +184,11 @@ def targets(kind, g):
             for t in sh["texts"]:
                 if t["model"] == "" and t["role"] == "pin" and t["s"] in drawn and t["y"] > 150: out.append((f"sheet {si + 1}: table row {t['s']} dropped", lambda h, si=si, t=t: _drop(h["sheets"][si], t)))
     return out
+
+
+def _undot(sh, cx, cy):
+    """Takes every filled dot at that point away (the engine draws one per wire that meets there)."""
+    for s in sh["symbols"]: s["prims"] = [p for p in s["prims"] if not (p["kind"] == "circle" and p.get("fill") == "black" and (p["cx"], p["cy"]) == (cx, cy))]
 
 
 def _swap(texts, i, j):

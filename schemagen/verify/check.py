@@ -13,7 +13,7 @@ from typing import Any
 
 from . import expect as X
 from . import legible
-from .parse import End, FlagObs, SheetObs, TableRow, WireObs, parse_sheet, same_colour
+from .parse import End, SheetObs, TableRow, WireObs, parse_sheet, same_colour
 from .pdfread import read
 
 NAMES = {"BK": "black", "WH": "white", "GY": "grey", "PK": "pink", "RD": "red", "OG": "orange", "YE": "yellow", "OL": "olive", "GN": "green", "TQ": "turquoise",
@@ -88,6 +88,8 @@ class Drawing:
             for w in sh.wires:
                 if w.labels: self.recs[w.labels[0]].append((sh.n, w))
         self.table_labels: set[str] = {r.label for sh in self.sheets for r in sh.rows}
+        self.table_only = 0
+        self.covered = 0
 
     def add(self, kind: str, msg: str, sheet: int | None = None, **kw: Any) -> None:
         self.findings.append(dict(kind=kind, drawing=self.name, sheet=sheet, msg=msg, **kw))
@@ -95,7 +97,6 @@ class Drawing:
 
 def check_drawing(d: Drawing, source: dict[str, str] | None = None, others: dict[str, Drawing] | None = None) -> None:
     """All per-drawing checks; the findings go to d.findings."""
-    ex = d.ex
     if not d.sheets: d.add("unread", "no pages"); return
     _title(d, source)
     _wires(d)
@@ -128,11 +129,17 @@ def _title(d: Drawing, source: dict[str, str] | None) -> None:
 
 def _terms(w: list[tuple[int, WireObs]]) -> tuple[list[End], list[End], list[End]]:
     """Terminal ends, far-end flags (off-sheet) and continuation flags of every piece of a conductor."""
-    t, f, c = [], [], []
+    t: list[End] = []
+    f: list[End] = []
+    c: list[End] = []
     for _, p in w:
         for e in p.ends: (c if _is_cont(e) else f if e.kind == "flag" else t if e.kind in ("pin", "node") else f).append(e)
     seen: set[tuple[Any, ...]] = set()
-    t = [e for e in t if (k := (e.kind, e.comp, e.conn, e.pin)) not in seen and not seen.add(k)]   # a splice drawn on two sheets is one end
+    uniq: list[End] = []
+    for e in t:   # a splice drawn on two sheets is one end
+        k = (e.kind, e.comp, e.conn, e.pin)
+        if k not in seen: seen.add(k); uniq.append(e)
+    t = uniq
     return t, f, c
 
 
@@ -144,20 +151,21 @@ def _wires(d: Drawing) -> None:
     by_label: dict[str, list[X.Cond]] = defaultdict(list)
     for i in want: by_label[ex.conds[i].label].append(ex.conds[i])
     for sh in d.sheets:
-        c: dict[str, list[WireObs]] = defaultdict(list)
+        bylab: dict[str, list[WireObs]] = defaultdict(list)
         for w in sh.wires:
             if not w.labels:
                 if not any(e.kind == "flag" and re.match(r"^\+\s*\d+ more wires", e.text) for e in w.ends): d.add("label", "a wire has no label text on it", sh.n)
                 continue
             if len(set(w.labels)) > 1: d.add("label", f"a wire carries two labels {w.labels}", sh.n)
-            c[w.labels[0]].append(w)
-        for k, ws in c.items():   # one label on several wires is a loop drawn as two flags: each piece must end in a flag
+            if w.conflict: d.add("label", f"the labels of one wire disagree: {w.conflict}", sh.n)
+            bylab[w.labels[0]].append(w)
+        for k, ws in bylab.items():   # one label on several wires is a loop drawn as two flags: each piece must end in a flag
             if len(ws) > 1 and not all(any(e.kind == "flag" and not _is_cont(e) for e in w.ends) for w in ws): d.add("label", f"label {k} is on {len(ws)} wires of the sheet", sh.n)
     covered = sum(f.n for sh in d.sheets for f in sh.flags if f.kind == "summary")
     for lab, cs in by_label.items():
         if lab not in d.recs:
-            if lab in d.table_labels: d.table_only = getattr(d, "table_only", 0) + 1; continue
-            for c in cs: d.add("missing", f"wire {lab} is not in the drawing", conductor=c.id)
+            if lab in d.table_labels: d.table_only += 1; continue
+            for cc in cs: d.add("missing", f"wire {lab} is not in the drawing", conductor=cc.id)
             continue
         if len(cs) > 1: continue   # two conductors with one label: not decidable from the label
         c = cs[0]
@@ -173,7 +181,7 @@ def _wires(d: Drawing) -> None:
         _ends(d, c, t, f, pieces)
     extra = set(d.recs) - set(by_label)
     for lab in sorted(extra): d.add("extra", f"wire {lab} is drawn but the wire list does not put it in this drawing", d.recs[lab][0][0])
-    d.covered = covered   # type: ignore[attr-defined]
+    d.covered = covered
 
 
 def _ends(d: Drawing, c: X.Cond, t: list[End], f: list[End], pieces: list[tuple[int, WireObs]]) -> None:
@@ -208,7 +216,9 @@ def _names_end(d: Drawing, far: str, c: X.Cond, t: X.Term, end: int) -> bool:
     terminal's own component it gives the connector and pin."""
     if not _run_names(d, far, c, end): return False
     seg = re.split(r"\s*->\s*", far)[0]
-    return describes(d.ex, seg, None, t) if d.ex.lead(seg)[0] == t[0] else True
+    comp, rest = d.ex.lead(seg)
+    if comp != t[0] or not rest: return True   # a flag may name the component without its terminal
+    return describes(d.ex, seg, None, t)
 
 
 def _show(e: End) -> str:
@@ -245,8 +255,7 @@ def _tables(d: Drawing) -> None:
     n_sheets = len(d.sheets)
     by_label = {c.label: c for c in ex.conds}
     for sh in d.sheets:
-        if sh.wires and not any(rows.get(sh.n)) and not sh.rows:
-            if not any(r.sheet == sh.n for s in d.sheets for r in s.rows): d.add("table", "the sheet has no wire table", sh.n)
+        if sh.wires and not rows.get(sh.n): d.add("table", "the sheet has no wire table", sh.n)
     for k, rs in rows.items():
         if k > n_sheets: d.add("table", f"the wire table speaks of sheet {k}, which does not exist"); continue
         sh = d.sheets[k - 1]
@@ -273,7 +282,7 @@ def _tables(d: Drawing) -> None:
                 if cw and not r.wire.endswith(cw): d.add("table", f"table row {r.label}: '{r.wire}' but the wire is {w.colour} ({cw})", k)
                 if re.sub(r"\s*AWG", "", gtxt).strip() != w.gauge: d.add("table", f"table row {r.label}: gauge '{r.wire}' but the wire is {w.gauge}", k)
             _row_vs_wire(d, r, ws, k)
-        for lab, w in drawn.items():
+        for lab in drawn:
             if lab not in seen: d.add("table", f"wire {lab} has no row in the wire table of sheet {k}", k)
         if undrawn > cover: d.add("table", f"{undrawn - cover} table rows of sheet {k} are for wires that are not drawn and no summary flag covers them", k)
 
@@ -293,6 +302,8 @@ def _row_end(ex: X.Expected, e: End, text: str) -> bool:
     if e.kind == "flag":
         far = " ".join(re.sub(r"^(?:\d+ )?(?:continues on sheet \d+:?|to|->|→)\s*", "", e.text).split())
         t = " ".join(re.sub(r"\s*\(sheet \d+\)$", "", text).split())
+        if t.endswith("..") and far.endswith(".."): a, b = t[:-2].rstrip(), far[:-2].rstrip(); return a.startswith(b) or b.startswith(a)
+        if t.endswith("..") and not far.endswith(".."): return far.startswith(t[:-2].rstrip())
         if far.endswith(".."): return t.startswith(far[:-2].rstrip())   # a flag text cut short by the drawing: the table has all of it
         return far == t or not far or t.startswith(far) or far.startswith(t)   # the table may add the long name in brackets
     return describes(ex, text, e)
@@ -307,7 +318,7 @@ def _row_vs_model(d: Drawing, r: TableRow, c: X.Cond, k: int) -> None:
     cw = words(c.colour) if c.colour else ""
     gtxt = r.wire[:-len(cw)] if cw and r.wire.endswith(cw) else r.wire
     if r.wire and re.sub(r"\s*AWG", "", gtxt).strip() != c.gauge: d.add("table", f"table row {r.label}: '{r.wire}' but the wire list says {c.gauge} {cw}", k)
-    d.table_only = getattr(d, "table_only", 0) + 1   # type: ignore[attr-defined]
+    d.table_only += 1
 
 
 def _flags(d: Drawing, others: dict[str, Drawing]) -> None:
@@ -323,6 +334,7 @@ def _flags(d: Drawing, others: dict[str, Drawing]) -> None:
             elif f.sheet is None: d.add("flag_no_sheet", f"flag '{f.text}' names drawing {f.drawing} but no sheet", sh.n)
             if w is None: d.add("flag", f"flag '{f.text}' has no wire ending in it", sh.n); continue
             if not lab: continue
+            target: Drawing | None
             if f.drawing is None or others.get(f.drawing) is d or f.drawing == d.name or f.drawing == d.scope.split(":")[-1]: target, tn = d, f.sheet
             else: target, tn = others.get(f.drawing) or others.get("component-" + f.drawing), f.sheet
             if f.drawing is not None and target is None: d.add("flag", f"flag '{f.text}': no drawing {f.drawing} among the PDFs", sh.n); continue
@@ -348,6 +360,7 @@ def _reaches(d: Drawing, lab: str, n: int, here: int, mine: WireObs) -> bool:
         seen.add(k)
         for x in [x for m, x in d.recs.get(lab, []) if m == k]:
             if any(e.kind in ("pin", "node") and end_matches(e, other, d.ex) for e in x.ends): return True
+            if any(e.kind == "flag" and not _is_cont(e) and _names_end(d, re.sub(r"^(?:to|->|→)\s+", "", e.text), c, other, 2 if other is c.b else 1) for e in x.ends): return True
             todo += [int(m.group(1)) for e in x.ends if _is_cont(e) and (m := re.search(r"sheet (\d+)", e.text))]
     return False
 

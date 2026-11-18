@@ -38,13 +38,20 @@ class Expected:
 
     def lead(self, text: str) -> tuple[str | None, str]:
         """The component a text starts with (its id or display name, longest match; a leading `ground bus`, `bus` or `splice` is skipped) and the rest of the text."""
-        t = re.sub(r"^(ground bus|bus|splice)\s+", "", text.strip(), flags=re.I)
-        t = " ".join(t.split())
+        raw = " ".join(text.split())
+        for t in (raw, re.sub(r"^(ground bus|bus|splice)\s+", "", raw, flags=re.I)):   # `bus strip` can be a name; `bus BB1` is how the table says a bus
+            r = self._lead(t)
+            if r[0]: return r
+        return self._lead(raw)
+
+    def _lead(self, t: str) -> tuple[str | None, str]:
         low = t.lower()
         for k, cid in self.names:
             if low == k: return cid, ""
             if low.startswith(k) and not low[len(k)].isalnum() and not (low[len(k)] == "-" and low[len(k) + 1:len(k) + 2].isalnum()): return cid, t[len(k):].strip(" ,")
-        return None, t
+        cut = low[:-2].rstrip() if low.endswith("..") else low   # a name cut short (`..`) or given without its bracket: the one component whose name starts so
+        hit = {cid for k, cid in self.names if (len(cut) >= 12 or low.endswith("..")) and len(cut) >= 6 and k.startswith(cut)}
+        return (hit.pop(), "") if len(hit) == 1 else (None, t)
 
     def scope(self, text: str) -> set[int] | None:
         """Indices of the conductors a drawing of `text` must show (a wire or an off-sheet flag); None for a scope kind the verifier does not know."""
@@ -115,7 +122,7 @@ def read(project: str | Path) -> Expected:
     for c in conds:
         for t in (c.a, c.b): conns.setdefault(t[0], set()).add(t[1])
     names: dict[str, str] = {}
-    for c in L.model.components:
-        for k in (c.id, c.name, f"{c.id} {c.name}", c.raw): names.setdefault(" ".join(k.lower().split()), c.id)
+    for m in L.model.components:
+        for k in (m.id, m.name, f"{m.id} {m.name}", m.raw): names.setdefault(" ".join(k.lower().split()), m.id)
     names.pop("", None)
     return Expected(conds, {c.id: c.kind for c in L.model.components}, conns, ctx, source_digest(cfg), sorted(names.items(), key=lambda kv: -len(kv[0])))

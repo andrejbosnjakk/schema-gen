@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from .parse import SheetObs, _label_of
+from .parse import SheetObs
 from .pdfread import Run
 
 MIN_CAP_MM = 2.0   # smallest letter height at A3
@@ -61,19 +61,19 @@ def findings(ob: SheetObs) -> list[dict[str, Any]]:
     # text on lines: wires (not its own), plain lines, outlines' edges
     lines: list[tuple[tuple[float, float], tuple[float, float], float, int]] = []
     for j, w in enumerate(pg.wires):
-        for a, z in zip(w.pts, w.pts[1:]): lines.append((a, z, w.w / 2 + 0.2, j))
-    for a, z, wd, st in pg.segs:
-        if a[1] < sy0 - 0.5: lines.append((a, z, wd / 2, -1))
+        for p, q in zip(w.pts, w.pts[1:]): lines.append((p, q, w.w / 2 + 0.2, j))
+    for p, q, wd, st in pg.segs:
+        if p[1] < sy0 - 0.5: lines.append((p, q, wd / 2, -1))
     for o in pg.outlines:
         if o.y0 < sy0 - 0.5:
-            for a, z in zip(o.pts, o.pts[1:]): lines.append((a, z, 0.17, -2))
+            for p, q in zip(o.pts, o.pts[1:]): lines.append((p, q, 0.17, -2))
     for r in runs:
         if region(r) != "drawing": continue
-        b = _box(r)
-        for a, z, half, j in lines:
-            if max(a[0], z[0]) + half < b[0] or min(a[0], z[0]) - half > b[2] or max(a[1], z[1]) + half < b[1] or min(a[1], z[1]) - half > b[3]: continue
+        bx = _box(r)
+        for p, q, half, j in lines:
+            if max(p[0], q[0]) + half < bx[0] or min(p[0], q[0]) - half > bx[2] or max(p[1], q[1]) + half < bx[1] or min(p[1], q[1]) - half > bx[3]: continue
             if owned.get(id(r)) == j: continue
-            if _hit_seg(b, a, z, half):
+            if _hit_seg(bx, p, q, half):
                 out.append(dict(kind="text_on_line", msg=f"'{r.s}' sits on a " + ("wire" if j >= 0 else "symbol line") + (f" ({'/'.join(ob.wires[j].labels)})" if j >= 0 else "")))
                 break
     for j, w in enumerate(pg.wires):

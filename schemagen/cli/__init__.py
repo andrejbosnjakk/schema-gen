@@ -72,7 +72,7 @@ def main(argv=None):
     ch = sub.add_parser("changes", help="list or undo stored change sets")
     ch.add_argument("config"); ch.add_argument("--undo", action="store_true")
     cd = sub.add_parser("check-drawings", help="read the drawing PDFs back and compare them with the wire list (JSON report, summary)")
-    cd.add_argument("config"); cd.add_argument("pdfs", help="folder with the PDFs (`drawings/*.pdf` and the book `wiring-diagrams.pdf`, as `app export` writes them)")
+    cd.add_argument("config"); cd.add_argument("pdfs", help="folder with the PDFs (drawings/*.pdf and the book)")
     cd.add_argument("--source", help="the spreadsheet the title-block hash is checked against (default: the project's own)")
     cd.add_argument("-o", "--output", help="JSON report (default: <pdfs>/check-drawings.json)")
     sm = sub.add_parser("sim", help="DC simulation: scenarios and fault sweep (HTML + JSON report)")

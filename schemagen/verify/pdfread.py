@@ -89,7 +89,8 @@ def read(path: str | Path) -> list[Sheet]:
     """Every page of a PDF as a Sheet."""
     import pdfplumber
     out: list[Sheet] = []
-    with pdfplumber.open(str(path)) as pdf:
+    opener = pdfplumber.open   # a PDF is read as bytes
+    with opener(str(path)) as pdf:
         for n, p in enumerate(pdf.pages, 1):
             sh = Sheet(n, _mm(p.width), _mm(p.height))
             sh.runs = _runs(p.chars)
