@@ -22,5 +22,8 @@ if ($title -ne "schemagen") { throw "window title '$title', expected 'schemagen'
 Start-Sleep 2
 (Get-Process -Id $p.Id).CloseMainWindow() | Out-Null
 if (-not $p.WaitForExit(15000)) { $p.Kill(); throw "the app did not exit after its window closed" }
-try { Invoke-WebRequest "${url}api/health" -UseBasicParsing -TimeoutSec 2 | Out-Null; throw "the server still answers after exit" } catch [System.Net.WebException] { "closed; server stopped" }
+$answers = $true  # any failure (refused, or a timeout, whose exception type differs between PowerShell 5.1 and 7) means it stopped
+try { Invoke-WebRequest "${url}api/health" -UseBasicParsing -TimeoutSec 2 | Out-Null } catch { $answers = $false }
+if ($answers) { throw "the server still answers after exit" }
+"closed; server stopped"
 Get-Content $log
