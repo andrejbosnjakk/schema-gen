@@ -80,6 +80,12 @@ def test_cli_writes_report_and_exit_code(drawings, tmp_path):
                        capture_output=True, text=True, cwd=ROOT, env={**os.environ, "PYTHONPATH": str(ROOT)})
     assert r.returncode == 0, r.stdout + r.stderr
     assert json.loads(out.read_text(encoding="utf-8"))["ok"] and "verdict: PDFs agree" in r.stdout
+    import shutil  # a hard finding must fail the command, also through `python -m schemagen`
+    shutil.copytree(folders["demo"] / "drawings", tmp_path / "bad" / "drawings")
+    (tmp_path / "bad" / "drawings" / "component-ECU.pdf").unlink()
+    r = subprocess.run([sys.executable, "-m", "schemagen", "check-drawings", str(PROJECTS["demo"]), str(tmp_path / "bad"), "-o", str(out)],
+                       capture_output=True, text=True, cwd=ROOT, env={**os.environ, "PYTHONPATH": str(ROOT)})
+    assert r.returncode == 1, r.stdout + r.stderr
 
 
 def test_missing_pdf_is_a_book_finding(drawings, tmp_path):
