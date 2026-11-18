@@ -236,7 +236,9 @@ def _nets(d: Drawing) -> None:
         by_node: dict[str, set[Any]] = defaultdict(set)
         for w in sh.wires:
             for e in w.ends:
-                if e.kind == "node": sites[e.net].add((e.comp,)); by_node[e.comp].add(e.net)
+                if e.kind == "node":
+                    sites[e.net].add((e.comp,))
+                    if ex.kind.get(e.comp) in ("splice", "bus"): by_node[e.comp].add(e.net)    # one node; a harness pin drawn as a bar is one node per pin
                 elif e.kind == "pin":
                     key = (e.comp, "pin", e.pin or "") if ex.kind.get(e.comp) == "harness" else (e.comp, e.conn or "", e.pin or "")
                     sites[e.net].add(key)

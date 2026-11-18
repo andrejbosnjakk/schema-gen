@@ -247,6 +247,12 @@ def _wire(st: Any, c: Any, wsev: dict[str, str], overlay: dict[str, Any]) -> Sce
                      fault=Fault(status=sim["status"], reason=sim.get("reason", "")) if sim and sim.get("status") != "ok" else None)
 
 
+def short(words: str, limit: int = 72) -> str:
+    """The words of a far end, shortened for a flag when they are long: the bracket after a name (what the part is) goes first, then the `via` part."""
+    if len(words) > limit: words = re.sub(r"\s*\([^)]*\)", "", words)
+    return re.sub(r"\s+via .*$", "", words) if len(words) > limit else words
+
+
 def terminal_words(ctx: Any, t: Terminal) -> str:
     """A terminal by display name: `Battery 14 V, + terminal`, `EFIS, J1, pin 2`; a splice or bus by its name."""
     c = ctx.comp.get(t.device)
@@ -260,7 +266,7 @@ def far_end(st: Any, j: int, e: int) -> tuple[str, str]:
     or past a splice the first terminal the run lands on (`+2 more`: it lands on others too; `via`: the splice)."""
     ctx, net, conds = st.ctx, st.ctx.net, st.m.conductors
     t = conds[j].end(3 - e)
-    if net.role(t.device) != "splice": return terminal_words(ctx, t), ctx.comp[t.device].id if t.device in ctx.comp else t.device
+    if net.role(t.device) != "splice": return short(terminal_words(ctx, t)), ctx.comp[t.device].id if t.device in ctx.comp else t.device
     seen, todo, lands = {j}, [net.node(j, 3 - e)], []
     while todo:
         for i, k in net.at[todo.pop()]:
@@ -271,9 +277,9 @@ def far_end(st: Any, j: int, e: int) -> tuple[str, str]:
             else: lands.append((terminal_words(ctx, o), o.device))
     lands.sort()
     via = terminal_words(ctx, t)
-    if not lands: return via, ctx.comp[t.device].id
+    if not lands: return short(via), ctx.comp[t.device].id
     first, dev = lands[0]
-    return first + (f" +{len(lands) - 1} more" if len(lands) > 1 else "") + f" via {via}", ctx.comp[dev].id if dev in ctx.comp else dev
+    return short(first + (f" +{len(lands) - 1} more" if len(lands) > 1 else "") + f" via {via}"), ctx.comp[dev].id if dev in ctx.comp else dev
 
 
 def _flag(st: Any, j: int, e: int) -> SceneFlag:

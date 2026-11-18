@@ -205,7 +205,7 @@ def parse_sheet(page: Sheet, lead: Any, conns: dict[str, set[str]]) -> SheetObs:
     for r in free:
         j = _wire_under(r, wires)
         if j is not None and (sl := split_label(r.s)): lab_runs.append((r, j, sl))
-        elif (m := _label_of(r)) and (m.group("colour") or "AWG" in r.s or "mm" in r.s): ob.orphan_labels.append(r)
+        elif (m := _label_of(r)) and ((m.group("colour") and COLOUR.match(m.group("colour")) and m.group("gauge")[0].isdigit()) or "AWG" in r.s or "mm" in r.s): ob.orphan_labels.append(r)
     used: set[int] = set()
     obs: list[WireObs] = []
     for j, w in enumerate(wires):
@@ -379,7 +379,7 @@ def _node(p: Pt, nid: Any, dots: list[Pt], cand: list[tuple[Run, str]], free: li
         if d < bd: best, bd = c, d
     near = sorted((min(abs(r.x0 - q[0]) if r.x0 > q[0] else abs(q[0] - r.x1) for q in dots if abs(r.cy - q[1]) <= 1.4 and -0.5 <= (r.x0 - q[0]) <= 8 or -0.5 <= (q[0] - r.x1) <= 8), r.s)
                   for r in free if any(abs(r.cy - q[1]) <= 1.4 and (-0.5 <= r.x0 - q[0] <= 8 or -0.5 <= q[0] - r.x1 <= 8) for q in dots))
-    toks = [s for _, s in near if not any(c == s for _, c in cand)]
+    toks = [s for _, s in near if not any(r.s == s or c == s for r, c in cand)]   # a name printed beside the dot is the part's name, not a pin
     if best is None or bd > 14: return End("node", p, "?", net=nid, toks=toks)
     return End("node", p, best, net=nid, toks=toks)
 

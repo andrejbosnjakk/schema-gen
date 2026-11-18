@@ -21,7 +21,10 @@ def draw(st: Any, scope: Any, size: str = "A3", meta: dict[str, str] | None = No
     sc = scene(st, scope)
     I.annotate(sc, where or (lambda d, c: []))
     meta = dict(meta or {})
-    pages = H.pages(sc, size, where or (lambda d, c: [])) if H.is_hub(sc) else L.paginate(sc, size)  # type: ignore[arg-type]
+    flat = where or (lambda d, c: [])
+    if H.is_hub(sc): pages = H.pages(sc, size, flat)
+    elif sc["scope"]["kind"] in ("component", "harness"): pages = L.one_page(sc, size) or H.pages(sc, size, flat)      # a net of wires on one sheet, else a strip
+    else: pages = L.paginate(sc, size)  # type: ignore[arg-type]
     info: dict[str, str] = dict(title=sc["title"], scope=sc["scope"]["text"], project=sc["project"], revision=meta.get("revision", ""), date=meta.get("date", ""),
                 drawn_by=meta.get("drawn_by", ""), source=meta.get("source", ""))
     ah = areas(size)["area"][3]

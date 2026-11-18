@@ -179,6 +179,11 @@ def targets(kind, g):
         elif kind == "wrong_sheet":
             for fi, f in enumerate(sh["flags"]):
                 if f["kind"] == "continuation": out.append((f"sheet {si + 1}: flag {f['id']} points at the wrong sheet", lambda h, si=si, fi=fi: _sheet(h, si, fi)))
+                m = re.search(r"\(drawing ([^,)]+), sheet (\d+)\)", f["text"])
+                if m and m.group(1) == g["drawing"]["scope"].partition(":")[2]:     # a strip's flag names a sheet of this drawing
+                    cid = f["model"]
+                    bad = [k for k, x in enumerate(g["sheets"], 1) if not any(w["model"] == cid for w in x["wires"])]
+                    if bad: out.append((f"sheet {si + 1}: flag {f['id']} names the wrong sheet", lambda h, si=si, fi=fi, k=bad[0]: _flag_sheet(h, si, fi, k)))
         elif kind == "drop_table_row":
             drawn = {w["label"] for w in sh["wires"]}
             for t in sh["texts"]:
@@ -228,6 +233,11 @@ def _sheet(g, si, fi):
     f = g["sheets"][si]["flags"][fi]
     n = len(g["sheets"])
     f["sheet"] = next((k for k in range(1, n + 1) if k not in (f["sheet"], si + 1)), n + 1)
+
+
+def _flag_sheet(g, si, fi, k):
+    f = g["sheets"][si]["flags"][fi]
+    f["text"] = re.sub(r"sheet \d+\)", f"sheet {k})", f["text"])
 
 
 def _drop(sh, t):

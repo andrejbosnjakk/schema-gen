@@ -46,11 +46,12 @@ def test_every_scope(states, project):
 
 
 def test_text_and_flags(states):
-    """A multi-sheet drawing names the other sheet in its continuation flags; the summary flag stands for many wires."""
+    """A multi-sheet drawing is a strip: every flag names the drawing it leads to (and the sheet, when that is this drawing); the summary flag stands for many wires."""
     g = draw(states["aircraft"], "component:EFIS")
     assert len(g["sheets"]) > 1
-    cont = [f for sh in g["sheets"] for f in sh["flags"] if f["kind"] == "continuation"]
-    assert cont and all(f["sheet"] and not f["text"].startswith("→ pin:") and "pin:" not in f["text"] for f in cont)
+    flags = [f for sh in g["sheets"] for f in sh["flags"]]
+    assert flags and all("(drawing " in f["text"] and "pin:" not in f["text"] for f in flags)
+    assert any("(drawing EFIS, sheet " in f["text"] for f in flags)
     assert any(f.get("covers") for sh in g["sheets"] for f in sh["flags"])
     assert any("22 " in t["s"] for sh in g["sheets"] for t in sh["texts"] if t["role"] == "wire")
 
@@ -60,8 +61,6 @@ def test_crossings_reported(states):
     assert r["crossings"]["total"] >= 0 and set(r["crossings"]["by_sheet"]) == {1, 2}
 
 
-@pytest.mark.xfail(reason="not met: most crossings on a single-component aircraft drawing are 27 (MOTOR-CONTROLLER, 23 on its first sheet) and 19 (X-FW, a 38-wire"
-                   " harness connector over 5 sheets); every other component has at most 6 (X-WR 6, EFIS 6)", strict=True)
 def test_crossings_at_most_5(states):
     st = states["aircraft"]
     worst = {c.id: checks.crossings(draw(st, f"component:{c.id}")) for c in st.m.components}
@@ -100,8 +99,7 @@ def test_wire_table(states):
     g = draw(states["aircraft"], "component:EFIS")
     rows = {r["id"]: r for sh in g["sheets"] for r in sh["table"]["rows"]}
     assert {"W051", "W052", "W106"} <= set(rows) and table(g) == []
-    assert rows["W051"]["frm"] == "CB-EFIS, LOAD" and rows["W052"]["frm"] == "EFIS, J1, pin 2 (GND)" and rows["W052"]["to"] == "ground bus BB-GROUND-BUS"
-    assert [sh for sh in g["sheets"] if not sh["symbols"]], "the EFIS wire table does not fit under its sheets: a table sheet follows"
+    assert rows["W051"]["frm"] == "EFIS, J1, pin 1 (POWER)" and rows["W051"]["to"].startswith("Breaker 'EFIS' 5 A, LOAD")
     rows["W051"]["gauge"] = "99"
     assert table(g)
 

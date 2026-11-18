@@ -123,6 +123,6 @@ def read(project: str | Path) -> Expected:
         for t in (c.a, c.b): conns.setdefault(t[0], set()).add(t[1])
     names: dict[str, str] = {}
     for m in L.model.components:
-        for k in (m.id, m.name, f"{m.id} {m.name}", m.raw): names.setdefault(" ".join(k.lower().split()), m.id)
+        for k in (m.id, m.name, f"{m.id} {m.name}", m.raw, re.sub(r"\s*\([^)]*\)", "", m.name)): names.setdefault(" ".join(k.lower().split()), m.id)   # the last: a name without its bracket
     names.pop("", None)
     return Expected(conds, {c.id: c.kind for c in L.model.components}, conns, ctx, source_digest(cfg), sorted(names.items(), key=lambda kv: -len(kv[0])))

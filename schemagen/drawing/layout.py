@@ -20,6 +20,7 @@ from ..app.workspace import _natural
 from . import hub as H
 from . import index as I
 from . import route as R
+from .scope import short
 from .geometry import Anchor
 from . import symbols as S
 from ..exporters.palette import words as colour_words
@@ -422,9 +423,9 @@ def _words(sc: Elem, ref: str) -> str:
         for b in it["blocks"]:
             for p in b["pins"]:
                 if p["anchor"] == ref:
-                    if it["symbol"] in ("splice", "bus", "ground"): return it["name"] or it["code"]
+                    if it["kind"] in ("splice", "bus"): return it["name"] or it["code"]
                     pin = f"pin {p['n']}" if p["n"] else "terminal" if b["id"] else ""
-                    return ", ".join(x for x in (it["name"] or it["code"], b["id"] if b["id"] and (len(it["blocks"]) > 1 or p["n"] or not p["name"]) else "", pin) if x)
+                    return short(", ".join(x for x in (it["name"] or it["code"], b["id"] if b["id"] and (len(it["blocks"]) > 1 or p["n"] or not p["name"]) else "", pin) if x))
     return ref.removeprefix("pin:")
 
 
@@ -495,6 +496,14 @@ def _page(sc: Elem, elems: list[tuple[str, Elem]], nums: dict[str, list[int]] | 
                        sheet=sh[0] if sh else None, covers=cov, at=cov[0]["at"], target=cov[0]["target"])]
         cont += mk
     return dict(scope=sc["scope"], title=sc["title"], project=sc["project"], items=items, wires=wires, flags=sorted(flags + cont, key=lambda f: _nat(f["id"])))
+
+
+def one_page(sc: Elem, size: str = "A3") -> list[Elem] | None:
+    """The scene as a single page when it fits the sheet as a net of wires, else None (hub.py draws it as a strip)."""
+    _, _, aw, ah = areas(size)["area"]
+    pg = _page(sc, [("w", w) for w in sc["wires"]] + [("f", f) for f in sc["flags"]])
+    r = place(pg, size)
+    return [dict(pg, n=1)] if r["w"] <= aw and r["h"] <= ah else None
 
 
 def paginate(sc: Elem, size: str = "A3") -> list[Elem]:

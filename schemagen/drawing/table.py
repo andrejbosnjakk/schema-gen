@@ -4,19 +4,22 @@ A sheet's `table` is its rows as data (`sheet["table"] = {"sheet": n where it is
 own items (the same words as the flags), colours from exporters/palette.py."""
 from __future__ import annotations
 
+import re
 from typing import Any
 
 from ..app.workspace import _natural
 from ..exporters.palette import words as colour_words
 from . import symbols as S
 from .route import unit
+from .scope import short
 from .style import SIZE, areas, fit
 
 Elem = dict[str, Any]
 ROW = 4.5                      # row pitch (mm); a text box is 4.2 mm high
-COLS = (0.0, 8.0, 36.0, 86.0, 230.0)   # tick box, label, wire, from, to (offsets from the area's left edge)
-WIDTH = 160.0                  # width of the to column (the from column is as wide as it can be)
-HEAD = ("", "LABEL", "WIRE", "FROM", "TO")
+COLS = (0.0, 8.0, 30.0, 88.0, 176.0, 283.0)   # tick box, label, wire, from, to, see (offsets from the area's left edge)
+WIDTH = 107.0                  # width of the see column
+HEAD = ("", "LABEL", "WIRE", "FROM", "TO", "SEE")
+SEE = re.compile(r"\s*(\(drawing [^)]*\))$")
 GAP = 5.0                      # between a drawing and the table under it
 
 
@@ -26,10 +29,11 @@ def _end(it: Elem, b: Elem, p: Elem) -> str:
     if it["symbol"] == "splice": return f"splice {code}"
     if it["symbol"] == "bus": return f"bus {code}"
     if it["symbol"] == "ground": return f"ground bus {code}"
+    code = it["name"] or code                     # the Name column, as on the drawing
     pin = f"pin {p['n']}" if p["n"] else ""
     where = b["id"] if b["id"] and (len(it["blocks"]) > 1 or p["n"] or not p["name"]) else ""
     nm = f"({p['name']})" if p["name"] and p["n"] else ""
-    return ", ".join(x for x in (code, where, " ".join(x for x in (pin, nm) if x)) if x)
+    return short(", ".join(x for x in (code, where, " ".join(x for x in (pin, nm) if x)) if x))
 
 
 def _cid(e: Elem) -> str:
@@ -51,6 +55,9 @@ def rows(pg: Elem) -> list[Elem]:
             cid = c["id"] if c else _cid(f)
             if cid in out and out[cid]["b"] == a and a in at: out[cid]["to"] = at[a]; continue      # both ends on bars of one sheet: the row says both
             add(cid, e, a, b, at.get(a, a), (text or b.removeprefix("pin:")) + sheet)
+    for r in out.values():          # where the far end is drawn goes in a column of its own
+        m = SEE.search(r["to"])
+        r["to"], r["see"] = (r["to"][:m.start()], m.group(1)) if m else (r["to"], "")
     return sorted(out.values(), key=lambda r: (_natural(r["label"]), _natural(r["id"])))
 
 
@@ -60,7 +67,7 @@ def height(n: int) -> float:
 
 
 def _rule(ax: float, y: float) -> Elem:
-    return dict(kind="line", stroke="thin", x1=ax, y1=y, x2=ax + COLS[4] + WIDTH, y2=y)
+    return dict(kind="line", stroke="thin", x1=ax, y1=y, x2=ax + COLS[5] + WIDTH, y2=y)
 
 
 def draw(lines: list[tuple[str, Any]], size: str, y: float) -> tuple[list[Elem], list[Elem]]:
@@ -82,7 +89,8 @@ def draw(lines: list[tuple[str, Any]], size: str, y: float) -> tuple[list[Elem],
         t(v["label"], 1, cy, w=COLS[2] - COLS[1] - 1)
         t(" ".join(x for x in (unit(v["gauge"]), colour_words(v["colour"])) if x), 2, cy, w=COLS[3] - COLS[2] - 1)
         t(v["frm"], 3, cy, w=COLS[4] - COLS[3] - 2)
-        t(v["to"], 4, cy, w=WIDTH)
+        t(v["to"], 4, cy, w=COLS[5] - COLS[4] - 2)
+        t(v["see"], 5, cy, w=WIDTH)
     return rules, texts
 
 

@@ -485,7 +485,7 @@ FLAG_TIP = 3.0     # the pointed ends of an off-sheet flag
 FLAG_TAB = 7.5     # the sheet-number cell of a continuation flag
 FLAG_CHARS = 52.0   # mm of text per line the flag starts with (two lines at most); it is widened up to twice that for a long text
 _SUFFIX = re.compile(r"\s*(\(drawing [^)]*\))\s*$")
-_SHEET_NO = re.compile(r"(sheet )\d+")
+_SHEET_NO = re.compile(r"(sheet )\d+(-\d+)?")
 
 
 def _plain(text: str) -> str:
@@ -495,7 +495,7 @@ def _plain(text: str) -> str:
     return head if sep and t.endswith(")") and (len(t) > 34 or head.split()[0] in par) else t
 
 
-def _flag_lines(kind: str, text: str, sheet: int | None = None, drawing: str = "") -> list[str]:
+def _flag_lines(kind: str, text: str, sheet: int | None = None, drawing: str = "", flat: bool = False) -> list[str]:
     """The flag's text on two lines: where it leads (`to Battery 14 V, + terminal`, `continues on sheet 2: ...`; a summary flag `+ 8 more wires on X`), then
     the drawing and sheet it can be found on (`(drawing VCU, sheet 3)`), which a continuation takes from `drawing` (the drawing it is in)."""
     t = " ".join(text.removeprefix("→ ").split())
@@ -506,8 +506,8 @@ def _flag_lines(kind: str, text: str, sheet: int | None = None, drawing: str = "
         main = (f"continues on sheet {sheet or 9}: " if kind == "continuation" else "to ") + main
         if kind == "continuation" and drawing: suf = f"(drawing {drawing})"
     body = main + (" " + suf if suf else "")
-    for w in (52.0, 70.0, 90.0, 110.0):
-        lines = wrap(body, w, SIZE, True, 2)
+    for w in (52.0, 70.0, 90.0, 110.0, 130.0)[:5 if flat else 4]:      # a flat flag may be wider: it stands alone on its row
+        lines = wrap(body, w, SIZE, False, 2)
         if not lines[-1].endswith(".."): break
     return lines
 
@@ -517,10 +517,10 @@ def flag(id: str, model: str, kind: str, text: str, target: str, sheet: int | No
     (x, y + 5) or (x + w, y + 5)). off_sheet: a pennant with pointed ends (text = where it leads); continuation: a box with a cell
     for the sheet number (text = the pin it continues to). `sheet` is the continuation's sheet number. `side` is the edge the wire enters.
     The width is measured with the sheet in `(drawing X, sheet N)` as two digits, so the same layout results before and after the numbers are known."""
-    lines = [_SHEET_NO.sub(r"\g<1>44", t) for t in _flag_lines(kind, text, sheet, drawing)]
+    lines = [_SHEET_NO.sub(r"\g<1>44-44", t) for t in _flag_lines(kind, text, sheet, drawing, h <= FLAG_H / 2)]
     if h <= FLAG_H / 2: lines = [" ".join(lines)]      # a flat flag (a terminal strip's) says it all on one line
     pad = 2 * FLAG_TIP + 1 if kind == "off_sheet" else FLAG_TAB + 3
-    w = ceil_to(max([_tw(t, "flag") for t in lines] or [0.0]) + pad)
+    w = ceil_to(max([_tw(t) for t in lines] or [0.0]) + pad)
     f = Flag(id=id, model=model, x=x, y=y, w=max(w, 15.0), h=h, text=text, target=target, sheet=sheet, kind=kind, side=side)  # type: ignore[typeddict-item]
     if drawing: f["drawing"] = drawing
     return f
@@ -530,7 +530,7 @@ def flag_shapes(f: Flag) -> tuple[list[Prim], list[Text]]:
     """The prims and texts a renderer draws for a flag."""
     B = _B({"model": f["model"]}, f["x"], f["y"])
     w, h = f["w"], f["h"]
-    lines = _flag_lines(f["kind"], f["text"], f.get("sheet"), f.get("drawing", ""))
+    lines = _flag_lines(f["kind"], f["text"], f.get("sheet"), f.get("drawing", ""), h <= FLAG_H / 2)
     if h <= FLAG_H / 2: lines = [" ".join(lines)]
     if f["kind"] == "off_sheet":
         k = FLAG_TIP
@@ -540,7 +540,7 @@ def flag_shapes(f: Flag) -> tuple[list[Prim], list[Text]]:
         B.rect(0, 0, w, h, N, "white"); B.line(FLAG_TAB, 0, FLAG_TAB, h, T_)
         B.text(str(f["sheet"] or ""), FLAG_TAB / 2, h / 2, "centre", "flag")
         x0, x1 = FLAG_TAB + 1.5, w - 1.5
-    for i, t in enumerate(lines): B.text(t, (x0 + x1) / 2, h / 2 + (i - (len(lines) - 1) / 2) * 4.5, "centre", "flag")
+    for i, t in enumerate(lines): B.text(t, (x0 + x1) / 2, h / 2 + (i - (len(lines) - 1) / 2) * 4.5, "centre", "pin")
     return B.prims, B.texts
 
 
@@ -603,20 +603,20 @@ def title_block(meta: dict[str, str], sheet: dict[str, Any]) -> tuple[list[Prim]
     B.rect(fx, fy, fw, fh, K)
     x, y, w, h = a["title"]
     B.rect(x, y, w, h, N)
-    B.line(x, y + 10, x + w, y + 10, T_); B.line(x, y + 20, x + w, y + 20, T_); B.line(x + 100, y, x + 100, y + 10, T_); B.line(x + 70, y + 10, x + 70, y + 20, T_)
-    for cx in (20, 50, 90): B.line(x + cx, y + 20, x + cx, y + h, T_)
+    B.line(x, y + 10, x + w, y + 10, T_); B.line(x, y + 20, x + w, y + 20, T_); B.line(x + 100, y, x + 100, y + 10, T_); B.line(x + 45, y + 10, x + 45, y + 20, T_)
+    for cx in (24, 48, 72): B.line(x + cx, y + 20, x + cx, y + h, T_)
 
     def cell(cx: float, cy: float, cw: float, label: str, value: str) -> None:
         B.text(label, x + cx + 1.5, y + cy + 2.5, "left", "caption")
         B.text(fit(value, SIZE, cw - 3, False), x + cx + 1.5, y + cy + 7.0, "left", "pin")
     B.text(fit(meta.get("title", ""), SIZE_TITLE, 97, True), x + 1.5, y + 5, "left", "title", SIZE_TITLE)
     cell(100, 0, 40, "SHEET", f"{sheet['n']} of {sheet['of']}")
-    cell(0, 10, 70, "PROJECT", meta.get("project", ""))
-    cell(70, 10, 70, "SCOPE", meta.get("scope", ""))
-    cell(0, 20, 20, "REV", meta.get("revision", ""))
-    cell(20, 20, 30, "DATE", meta.get("date", ""))
-    cell(50, 20, 40, "DRAWN BY", meta.get("drawn_by", ""))
-    cell(90, 20, 50, "SOURCE", meta.get("source", ""))
+    cell(0, 10, 45, "PROJECT", meta.get("project", ""))
+    cell(45, 10, 95, "SCOPE", meta.get("scope", ""))
+    cell(0, 20, 24, "REV", meta.get("revision", ""))
+    cell(24, 20, 24, "DATE", meta.get("date", ""))
+    cell(48, 20, 24, "DRAWN BY", meta.get("drawn_by", ""))
+    cell(72, 20, 68, "SOURCE", meta.get("source", ""))
     return B.prims, B.texts
 
 
