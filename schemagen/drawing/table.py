@@ -16,7 +16,7 @@ from .scope import short, short_name
 from .style import SIZE, areas, text_w, wrap_all
 
 Elem = dict[str, Any]
-ROW = 4.5                      # pitch of a line of text (mm); a text box is 4.2 mm high
+ROW = 4.5                      # pitch of a line of text (mm); a text box is 3.4 mm high
 WIREW = 52.0                   # width of the wire column
 HEAD = ("", "LABEL", "WIRE", "FROM", "TO", "SEE")
 SEE = re.compile(r"\s*(\(drawing [^)]*\))$")

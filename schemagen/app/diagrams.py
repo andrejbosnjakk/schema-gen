@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any, Callable
 
 from ..drawing import index as I
+from ..drawing import toc
 from ..drawing.engine import draw, export, meta, stem
 from ..drawing.render_pdf import Book
 from ..drawing.render_svg import svg
@@ -51,38 +52,54 @@ class Cancelled(BaseException):
 
 
 def export_all(st: Any, out: Path, progress: Callable[[int, int, str], None] = lambda n, N, cur: None) -> tuple[list[str], list[str]]:
-    """A PDF per component and harness connector that has wires (`<out>/drawings/`) and `<out>/wiring-diagrams.pdf`, all of them with the symbol
-    sheet first. Each drawing is written to disk and added to the book as soon as it is drawn, then dropped: memory stays at one drawing.
-    Rendered aside and moved on success: a failure or a cancel leaves nothing in `out`. A drawing that cannot be drawn is logged and left out; returns
-    (files, ids of the components that failed). Only when none could be drawn is it an error. progress(n, N, id) is called before each drawing."""
+    """A PDF per component and harness connector that has wires (`<out>/drawings/`) and `<out>/wiring-diagrams.pdf`: the symbol sheet, the table of contents
+    (every drawing by display name with its sheet count and the book page it starts on), then the drawings in that order. Each drawing is written to disk
+    and added to the book as soon as it is drawn, then dropped: memory stays at one drawing. Rendered aside and moved on success: a failure or a cancel leaves
+    nothing in `out`. A drawing that cannot be drawn is logged and left out; returns (files, ids of the components that failed). Only when none could be
+    drawn is it an error. progress(n, N, id) is called before each drawing."""
     stage = Path(tempfile.mkdtemp(prefix="schemagen-drawings-"))
     try:
-        (stage / "drawings").mkdir()
         cs = [c for c in sorted(st.m.components, key=lambda c: _natural(c.id)) if c.kind != "splice"]  # a splice is drawn inside the runs through it
-        book = Book(stage / "wiring-diagrams.pdf", symbol_sheet()["drawing"].get("title", ""), meta(st.cfg)["date"])
-        book.add(symbol_sheet())
-        done, failed = 0, []
+        info: dict[str, str] = {}
+        failed: list[str] = []
         where: dict[tuple[str, str, str], list[int]] = {}
+        count: dict[str, tuple[str, int]] = {}
         for n, c in enumerate(cs):   # first pass: where does each drawing put each conductor (flags name the sheet of their far end)
             progress(n, 2 * len(cs), c.id)
-            try: where.update(I.index_of(draw(st, f"component:{c.id}", "A3", meta(st.cfg), I.guess)))
+            try:
+                g = draw(st, f"component:{c.id}", "A3", meta(st.cfg), I.guess)
+                where.update(I.index_of(g))
+                if any(sh["wires"] or sh["flags"] for sh in g["sheets"]): count[c.id] = (g["drawing"]["title"], len(g["sheets"])); info = dict(g["drawing"])
             except Exception:
                 userdata.log().exception("wiring diagram of %s could not be drawn", c.id)
                 failed.append(c.id)
         sheets_of: I.Where = lambda d, cid, ref: where.get((d, cid, ref)) or where.get((d, cid, ""), [])  # noqa: E731
-        for n, c in enumerate(cs):
-            g = None  # the previous drawing is dropped before the next one is built
-            progress(len(cs) + n, 2 * len(cs), c.id)
-            if c.id in failed: continue
-            try:
-                g = draw(st, f"component:{c.id}", "A3", meta(st.cfg), sheets_of)
-                if not any(sh["wires"] or sh["flags"] for sh in g["sheets"]): continue
-                export(g, stage / "drawings" / f"{stem(g['drawing']['scope'])}.pdf")
-                book.add(g)
-                done += 1
-            except Exception:
-                userdata.log().exception("wiring diagram of %s could not be drawn", c.id)
-                failed.append(c.id)
+        done = 0
+        for attempt in range(2):     # the contents are written first from the first pass's sheet counts; if a count changed, once more with the real ones
+            if (stage / "drawings").exists(): shutil.rmtree(stage / "drawings")
+            (stage / "drawings").mkdir()
+            order = toc.order([(t, i, k) for i, (t, k) in count.items()])
+            book = Book(stage / "wiring-diagrams.pdf", symbol_sheet()["drawing"].get("title", ""), meta(st.cfg)["date"])
+            book.add(symbol_sheet())
+            pages = toc.sheets(order, info, 3 + len(toc.split(order)) + 1)
+            book.add(dict(version=1, drawing=info, sheets=pages))   # type: ignore[arg-type]
+            ids = {c.id: c for c in cs}
+            actual: dict[str, tuple[str, int]] = {}
+            done = 0
+            for n, (_, cid, _) in enumerate(order):
+                g = None  # the previous drawing is dropped before the next one is built
+                progress(len(cs) + n, 2 * len(cs), cid)
+                try:
+                    g = draw(st, f"component:{ids[cid].id}", "A3", meta(st.cfg), sheets_of)
+                    export(g, stage / "drawings" / f"{stem(g['drawing']['scope'])}.pdf")
+                    book.add(g)
+                    actual[cid] = (g["drawing"]["title"], len(g["sheets"]))
+                    done += 1
+                except Exception:
+                    userdata.log().exception("wiring diagram of %s could not be drawn", cid)
+                    failed.append(cid)
+            if actual == count or attempt: break
+            count = actual
         progress(2 * len(cs), 2 * len(cs), "")
         if not done: raise AppError("bad-request", "No component has wires to draw." if not failed else f"None of the {len(failed)} wiring diagrams could be drawn.")
         book.close()
@@ -90,7 +107,7 @@ def export_all(st: Any, out: Path, progress: Callable[[int, int, str], None] = l
         for f in files:
             (out / f).parent.mkdir(parents=True, exist_ok=True)
             shutil.move(str(stage / f), str(out / f))
-        return files, failed
+        return files, list(dict.fromkeys(failed))
     finally: shutil.rmtree(stage, ignore_errors=True)
 
 

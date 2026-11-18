@@ -15,9 +15,10 @@ from typing import Any
 
 from . import expect as X
 from .check import Drawing, check_drawing, summary  # noqa: F401
+from .toc import check_toc
 from .pdfread import read
 
-HARD = ("missing", "extra", "ends", "gauge", "colour", "label", "net", "table", "junction", "book", "unread", "flag", "title")   # the PDF disagrees with the wire list
+HARD = ("missing", "extra", "ends", "gauge", "colour", "label", "net", "table", "junction", "book", "toc", "unread", "flag", "title")   # the PDF disagrees with the wire list
 SOFT_FLAG = ("flag_no_target", "flag_no_drawing", "flag_no_sheet")
 LEGIBILITY = ("text_truncated", "text_overlaps_text", "text_on_line", "text_outside_frame", "text_too_small", "graphics_in_furniture", "graphics_outside_frame")
 FILES = "*.pdf"
@@ -64,6 +65,7 @@ def check_drawings(project: str | Path, pdf_dir: str | Path, source: str | Path 
         if d.sheets: check_drawing(d, src, ds)
     findings = [f for d in ds.values() for f in d.findings]
     findings += _book(ex, ds, bookpdf if book else None)
+    if book and bookpdf is not None and ds: findings += check_toc(ex, ds, read(bookpdf))
     return _report(project, pdf_dir, ex, src, ds, findings)
 
 

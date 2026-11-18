@@ -356,7 +356,12 @@ def _ends(page: Sheet, free: list[Run], flags: list[FlagObs], uf: _UF, wend: dic
         for j, w in enumerate(page.wires):
             for e in (0, 1):
                 if _eq(d, w.pts[0] if e == 0 else w.pts[-1]): net_dots.setdefault(uf.find(("w", j, e)), []).append(d)
-    cand = [(r, c) for r in free if (c := _lead_run(r, free, lead))]
+    cand: list[tuple[Run, str]] = []
+    cont: set[int] = set()         # lines that only go on a name from the line above
+    for r in free:
+        if id(r) in cont: continue
+        c, more = _lead_run(r, free, lead)
+        if c: cand.append((r, c)); cont |= {id(q) for q in more}
     ends_pts = [pt for w in page.wires for pt in (w.pts[0], w.pts[-1])]
     touch = lambda p: any(_eq(a, p) or _eq(b, p) for _, a, b in lines) or any(_dist_edge(p, o.pts) <= 0.35 for o in page.outlines)  # noqa: E731
     outs = sorted((o for o in page.outlines if o.x1 - o.x0 >= 6 and o.y1 - o.y0 >= 6), key=lambda o: -(o.x1 - o.x0) * (o.y1 - o.y0))
@@ -456,15 +461,16 @@ def _crossings(wires: list[Any]) -> int:
     return n
 
 
-def _lead_run(r: Run, free: list[Run], lead: Any) -> str | None:
-    """The component a text run names. A name that goes on to a second or third line (a long box name) is read with its lines: the shortest run of stacked
-    lines (same left edge, the next just below) that is a whole name; else the run alone."""
-    s, last = r.s, r
+def _lead_run(r: Run, free: list[Run], lead: Any) -> tuple[str | None, list[Run]]:
+    """The component a text run names, and the further lines of its name. A name that goes on to a second or third line (a long box name) is read with its
+    lines: the shortest run of stacked lines (same left edge or centre, the next just below) that is a whole name; else the run alone."""
+    s, last, more = r.s, r, []
     for _ in range(3):
         c, rest = lead(s)
-        if c and not rest: return str(c)
-        nxt = next((q for q in free if abs(q.x0 - last.x0) < 0.3 and 0 <= q.top - last.bot < 2.4 and abs(q.em - last.em) < 0.05), None)
+        if c and not rest: return str(c), more
+        nxt = next((q for q in free if (abs(q.x0 - last.x0) < 0.3 or abs(q.cx - last.cx) < 0.3) and 0 <= q.top - last.bot < 2.4 and abs(q.em - last.em) < 0.05), None)
         if nxt is None: break
         s, last = s + ("" if s.endswith("-") else " ") + nxt.s, nxt
+        more.append(nxt)
     c = lead(r.s)[0]
-    return str(c) if c else None
+    return (str(c) if c else None), []

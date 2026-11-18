@@ -19,7 +19,7 @@ from .pdfread import read
 NAMES = {"BK": "black", "WH": "white", "GY": "grey", "PK": "pink", "RD": "red", "OG": "orange", "YE": "yellow", "OL": "olive", "GN": "green", "TQ": "turquoise",
          "LB": "light blue", "BU": "blue", "VT": "violet", "BN": "brown", "BG": "beige", "IV": "ivory", "SL": "slate", "CU": "copper", "SN": "silver", "SR": "silver",
          "GD": "gold"}
-CONNECTIVITY = ("missing", "extra", "ends", "gauge", "colour", "label", "net", "table", "junction", "book", "unread")   # kinds that mean "the PDF differs from the wire list"
+CONNECTIVITY = ("missing", "extra", "ends", "gauge", "colour", "label", "net", "table", "junction", "book", "toc", "unread")   # kinds that mean "the PDF differs from the wire list"
 
 
 def words(code: str) -> str:
