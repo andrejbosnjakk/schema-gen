@@ -31,7 +31,7 @@ def annotate(sc: dict[str, Any], where: Where) -> None:
         else: f["text"] += suffix(f.get("drawing", ""), where(f.get("drawing", ""), cid))
 
 
-def index_of(geometry: dict[str, Any]) -> dict[tuple[str, str], list[int]]:
+def index_of(geometry: Any) -> dict[tuple[str, str], list[int]]:
     """(drawing id, conductor id) -> the sheets of this drawing that draw the conductor."""
     d = geometry["drawing"]["scope"].partition(":")[2]
     out: dict[tuple[str, str], list[int]] = {}

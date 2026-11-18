@@ -248,15 +248,19 @@ def _wire(st: Any, c: Any, wsev: dict[str, str], overlay: dict[str, Any]) -> Sce
 
 
 def short(words: str, limit: int = 50) -> str:
-    """The words of a far end, shortened for a flag when they are long: the bracket after a name (what the part is) goes first, then the `via` part."""
-    if len(words) > limit: words = re.sub(r"\s*\([^)]*\)", "", words)
+    """The `via` part of a far end's words goes when they are long."""
     return re.sub(r"\s+via .*$", "", words) if len(words) > limit else words
+
+
+def short_name(name: str, limit: int = 1000) -> str:
+    """A component name without the bracket after it (what the part is) when longer than `limit`; off by default: two parts can differ only in the bracket."""
+    return re.sub(r"\s*\([^)]*\)", "", name) if len(name) > limit else name
 
 
 def terminal_words(ctx: Any, t: Terminal) -> str:
     """A terminal by display name: `Battery 14 V, + terminal`, `EFIS, J1, pin 2`; a splice or bus by its name."""
     c = ctx.comp.get(t.device)
-    nm = (c.name or c.id) if c else t.device
+    nm = short_name((c.name or c.id) if c else t.device)
     if c and c.kind in ("splice", "bus"): return nm
     return ", ".join(x for x in (nm, t.connector, f"pin {t.pin}" if t.pin else "terminal" if t.connector else "") if x)
 

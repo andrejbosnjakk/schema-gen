@@ -145,6 +145,10 @@ def targets(kind, g):
                     anchor = w["a"] if end == 0 else w["b"]
                     if len(p) >= 4 and anchor.startswith("pin:") and "#" not in anchor and q[0][1] == q[1][1] and q[1][0] == q[2][0]:
                         for dy in (5.0, -5.0):
+                            ny = (p[0][1] if end == 0 else p[-1][1]) + dy
+                            ex = (p[0][0] if end == 0 else p[-1][0])
+                            if not any(s_["x"] - 0.1 <= ex <= s_["x"] + s_["w"] + 0.1 and s_["y"] + 5 < ny < s_["y"] + s_["h"] - 3 for s_ in sh["symbols"]): continue     # inside the box, not on its edge
+                            if not any(t["role"] == "pin" and t["model"].startswith("pin:") and t["model"] != anchor and t["s"] == t["model"].rsplit("/", 1)[-1] and abs(t["y"] + t["h"] / 2 - ny) < 2 for t in sh["texts"]): continue     # the end must land on the row of another pin
                             out.append((f"sheet {si + 1}: wire {w['label']} end moved {dy} mm", lambda h, si=si, wi=wi, end=end, dy=dy: _move(h["sheets"][si]["wires"][wi], end, dy)))
         elif kind == "delete_wire":
             for wi, w in enumerate(sh["wires"]):

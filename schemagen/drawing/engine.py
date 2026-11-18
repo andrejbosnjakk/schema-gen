@@ -18,7 +18,7 @@ from .style import areas
 def draw(st: Any, scope: Any, size: str = "A3", meta: dict[str, str] | None = None, where: I.Where | None = None) -> Geometry:
     """The drawing of `scope` ("component:VCU", ...) on A3 or A4 landscape sheets. meta: revision, date, drawn_by, source (never the wall clock).
     where: the sheets of other drawings that show a conductor (index.py); without it a flag names the drawing but not the sheet."""
-    sc = scene(st, scope)
+    sc: Any = scene(st, scope)
     I.annotate(sc, where or (lambda d, c: []))
     meta = dict(meta or {})
     flat = where or (lambda d, c: [])
@@ -45,8 +45,8 @@ def draw(st: Any, scope: Any, size: str = "A3", meta: dict[str, str] | None = No
         rules, texts = T.inline(rs, size) if fits and rs else ([], [])
         sheet: dict[str, Any] = dict(n=n, of=of, size=size, w_mm=SHEETS[size][0], h_mm=SHEETS[size][1], grid_mm=5.0, symbols=sh["symbols"], wires=sh["wires"],  # noqa: E501
                                      texts=sh["texts"] + texts, flags=sh["flags"], rules=rules, table=dict(sheet=n if fits else on.get(n), rows=T.row_data(rs)))
-        where = "under the drawing" if fits else f"on sheet {on[n]}" if n in on else ""
-        sheet.update(S.furniture(info, size, n, of, kinds, L.notes(pg, sh, where)))
+        where_t = "under the drawing" if fits else f"on sheet {on[n]}" if n in on else ""
+        sheet.update(S.furniture(info, size, n, of, kinds, L.notes(pg, sh, where_t)))
         sheets.append(sheet)
     for k, (rules, texts, shown) in enumerate(tabs):
         n = len(pages) + 1 + k
@@ -72,7 +72,7 @@ def meta(source: Any) -> dict[str, str]:
     from ..core.load import source_digest
     name, sha = source_digest(source)
     f = source.root / str((source.source or {}).get("path", "")) if (source.source or {}).get("path") else source.wirelist
-    day = str(source.raw.get("date") or datetime.date.fromtimestamp(max([f.stat().st_mtime] + [p.stat().st_mtime for p in f.rglob("*") if p.is_file()]) if f.is_dir() else f.stat().st_mtime))
+    day = str(source.raw.get("date") or datetime.date.fromtimestamp(max([f.stat().st_mtime] + [p.stat().st_mtime for p in f.rglob("*") if p.is_file()]) if f.is_dir() else f.stat().st_mtime))  # noqa: E501
     return dict(revision=str(source.raw.get("revision") or sha[:8]), date=day, drawn_by="schemagen", source=f"#{sha[:8]} {name}")
 
 

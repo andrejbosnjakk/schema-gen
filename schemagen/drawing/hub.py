@@ -59,7 +59,7 @@ def _split(sc: Elem, tall: bool) -> dict[str, Elem]:
         it, b, p = own[a]
         if it["symbol"] in BARS:
             return (it["id"], "bar", it) if _mine(sc, it) or it["symbol"] == "splice" else (a, "bar", it) if a in flagged else None
-        if it["symbol"] == "harness" and (tall or not _mine(sc, it)): return f"{it['id']}/{p['n']}", "block", it      # a pin of a harness connector: both halves, one row
+        if it["symbol"] == "harness" and (tall or not _mine(sc, it)): return f"{it['id']}/{p['n']}", "block", it      # a pin of a harness connector: both halves, one row  # noqa: E501
         if _mine(sc, it): return it["id"], "block", it
         return (a, "block", it) if a in flagged else None                 # a part's pin that carries a flagged conductor: a box of its own
     units: dict[str, Elem] = {}
@@ -69,11 +69,11 @@ def _split(sc: Elem, tall: bool) -> dict[str, Elem]:
             if u: units.setdefault(u[0], dict(kind=u[1], item=u[2], rows=[]))["rows"].append(dict(cid=w["id"], e=w, at=at, other=other, far=v[0] if v else None))
     for f in sc["flags"]:
         u = key(f["at"])
-        if u: units.setdefault(u[0], dict(kind=u[1], item=u[2], rows=[]))["rows"].append(dict(cid=f["model"].removeprefix("conductor:"), e=f, at=f["at"], other=f["target"],
+        if u: units.setdefault(u[0], dict(kind=u[1], item=u[2], rows=[]))["rows"].append(dict(cid=f["model"].removeprefix("conductor:"), e=f, at=f["at"], other=f["target"],  # noqa: E501
                                                                                               far=None, text=f["text"].removeprefix("→ ")))
-    for u in units.values():
-        pos = {p["anchor"]: (j, i) for j, b in enumerate(u["item"]["blocks"]) for i, p in enumerate(b["pins"])}
-        u["rows"].sort(key=lambda r: ((pos[r["at"]], _natural(r["e"]["label"])) if u["kind"] == "block" else (_natural(r["e"]["label"]), _natural(r["cid"])), r["at"]))
+    for un in units.values():
+        pos = {p["anchor"]: (j, i) for j, b in enumerate(un["item"]["blocks"]) for i, p in enumerate(b["pins"])}
+        un["rows"].sort(key=lambda r: ((pos[r["at"]], _natural(r["e"]["label"])) if un["kind"] == "block" else (_natural(r["e"]["label"]), _natural(r["cid"])), r["at"]))  # noqa: E501
     return units
 
 
@@ -88,9 +88,9 @@ def _bar(sc: Elem, key: str, u: Elem) -> Elem:
 
 
 def _taps(key: str, it: Elem, rows: list[Elem], tall: bool) -> list[dict[str, Any]]:
-    """The taps of one chunk of a bar, alternately left and right, in the order of the rows (10 mm apart when the flags have two lines); a bus names the stud a wire is on."""
+    """The taps of one chunk of a bar, alternately left and right, in the order of the rows (10 mm apart when the flags have two lines); a bus names the stud a wire is on."""  # noqa: E501
     return [dict(id=f"{r['at']}#{r['cid']}", model=r["at"], side="LR"[i % 2], pitch=S.FLAG_H if tall else FLAT,
-                 text=next((p["n"] for b in it["blocks"] for p in b["pins"] if p["anchor"] == r["at"]), "") if key == it["id"] and it["symbol"] == "bus" else "") for i, r in enumerate(rows)]
+                 text=next((p["n"] for b in it["blocks"] for p in b["pins"] if p["anchor"] == r["at"]), "") if key == it["id"] and it["symbol"] == "bus" else "") for i, r in enumerate(rows)]  # noqa: E501
 
 
 def _block(it: Elem, rows: list[Elem], tall: bool) -> tuple[Elem, dict[str, str], dict[tuple[str, str], str]]:
@@ -107,12 +107,12 @@ def _block(it: Elem, rows: list[Elem], tall: bool) -> tuple[Elem, dict[str, str]
         else: continue
         pins = [q for p in keep for q in ([dict(p, anchor=tid[(r["at"], r["cid"])]) for r in rows if r["at"] == p["anchor"]] if used[p["anchor"]] > 1 else [p])]
         if pins: blocks.append(dict(b, pins=pins))
-    item = dict(it, blocks=blocks, role="in_scope", symbol="block" if it["symbol"] in ("breaker", "fuse", "switch", "relay", "terminator", "battery", "dcdc") else it["symbol"],
-                partial=it["partial"] or sum(len(b["pins"]) for b in blocks) < sum(len(b["pins"]) for b in it["blocks"]))     # a part with terminals on two sides is drawn as a box, its terminals in a column
+    item = dict(it, blocks=blocks, role="in_scope", symbol="block" if it["symbol"] in ("breaker", "fuse", "switch", "relay", "terminator", "battery", "dcdc") else it["symbol"],  # noqa: E501
+                partial=it["partial"] or sum(len(b["pins"]) for b in blocks) < sum(len(b["pins"]) for b in it["blocks"]))     # a part with terminals on two sides is drawn as a box, its terminals in a column  # noqa: E501
     return item, ({t: "LR"[i % 2] for i, t in enumerate(tid[(r["at"], r["cid"])] for r in rows)} if tall and it["symbol"] != "harness" else {}), tid
 
 
-def _chunk(sc: Elem, key: str, u: Elem, rows: list[Elem], tall: bool, x: float, y: float) -> tuple[Elem, list[Elem], dict[int, Elem]]:
+def _chunk(sc: Elem, key: str, u: Elem, rows: list[Elem], tall: bool, x: float, y: float) -> tuple[Any, list[Any], dict[int, Any]]:
     """The symbol of a unit holding these rows at (x, y), its texts, and for every row (by position) the anchor its stub starts at."""
     if u["kind"] == "bar":
         taps = _taps(key, u["item"], rows, tall)
@@ -144,12 +144,12 @@ def _layout(sc: Elem, units: dict[str, Elem], cur: list[tuple[str, Elem]], flatw
     for tall in (False, True):
         sy = [_chunk(sc, k, units[k], rs, tall, 0.0, 0.0)[0] for k, rs in ch.items()]
         right = max(flatw[(k, r["cid"], r["at"])] for k, r in cur)
-        both = any(units[k]["kind"] == "bar" or units[k]["item"]["symbol"] == "harness" for k in ch)     # a bar or a harness connector has stubs on both sides, a box only on its right
+        both = any(units[k]["kind"] == "bar" or units[k]["item"]["symbol"] == "harness" for k in ch)     # a bar or a harness connector has stubs on both sides, a box only on its right  # noqa: E501
         if tall or (2 if both else 1) * (zone + right) + max(y["w"] for y in sy) <= aw: break
     return tall, sum(y["h"] + GRID for y in sy)
 
 
-def _plan(sc: Elem, units: dict[str, Elem], size: str, inline: bool, flatw: dict[tuple[str, str, str], float], zone: float) -> list[tuple[list[tuple[str, Elem]], bool]]:
+def _plan(sc: Elem, units: dict[str, Elem], size: str, inline: bool, flatw: dict[tuple[str, str, str], float], zone: float) -> list[tuple[list[tuple[str, Elem]], bool]]:  # noqa: E501
     """The rows in order cut into pages (rows, tall): filled while the strip (and, when inline, its wire table) fits the sheet, then evened out."""
     ax, ay, aw, ah = areas(size)["area"]
     order = sorted(units, key=lambda k: (not _mine(sc, units[k]["item"]), _natural(k)))
@@ -182,7 +182,7 @@ def pages(sc: Elem, size: str, where: I.Where) -> list[Elem]:
         if 2 * (zone + top) + max(_chunk(sc, k, u, u["rows"], False, 0.0, 0.0)[0]["w"] for k, u in units.items()) > aw:
             units = _split(sc, True)                   # they do not fit both sides: a bar per pin instead
             rows = [r for u in units.values() for r in u["rows"]]
-    flatw = {(k, r["cid"], r["at"]): S.flag("", "", "off_sheet", _text(sc, r, where, own_id, 44), "", None, h=FLAT)["w"] for k, u in units.items() for r in u["rows"]}
+    flatw = {(k, r["cid"], r["at"]): S.flag("", "", "off_sheet", _text(sc, r, where, own_id, 44), "", None, h=FLAT)["w"] for k, u in units.items() for r in u["rows"]}  # noqa: E501
     plans = [_plan(sc, units, size, inline, flatw, zone) for inline in (True, False)]
     tab = lambda p: math.ceil(sum(len({r["cid"] for _, r in pg}) + 1 for pg, _ in p) / (int(areas(size)["area"][3] / T.ROW) - 1))   # noqa: E731
     pgs = plans[0] if len(plans[0]) <= len(plans[1]) + tab(plans[1]) else plans[1]
@@ -194,7 +194,7 @@ def pages(sc: Elem, size: str, where: I.Where) -> list[Elem]:
         used = {r["at"] for _, r in pg}
         flags = []
         for k, r in pg:
-            f = dict(id=f"flag:{r['cid']}:{r['at']}", model=r["e"]["model"], kind="off_sheet", at=r["at"], target=r["other"], target_item="", label=r["e"]["label"], gauge=r["e"]["gauge"],
+            f = dict(id=f"flag:{r['cid']}:{r['at']}", model=r["e"]["model"], kind="off_sheet", at=r["at"], target=r["other"], target_item="", label=r["e"]["label"], gauge=r["e"]["gauge"],  # noqa: E501
                      colour=r["e"]["colour"], hex=r["e"]["hex"], cls=r["e"].get("cls", ""), weight=r["e"]["weight"], tap=(k, r["cid"], r["at"]))
             f["text"] = _text(sc, r, where, own_id, where_row[(r["far"], r["cid"], r["other"])] if r["far"] else 0)
             if r["e"].get("covers"): f["covers"] = r["e"]["covers"]
@@ -221,7 +221,7 @@ def place(page: Elem, size: str, reserve: float = 0.0) -> Elem:
     side_w = {s: max([fl[(k, r["cid"], r["at"])]["w"] for k, _, rs, _, sd in built for r, q in zip(rs, sd) if q == s] + [0.0]) for s in "LR"}
     left = (zone + side_w["L"]) if side_w["L"] else 0.0
     x0 = ax + left + max(0.0, (aw - left - wide - zone - side_w["R"]) // 2 // GRID * GRID)
-    syms, texts, flags, wires = [], [], [], []
+    syms: list[Any] = []; texts: list[Any] = []; flags: list[Any] = []; wires: list[Any] = []
     y = ay
     for key, u, rs, w0, sd in built:
         sy, tx, anc = _chunk(page, key, u, rs, tall, x0, y)
@@ -234,8 +234,8 @@ def place(page: Elem, size: str, reserve: float = 0.0) -> Elem:
             if f0.get("covers"): flags[-1]["covers"] = f0["covers"]
             ex = fx + w if s == "L" else fx
             wid = r["cid"] + ("~" if any(q["model"] == r["e"]["model"] for q in wires) else "")
-            wires.append(dict(id=wid, model=r["e"]["model"], label=r["e"]["label"], gauge=r["e"]["gauge"], colour=r["e"]["colour"], hex=r["e"]["hex"], weight=r["e"]["weight"],
-                              points=[[a["x"], a["y"]], [ex, a["y"]]], a=a["id"], b=f0["id"], pair=r["e"].get("pair", ""), shield=r["e"].get("shield", ""), fault=r["e"].get("fault")))
-            if not f0.get("covers"): texts.append(S.text(label_text(r["e"]), (ex + 2.5) if s == "L" else (a["x"] + 2.5), a["y"] - 2.5, "left", "wire", model=r["e"]["model"]))   # a summary flag's stub is silent
+            wires.append(dict(id=wid, model=r["e"]["model"], label=r["e"]["label"], gauge=r["e"]["gauge"], colour=r["e"]["colour"], hex=r["e"]["hex"], weight=r["e"]["weight"],  # noqa: E501
+                              points=[[a["x"], a["y"]], [ex, a["y"]]], a=a["id"], b=f0["id"], pair=r["e"].get("pair", ""), shield=r["e"].get("shield", ""), fault=r["e"].get("fault")))  # noqa: E501
+            if not f0.get("covers"): texts.append(S.text(label_text(r["e"]), (ex + 2.5) if s == "L" else (a["x"] + 2.5), a["y"] - 2.5, "left", "wire", model=r["e"]["model"]))   # a summary flag's stub is silent  # noqa: E501
         y += sy["h"] + GRID
     return dict(symbols=syms, wires=wires, texts=texts, flags=flags, w=aw, h=y - GRID - ay, bad=0)

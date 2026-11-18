@@ -11,13 +11,13 @@ from ..app.workspace import _natural
 from ..exporters.palette import words as colour_words
 from . import symbols as S
 from .route import unit
-from .scope import short
+from .scope import short, short_name
 from .style import SIZE, areas, fit
 
 Elem = dict[str, Any]
 ROW = 4.5                      # row pitch (mm); a text box is 4.2 mm high
-COLS = (0.0, 8.0, 30.0, 88.0, 176.0, 283.0)   # tick box, label, wire, from, to, see (offsets from the area's left edge)
-WIDTH = 107.0                  # width of the see column
+COLS = (0.0, 8.0, 34.0, 88.0, 172.0, 278.0)   # tick box, label, wire, from, to, see (offsets from the area's left edge)
+WIDTH = 112.0                  # width of the see column
 HEAD = ("", "LABEL", "WIRE", "FROM", "TO", "SEE")
 SEE = re.compile(r"\s*(\(drawing [^)]*\))$")
 GAP = 5.0                      # between a drawing and the table under it
@@ -29,7 +29,7 @@ def _end(it: Elem, b: Elem, p: Elem) -> str:
     if it["symbol"] == "splice": return f"splice {code}"
     if it["symbol"] == "bus": return f"bus {code}"
     if it["symbol"] == "ground": return f"ground bus {code}"
-    code = it["name"] or code                     # the Name column, as on the drawing
+    code = short_name(it["name"] or code)         # the Name column, as on the drawing
     pin = f"pin {p['n']}" if p["n"] else ""
     where = b["id"] if b["id"] and (len(it["blocks"]) > 1 or p["n"] or not p["name"]) else ""
     nm = f"({p['name']})" if p["name"] and p["n"] else ""

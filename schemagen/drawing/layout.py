@@ -21,7 +21,7 @@ from ..app.workspace import _natural
 from . import hub as H
 from . import index as I
 from . import route as R
-from .scope import short
+from .scope import short, short_name
 from .geometry import Anchor
 from . import symbols as S
 from ..exporters.palette import words as colour_words
@@ -427,7 +427,7 @@ def _words(sc: Elem, ref: str) -> str:
                 if p["anchor"] == ref:
                     if it["kind"] in ("splice", "bus"): return it["name"] or it["code"]
                     pin = f"pin {p['n']}" if p["n"] else "terminal" if b["id"] else ""
-                    return short(", ".join(x for x in (it["name"] or it["code"], b["id"] if b["id"] and (len(it["blocks"]) > 1 or p["n"] or not p["name"]) else "", pin) if x))
+                    return short(", ".join(x for x in (short_name(it["name"] or it["code"]), b["id"] if b["id"] and (len(it["blocks"]) > 1 or p["n"] or not p["name"]) else "", pin) if x))  # noqa: E501
     return ref.removeprefix("pin:")
 
 
@@ -494,7 +494,7 @@ def _page(sc: Elem, elems: list[tuple[str, Elem]], nums: dict[str, list[int]] | 
                    for a, e, o in lst if "covers" not in e]
             cov += [c for _, e, _ in lst for c in e.get("covers", [])]
             sh = sorted({m["sheet"] for m in mk if m["sheet"]})
-            mk = [dict(mk[0], id=f"cont:+{_cid(mk[0])}", text=f"+ {len(cov)} more wires on {it['code']}" + (I.suffix(_own(sc), sh) if sh else next((m.group(0) for _, e, _ in lst if e.get("covers") and (m := re.search(r"\s*\(drawing [^)]*\)$", e["text"]))), "")),
+            mk = [dict(mk[0], id=f"cont:+{_cid(mk[0])}", text=f"+ {len(cov)} more wires on {it['code']}" + (I.suffix(_own(sc), sh) if sh else next((m.group(0) for _, e, _ in lst if e.get("covers") and (m := re.search(r"\s*\(drawing [^)]*\)$", e["text"]))), "")),  # noqa: E501
                        sheet=sh[0] if sh else None, covers=cov, at=cov[0]["at"], target=cov[0]["target"])]
         cont += mk
     return dict(scope=sc["scope"], title=sc["title"], project=sc["project"], items=items, wires=wires, flags=sorted(flags + cont, key=lambda f: _nat(f["id"])))
@@ -596,7 +596,7 @@ def paginate(sc: Elem, size: str = "A3") -> list[Elem]:
         n = len(es)
         cuts = [k for k in range(1, n) if near(es[k - 1]) != near(es[k])]      # between connectors first, else through the middle
         P = max(2, math.ceil(r["h"] / ah))                                   # as many sheets as the whole needs, each cut near its share: no sheet is left thin
-        at = []
+        at: list[int] = []
         for j in range(1, P):
             t = round(j * n / P)
             k = min(cuts, key=lambda k: abs(k - t), default=t)

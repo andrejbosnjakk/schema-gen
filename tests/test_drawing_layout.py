@@ -46,7 +46,7 @@ def test_every_scope(states, project):
 
 
 def test_text_and_flags(states):
-    """A multi-sheet drawing is a strip: every flag names the drawing it leads to (and the sheet, when that is this drawing); the summary flag stands for many wires."""
+    """A multi-sheet drawing is a strip: every flag names the drawing it leads to (and the sheet, when that is this drawing); the summary flag stands for many wires."""  # noqa: E501
     g = draw(states["aircraft"], "component:EFIS")
     assert len(g["sheets"]) > 1
     flags = [f for sh in g["sheets"] for f in sh["flags"]]

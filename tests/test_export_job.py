@@ -74,13 +74,13 @@ def test_one_export_at_a_time_and_cancel_between_drawings(client):
     assert run_export(c, kind="pinout").status_code == 200  # and the next export can start
 
 
-def test_cancel_inside_one_long_drawing(tmp_path):
-    """The full project's ground bus (151 wires) takes the engine minutes to draw: a cancel still stops it within 2 s."""
+def test_cancel_inside_a_long_export(tmp_path):
+    """The full project (151 wires on the ground bus) takes the whole set seconds to draw: a cancel still stops it within 2 s."""
     d = tmp_path / "p"
     shutil.copytree(LARGE, d)
     c = TestClient(create_app(str(d)))
-    jid = c.post("/api/export", json=dict(kind="diagram", scope="component:GNDB")).json()["job"]
-    time.sleep(1.5)  # well inside the layout
+    jid = c.post("/api/export", json=dict(kind="drawings")).json()["job"]
+    time.sleep(1.0)  # well inside the first pass
     assert c.get(f"/api/export/{jid}").json()["state"] == "running"
     t = time.time()
     c.post(f"/api/export/{jid}/cancel")

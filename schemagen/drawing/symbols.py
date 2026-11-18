@@ -512,7 +512,7 @@ def _flag_lines(kind: str, text: str, sheet: int | None = None, drawing: str = "
     return lines
 
 
-def flag(id: str, model: str, kind: str, text: str, target: str, sheet: int | None = None, x: float = 0.0, y: float = 0.0, side: str = "L", drawing: str = "", h: float = FLAG_H) -> Flag:
+def flag(id: str, model: str, kind: str, text: str, target: str, sheet: int | None = None, x: float = 0.0, y: float = 0.0, side: str = "L", drawing: str = "", h: float = FLAG_H) -> Flag:  # noqa: E501
     """A flag at (x, y) on the grid, sized to its text. The wire attaches at the middle of its left or right edge (a grid point,
     (x, y + 5) or (x + w, y + 5)). off_sheet: a pennant with pointed ends (text = where it leads); continuation: a box with a cell
     for the sheet number (text = the pin it continues to). `sheet` is the continuation's sheet number. `side` is the edge the wire enters.
@@ -603,7 +603,7 @@ def title_block(meta: dict[str, str], sheet: dict[str, Any]) -> tuple[list[Prim]
     B.rect(fx, fy, fw, fh, K)
     x, y, w, h = a["title"]
     B.rect(x, y, w, h, N)
-    B.line(x, y + 10, x + w, y + 10, T_); B.line(x, y + 20, x + w, y + 20, T_); B.line(x + 100, y, x + 100, y + 10, T_); B.line(x + 45, y + 10, x + 45, y + 20, T_)
+    B.line(x, y + 10, x + w, y + 10, T_); B.line(x, y + 20, x + w, y + 20, T_); B.line(x + 100, y, x + 100, y + 10, T_); B.line(x + 55, y + 10, x + 55, y + 20, T_)
     for cx in (24, 48, 72): B.line(x + cx, y + 20, x + cx, y + h, T_)
 
     def cell(cx: float, cy: float, cw: float, label: str, value: str) -> None:
@@ -611,8 +611,8 @@ def title_block(meta: dict[str, str], sheet: dict[str, Any]) -> tuple[list[Prim]
         B.text(fit(value, SIZE, cw - 3, False), x + cx + 1.5, y + cy + 7.0, "left", "pin")
     B.text(fit(meta.get("title", ""), SIZE_TITLE, 97, True), x + 1.5, y + 5, "left", "title", SIZE_TITLE)
     cell(100, 0, 40, "SHEET", f"{sheet['n']} of {sheet['of']}")
-    cell(0, 10, 45, "PROJECT", meta.get("project", ""))
-    cell(45, 10, 95, "SCOPE", meta.get("scope", ""))
+    cell(0, 10, 55, "PROJECT", meta.get("project", ""))
+    cell(55, 10, 85, "SCOPE", meta.get("scope", ""))
     cell(0, 20, 24, "REV", meta.get("revision", ""))
     cell(24, 20, 24, "DATE", meta.get("date", ""))
     cell(48, 20, 24, "DRAWN BY", meta.get("drawn_by", ""))
