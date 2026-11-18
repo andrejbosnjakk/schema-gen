@@ -7,6 +7,8 @@ on:
 jobs:
   windows:
     runs-on: windows-latest
+    permissions:
+      contents: write  # a v* tag publishes the installer as a GitHub release
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -29,6 +31,16 @@ jobs:
           name: schemagen-installer
           path: packaging/dist/schemagen-setup-*.exe
           if-no-files-found: error
+      - name: release on a v* tag (a tag with a "-", such as v1.2.0-dev, is a pre-release)
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $exe = (Get-Item packaging/dist/schemagen-setup-*.exe).FullName
+          $pre = if ($env:GITHUB_REF_NAME -like '*-*') { @('--prerelease') } else { @() }
+          gh release create $env:GITHUB_REF_NAME $exe @pre --title "schemagen $env:GITHUB_REF_NAME" --notes "Windows installer for schemagen $env:GITHUB_REF_NAME. Unsigned: Windows SmartScreen asks once (More info, Run anyway). Changes: see CHANGELOG.md."
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
       - uses: actions/upload-artifact@v4
         if: always()
         with:

@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.2.0-dev (pre-release, branch dev/1.2)
+
+Reliable drawings. A preview for trying the app; the drawings are a review draft, not a wiring set.
+
+- Export runs as a background job: progress bar, Cancel, the folder opens when done. One drawing that fails is listed
+  and the rest complete; drawings stream to disk instead of being held in memory.
+- `schemagen check-drawings <project> <pdf folder>`: an independent verifier that reads the PDFs back (no drawing-engine
+  code) and compares every wire, pin, gauge, colour, junction, wire-table row and off-sheet flag with the wire list.
+- Components that do not fit one sheet are drawn as terminal strips: one stub and flag per wire, no routing across the
+  sheet. Boxes and flags show the Name column; flags name the far drawing and sheet.
+- Title block: source file name and content hash, `revision:` and `date:` from schemagen.yml. Output is deterministic.
+- Faster drawing (text-width cache, routing memo, one layout per page).
+- Known open: some wire-table cells and flags still truncate long names; sheet counts are above target.
+
 ## 1.1.0 (in progress, branch dev/1.1)
 
 Real wiring drawings, made by schemagen itself (decision D106). Planned, not done: the drawing engine in
