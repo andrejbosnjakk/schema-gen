@@ -109,6 +109,8 @@ def test_sheet_is_reproducible(tmp_path):
     ms = importlib.util.module_from_spec(spec); spec.loader.exec_module(ms)
     ms.write(tmp_path / "w.xlsx")
     import zipfile
-    parts = lambda f: {i.filename: z.read(i) for z in [zipfile.ZipFile(f)] for i in z.infolist()}  # noqa: E731
-    # the unpacked parts, not the file bytes: the compressed stream depends on the zlib build (zlib or zlib-ng)
+    from xml.etree.ElementTree import canonicalize
+    parts = lambda f: {i.filename: canonicalize(z.read(i).decode("utf8")) for z in [zipfile.ZipFile(f)] for i in z.infolist()}  # noqa: E731
+    # the unpacked parts as canonical XML, not the file bytes: the compressed stream depends on the zlib build (zlib or zlib-ng), and the XML writer
+    # of the Python in use decides how an empty element is spelled (`<a/>` from Python 3.14, `<a />` before): the same document either way
     assert parts(tmp_path / "w.xlsx") == parts(AIRCRAFT / "wires.xlsx")
