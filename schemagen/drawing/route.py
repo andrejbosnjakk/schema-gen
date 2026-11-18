@@ -67,7 +67,9 @@ def tracks(hops: list[tuple[str, float, float]]) -> tuple[dict[str, int], dict[s
         a, b = next((a, b) for u, a, b in jog if u == w)
         used = {y for _, p, q in hops for y in (p, q)} | set(dog.values())
         mid = (a + b) / 2
-        rows = [float(y) for y in range(int(min(a, b)) - 100, int(max(a, b)) + 105, 5) if y not in used and y not in (a, b)]   # a free row, near the middle
+        for room in (100, 400, 1600, 6400):     # a free row, near the middle (farther out when a crowded stretch has none)
+            rows = [float(y) for y in range(int(min(a, b)) - room, int(max(a, b)) + room + 5, 5) if y not in used and y not in (a, b)]
+            if rows: break
         dog[w] = min(rows, key=lambda y: (abs(y - mid) + (0 if min(a, b) < y < max(a, b) else 15), y))
     return t if jog else {}, dog, len(bad) if jog else 0
 

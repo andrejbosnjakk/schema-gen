@@ -10,7 +10,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
-from .geometry import GRID, SHEETS  # noqa: F401  (re-exported: GRID = 5, SHEETS = {"A3": (420, 297), "A4": (297, 210)})
+from .geometry import GRID, SHEETS, dims  # noqa: F401  (re-exported: GRID = 5, SHEETS = {"A3": (420, 297), "A4": (297, 210)})
 
 FONT_DIR = Path(__file__).with_name("fonts")
 FONT_FAMILY = "Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif"
@@ -110,7 +110,7 @@ PAD = 5.0            # between the drawable area and the frame / strip
 def areas(size: str) -> dict[str, tuple[float, float, float, float]]:
     """Rectangles (x, y, w, h), all on the grid: frame, area (drawable: put symbols and wires here), strip, title, legend and notes
     (notes is (0, 0, 0, 0) when the sheet is too narrow for it: A4)."""
-    W, H = SHEETS[size]
+    W, H = dims(size) or SHEETS["A3"]
     x0, y0 = MARGIN, MARGIN
     x1, y1 = math.floor((W - MARGIN) / GRID) * GRID, math.floor((H - MARGIN) / GRID) * GRID
     sy = y1 - STRIP_H

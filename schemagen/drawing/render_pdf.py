@@ -84,10 +84,10 @@ def _page(c: Canvas, sh: dict[str, Any], fonts: tuple[str, str]) -> None:
         else:
             pts = v["points"]
             c.setStrokeColorRGB(0, 0, 0)
-            path(pts, False, None, "k", casing(v), bool(v.get("fault")))
+            path(pts, False, None, "k", casing(v), bool(v.get("fault") or v.get("dash")))
             if len(v.get("hex") or "") == 7 and not v.get("fault"):
                 c.setStrokeColorRGB(*_hex(v["hex"]))
-                path(pts, False, None, "k", core(v))
+                path(pts, False, None, "k", core(v), bool(v.get("dash")))
 
 
 class Book:

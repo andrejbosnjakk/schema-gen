@@ -45,7 +45,7 @@ def draw_scope(config, scope, sheet="A3", output=None):
     out.parent.mkdir(parents=True, exist_ok=True)
     files = export(g, out)
     r = checks.report(g)
-    print(f"{scope}: {len(g['sheets'])} sheet(s) {sheet}, {r['crossings']['total']} crossing(s), {len(r['findings'])} layout finding(s)")
+    print(f"{scope}: {len(g['sheets'])} sheet(s) {g['sheets'][0]['size']}{' mm' if scope == 'overview' else ''},{r['crossings']['total']} crossing(s), {len(r['findings'])} layout finding(s)")  # noqa: E501
     for f in files: print(f"wrote {f}")
     return 0
 

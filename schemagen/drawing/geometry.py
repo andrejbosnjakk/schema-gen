@@ -206,7 +206,7 @@ class Flag(_Flag, total=False):
 class Sheet(TypedDict):
     n: int
     of: int
-    size: Literal["A3", "A4"]
+    size: str                     # "A3", "A4" or a custom "<w>x<h>" in mm (the overview)
     w_mm: float
     h_mm: float
     grid_mm: float
@@ -247,6 +247,14 @@ def from_json(s: str) -> Geometry:
     return g  # type: ignore[return-value]
 
 
+def dims(size: str) -> tuple[float, float] | None:
+    """(w, h) in mm of a sheet size: "A3", "A4", or a custom sheet written "<w>x<h>" (the overview: as big as its content); None when unknown."""
+    if size in SHEETS: return SHEETS[size]
+    w, _, h = size.partition("x")
+    try: return (float(w), float(h)) if w and h and float(w) > 0 and float(h) > 0 else None
+    except ValueError: return None
+
+
 def _on(v: float, grid: float) -> bool:
     return abs(v / grid - round(v / grid)) < 1e-6
 
@@ -264,8 +272,8 @@ def validate(g: Geometry) -> list[str]:
     if not sheets: out.append("no sheets")
     for sh in sheets:
         p = f"sheet {sh.get('n')}"
-        size = SHEETS.get(sh.get("size", ""))
-        if size is None: out.append(f"{p}: size {sh.get('size')!r} is not A3 or A4")
+        size = dims(sh.get("size", ""))
+        if size is None: out.append(f"{p}: size {sh.get('size')!r} is not A3 or A4 (or <w>x<h>)")
         elif (sh["w_mm"], sh["h_mm"]) != size: out.append(f"{p}: {sh['size']} is {size[0]:g} x {size[1]:g} mm, not {sh['w_mm']:g} x {sh['h_mm']:g}")
         if sh.get("of") != len(sheets): out.append(f"{p}: of is {sh.get('of')}, the drawing has {len(sheets)} sheets")
         grid = sh.get("grid_mm") or 0

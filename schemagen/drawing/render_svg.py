@@ -108,9 +108,9 @@ def svg(geometry: Geometry, sheet: int = 0, colour: bool = True, embed_font: boo
         else:
             pts = " ".join(f"{num(x)},{num(y)}" for x, y in v["points"])
             wd = casing(v, colour)
-            dash = ' stroke-dasharray="1.5 1"' if v.get("fault") else ""
+            dash = ' stroke-dasharray="1.5 1"' if v.get("fault") or v.get("dash") else ""
             out.append(f'<polyline points="{pts}" fill="none" stroke="#000" stroke-width="{num(wd)}" stroke-linejoin="round"{dash} data-model="{escape(model)}"/>')  # noqa: E501
             if colour and v.get("hex") and not v.get("fault"):
-                out.append(f'<polyline points="{pts}" fill="none" stroke="{escape(v["hex"])}" stroke-width="{num(core(v))}" stroke-linejoin="round"/>')
+                out.append(f'<polyline points="{pts}" fill="none" stroke="{escape(v["hex"])}" stroke-width="{num(core(v))}" stroke-linejoin="round"{dash}/>')
     out.append("</svg>")
     return "\n".join(out) + "\n"
