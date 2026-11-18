@@ -6,6 +6,7 @@ y + ASC * em. `align` says what x means (left edge, centre, right edge). The min
 from __future__ import annotations
 
 import math
+from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
@@ -59,6 +60,7 @@ def is_bold(role: str) -> bool:
     return role in BOLD_ROLES
 
 
+@lru_cache(maxsize=1 << 16)  # the layout measures the same few thousand strings over and over
 def text_w(s: str, size_mm: float = SIZE, bold: bool = False) -> float:
     """Width in mm of s at cap height size_mm, from Inter's advance widths plus 3 %, rounded up to 0.05 mm (deterministic, conservative)."""
     t = _W[bold]

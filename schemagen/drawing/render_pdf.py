@@ -6,6 +6,7 @@ import math
 from pathlib import Path
 from typing import Any
 
+from reportlab import rl_config
 from reportlab.lib.units import mm
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
@@ -15,6 +16,7 @@ from .geometry import Geometry
 from .render_svg import casing, core, layers
 from .style import DASH, GREY, GREY_ROLES, LINE, baseline_dy, em, font_files, glyphs, is_bold
 
+rl_config.useA85 = 0  # binary streams: the base-85 pass is pure Python here and cost a tenth of an export
 FILL = {"black": (0, 0, 0), "white": (1, 1, 1)}
 
 

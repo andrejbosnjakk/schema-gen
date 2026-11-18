@@ -13,6 +13,7 @@ from __future__ import annotations
 import heapq
 import math
 from collections import Counter, defaultdict, deque
+from functools import lru_cache
 from typing import Any
 
 from ..app.workspace import _natural
@@ -46,6 +47,7 @@ class Node:
         return s.y + s.off[key][1]
 
 
+@lru_cache(maxsize=1 << 16)  # a sort key, asked for the same few thousand ids again and again (read only)
 def _nat(s: str) -> Any:
     return _natural(s)
 
