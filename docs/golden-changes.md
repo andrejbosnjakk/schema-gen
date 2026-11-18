@@ -44,3 +44,4 @@ The demo also gained P (ratings, panel labels), D and O tables.
 |---|---|---|
 | docs/screens/drawings/*.svg, *.pdf | wire casing 0.4 mm wider than the colour core (core centred at any zoom); a wire with both ends on one part is two off-sheet flags | the coloured line looked doubled on screen; such wires were drawn through the block |
 | docs/screens/drawings/*.svg, *.pdf (round 1.2) | Name column in boxes, flags name drawing and sheet, drawings that do not fit one sheet are terminal strips, wire table has a SEE column, title block REV and DATE filled | the verifier needs every flag to say where it goes; strips cut the sheet count and the crossings |
+| docs/screens/drawings/*.svg, *.pdf (wrap round) | title block 35 mm high with wrapped cells; wire table once per drawing with wrapped cells; one-line-more flags; one sheet per flag | nothing is cut off any more; the table repeated every wire on every sheet |

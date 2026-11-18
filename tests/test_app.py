@@ -128,7 +128,7 @@ def test_export_all_drawings_makes_a_book(client):
     per = [f for f in files if f.startswith("drawings/")]
     assert "wiring-diagrams.pdf" in files and "drawings/component-ECU.pdf" in per and "drawings/component-X-BH.pdf" in per
     assert all((out / f).is_file() for f in files)
-    assert _pages(out / "wiring-diagrams.pdf") == len(symbol_sheet()["sheets"]) + sum(_pages(out / f) for f in per)
+    assert _pages(out / "wiring-diagrams.pdf") == len(symbol_sheet()["sheets"]) + 1 + sum(_pages(out / f) for f in per)
 
 
 def test_export_all_survives_one_failed_drawing(client, monkeypatch):

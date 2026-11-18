@@ -85,7 +85,7 @@ def fit(s: str, size_mm: float, maxw: float, bold: bool = False) -> str:
 
 
 def wrap(s: str, width_mm: float, size_mm: float = SIZE, bold: bool = False, lines: int = 2) -> list[str]:
-    """s broken at spaces into at most `lines` lines of at most width_mm (the last line shortened with '..')."""
+    """s broken at spaces into at most `lines` lines of at most width_mm (the last line shortened with '..'). Only for fictional reference sheets: drawings never cut text."""  # noqa: E501
     out: list[str] = []
     cur = ""
     for w in s.split():
@@ -95,13 +95,42 @@ def wrap(s: str, width_mm: float, size_mm: float = SIZE, bold: bool = False, lin
     return [*out, fit(cur, size_mm, width_mm, bold)] if cur else out
 
 
+def wrap_words(words: list[str], width_mm: float, size_mm: float = SIZE, bold: bool = False) -> list[int]:
+    """How many of the words go on each line when they are filled greedily into lines of at most width_mm (a word wider than that has a line of its own)."""
+    out: list[int] = []
+    cur = ""
+    n = 0
+    for w in words:
+        t = f"{cur} {w}" if cur else w
+        if cur and text_w(t, size_mm, bold) > width_mm: out.append(n); cur, n = w, 1
+        else: cur, n = t, n + 1
+    return [*out, n] if n else out
+
+
+def wrap_all(s: str, width_mm: float, size_mm: float = SIZE, bold: bool = False) -> list[str]:
+    """s broken at spaces into lines of at most width_mm, measured with the font's metrics; nothing is cut off (a word wider than a line is broken inside,
+    each piece a line of its own). The one text wrapper of the drawings: table cells, notes, title block, box names."""
+    out: list[str] = []
+    cur = ""
+    for w in s.split():
+        while text_w(w, size_mm, bold) > width_mm and len(w) > 1:
+            k = max(1, next((i for i in range(len(w) - 1, 0, -1) if text_w(w[:i], size_mm, bold) <= width_mm), 1))
+            k = w[:k].rfind("-") + 1 or k          # after a hyphen when there is one
+            if cur: out.append(cur); cur = ""
+            out.append(w[:k]); w = w[k:]
+        t = f"{cur} {w}" if cur else w
+        if cur and text_w(t, size_mm, bold) > width_mm: out.append(cur); cur = w
+        else: cur = t
+    return [*out, cur] if cur else out
+
+
 def ceil_to(v: float, step: float = GRID) -> float:
     return math.ceil(v / step - 1e-9) * step
 
 
 # ---------------------------------------------------------------- sheets
 MARGIN = 10.0        # frame distance from the paper edge (top, left); right and bottom are rounded down to the grid
-STRIP_H = 30.0       # the strip along the bottom of the frame: legend, notes, title block
+STRIP_H = 35.0       # the strip along the bottom of the frame: legend, notes, title block
 TITLE_W = 140.0      # title block width
 LEGEND_W = 135.0     # legend width (3 columns of 45)
 PAD = 5.0            # between the drawable area and the frame / strip
