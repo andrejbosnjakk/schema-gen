@@ -37,7 +37,10 @@ def draw_scope(config, scope, sheet="A3", output=None):
     from ..drawing import checks
     from ..drawing.engine import draw as render, export, meta, stem
     st = State(config)
-    g = render(st, scope, sheet, meta(st.cfg))
+    if scope == "overview":      # one sheet of the size the content needs (drawing/overview.py); --sheet does not apply
+        from ..drawing.overview import draw as overview
+        g = overview(st, meta(st.cfg))
+    else: g = render(st, scope, sheet, meta(st.cfg))
     out = Path(output) if output else st.cfg.out / (stem(scope) + ".pdf")
     out.parent.mkdir(parents=True, exist_ok=True)
     files = export(g, out)
