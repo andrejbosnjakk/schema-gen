@@ -1,7 +1,8 @@
-"""The wire table of a drawing (docs/drawing-model.md): one row per conductor a sheet shows, so a person can work through the sheet wire by wire.
-A sheet's `table` is its rows as data (`sheet["table"] = {"sheet": n where it is drawn, "rows": [...]}`); the table itself is drawn as texts and `rules`
-(prims) below the drawing when it fits there, else on table sheets after the last drawing sheet. Text for the wire's two ends comes from the page's
-own items (the same words as the flags), colours from exporters/palette.py."""
+"""The wire table of a drawing (docs/drawing-model.md): one row per conductor, once per drawing, under the sheet that draws it first, so a person can work
+through a sheet wire by wire. A page's `table` is its rows as data (`sheet["table"] = {"sheet": n where it is drawn, "rows": [...]}`); the table itself is
+drawn as texts and `rules` (prims) under the drawing when it fits there, else after the last drawing sheet (a strip drawing: from the free room under its last sheet
+on, then on table sheets). A cell that is too long for its column goes on to further lines of the row; nothing is cut off. Text for the wire's two ends comes from
+the page's own items (the same words as the flags), colours from exporters/palette.py."""
 from __future__ import annotations
 
 import re
@@ -12,15 +13,15 @@ from ..exporters.palette import words as colour_words
 from . import symbols as S
 from .route import unit
 from .scope import short, short_name
-from .style import SIZE, areas, fit
+from .style import SIZE, areas, text_w, wrap_all
 
 Elem = dict[str, Any]
-ROW = 4.5                      # row pitch (mm); a text box is 4.2 mm high
-COLS = (0.0, 8.0, 34.0, 88.0, 172.0, 278.0)   # tick box, label, wire, from, to, see (offsets from the area's left edge)
-WIDTH = 112.0                  # width of the see column
+ROW = 4.5                      # pitch of a line of text (mm); a text box is 4.2 mm high
+WIREW = 52.0                   # width of the wire column
 HEAD = ("", "LABEL", "WIRE", "FROM", "TO", "SEE")
 SEE = re.compile(r"\s*(\(drawing [^)]*\))$")
 GAP = 5.0                      # between a drawing and the table under it
+MIN_FREE = 40.0                 # room under a drawing from which a table is carried on there (mm)
 
 
 def _end(it: Elem, b: Elem, p: Elem) -> str:
@@ -61,58 +62,85 @@ def rows(pg: Elem) -> list[Elem]:
     return sorted(out.values(), key=lambda r: (_natural(r["label"]), _natural(r["id"])))
 
 
-def height(n: int) -> float:
-    """Height a table of n rows with its caption row takes at the foot of a sheet, with a gap above it."""
-    return ROW * (n + 1) + GAP
+def columns(rs: list[Elem], size: str = "A3") -> tuple[float, ...]:
+    """The column offsets (tick box, label, wire, from, to, see, right edge) of the tables of a drawing: the label column as wide as its longest label, the
+    rest of the width shared by FROM, TO and SEE (9 : 10 : 10)."""
+    total = areas(size)["area"][2]
+    lw = min(50.0, max(18.0, max((text_w(r["label"]) for r in rs), default=0.0) + 3.0))
+    x = [0.0, 8.0, 8.0 + lw, 8.0 + lw + WIREW]
+    rest = total - x[3]
+    return (*x, x[3] + rest * 9 / 29, x[3] + rest * 19 / 29, total)
 
 
-def _rule(ax: float, y: float) -> Elem:
-    return dict(kind="line", stroke="thin", x1=ax, y1=y, x2=ax + COLS[5] + WIDTH, y2=y)
+def cells(r: Elem, cols: tuple[float, ...]) -> list[list[str]]:
+    """The lines of each cell of a row (label, wire, from, to, see), each broken to its column."""
+    wire = " ".join(x for x in (unit(r["gauge"]), colour_words(r["colour"])) if x)
+    txt = [r["label"], wire, r["frm"], r["to"], r["see"]]
+    return [wrap_all(t, cols[i + 2] - cols[i + 1] - 2, SIZE) or [""] for i, t in enumerate(txt)]
 
 
-def draw(lines: list[tuple[str, Any]], size: str, y: float) -> tuple[list[Elem], list[Elem]]:
+def row_h(r: Elem, cols: tuple[float, ...]) -> float:
+    """Height of a row: a line of text for each line its longest cell needs."""
+    return ROW * max(len(c) for c in cells(r, cols))
+
+
+def height(rs: list[Elem], cols: tuple[float, ...]) -> float:
+    """Height a table of these rows with its caption row takes at the foot of a sheet, with a gap above it."""
+    return ROW + sum(row_h(r, cols) for r in rs) + GAP
+
+
+def _rule(ax: float, y: float, cols: tuple[float, ...]) -> Elem:
+    return dict(kind="line", stroke="thin", x1=ax, y1=y, x2=ax + cols[6], y2=y)
+
+
+def draw(lines: list[tuple[str, Any]], size: str, y: float, cols: tuple[float, ...]) -> tuple[list[Elem], list[Elem]]:
     """Rules and texts of a table whose caption row is at y: lines are ("head", text) or ("row", row)."""
     ax = areas(size)["area"][0]
     rules: list[Elem] = []
     texts: list[Any] = []
-
-    def t(s: str, i: int, cy: float, role: str = "pin", w: float = 1e9) -> None:
-        if s: texts.append(S.text(fit(s, SIZE, w, role == "head"), ax + COLS[i], cy, "left", role, SIZE))
-    for i, h in enumerate(HEAD): t(h, i, y + ROW / 2, "caption")
-    rules.append(_rule(ax, y + ROW))
-    for k, (kind, v) in enumerate(lines):
-        y0 = y + ROW * (k + 1)
-        cy = y0 + ROW / 2
-        rules.append(_rule(ax, y0 + ROW))
-        if kind == "head": t(v, 1, cy, "head"); continue
-        rules.append(dict(kind="rect", stroke="thin", fill="none", x=ax + 1, y=cy - 1.25, w=2.5, h=2.5))
-        t(v["label"], 1, cy, w=COLS[2] - COLS[1] - 1)
-        t(" ".join(x for x in (unit(v["gauge"]), colour_words(v["colour"])) if x), 2, cy, w=COLS[3] - COLS[2] - 1)
-        t(v["frm"], 3, cy, w=COLS[4] - COLS[3] - 2)
-        t(v["to"], 4, cy, w=COLS[5] - COLS[4] - 2)
-        t(v["see"], 5, cy, w=WIDTH)
+    for i, h in enumerate(HEAD):
+        if h: texts.append(S.text(h, ax + cols[i], y + ROW / 2, "left", "caption", SIZE))
+    rules.append(_rule(ax, y + ROW, cols))
+    y0 = y + ROW
+    for kind, v in lines:
+        if kind == "head":
+            texts.append(S.text(v, ax + cols[1], y0 + ROW / 2, "left", "head", SIZE)); y0 += ROW
+            rules.append(_rule(ax, y0, cols)); continue
+        cs, h = cells(v, cols), row_h(v, cols)
+        rules.append(dict(kind="rect", stroke="thin", fill="none", x=ax + 1, y=y0 + ROW / 2 - 1.25, w=2.5, h=2.5))
+        for i, c in enumerate(cs):
+            for j, t in enumerate(c):
+                if t: texts.append(S.text(t, ax + cols[i + 1], y0 + ROW * (j + 0.5), "left", "pin", SIZE))
+        y0 += h
+        rules.append(_rule(ax, y0, cols))
     return rules, texts
 
 
-def pages(groups: list[tuple[int, list[Elem]]], size: str) -> list[tuple[list[Elem], list[Elem], list[int]]]:
-    """Table sheets for the rows of the sheets in `groups` ((sheet number, rows)): (rules, texts, sheets shown) per table sheet."""
-    ay, ah = areas(size)["area"][1:4:2]
-    cap = int(ah / ROW) - 1
-    pgs: list[list[tuple[str, Any]]] = [[]]
-    shown: list[list[int]] = [[]]
+def flow(groups: list[tuple[int, list[Elem]]], size: str, cols: tuple[float, ...], free: float = 0.0) -> tuple[list[tuple[list[tuple[str, Any]], list[int]]], bool]:
+    """The rows of the sheets in `groups` ((sheet number, rows)) in order, headed by `Sheet n`, cut into tables: the first holds up to `free` mm (the room
+    under the last drawing sheet, a caption row included) when that is worth using (MIN_FREE), every further one fills a table sheet.
+    Returns (lines, sheets shown) per table, and whether the first table is the one under the drawing."""
+    ah = areas(size)["area"][3]
+    under = free - GAP >= MIN_FREE
+    caps = [free - GAP] * under + [ah] * 10 ** 3
+    out: list[tuple[list[tuple[str, Any]], list[int]]] = [([], [])]
+    used = ROW                                   # the caption row
     for n, rs in groups:
         for i, r in enumerate(rs):
-            fresh = n not in shown[-1]
-            if pgs[-1] and len(pgs[-1]) + 1 + fresh > cap: pgs.append([]); shown.append([]); fresh = True
-            if fresh: pgs[-1].append(("head", f"Sheet {n}" + (" (continued)" if i else ""))); shown[-1].append(n)
-            pgs[-1].append(("row", r))
-    return [(*draw(lines, size, ay), sh) for lines, sh in zip(pgs, shown) if lines]
+            lines, shown = out[-1]
+            head = 0.0 if n in shown else ROW
+            if lines and used + head + row_h(r, cols) > caps[len(out) - 1]:
+                out.append(([], [])); used, head = ROW, ROW
+                lines, shown = out[-1]
+            if head: lines.append(("head", f"Sheet {n}" + (" (continued)" if i else ""))); shown.append(n); used += head
+            lines.append(("row", r)); used += row_h(r, cols)
+    return [t for t in out if t[0]], under
 
 
-def inline(rs: list[Elem], size: str) -> tuple[list[Elem], list[Elem]]:
+def inline(rs: list[Elem], size: str, cols: tuple[float, ...]) -> tuple[list[Elem], list[Elem]]:
     """The table of one sheet at the foot of the drawing area."""
     ay, ah = areas(size)["area"][1:4:2]
-    return draw([("row", r) for r in rs], size, ay + ah - ROW * (len(rs) + 1))
+    return draw([("row", r) for r in rs], size, ay + ah - height(rs, cols) + GAP, cols)
 
 
 def row_data(rs: list[Elem]) -> list[Elem]:

@@ -194,7 +194,7 @@ def place(page: Elem, size: str = "A3", fside: dict[str, str] | None = None, spr
         ka = end(a, f["at"], fn.col, f)
         fl = S.flag(f["id"], f["model"], f["kind"], f["text"], f["target"], f.get("sheet"), drawing=f.get("drawing", "") if f["kind"] == "continuation" else "")
         fn.w, fn.h = fl["w"], fl["h"]
-        fn.off = {"f": (0.0 if sd == "R" else fl["w"], 5.0)}
+        fn.off = {"f": (0.0 if sd == "R" else fl["w"], fl["h"] / 2)}
         paths.append((f, [nodes[a], fn] if sd == "R" else [fn, nodes[a]], ka if sd == "R" else "f", "f" if sd == "R" else ka, sd == "L"))
     shift = -min([n.col for n in nodes.values()] + [0])
     for n in nodes.values(): n.col += shift

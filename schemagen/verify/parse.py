@@ -160,15 +160,18 @@ class _UF:
 
 # ------------------------------------------------------------------ the sheet
 def title_fields(page: Sheet) -> dict[str, str]:
-    """The title block: the value under each caption (SHEET, PROJECT, SCOPE, REV, DATE, DRAWN BY, SOURCE) and the drawing title (the largest text of the strip)."""
+    """The title block: the value under each caption (SHEET, PROJECT, SCOPE, REV, DATE, DRAWN BY, SOURCE; a long value goes on to a second line, read as one:
+    a scope is an id, so its lines join without a space) and the drawing title (the large text left of SHEET, or its bold lines when it is long)."""
     caps = {"SHEET", "PROJECT", "SCOPE", "REV", "DATE", "DRAWN BY", "SOURCE"}
     out: dict[str, str] = {}
     for r in page.runs:
         if r.s in caps and r.top > page.h * 0.75:
-            below = [q for q in page.runs if abs(q.x0 - r.x0) < 1.0 and 2.0 < q.top - r.top < 8.0]
-            out[r.s.lower().replace(" ", "_")] = min(below, key=lambda q: q.top).s if below else ""
-    big = [r for r in page.runs if r.top > page.h * 0.75 and r.em > 4.0]
-    if big: out["title"] = max(big, key=lambda r: r.em).s
+            below = sorted((q for q in page.runs if abs(q.x0 - r.x0) < 1.0 and 2.0 < q.top - r.top < 11.0), key=lambda q: q.top)
+            out[r.s.lower().replace(" ", "_")] = ("" if r.s == "SCOPE" else " ").join(q.s for q in below)
+            if r.s == "SHEET":
+                big = [q for q in page.runs if q.top > page.h * 0.75 and q.em > 4.0 and q.x1 <= r.x0 + 0.5]
+                if big: out["title"] = max(big, key=lambda q: q.em).s
+                else: out["title"] = " ".join(q.s for q in sorted((q for q in page.runs if q.top > page.h * 0.75 and r.x0 - 100.5 <= q.x0 and q.x1 <= r.x0 + 0.5 and q.top < r.top + 8), key=lambda q: q.top))
     return out
 
 
@@ -244,27 +247,35 @@ def _wire_under(r: Run, wires: list[Any]) -> int | None:
 
 
 def _table(ob: SheetObs, runs: list[Run]) -> None:
-    """The wire table, if the sheet has one: rows below the caption row LABEL / WIRE / FROM / TO."""
+    """The wire table, if the sheet has one: rows below the caption row LABEL / WIRE / FROM / TO / SEE. A row whose cells are too long goes on to further lines
+    (a line with no label belongs to the row above); a line `Sheet 3` says which sheet the rows after it speak of. The SEE cell is read as the end of the TO cell."""
     heads = [r for r in runs if r.s == "LABEL"]
     for h in heads:
-        row = [r for r in runs if abs(r.cy - h.cy) < 0.6 and r.s in ("WIRE", "FROM", "TO")]
-        if {r.s for r in row} != {"WIRE", "FROM", "TO"}: continue
+        row = [r for r in runs if abs(r.cy - h.cy) < 0.6 and r.s in ("WIRE", "FROM", "TO", "SEE")]
+        if {r.s for r in row} != {"WIRE", "FROM", "TO", "SEE"}: continue
         xs = {"LABEL": h.x0, **{r.s: r.x0 for r in row}}
         body = sorted((r for r in runs if r.top > h.bot - 0.1), key=lambda r: (round(r.cy * 2), r.x0))
-        rows: dict[int, list[Run]] = {}
-        for r in body: rows.setdefault(round(r.cy / 2.5), []).append(r)
+        lines: dict[int, list[Run]] = {}
+        for r in body: lines.setdefault(round(r.cy / 2.5), []).append(r)
         sheet: int | None = None
         last = h.bot
-        for k in sorted(rows):
-            rs = rows[k]
-            cols = {"LABEL": "", "WIRE": "", "FROM": "", "TO": ""}
+        acc: list[tuple[dict[str, str], int | None, float]] = []
+        for k in sorted(lines):
+            rs = lines[k]
+            cols = {"LABEL": "", "WIRE": "", "FROM": "", "TO": "", "SEE": ""}
             for r in sorted(rs, key=lambda r: r.x0):
                 c = max((n for n in xs if xs[n] <= r.x0 + 1.5), key=lambda n: xs[n], default="LABEL")
                 cols[c] = (cols[c] + " " + r.s).strip()
-            if not cols["WIRE"] and not cols["FROM"] and cols["LABEL"]:
-                m = re.match(r"Sheet (\d+)", cols["LABEL"])
-                if m: sheet = int(m.group(1)); last = max(r.bot for r in rs); continue
-            if cols["LABEL"]: ob.rows.append(TableRow(cols["LABEL"], cols["WIRE"], cols["FROM"], cols["TO"], sheet, rs[0].cy)); last = max(r.bot for r in rs)
+            if cols["LABEL"] and not any(cols[c] for c in ("WIRE", "FROM", "TO", "SEE")) and (m := re.match(r"Sheet (\d+)", cols["LABEL"])):
+                sheet, last = int(m.group(1)), max(r.bot for r in rs)
+                acc.append(({}, None, 0.0))                 # a heading ends the row above
+                continue
+            if cols["LABEL"]: acc.append((cols, sheet, rs[0].cy))
+            elif acc and acc[-1][0] and 0 < rs[0].top - last < 2.0:         # a further line of the row above
+                for c in cols: acc[-1][0][c] = (acc[-1][0][c] + " " + cols[c]).strip()
+            else: continue
+            last = max(r.bot for r in rs)
+        ob.rows += [TableRow(c["LABEL"], c["WIRE"], c["FROM"], (c["TO"] + " " + c["SEE"]).strip(), s, y) for c, s, y in acc if c]
         ob.table = (min(r.x0 for r in row + [h]) - 8, h.top - 0.5, ob.frame[2], last + 1.0)
         return
 
@@ -345,7 +356,7 @@ def _ends(page: Sheet, free: list[Run], flags: list[FlagObs], uf: _UF, wend: dic
         for j, w in enumerate(page.wires):
             for e in (0, 1):
                 if _eq(d, w.pts[0] if e == 0 else w.pts[-1]): net_dots.setdefault(uf.find(("w", j, e)), []).append(d)
-    cand = [(r, c) for r in free if (c := lead(r.s)[0])]
+    cand = [(r, c) for r in free if (c := _lead_run(r, free, lead))]
     ends_pts = [pt for w in page.wires for pt in (w.pts[0], w.pts[-1])]
     touch = lambda p: any(_eq(a, p) or _eq(b, p) for _, a, b in lines) or any(_dist_edge(p, o.pts) <= 0.35 for o in page.outlines)  # noqa: E731
     outs = sorted((o for o in page.outlines if o.x1 - o.x0 >= 6 and o.y1 - o.y0 >= 6), key=lambda o: -(o.x1 - o.x0) * (o.y1 - o.y0))
@@ -443,3 +454,17 @@ def _crossings(wires: list[Any]) -> int:
             if max(p[0] for p in v.pts) < bi[0] or min(p[0] for p in v.pts) > bi[2] or max(p[1] for p in v.pts) < bi[1] or min(p[1] for p in v.pts) > bi[3]: continue
             n += sum(1 for a, b in zip(w.pts, w.pts[1:]) for c, d in zip(v.pts, v.pts[1:]) if _cross(a, b, c, d))
     return n
+
+
+def _lead_run(r: Run, free: list[Run], lead: Any) -> str | None:
+    """The component a text run names. A name that goes on to a second or third line (a long box name) is read with its lines: the shortest run of stacked
+    lines (same left edge, the next just below) that is a whole name; else the run alone."""
+    s, last = r.s, r
+    for _ in range(3):
+        c, rest = lead(s)
+        if c and not rest: return str(c)
+        nxt = next((q for q in free if abs(q.x0 - last.x0) < 0.3 and 0 <= q.top - last.bot < 2.4 and abs(q.em - last.em) < 0.05), None)
+        if nxt is None: break
+        s, last = s + ("" if s.endswith("-") else " ") + nxt.s, nxt
+    c = lead(r.s)[0]
+    return str(c) if c else None

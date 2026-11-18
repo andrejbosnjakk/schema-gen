@@ -62,14 +62,14 @@ def export_all(st: Any, out: Path, progress: Callable[[int, int, str], None] = l
         book = Book(stage / "wiring-diagrams.pdf", symbol_sheet()["drawing"].get("title", ""), meta(st.cfg)["date"])
         book.add(symbol_sheet())
         done, failed = 0, []
-        where: dict[tuple[str, str], list[int]] = {}
+        where: dict[tuple[str, str, str], list[int]] = {}
         for n, c in enumerate(cs):   # first pass: where does each drawing put each conductor (flags name the sheet of their far end)
             progress(n, 2 * len(cs), c.id)
             try: where.update(I.index_of(draw(st, f"component:{c.id}", "A3", meta(st.cfg), I.guess)))
             except Exception:
                 userdata.log().exception("wiring diagram of %s could not be drawn", c.id)
                 failed.append(c.id)
-        sheets_of: I.Where = lambda d, cid: where.get((d, cid), [])  # noqa: E731
+        sheets_of: I.Where = lambda d, cid, ref: where.get((d, cid, ref)) or where.get((d, cid, ""), [])  # noqa: E731
         for n, c in enumerate(cs):
             g = None  # the previous drawing is dropped before the next one is built
             progress(len(cs) + n, 2 * len(cs), c.id)

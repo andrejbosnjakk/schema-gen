@@ -22,7 +22,8 @@ Elem = dict[str, Any]
 BARS = ("splice", "bus", "ground")
 HUB_MIN = 12        # legs at a bar in scope from which it is drawn as a strip however small the drawing
 FLAT = 5.0          # height of a flat flag: one line
-ZONE = 5.0          # room beside a symbol for the wire text, besides the text's own width
+ZONE = 3.0          # room beside a symbol for the wire text, besides the text's own width
+LAST = 4            # a last page holds at least this many wires (when the drawing has them)
 
 
 def _owner(sc: Elem) -> dict[str, tuple[Elem, Elem, Elem]]:
@@ -134,7 +135,7 @@ def _text(sc: Elem, r: Elem, where: I.Where, own_id: str, sheet: int) -> str:
     if "text" in r: return "→ " + r["text"]
     if r["far"]: return "→ " + words(sc, r["other"]) + I.suffix(own_id, [sheet])
     it = _owner(sc)[r["other"]][0]
-    return "→ " + words(sc, r["other"]) + I.suffix(it["code"], where(it["code"], r["cid"]))
+    return "→ " + words(sc, r["other"]) + I.suffix(it["code"], where(it["code"], r["cid"], r["other"]))
 
 
 def _layout(sc: Elem, units: dict[str, Elem], cur: list[tuple[str, Elem]], flatw: dict[tuple[str, str, str], float], zone: float, aw: float) -> tuple[bool, float]:
@@ -149,25 +150,19 @@ def _layout(sc: Elem, units: dict[str, Elem], cur: list[tuple[str, Elem]], flatw
     return tall, sum(y["h"] + GRID for y in sy)
 
 
-def _plan(sc: Elem, units: dict[str, Elem], size: str, inline: bool, flatw: dict[tuple[str, str, str], float], zone: float) -> list[tuple[list[tuple[str, Elem]], bool]]:  # noqa: E501
-    """The rows in order cut into pages (rows, tall): filled while the strip (and, when inline, its wire table) fits the sheet, then evened out."""
+def _plan(sc: Elem, units: dict[str, Elem], size: str, flatw: dict[tuple[str, str, str], float], zone: float) -> list[tuple[list[tuple[str, Elem]], bool]]:
+    """The rows in order cut into pages (rows, tall): each page is filled to the foot of the area (the wire table follows the strips, so no room is kept for it);
+    a last page left with only a few rows takes some from the one before, so that no sheet carries a lone wire."""
     ax, ay, aw, ah = areas(size)["area"]
     order = sorted(units, key=lambda k: (not _mine(sc, units[k]["item"]), _natural(k)))
     seq = [(k, r) for k in order for r in units[k]["rows"]]
-
-    def height(cur: list[tuple[str, Elem]]) -> float:
-        return _layout(sc, units, cur, flatw, zone, aw)[1] + (T.height(len({r["cid"] for _, r in cur})) if inline else 0.0)
-
-    def fill(limit: int) -> list[list[tuple[str, Elem]]]:
-        pgs: list[list[tuple[str, Elem]]] = [[]]
-        for item in seq:
-            cur = pgs[-1] + [item]
-            if pgs[-1] and (len(cur) > limit or height(cur) > ah): pgs.append([item])
-            else: pgs[-1] = cur
-        return pgs
-    first = fill(10 ** 9)
-    pgs = fill(-(-len(seq) // len(first)))                       # as many pages as that needed, evenly filled
-    return [(pg, _layout(sc, units, pg, flatw, zone, aw)[0]) for pg in (first if len(pgs) > len(first) else pgs)]
+    pgs: list[list[tuple[str, Elem]]] = [[]]
+    for item in seq:
+        cur = pgs[-1] + [item]
+        if pgs[-1] and _layout(sc, units, cur, flatw, zone, aw)[1] > ah: pgs.append([item])
+        else: pgs[-1] = cur
+    while len(pgs) > 1 and len(pgs[-1]) < LAST and len(pgs[-2]) > LAST: pgs[-1].insert(0, pgs[-2].pop())
+    return [(pg, _layout(sc, units, pg, flatw, zone, aw)[0]) for pg in pgs]
 
 
 def pages(sc: Elem, size: str, where: I.Where) -> list[Elem]:
@@ -183,9 +178,7 @@ def pages(sc: Elem, size: str, where: I.Where) -> list[Elem]:
             units = _split(sc, True)                   # they do not fit both sides: a bar per pin instead
             rows = [r for u in units.values() for r in u["rows"]]
     flatw = {(k, r["cid"], r["at"]): S.flag("", "", "off_sheet", _text(sc, r, where, own_id, 44), "", None, h=FLAT)["w"] for k, u in units.items() for r in u["rows"]}  # noqa: E501
-    plans = [_plan(sc, units, size, inline, flatw, zone) for inline in (True, False)]
-    tab = lambda p: math.ceil(sum(len({r["cid"] for _, r in pg}) + 1 for pg, _ in p) / (int(areas(size)["area"][3] / T.ROW) - 1))   # noqa: E731
-    pgs = plans[0] if len(plans[0]) <= len(plans[1]) + tab(plans[1]) else plans[1]
+    pgs = _plan(sc, units, size, flatw, zone)
     where_row = {(k, r["cid"], r["at"]): n for n, (pg, _) in enumerate(pgs, 1) for k, r in pg}
     out = []
     for n, (pg, tall) in enumerate(pgs, 1):

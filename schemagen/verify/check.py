@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import hashlib
 import re
-from collections import defaultdict
+from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any
 
@@ -249,34 +249,37 @@ def _nets(d: Drawing) -> None:
 
 
 def _tables(d: Drawing) -> None:
-    """Every wire-table row against the lines, and every drawn wire against the table."""
+    """The wire tables of a drawing hold every wire once: under the first sheet that draws it (or, for a wire only a summary flag speaks of, under the sheet of
+    that flag). Every row is held against the lines drawn on its sheet, and every drawn wire must have its row."""
     ex = d.ex
     rows: dict[int, list[TableRow]] = defaultdict(list)
     for sh in d.sheets:
         for r in sh.rows: rows[r.sheet or sh.n].append(r)
     n_sheets = len(d.sheets)
     by_label = {c.label: c for c in ex.conds}
-    for sh in d.sheets:
-        if sh.wires and not rows.get(sh.n): d.add("table", "the sheet has no wire table", sh.n)
-    for k, rs in rows.items():
+    count = Counter(c.label for c in ex.conds)
+    first = {lab: min(n for n, _ in recs) for lab, recs in d.recs.items()}
+    listed: dict[str, int] = {}
+    for k, rs in sorted(rows.items()):
         if k > n_sheets: d.add("table", f"the wire table speaks of sheet {k}, which does not exist"); continue
         sh = d.sheets[k - 1]
         drawn: dict[str, list[WireObs]] = defaultdict(list)
         for w in sh.wires:
             if w.labels: drawn[w.labels[0]].append(w)
         cover = sum(f.n for f in sh.flags if f.kind == "summary")
-        seen: set[str] = set()
         undrawn = 0
         for r in rs:
-            if r.label in seen: d.add("table", f"label {r.label} twice in the wire table of sheet {k}", k)
-            seen.add(r.label)
+            if r.label in listed and count[r.label] == 1: d.add("table", f"label {r.label} twice in the wire tables (sheets {listed[r.label]} and {k})", k)
+            listed.setdefault(r.label, k)
             ws = drawn.get(r.label)
             if ws is None:
                 undrawn += 1
                 c = by_label.get(r.label)
                 if c is None: d.add("table", f"table row {r.label} is not a wire of the wire list", k); continue
+                if r.label in first and not (k < first[r.label] and cover): d.add("table", f"table row {r.label} is under sheet {k}, which does not draw it (sheet {first[r.label]} does)", k)
                 _row_vs_model(d, r, c, k)
                 continue
+            if k != first[r.label]: d.add("table", f"table row {r.label} is under sheet {k}, but the wire is first drawn on sheet {first[r.label]}", k)
             w = ws[0]
             if r.wire:
                 cw = words(w.colour) if w.colour else ""
@@ -284,9 +287,9 @@ def _tables(d: Drawing) -> None:
                 if cw and not r.wire.endswith(cw): d.add("table", f"table row {r.label}: '{r.wire}' but the wire is {w.colour} ({cw})", k)
                 if re.sub(r"\s*AWG", "", gtxt).strip() != w.gauge: d.add("table", f"table row {r.label}: gauge '{r.wire}' but the wire is {w.gauge}", k)
             _row_vs_wire(d, r, ws, k)
-        for lab in drawn:
-            if lab not in seen: d.add("table", f"wire {lab} has no row in the wire table of sheet {k}", k)
         if undrawn > cover: d.add("table", f"{undrawn - cover} table rows of sheet {k} are for wires that are not drawn and no summary flag covers them", k)
+    for lab, n in sorted(first.items()):
+        if lab not in listed: d.add("table", f"wire {lab} has no row in the wire tables of the drawing (it is drawn on sheet {n})", n)
 
 
 def _row_vs_wire(d: Drawing, r: TableRow, ws: list[WireObs], k: int) -> None:

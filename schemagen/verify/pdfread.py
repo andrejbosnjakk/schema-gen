@@ -85,6 +85,7 @@ def _runs(chars: list[dict[str, Any]]) -> list[Run]:
     return out
 
 
+
 def read(path: str | Path) -> list[Sheet]:
     """Every page of a PDF as a Sheet."""
     import pdfplumber
