@@ -10,6 +10,7 @@
     schemagen labels <project> [--update] [--retire LABEL --reason TEXT]
     schemagen diff <A> <B> [--project DIR] [--format text|json|html] [-o FILE]   (A, B: folders or git revisions)
     schemagen changes <project> [--undo]
+    schemagen check-drawings <project> <pdf folder> [--source FILE] [-o report.json]   (do the PDFs say what the wire list says?)
     schemagen sim <project> [scenario.yml ...] [--faults all] [--infer]
     schemagen app [<project>] [--port 8765]
     schemagen palette <project> [--json] | schema [-o schemas] | synth --wires N --seed S -o DIR
@@ -70,6 +71,10 @@ def main(argv=None):
     df.add_argument("--format", choices=["text", "json", "html"], default="text"); df.add_argument("-o", "--output")
     ch = sub.add_parser("changes", help="list or undo stored change sets")
     ch.add_argument("config"); ch.add_argument("--undo", action="store_true")
+    cd = sub.add_parser("check-drawings", help="read the drawing PDFs back and compare them with the wire list (JSON report, summary)")
+    cd.add_argument("config"); cd.add_argument("pdfs", help="folder with the PDFs (drawings/*.pdf and the book)")
+    cd.add_argument("--source", help="the spreadsheet the title-block hash is checked against (default: the project's own)")
+    cd.add_argument("-o", "--output", help="JSON report (default: <pdfs>/check-drawings.json)")
     sm = sub.add_parser("sim", help="DC simulation: scenarios and fault sweep (HTML + JSON report)")
     sm.add_argument("config"); sm.add_argument("scenarios", nargs="*", help="scenario YAML files (default: <project>/scenarios/*.yml)")
     sm.add_argument("--faults", choices=["all"], help="short every node to ground"); sm.add_argument("-o", "--output", help="report folder")
@@ -102,6 +107,9 @@ def main(argv=None):
                   file=sys.stderr)
             return 1
     elif a.cmd == "check": return commands.check(a)
+    elif a.cmd == "check-drawings":
+        from ..verify import main as check_drawings
+        return check_drawings(a.config, a.pdfs, a.output, a.source)
     elif a.cmd == "fix": return commands.fix(a)
     elif a.cmd == "export" and a.readable:
         from ..importers import readable

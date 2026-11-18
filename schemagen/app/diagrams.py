@@ -23,7 +23,7 @@ VIEW_MAX = 25  # components in one viewer scope
 
 def geometry(st: Any, scope: str) -> Any:
     """The A3 drawing of `scope`; a scope the engine does not know becomes a plain message."""
-    try: return draw(st, scope, "A3", meta(st.cfg.root.name))
+    try: return draw(st, scope, "A3", meta(st.cfg))
     except ValueError as e: raise AppError("bad-request", f"{str(e).rstrip('.').capitalize()}.") from None
 
 
@@ -65,7 +65,7 @@ def export_all(st: Any, out: Path, progress: Callable[[int, int, str], None] = l
             g = None  # the previous drawing is dropped before the next one is built
             progress(n, len(cs), c.id)
             try:
-                g = draw(st, f"component:{c.id}", "A3", meta(st.cfg.root.name))
+                g = draw(st, f"component:{c.id}", "A3", meta(st.cfg))
                 if not any(sh["wires"] or sh["flags"] for sh in g["sheets"]): continue
                 export(g, stage / "drawings" / f"{stem(g['drawing']['scope'])}.pdf")
                 book.add(g)

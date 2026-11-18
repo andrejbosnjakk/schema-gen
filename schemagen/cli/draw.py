@@ -37,7 +37,7 @@ def draw_scope(config, scope, sheet="A3", output=None):
     from ..drawing import checks
     from ..drawing.engine import draw as render, export, meta, stem
     st = State(config)
-    g = render(st, scope, sheet, meta(Path(config).name))
+    g = render(st, scope, sheet, meta(st.cfg))
     out = Path(output) if output else st.cfg.out / (stem(scope) + ".pdf")
     out.parent.mkdir(parents=True, exist_ok=True)
     files = export(g, out)
