@@ -91,10 +91,11 @@ def _page(c: Canvas, sh: dict[str, Any], fonts: tuple[str, str]) -> None:
 class Book:
     """A PDF written drawing by drawing: `add` puts a drawing's pages in and the caller may drop the geometry at once; `close` saves."""
 
-    def __init__(self, path: str | Path, title: str = ""):
+    def __init__(self, path: str | Path, title: str = "", date: str = ""):
         self.fonts, self.pages = _fonts(), 0
         self.c = Canvas(str(path), invariant=1, pageCompression=1)
         self.c.setTitle(title); self.c.setCreator("schemagen")
+        if date: self.c.setDateFormatter(lambda *a: "D:" + date.replace("-", "") + "000000Z")   # creation and modification date: the source's date, never the clock
 
     def add(self, g: Geometry) -> None:
         for sh in g["sheets"]:
@@ -110,6 +111,6 @@ class Book:
 def pdf(geometry: Geometry | list[Geometry], path: str | Path) -> int:
     """Writes the geometry (or a list of them: one book, in that order) as a vector PDF, one page per sheet; returns the number of pages."""
     gs = geometry if isinstance(geometry, list) else [geometry]
-    b = Book(path, gs[0]["drawing"].get("title", ""))
+    b = Book(path, gs[0]["drawing"].get("title", ""), gs[0]["drawing"].get("date", ""))
     for g in gs: b.add(g)
     return b.close()

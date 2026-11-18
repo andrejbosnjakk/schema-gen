@@ -89,9 +89,9 @@ def flat(t: str) -> str:
 
 
 def _head(it: Item) -> tuple[str, str]:
-    """Code and display name (the name only when it says more than the code: not the code again in words)."""
-    name = " ".join(it["name"].replace(it["code"], "").split()) if it["name"] else ""      # "Wing root connector X-WR" -> "Wing root connector"
-    return it["code"], name if name and flat(name) != flat(it["code"]) else ""
+    """Title and code: the Name column is the title (the code when the part has no name); the code stands small underneath only when it differs."""
+    name, code = " ".join(it["name"].split()), it["code"]
+    return (name, "" if flat(code) in flat(name) else code) if name else (code, "")
 
 
 def _two(it: Item, sides: dict[str, str]) -> list[tuple[dict[str, Any], dict[str, Any], str]]:
@@ -125,11 +125,10 @@ def _leads(B: _B, w: float, y: float, xa: float, xb: float, two: list[Any]) -> N
 def _block(it: Item, B: _B, sides: dict[str, str]) -> tuple[float, float]:
     far = it["role"] == "far_end"
     dflt = "L" if far else "R"
-    code, name = _head(it)
+    title, code = _head(it)
     part, loc = it["part"], it["location"]
-    n = 1 + bool(part)
-    need = 2.5 + _tw(code, "name") + (2 + _tw(name) if name else 0) + (4 + _tw(loc) if loc else 0) + 2.5
-    if part: need = max(need, 5 + _tw(part))
+    n = 1 + bool(code) + bool(part)
+    need = max(2.5 + _tw(title, "name") + (4 + _tw(loc) if loc else 0) + 2.5, *(5 + _tw(t) for t in (code, part)))
     plan = []
     for b in it["blocks"]:
         m = int(bool(b["id"] or b["part"])) + bool(b["mate"])
@@ -151,10 +150,10 @@ def _block(it: Item, B: _B, sides: dict[str, str]) -> tuple[float, float]:
         pts = [(xn, 0.0), (xf, 0.0)] + [(xf + (d * 1.25 if i % 2 else 0), 2.5 * i) for i in range(1, int(H / 2.5))] + [(xf, H), (xn, H)]
         B.poly(pts, True, N, "white")
     else: B.rect(0, 0, W, H, N, "white")
-    B.text(code, 2.5, 3.75, "left", "name")
-    if name: B.text(name, 2.5 + _tw(code, "name") + 2, 3.75, "left", "pin")
+    B.text(title, 2.5, 3.75, "left", "name")
     B.text(loc, W - 2.5, 3.75, "right", "pin")
-    B.text(part, 2.5, 8.75, "left", "part")
+    B.text(code, 2.5, 8.75, "left", "part")
+    B.text(part, 2.5, 8.75 + 5 * bool(code), "left", "part")
     top = 5 * n + 2.5
     for b, m, pins, nw in plan:
         h = 5 * (m + len(pins))
@@ -190,25 +189,26 @@ def _harness(it: Item, B: _B, sides: dict[str, str]) -> tuple[float, float]:
         if sd[0] == sd[1]: sd[1] = _OPP[sd[0]]
         if sd[0] == "R": bl, sd = bl[::-1], sd[::-1]
     else: sd = ["L"]
-    code, name = _head(it)
-    k = 2 + any(b["part"] for b in bl) + any(b["mate"] for b in bl)
+    title, code = _head(it)
+    k = 2 + bool(code) + any(b["part"] for b in bl) + any(b["mate"] for b in bl)
     rows = max((len(b["pins"]) for b in bl), default=0)
     nums = [p["n"] for b in bl for p in b["pins"]]
     cw = max([20.0, *(_tw(x) + 6 for x in nums), *(_tw(b["id"], "name") + 4 for b in bl), *(_tw(b["part"]) + 4 for b in bl),
               *(_tw("mates " + b["mate"]) + 4 for b in bl),
-              (_tw(code, "name") + (2 + _tw(name) if name else 0) + 4) / max(1, len(bl))])
+              (max(_tw(title, "name"), _tw(code)) + 4) / max(1, len(bl))])
     cw = ceil_to(cw, 2.5)
     W, H = cw * max(1, len(bl)), 5 * k + 5 + 5 * rows
     B.rect(0, 0, W, H, N, "white")
-    B.text(code, W / 2 - (2 + _tw(code, "name") + _tw(name)) / 2 if name else W / 2, 3.5, "left" if name else "centre", "name")
-    if name: B.text(name, W / 2 - (2 + _tw(code, "name") + _tw(name)) / 2 + _tw(code, "name") + 2, 3.5, "left", "pin")
-    B.line(0, 5 * k + 2.5, W, 5 * k + 2.5, T_); B.line(0, 6, W, 6, T_)
-    if len(bl) == 2: B.line(W / 2, 6, W / 2, H, T_)
+    d = 5 * bool(code)
+    B.text(title, W / 2, 3.5, "centre", "name")
+    B.text(code, W / 2, 8.5, "centre", "part")
+    B.line(0, 5 * k + 2.5, W, 5 * k + 2.5, T_); B.line(0, 6 + d, W, 6 + d, T_)
+    if len(bl) == 2: B.line(W / 2, 6 + d, W / 2, H, T_)
     for c, b in enumerate(bl):
         cx = cw * c + cw / 2
-        B.text(b["id"], cx, 8.75, "centre", "name")
-        B.text(b["part"], cx, 13.25, "centre", "part")
-        if b["mate"]: B.text("mates " + b["mate"], cx, 13.25 + 4.5 * bool(b["part"]), "centre", "part")
+        B.text(b["id"], cx, 8.75 + d, "centre", "name")
+        B.text(b["part"], cx, 13.25 + d, "centre", "part")
+        if b["mate"]: B.text("mates " + b["mate"], cx, 13.25 + d + 4.5 * bool(b["part"]), "centre", "part")
         for i, p in enumerate(b["pins"]):
             y = 5 * k + 5 + 5 * i
             s = sd[c]
@@ -226,17 +226,19 @@ def _bartaps(it: Item, B: _B) -> tuple[float, float]:
     cls = it["attrs"].get("function_class") or "" if k == "bus" else ""
     sd = {s: [t for t in B.taps if t["side"] == s] for s in "LR"}
     labs = [t["text"] for t in B.taps if t.get("text")]
-    half = ceil_to(max([5.0, (_tw(it["code"], "name") + 2) / 2, (_tw(cls) + 2) / 2, *(_tw(t) + 3 for t in labs)]))
-    W, hdr = 2 * half, 5 * (1 + bool(cls)) if k != "splice" else 5
+    title, code = _head(it) if k != "splice" else (it["code"], "")
+    hd = [(title, "name"), *[(t, "part") for t in (code,) if t], *[(t, "pin") for t in (cls,) if t]]
+    half = ceil_to(max([5.0, *((_tw(t, r) + 2) / 2 for t, r in hd), *(_tw(t) + 3 for t in labs)]))
+    W, hdr = 2 * half, 5 * len(hd)
     rows = max(1, len(sd["L"]), len(sd["R"]))
+    pitch = max([5.0, *(float(t.get("pitch", 5)) for t in B.taps)])     # a terminal strip with two-line flags has 10 mm between its taps
     y0 = hdr + 5
-    B.text(it["code"], half, 3.75, "centre", "name")
-    if cls: B.text(cls, half, 8.25, "centre", "pin")
-    yb = y0 + 5 * (rows - 1) + 2.5
+    for i, (t, r) in enumerate(hd): B.text(t, half, 3.75 + 5 * i, "centre", r)
+    yb = y0 + pitch * (rows - 1) + 2.5
     B.line(half, y0 - 2.5, half, yb, K if k == "bus" else N)
     for s, ts in sd.items():
         for i, t in enumerate(ts):
-            y = y0 + 5 * i
+            y = y0 + pitch * i
             B.line(half, y, 0 if s == "L" else W, y); B.circle(half, y, 0.9, N, "black")
             B.text(t.get("text", ""), half + 1.5 if s == "L" else half - 1.5, y - 2.5, "left" if s == "L" else "right", "pin", model=t["model"])
             B.anchor(t["id"], 0 if s == "L" else W, y, s, t["model"])
@@ -261,24 +263,27 @@ def _splice(it: Item, B: _B, sides: dict[str, str]) -> tuple[float, float]:
 
 def _ground(it: Item, B: _B, sides: dict[str, str]) -> tuple[float, float]:
     if B.taps: return _bartaps(it, B)
-    W = ceil_to(max(10.0, _tw(it["code"], "name") + 2), 10)
+    title, code = _head(it)
+    W = ceil_to(max(10.0, _tw(title, "name") + 2, _tw(code) + 2), 10)
     c = W / 2
     B.line(c, 0, c, 5); B.line(c - 5, 5, c + 5, 5); B.line(c - 3, 7.5, c + 3, 7.5); B.line(c - 1, 10, c + 1, 10)
-    B.text(it["code"], c, 12.9, "centre", "name")
+    B.text(title, c, 12.9, "centre", "name")
+    B.text(code, c, 17.4, "centre", "part")
     for _, p in _pins(it): B.anchor(p["anchor"], c, 0, "T")
-    return W, 15
+    return W, 15 + 5 * bool(code)
 
 
 def _bus(it: Item, B: _B, sides: dict[str, str]) -> tuple[float, float]:
     if B.taps: return _bartaps(it, B)
     pins = _pins(it) or [({}, {"n": "", "name": "", "anchor": ""})]
     cls = it["attrs"].get("function_class") or ""
-    rows = 1 + bool(cls)
+    title, code = _head(it)
+    hd = [(title, "name"), *[(t, "part") for t in (code,) if t], *[(t, "pin") for t in (cls,) if t]]
+    rows = len(hd)
     lab = [p["n"] or p["name"] for _, p in pins]
-    half = ceil_to(max([10.0, *(_tw(t) + 3 for t in lab), (_tw(it["code"], "name") + 2) / 2, (_tw(cls) + 2) / 2]))
+    half = ceil_to(max([10.0, *(_tw(t) + 3 for t in lab), *((_tw(t, r) + 2) / 2 for t, r in hd)]))
     W, H = 2 * half, 5 * rows + 5 * len(pins) + 5
-    B.text(it["code"], half, 3.75, "centre", "name")
-    B.text(cls, half, 8.25, "centre", "pin")
+    for i, (t, r) in enumerate(hd): B.text(t, half, 3.75 + 5 * i, "centre", r)
     B.line(half, 5 * rows + 2.5, half, H - 2.5, K)
     for i, ((_, p), t) in enumerate(zip(pins, lab)):
         y = 5 * rows + 5 + 5 * i
@@ -292,8 +297,8 @@ def _bus(it: Item, B: _B, sides: dict[str, str]) -> tuple[float, float]:
 
 def _breaker(it: Item, B: _B, sides: dict[str, str]) -> tuple[float, float]:
     fuse = it["symbol"] == "fuse"
-    code, _ = _head(it)
-    rows = [(code, "name"), *[(t, "pin") for t in (_rating(it), it["attrs"].get("panel") or "") if t]]
+    title, code = _head(it)
+    rows = [(title, "name"), *[(t, "part") for t in (code,) if t], *[(t, "pin") for t in (_rating(it), it["attrs"].get("panel") or "") if t]]
     W = _inline_w(rows)
     c = W / 2
     two = _two(it, sides)
@@ -309,7 +314,8 @@ def _breaker(it: Item, B: _B, sides: dict[str, str]) -> tuple[float, float]:
 
 def _terminator(it: Item, B: _B, sides: dict[str, str]) -> tuple[float, float]:
     """A resistor drawn upright between its two terminals, which are both on one side (default L): it closes a bus from the side."""
-    rows = [(it["code"], "name"), *[(t, "pin") for t in (it["attrs"].get("value") or "",) if t]]
+    title, code = _head(it)
+    rows = [(title, "name"), *[(t, "part") for t in (code,) if t], *[(t, "pin") for t in (it["attrs"].get("value") or "",) if t]]
     W = _inline_w(rows)
     c = W / 2
     ts = _pins(it)[:2]
@@ -323,7 +329,8 @@ def _terminator(it: Item, B: _B, sides: dict[str, str]) -> tuple[float, float]:
 
 def _battery(it: Item, B: _B, sides: dict[str, str]) -> tuple[float, float]:
     v = it["attrs"].get("voltage")
-    rows = [(it["code"], "name"), *[(t, "pin") for t in ((f"{v:g} V" if isinstance(v, (int, float)) else ""),) if t]]
+    title, code = _head(it)
+    rows = [(title, "name"), *[(t, "part") for t in (code,) if t], *[(t, "pin") for t in ((f"{v:g} V" if isinstance(v, (int, float)) else ""),) if t]]
     W = _inline_w(rows)
     c = W / 2
     ts = _pins(it)[:2]
@@ -352,8 +359,8 @@ def _battery(it: Item, B: _B, sides: dict[str, str]) -> tuple[float, float]:
 def _dcdc(it: Item, B: _B, sides: dict[str, str]) -> tuple[float, float]:
     ps = _pins(it)
     v = it["attrs"].get("voltage")
-    code, name = _head(it)
-    hdr = [(code, "name")] + ([(name, "pin")] if name else []) + ([(f"out {v:g} V", "pin")] if isinstance(v, (int, float)) else [])
+    title, code = _head(it)
+    hdr = [(title, "name")] + ([(code, "part")] if code else []) + ([(f"out {v:g} V", "pin")] if isinstance(v, (int, float)) else [])
 
     def side(i: int, b: dict[str, Any], p: dict[str, Any]) -> str:
         if p["anchor"] in sides: return sides[p["anchor"]]
@@ -399,8 +406,8 @@ def _switch(it: Item, B: _B, sides: dict[str, str]) -> tuple[float, float]:
         q = ref.rsplit("/", 2)
         return q[-1] or (q[-2] if len(q) > 1 else "")
     refs = [r for p in poles for r in p if r] + ([coil["a1"], coil["a2"]] if coil else [])
-    code, name = _head(it)
-    rows = [(code, "name"), *[(t, "part") for t in (name, it["part"]) if t]]
+    title, code = _head(it)
+    rows = [(title, "name"), *[(t, "part") for t in (code, it["part"]) if t]]
     W = max(30.0, ceil_to(max(2 * (max((_tw(tn(r)) for r in refs), default=0.0) + 2.5) + 16, *(_tw(t, r) + 2 for t, r in rows))))
     c = W / 2
 
@@ -476,7 +483,9 @@ def size(item: Item, sides: dict[str, str] | None = None) -> tuple[float, float]
 FLAG_H = 10.0
 FLAG_TIP = 3.0     # the pointed ends of an off-sheet flag
 FLAG_TAB = 7.5     # the sheet-number cell of a continuation flag
-FLAG_CHARS = 52.0  # mm of text per line (two lines at most)
+FLAG_CHARS = 52.0   # mm of text per line the flag starts with (two lines at most); it is widened up to twice that for a long text
+_SUFFIX = re.compile(r"\s*(\(drawing [^)]*\))\s*$")
+_SHEET_NO = re.compile(r"(sheet )\d+")
 
 
 def _plain(text: str) -> str:
@@ -486,32 +495,43 @@ def _plain(text: str) -> str:
     return head if sep and t.endswith(")") and (len(t) > 34 or head.split()[0] in par) else t
 
 
-def _flag_lines(kind: str, text: str, sheet: int | None = None) -> list[str]:
-    """The flag's text on at most two lines, as narrow as FLAG_CHARS lets it and wider only when it would be cut off. An off-sheet flag says
-    `to X-FW cockpit side 11`; a continuation says `continues on sheet 2: ...`; a summary flag (`+ 8 more wires on X`) is narrow."""
-    if text.startswith("+ "): return wrap(text, 44.0, SIZE, True, 2)
-    body = (f"continues on sheet {sheet or 9}: " if kind == "continuation" else "to ") + _plain(text)
-    for w in (FLAG_CHARS, FLAG_CHARS + 12, FLAG_CHARS + 30):
+def _flag_lines(kind: str, text: str, sheet: int | None = None, drawing: str = "") -> list[str]:
+    """The flag's text on two lines: where it leads (`to Battery 14 V, + terminal`, `continues on sheet 2: ...`; a summary flag `+ 8 more wires on X`), then
+    the drawing and sheet it can be found on (`(drawing VCU, sheet 3)`), which a continuation takes from `drawing` (the drawing it is in)."""
+    t = " ".join(text.removeprefix("→ ").split())
+    m = _SUFFIX.search(t)
+    suf, main = (m.group(1), t[:m.start()]) if m else ("", t)
+    if not main.startswith("+ "):
+        main = _plain(main)
+        main = (f"continues on sheet {sheet or 9}: " if kind == "continuation" else "to ") + main
+        if kind == "continuation" and drawing: suf = f"(drawing {drawing})"
+    body = main + (" " + suf if suf else "")
+    for w in (52.0, 70.0, 90.0, 110.0):
         lines = wrap(body, w, SIZE, True, 2)
         if not lines[-1].endswith(".."): break
     return lines
 
 
-def flag(id: str, model: str, kind: str, text: str, target: str, sheet: int | None = None, x: float = 0.0, y: float = 0.0, side: str = "L") -> Flag:
+def flag(id: str, model: str, kind: str, text: str, target: str, sheet: int | None = None, x: float = 0.0, y: float = 0.0, side: str = "L", drawing: str = "", h: float = FLAG_H) -> Flag:
     """A flag at (x, y) on the grid, sized to its text. The wire attaches at the middle of its left or right edge (a grid point,
     (x, y + 5) or (x + w, y + 5)). off_sheet: a pennant with pointed ends (text = where it leads); continuation: a box with a cell
-    for the sheet number (text = the pin it continues to). `sheet` is the continuation's sheet number. `side` is the edge the wire enters."""
-    lines = _flag_lines(kind, text, sheet)
+    for the sheet number (text = the pin it continues to). `sheet` is the continuation's sheet number. `side` is the edge the wire enters.
+    The width is measured with the sheet in `(drawing X, sheet N)` as two digits, so the same layout results before and after the numbers are known."""
+    lines = [_SHEET_NO.sub(r"\g<1>44", t) for t in _flag_lines(kind, text, sheet, drawing)]
+    if h <= FLAG_H / 2: lines = [" ".join(lines)]      # a flat flag (a terminal strip's) says it all on one line
     pad = 2 * FLAG_TIP + 1 if kind == "off_sheet" else FLAG_TAB + 3
     w = ceil_to(max([_tw(t, "flag") for t in lines] or [0.0]) + pad)
-    return Flag(id=id, model=model, x=x, y=y, w=max(w, 15.0), h=FLAG_H, text=text, target=target, sheet=sheet, kind=kind, side=side)  # type: ignore[typeddict-item]
+    f = Flag(id=id, model=model, x=x, y=y, w=max(w, 15.0), h=h, text=text, target=target, sheet=sheet, kind=kind, side=side)  # type: ignore[typeddict-item]
+    if drawing: f["drawing"] = drawing
+    return f
 
 
 def flag_shapes(f: Flag) -> tuple[list[Prim], list[Text]]:
     """The prims and texts a renderer draws for a flag."""
     B = _B({"model": f["model"]}, f["x"], f["y"])
     w, h = f["w"], f["h"]
-    lines = _flag_lines(f["kind"], f["text"], f.get("sheet"))
+    lines = _flag_lines(f["kind"], f["text"], f.get("sheet"), f.get("drawing", ""))
+    if h <= FLAG_H / 2: lines = [" ".join(lines)]
     if f["kind"] == "off_sheet":
         k = FLAG_TIP
         B.poly([(0, h / 2), (k, 0), (w - k, 0), (w, h / 2), (w - k, h), (k, h)], True, N, "white")

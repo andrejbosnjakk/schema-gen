@@ -149,7 +149,8 @@ READING = [  # (picture, what it is and what it means for the person wiring it)
 ]
 STEPS = ["1. Find the wire in the wire table (under the drawing or on the table sheet after it).",
          "2. Cut it and put its label on both ends.",
-         "3. Connect the From end and the To end as the table says, then tick the box."]
+         "3. Connect the From end and the To end as the table says, then tick the box.",
+         "The drawings are proven to match the wire list; whether the wire list matches the aircraft is checked at the plane with the wire-table tick boxes and a continuity test."]
 
 
 def reading_sheet(info: dict[str, str]) -> dict[str, Any]:

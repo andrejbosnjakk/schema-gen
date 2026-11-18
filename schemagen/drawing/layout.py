@@ -12,10 +12,13 @@ from __future__ import annotations
 
 import heapq
 import math
+import re
 from collections import Counter, defaultdict, deque
 from typing import Any
 
 from ..app.workspace import _natural
+from . import hub as H
+from . import index as I
 from . import route as R
 from .geometry import Anchor
 from . import symbols as S
@@ -147,6 +150,7 @@ def place(page: Elem, size: str = "A3", fside: dict[str, str] | None = None, spr
     """Lays out and routes one page: returns the sheet's symbols, wires, texts, flags, the natural extent (`w`, `h`, before `spread`) and `bad`
     (pairs of wires in one channel that need a dogleg: should be 0). spread 1: use the sheet, rows stretched up to 2x and channels widened (2: channels only).
     reserve: height kept free at the foot of the area (for the wire table)."""
+    if page.get("hub"): return H.place(page, size, reserve)
     col, lvl, flip = columns(page)
     items = {i["id"]: i for i in page["items"]}
     owner = {p["anchor"]: i["id"] for i in items.values() for b in i["blocks"] for p in b["pins"]}
@@ -185,7 +189,7 @@ def place(page: Elem, size: str = "A3", fside: dict[str, str] | None = None, spr
         fn = Node(f["id"], "flag", col[a] + (1 if sd == "R" else -1), 0, 0, flag=f)
         nodes[f["id"]] = fn
         ka = end(a, f["at"], fn.col, f)
-        fl = S.flag(f["id"], f["model"], f["kind"], f["text"], f["target"], f.get("sheet"))
+        fl = S.flag(f["id"], f["model"], f["kind"], f["text"], f["target"], f.get("sheet"), drawing=f.get("drawing", "") if f["kind"] == "continuation" else "")
         fn.w, fn.h = fl["w"], fl["h"]
         fn.off = {"f": (0.0 if sd == "R" else fl["w"], 5.0)}
         paths.append((f, [nodes[a], fn] if sd == "R" else [fn, nodes[a]], ka if sd == "R" else "f", "f" if sd == "R" else ka, sd == "L"))
@@ -256,7 +260,7 @@ def place(page: Elem, size: str = "A3", fside: dict[str, str] | None = None, spr
     ring = [w for w, ns, k0, k1, rev in paths if w in page["wires"] and (owner[w["a"]] == owner[w["b"]] or any(m.act.get(k, "") not in ("", "R" if o.col > m.col else "L") for m, k, o in ((ns[0], k0, ns[-1]), (ns[-1], k1, ns[0]))))]  # noqa: E501
     if ring:   # a wire that would have to run back through a symbol (a loop in the wiring, or both ends on one part): two off-sheet flags, each naming the other end
         ids = {w["id"] for w in ring}
-        stubs: list[Elem] = [dict(id=f"flag:{w['id']}:{e}", model=w["model"], kind="off_sheet", at=at, target=to, target_item="", text="→ " + _words(page, to), label=w["label"], gauge=w["gauge"],  # noqa: E501
+        stubs: list[Elem] = [dict(id=f"flag:{w['id']}:{e}", model=w["model"], kind="off_sheet", at=at, target=to, target_item="", text="→ " + _words(page, to) + I.suffix(_own(page), [page.get("n", 1)]), drawing=_own(page), label=w["label"], gauge=w["gauge"],  # noqa: E501
                    colour=w["colour"], hex=w["hex"], cls=w["cls"], weight=w["weight"], stub=e) for w in ring for e, at, to in ((1, w["a"], w["b"]), (2, w["b"], w["a"]))]  # noqa: E501
         return place(dict(page, wires=[w for w in page["wires"] if w["id"] not in ids], flags=page["flags"] + stubs), size, None, spread, reserve)
     # ---- rows
@@ -378,7 +382,8 @@ def place(page: Elem, size: str = "A3", fside: dict[str, str] | None = None, spr
             syms.append(sy); texts += tx
         elif n.kind == "flag" and n.flag:
             f = n.flag
-            flags.append(S.flag(f["id"], f["model"], f["kind"], f["text"], f["target"], f.get("sheet"), n.x, n.y, "L" if n.off["f"][0] == 0.0 else "R"))
+            flags.append(S.flag(f["id"], f["model"], f["kind"], f["text"], f["target"], f.get("sheet"), n.x, n.y, "L" if n.off["f"][0] == 0.0 else "R",
+                                f.get("drawing", "") if f["kind"] == "continuation" else ""))
             if f.get("covers"): flags[-1]["covers"] = f["covers"]
     for el, ns, k0, k1, rev in paths:
         ka = hopkeys(ns, k0, k1, 0)[0]
@@ -412,14 +417,14 @@ def place(page: Elem, size: str = "A3", fside: dict[str, str] | None = None, spr
 
 # ---------------------------------------------------------------- pages
 def _words(sc: Elem, ref: str) -> str:
-    """What a pin is, in words: `ECU engine control unit J1-3`."""
+    """What a pin is, in words: `Engine control unit, J1, pin 3` (the Name column, else the code)."""
     for it in sc["items"]:
         for b in it["blocks"]:
             for p in b["pins"]:
                 if p["anchor"] == ref:
-                    nm = f" ({it['name']})" if it["name"] and S.flat(it["name"]) != S.flat(it["code"]) and not it["name"].startswith(it["code"]) and len(it["name"]) <= 24 else ""  # noqa: E501
-                    pin = "-".join(x for x in (b["id"] if b["id"] and (len(it["blocks"]) > 1 or p["n"]) else "", p["n"]) if x)
-                    return f"{it['code']} {pin}{nm}".strip()
+                    if it["symbol"] in ("splice", "bus", "ground"): return it["name"] or it["code"]
+                    pin = f"pin {p['n']}" if p["n"] else "terminal" if b["id"] else ""
+                    return ", ".join(x for x in (it["name"] or it["code"], b["id"] if b["id"] and (len(it["blocks"]) > 1 or p["n"] or not p["name"]) else "", pin) if x)
     return ref.removeprefix("pin:")
 
 
@@ -427,9 +432,15 @@ def _cid(e: Elem) -> str:
     return e["model"].removeprefix("conductor:")
 
 
+def _own(sc: Elem) -> str:
+    """The id of the drawing a scene belongs to, as flags name it: `component:VCU` -> `VCU` (empty for a scope of several parts)."""
+    return sc["scope"]["text"].partition(":")[2] if sc["scope"]["kind"] in ("component", "harness") else ""     # a drawing of several parts has no id to name
+
+
 def _flag(sc: Elem, e: Elem, at: str, other: str, sheet: int | None, text: str | None = None) -> Elem:
-    """A continuation flag at anchor `at` for conductor e, which goes on at `other` on another sheet."""
-    return dict(id=f"cont:{_cid(e)}", model=e["model"], kind="continuation", at=at, target=other, target_item="", text="→ " + (text or _words(sc, other)), label=e["label"],  # noqa: E501
+    """A continuation flag at anchor `at` for conductor e, which goes on at `other` on another sheet (of this drawing, which the flag names)."""
+    far = re.sub(r"\s*\(drawing [^)]*\)$", "", text) if text else _words(sc, other)
+    return dict(id=f"cont:{_cid(e)}", model=e["model"], kind="continuation", at=at, target=other, target_item="", text="→ " + far, drawing=_own(sc), label=e["label"],  # noqa: E501
                 gauge=e["gauge"], colour=e["colour"], hex=e["hex"], cls=e["cls"], weight=e["weight"], sheet=sheet)
 
 
@@ -480,7 +491,7 @@ def _page(sc: Elem, elems: list[tuple[str, Elem]], nums: dict[str, list[int]] | 
                    for a, e, o in lst if "covers" not in e]
             cov += [c for _, e, _ in lst for c in e.get("covers", [])]
             sh = sorted({m["sheet"] for m in mk if m["sheet"]})
-            mk = [dict(mk[0], id=f"cont:+{_cid(mk[0])}", text=f"+ {len(cov)} more wires on {it['code']}" + (f" (sheet {', '.join(map(str, sh))})" if sh else ""),
+            mk = [dict(mk[0], id=f"cont:+{_cid(mk[0])}", text=f"+ {len(cov)} more wires on {it['code']}" + (I.suffix(_own(sc), sh) if sh else next((m.group(0) for _, e, _ in lst if e.get("covers") and (m := re.search(r"\s*\(drawing [^)]*\)$", e["text"]))), "")),
                        sheet=sh[0] if sh else None, covers=cov, at=cov[0]["at"], target=cov[0]["target"])]
         cont += mk
     return dict(scope=sc["scope"], title=sc["title"], project=sc["project"], items=items, wires=wires, flags=sorted(flags + cont, key=lambda f: _nat(f["id"])))
@@ -573,10 +584,16 @@ def paginate(sc: Elem, size: str = "A3") -> list[Elem]:
         es = sorted(es, key=lambda e: (rank[near(e)], ey(e), e[1]["id"]))
         n = len(es)
         cuts = [k for k in range(1, n) if near(es[k - 1]) != near(es[k])]      # between connectors first, else through the middle
-        k = min(cuts, key=lambda k: abs(k - n / 2)) if cuts else n // 2
-        return split(es[:k]) + split(es[k:])
+        P = max(2, math.ceil(r["h"] / ah))                                   # as many sheets as the whole needs, each cut near its share: no sheet is left thin
+        at = []
+        for j in range(1, P):
+            t = round(j * n / P)
+            k = min(cuts, key=lambda k: abs(k - t), default=t)
+            at.append(k if abs(k - t) <= n / (2 * P) and k > (at[-1] if at else 0) else max(t, (at[-1] if at else 0) + 1))
+        at = [k for k in at if 0 < k < n]
+        return [q for a, b in zip([0, *at], [*at, n]) for q in split(es[a:b])]
     parts = split(elems)
-    if len(parts) == 1: return [_page(sc, elems)]
+    if len(parts) == 1: return [dict(_page(sc, elems), n=1)]
     nums: dict[str, list[int]] = defaultdict(list)
     own: dict[str, int] = {}
     for i, es in enumerate(parts, 1):
@@ -586,7 +603,7 @@ def paginate(sc: Elem, size: str = "A3") -> list[Elem]:
     out = []
     for i, es in enumerate(parts, 1):
         es = [(k, dict(e, sheet=own[e["peer"]]) if "peer" in e else e) for k, e in es]
-        out.append(_page(sc, es, nums, i))
+        out.append(dict(_page(sc, es, nums, i), n=i))
     return out
 
 

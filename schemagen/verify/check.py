@@ -102,7 +102,7 @@ def check_drawing(d: Drawing, source: dict[str, str] | None = None, others: dict
     _wires(d)
     _nets(d)
     _tables(d)
-    _flags(d, others or {})
+    _flags(d, others)
     for sh in d.sheets:
         for a in sh.anomalies: d.add("junction", a, sh.n)
         for r in sh.orphan_labels: d.add("label", f"label text '{r.s}' is not on any wire", sh.n)
@@ -300,8 +300,8 @@ def _row_vs_wire(d: Drawing, r: TableRow, ws: list[WireObs], k: int) -> None:
 
 def _row_end(ex: X.Expected, e: End, text: str) -> bool:
     if e.kind == "flag":
-        far = " ".join(re.sub(r"^(?:\d+ )?(?:continues on sheet \d+:?|to|->|→)\s*", "", e.text).split())
-        t = " ".join(re.sub(r"\s*\(sheet \d+\)$", "", text).split())
+        far = " ".join(re.sub(r"\s*\(drawing [^)]*\)$", "", re.sub(r"^(?:\d+ )?(?:continues on sheet \d+:?|to|->|→)\s*", "", e.text)).split())
+        t = " ".join(re.sub(r"\s*\(drawing [^)]*\)$", "", re.sub(r"\s*\(sheet \d+\)$", "", text)).split())
         if t.endswith("..") and far.endswith(".."): a, b = t[:-2].rstrip(), far[:-2].rstrip(); return a.startswith(b) or b.startswith(a)
         if t.endswith("..") and not far.endswith(".."): return far.startswith(t[:-2].rstrip())
         if far.endswith(".."): return t.startswith(far[:-2].rstrip())   # a flag text cut short by the drawing: the table has all of it
@@ -321,22 +321,29 @@ def _row_vs_model(d: Drawing, r: TableRow, c: X.Cond, k: int) -> None:
     d.table_only += 1
 
 
-def _flags(d: Drawing, others: dict[str, Drawing]) -> None:
+def _flags(d: Drawing, others: dict[str, Drawing] | None) -> None:
     """Every flag must name the drawing and the sheet it goes on to, and that sheet must show the wire's far end. Continuations inside this PDF are
-    checked against the sheet they name (the wire must be there and point back); off-sheet flags that name a drawing are checked in that drawing."""
+    checked against the sheet they name (the wire must be there and point back); off-sheet flags that name a drawing are checked in that drawing
+    (when the other drawings are at hand: `others` is None for a PDF checked alone)."""
     for sh in d.sheets:
         for f in sh.flags:
             w = sh.wires[f.wire] if f.wire >= 0 else None
             lab = w.labels[0] if w and w.labels else ""
-            if f.kind == "summary": d.add("flag_no_target", f"summary flag '{f.text}' names no drawing and no sheet", sh.n); continue
+            if f.kind == "summary":   # `+ 59 more wires on GND-BUS (drawing GND-BUS, sheet 1-3)`: the drawing and a sheet of it that exist
+                if f.drawing is None or f.sheet is None: d.add("flag_no_target", f"summary flag '{f.text}' names no drawing and no sheet", sh.n); continue
+                tg = d if f.drawing in (d.name, d.scope.split(":")[-1]) else (others or {}).get(f.drawing) or (others or {}).get("component-" + f.drawing)
+                if others is None and tg is None: continue
+                if tg is None or not 1 <= f.sheet <= len(tg.sheets): d.add("flag", f"summary flag '{f.text}': drawing {f.drawing} sheet {f.sheet} does not exist", sh.n)
+                continue
             if f.drawing is None and f.sheet is None: d.add("flag_no_target", f"flag '{f.text}' names neither a drawing nor a sheet", sh.n)
             elif f.drawing is None: d.add("flag_no_drawing", f"flag '{f.text}' names sheet {f.sheet} but no drawing", sh.n)
             elif f.sheet is None: d.add("flag_no_sheet", f"flag '{f.text}' names drawing {f.drawing} but no sheet", sh.n)
             if w is None: d.add("flag", f"flag '{f.text}' has no wire ending in it", sh.n); continue
             if not lab: continue
             target: Drawing | None
-            if f.drawing is None or others.get(f.drawing) is d or f.drawing == d.name or f.drawing == d.scope.split(":")[-1]: target, tn = d, f.sheet
-            else: target, tn = others.get(f.drawing) or others.get("component-" + f.drawing), f.sheet
+            if f.drawing is None or (others or {}).get(f.drawing) is d or f.drawing == d.name or f.drawing == d.scope.split(":")[-1]: target, tn = d, f.sheet
+            else: target, tn = (others or {}).get(f.drawing) or (others or {}).get("component-" + f.drawing), f.sheet
+            if others is None and target is None: continue
             if f.drawing is not None and target is None: d.add("flag", f"flag '{f.text}': no drawing {f.drawing} among the PDFs", sh.n); continue
             if tn is None: continue
             if target is None or not 1 <= tn <= len(target.sheets): d.add("flag", f"flag '{f.text}': sheet {tn} does not exist", sh.n); continue

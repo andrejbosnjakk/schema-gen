@@ -5,6 +5,8 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+from . import hub as H
+from . import index as I
 from . import layout as L
 from . import symbols as S
 from . import table as T
@@ -13,11 +15,13 @@ from .scope import scene
 from .style import areas
 
 
-def draw(st: Any, scope: Any, size: str = "A3", meta: dict[str, str] | None = None) -> Geometry:
-    """The drawing of `scope` ("component:VCU", ...) on A3 or A4 landscape sheets. meta: revision, date, drawn_by, source (never the wall clock)."""
+def draw(st: Any, scope: Any, size: str = "A3", meta: dict[str, str] | None = None, where: I.Where | None = None) -> Geometry:
+    """The drawing of `scope` ("component:VCU", ...) on A3 or A4 landscape sheets. meta: revision, date, drawn_by, source (never the wall clock).
+    where: the sheets of other drawings that show a conductor (index.py); without it a flag names the drawing but not the sheet."""
     sc = scene(st, scope)
+    I.annotate(sc, where or (lambda d, c: []))
     meta = dict(meta or {})
-    pages = L.paginate(sc, size)  # type: ignore[arg-type]
+    pages = H.pages(sc, size, where or (lambda d, c: [])) if H.is_hub(sc) else L.paginate(sc, size)  # type: ignore[arg-type]
     info: dict[str, str] = dict(title=sc["title"], scope=sc["scope"]["text"], project=sc["project"], revision=meta.get("revision", ""), date=meta.get("date", ""),
                 drawn_by=meta.get("drawn_by", ""), source=meta.get("source", ""))
     ah = areas(size)["area"][3]
@@ -54,14 +58,17 @@ def stem(scope: str) -> str:
 
 
 def meta(source: Any) -> dict[str, str]:
-    """The title block data every drawing of the CLI and the app carries (today's date, drawn by schemagen). `source` is the project's Config: the title block
-    then names the wire list's source file with the start of its sha256 (`#1a2b3c4d name.xlsx`); a plain string is shown as given."""
+    """The title block data every drawing of the CLI and the app carries. `source` is the project's Config: the title block then names the wire list's
+    source file with the start of its sha256 (`#1a2b3c4d name.xlsx`); the revision is `revision:` of schemagen.yml, else that short hash; the date is `date:`
+    of schemagen.yml, else the modification date of the source file (never the wall clock, so the same input draws the same bytes). A plain string is shown
+    as given, with revision and date blank."""
+    if isinstance(source, str): return dict(date="", drawn_by="schemagen", source=source)
     import datetime
-    if not isinstance(source, str):
-        from ..core.load import source_digest
-        name, sha = source_digest(source)
-        source = f"#{sha[:8]} {name}"
-    return dict(date=datetime.date.today().isoformat(), drawn_by="schemagen", source=source)
+    from ..core.load import source_digest
+    name, sha = source_digest(source)
+    f = source.root / str((source.source or {}).get("path", "")) if (source.source or {}).get("path") else source.wirelist
+    day = str(source.raw.get("date") or datetime.date.fromtimestamp(max([f.stat().st_mtime] + [p.stat().st_mtime for p in f.rglob("*") if p.is_file()]) if f.is_dir() else f.stat().st_mtime))
+    return dict(revision=str(source.raw.get("revision") or sha[:8]), date=day, drawn_by="schemagen", source=f"#{sha[:8]} {name}")
 
 
 def export(geometry: Geometry, path: str | Path) -> list[Path]:

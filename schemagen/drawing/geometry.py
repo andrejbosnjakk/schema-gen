@@ -87,6 +87,7 @@ class Cover(TypedDict):
     gauge: str
     colour: str
     text: str                     # where the other end is, in words
+    drawing: str                  # id of the component whose drawing shows that end
 
 
 class _SceneFlag(TypedDict):
@@ -106,6 +107,7 @@ class _SceneFlag(TypedDict):
 
 
 class SceneFlag(_SceneFlag, total=False):
+    drawing: str                  # id of the component whose drawing shows the far end (named in the text with its sheet)
     covers: list[Cover]           # summary flag: the conductors it stands for (D111); `at`, `target`, label ... are the first one's
 
 
@@ -196,6 +198,7 @@ class _Flag(TypedDict):
 
 
 class Flag(_Flag, total=False):
+    drawing: str                  # continuation: the drawing the sheet number belongs to (this one)
     side: Literal["L", "R"]       # the edge the wire enters (middle of the edge)
     covers: list[Cover]           # summary flag: the conductors it stands for
 

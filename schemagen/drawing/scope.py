@@ -12,7 +12,7 @@ from ..app.workspace import _natural, kind_of, severities
 from ..core.model import Component, Contact, Terminal
 from ..core.net import Net, NodeKey
 from ..exporters.palette import HEX
-from ..exporters.pinout import far_text, where
+from ..exporters.pinout import where
 from .geometry import VERSION, Block, Cover, Fault, Item, Pin, Scene, SceneFlag, SceneWire, Scope
 
 SCOPES = ("component", "connection", "harness", "selection", "subsystem", "system")
@@ -160,10 +160,12 @@ def _collapse(st: Any, ends: dict[int, int], fl: list[SceneFlag], node: dict[int
         js.sort(key=lambda j: _natural(conds[j].id))
         f0 = next(f for f in fl if f["model"] == f"conductor:{conds[js[0]].id}")
         words = {f["model"]: f["text"].removeprefix("→ ") for f in fl}
+        drawings = {f["model"]: f.get("drawing", "") for f in fl}
         cov = [Cover(id=conds[j].id, at=ctx.ref(conds[j].end(ends[j])), target=ctx.ref(conds[j].end(3 - ends[j])), label=conds[j].label, gauge=gauge(conds[j].gauge),
-                     colour=conds[j].colour_code or conds[j].colour, text=words.get(f"conductor:{conds[j].id}", "")) for j in js]
+                     colour=conds[j].colour_code or conds[j].colour, text=words.get(f"conductor:{conds[j].id}", ""),
+                     drawing=drawings.get(f"conductor:{conds[j].id}", "")) for j in js]
         name = ctx.comp[conds[js[0]].end(ends[js[0]]).device]
-        out.append(dict(f0, id=f"flag:+{conds[js[0]].id}", target_item="", text=f"+ {len(js)} more wires on {name.id}", covers=cov))  # type: ignore[arg-type]
+        out.append(dict(f0, id=f"flag:+{conds[js[0]].id}", target_item="", text=f"+ {len(js)} more wires on {name.id}", drawing=name.id, covers=cov))  # type: ignore[arg-type]
         drop |= {f"conductor:{conds[j].id}" for j in js}
     return [f for f in fl if f["model"] not in drop] + out
 
@@ -245,9 +247,39 @@ def _wire(st: Any, c: Any, wsev: dict[str, str], overlay: dict[str, Any]) -> Sce
                      fault=Fault(status=sim["status"], reason=sim.get("reason", "")) if sim and sim.get("status") != "ok" else None)
 
 
+def terminal_words(ctx: Any, t: Terminal) -> str:
+    """A terminal by display name: `Battery 14 V, + terminal`, `EFIS, J1, pin 2`; a splice or bus by its name."""
+    c = ctx.comp.get(t.device)
+    nm = (c.name or c.id) if c else t.device
+    if c and c.kind in ("splice", "bus"): return nm
+    return ", ".join(x for x in (nm, t.connector, f"pin {t.pin}" if t.pin else "terminal" if t.connector else "") if x)
+
+
+def far_end(st: Any, j: int, e: int) -> tuple[str, str]:
+    """Where the other end of conductor j (away from its end e) is, in words, and the id of the component whose drawing shows it: the terminal itself,
+    or past a splice the first terminal the run lands on (`+2 more`: it lands on others too; `via`: the splice)."""
+    ctx, net, conds = st.ctx, st.ctx.net, st.m.conductors
+    t = conds[j].end(3 - e)
+    if net.role(t.device) != "splice": return terminal_words(ctx, t), ctx.comp[t.device].id if t.device in ctx.comp else t.device
+    seen, todo, lands = {j}, [net.node(j, 3 - e)], []
+    while todo:
+        for i, k in net.at[todo.pop()]:
+            if i in seen: continue
+            seen.add(i)
+            o = conds[i].end(3 - k)
+            if net.role(o.device) == "splice": todo.append(net.node(i, 3 - k))
+            else: lands.append((terminal_words(ctx, o), o.device))
+    lands.sort()
+    via = terminal_words(ctx, t)
+    if not lands: return via, ctx.comp[t.device].id
+    first, dev = lands[0]
+    return first + (f" +{len(lands) - 1} more" if len(lands) > 1 else "") + f" via {via}", ctx.comp[dev].id if dev in ctx.comp else dev
+
+
 def _flag(st: Any, j: int, e: int) -> SceneFlag:
     ctx, c = st.ctx, st.m.conductors[j]
     o = ctx.comp.get(c.end(3 - e).device)
+    words, dwg = far_end(st, j, e)
     return SceneFlag(id=f"flag:{c.id}", model=f"conductor:{c.id}", kind="off_sheet", at=ctx.ref(c.end(e)), target=ctx.ref(c.end(3 - e)),
-                     target_item=model_id(o) if o else "", text="→ " + far_text(ctx, j, e), label=c.label, gauge=gauge(c.gauge),
+                     target_item=model_id(o) if o else "", text="→ " + words, drawing=dwg, label=c.label, gauge=gauge(c.gauge),
                      colour=c.colour_code or c.colour, hex=HEX.get((c.colour_code or "")[:2], "#888"), cls=c.can or c.kind, weight=weight(c.awg))

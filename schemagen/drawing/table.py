@@ -14,8 +14,8 @@ from .style import SIZE, areas, fit
 
 Elem = dict[str, Any]
 ROW = 4.5                      # row pitch (mm); a text box is 4.2 mm high
-COLS = (0.0, 8.0, 30.0, 88.0, 239.0)   # tick box, label, wire, from, to (offsets from the area's left edge)
-WIDTH = 150.0                  # width of the from and to columns
+COLS = (0.0, 8.0, 36.0, 86.0, 230.0)   # tick box, label, wire, from, to (offsets from the area's left edge)
+WIDTH = 160.0                  # width of the to column (the from column is as wide as it can be)
 HEAD = ("", "LABEL", "WIRE", "FROM", "TO")
 GAP = 5.0                      # between a drawing and the table under it
 
@@ -48,7 +48,9 @@ def rows(pg: Elem) -> list[Elem]:
         for c in f.get("covers") or [None]:
             e, a, b, text = (c, c["at"], c["target"], c.get("text", "")) if c else (f, f["at"], f["target"], f["text"].removeprefix("→ "))
             sheet = f" (sheet {f['sheet']})" if f.get("sheet") and f["kind"] == "continuation" else ""
-            add(c["id"] if c else _cid(f), e, a, b, at.get(a, a), (text or b.removeprefix("pin:")) + sheet)
+            cid = c["id"] if c else _cid(f)
+            if cid in out and out[cid]["b"] == a and a in at: out[cid]["to"] = at[a]; continue      # both ends on bars of one sheet: the row says both
+            add(cid, e, a, b, at.get(a, a), (text or b.removeprefix("pin:")) + sheet)
     return sorted(out.values(), key=lambda r: (_natural(r["label"]), _natural(r["id"])))
 
 
@@ -79,7 +81,7 @@ def draw(lines: list[tuple[str, Any]], size: str, y: float) -> tuple[list[Elem],
         rules.append(dict(kind="rect", stroke="thin", fill="none", x=ax + 1, y=cy - 1.25, w=2.5, h=2.5))
         t(v["label"], 1, cy, w=COLS[2] - COLS[1] - 1)
         t(" ".join(x for x in (unit(v["gauge"]), colour_words(v["colour"])) if x), 2, cy, w=COLS[3] - COLS[2] - 1)
-        t(v["frm"], 3, cy, w=WIDTH - 2)
+        t(v["frm"], 3, cy, w=COLS[4] - COLS[3] - 2)
         t(v["to"], 4, cy, w=WIDTH)
     return rules, texts
 

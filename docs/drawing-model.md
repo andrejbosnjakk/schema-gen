@@ -222,3 +222,23 @@ has no such data); the reference drawings are in `docs/screens/drawings/` (golde
 once in any text (the scene strips a `AWG` the sheet already wrote; a gauge that is not a number, such as `TBD`, is printed as written). Label overlaps are
 `text_overlaps`, `text_symbol_overlaps` and `wire_text_overlaps`. A wire whose two ends are on one component is drawn as two off-sheet flags, each naming the other
 end. The in-line symbols of two terminals (breaker, fuse, terminator, battery) are used only for parts that list at most two terminals; others are blocks.
+
+## Names, flags, hubs, title block, determinism (round 1.2)
+
+- **Names.** A box (component, harness connector, bar, breaker, ...) is headed by the Name column of the wire list (the code when there is no name); the code
+  stands small underneath only when it differs from the name. Flags and table cells name a far end by display name: `Battery 14 V, + terminal`, `EFIS, J1, pin 2`.
+- **Flags say where the far end is.** An off-sheet flag reads `to <far end> (drawing VCU, sheet 3)`: the drawing (a component id; its PDF is `component-<id>.pdf`)
+  that shows the far end and a sheet of it that shows the conductor. Past a splice the far end is the first terminal the run lands on (`... +2 more via <splice>`).
+  A continuation flag reads `continues on sheet 2: <far end> (drawing VCU)` (the drawing it is in); a summary flag `+ 59 more wires on GND-BUS (drawing GND-BUS, sheet 1-3)`.
+  A drawing does not know how the others are paginated, so `export_all` draws every drawing twice: the first pass writes `sheet 44` (two digits: the layout measures
+  every flag as if it said so, so both passes lay out alike), `drawing.index.index_of` reads where each conductor went, the second pass writes the real sheets
+  (`engine.draw(..., where=)`; without `where` a flag names the drawing only).
+- **Hubs are terminal strips** (`drawing/hub.py`). A bus, ground bus or splice in scope with at least 12 legs, mostly to different parts, is drawn as a bar with
+  one stub per wire (wire text on the stub) ending in a flat one-line flag naming the far end. Nothing is routed. Splices and harness pins the runs go through, and a
+  part's pin that carries other conductors too, are small bars of their own with a stub per conductor; a conductor between two bars is drawn at both ends and each flag
+  names the other end's sheet. Pages are filled in order (the sheet's wire table counted in) and evened out, so no sheet but the last is thin.
+- **Packing** (`layout.paginate`): a drawing that is too tall is cut into as many sheets as its height needs, at connector boundaries nearest to equal shares, so
+  several connectors of one component share a sheet and no sheet but the last is thin.
+- **Title block.** REV is `revision:` of schemagen.yml, else the first 8 hex digits of the sha256 of the source wire list (the same hash the SOURCE field carries).
+  DATE is `date:` of schemagen.yml, else the modification date of the source file (the newest file of the wirelist folder); never the clock. The PDF's creation and
+  modification date are that date. Geometry JSON and PDF bytes are identical for identical input.
