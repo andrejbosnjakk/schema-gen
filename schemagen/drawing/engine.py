@@ -51,7 +51,7 @@ def draw(st: Any, scope: Any, size: str = "A3", meta: dict[str, str] | None = No
     for n, (pg, sh, rs, fits) in enumerate(placed, 1):
         kinds = list(dict.fromkeys([s["kind"] for s in sh["symbols"]] + (["spare"] if any(p["spare"] for it in pg["items"] for b in it["blocks"] for p in b["pins"]) else [])  # noqa: E501
                                    + [f["kind"] for f in sh["flags"]]))
-        rules, texts = T.inline(rs, size, cols) if fits else T.draw(tabs[0][0], size, areas(size)["area"][1] + sh["h"] + T.GAP, cols) if under and n == len(pages) else ([], [])
+        rules, texts = T.inline(rs, size, cols) if fits else T.draw(tabs[0][0], size, areas(size)["area"][1] + sh["h"] + T.GAP, cols) if under and n == len(pages) else ([], [])  # noqa: E501
         sheet: dict[str, Any] = dict(n=n, of=of, size=size, w_mm=SHEETS[size][0], h_mm=SHEETS[size][1], grid_mm=5.0, symbols=sh["symbols"], wires=sh["wires"],  # noqa: E501
                                      texts=sh["texts"] + texts, flags=sh["flags"], rules=rules, table=dict(sheet=at.get(n), rows=T.row_data(rs)))
         where_t = ("under the drawing" if at[n] == n else f"on sheet {at[n]}") if n in at else "the wires drawn here are listed on the sheets before"

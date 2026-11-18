@@ -60,14 +60,14 @@ def export_all(st: Any, out: Path, progress: Callable[[int, int, str], None] = l
     stage = Path(tempfile.mkdtemp(prefix="schemagen-drawings-"))
     try:
         cs = [c for c in sorted(st.m.components, key=lambda c: _natural(c.id)) if c.kind != "splice"]  # a splice is drawn inside the runs through it
-        info: dict[str, str] = {}
+        info: dict[str, Any] = {}
         failed: list[str] = []
         where: dict[tuple[str, str, str], list[int]] = {}
         count: dict[str, tuple[str, int]] = {}
         for n, c in enumerate(cs):   # first pass: where does each drawing put each conductor (flags name the sheet of their far end)
             progress(n, 2 * len(cs), c.id)
             try:
-                g = draw(st, f"component:{c.id}", "A3", meta(st.cfg), I.guess)
+                g: Any = draw(st, f"component:{c.id}", "A3", meta(st.cfg), I.guess)
                 where.update(I.index_of(g))
                 if any(sh["wires"] or sh["flags"] for sh in g["sheets"]): count[c.id] = (g["drawing"]["title"], len(g["sheets"])); info = dict(g["drawing"])
             except Exception:
@@ -82,7 +82,7 @@ def export_all(st: Any, out: Path, progress: Callable[[int, int, str], None] = l
             book = Book(stage / "wiring-diagrams.pdf", symbol_sheet()["drawing"].get("title", ""), meta(st.cfg)["date"])
             book.add(symbol_sheet())
             pages = toc.sheets(order, info, 3 + len(toc.split(order)) + 1)
-            book.add(dict(version=1, drawing=info, sheets=pages))   # type: ignore[arg-type]
+            book.add(dict(version=1, drawing=info, sheets=pages))   # type: ignore[arg-type,typeddict-item]
             ids = {c.id: c for c in cs}
             actual: dict[str, tuple[str, int]] = {}
             done = 0

@@ -7,14 +7,12 @@ boxes or bars is drawn at both ends and each flag names the other end's sheet. P
 fit (or left to table sheets, whichever makes fewer sheets), and evened out so that no sheet but the last is thin."""
 from __future__ import annotations
 
-import math
 from collections import Counter, defaultdict
 from typing import Any
 
 from ..app.workspace import _natural
 from . import index as I
 from . import symbols as S
-from . import table as T
 from .route import label_text
 from .style import GRID, SIZE, areas, ceil_to, text_w
 

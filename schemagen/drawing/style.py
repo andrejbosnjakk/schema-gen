@@ -85,7 +85,7 @@ def fit(s: str, size_mm: float, maxw: float, bold: bool = False) -> str:
 
 
 def wrap(s: str, width_mm: float, size_mm: float = SIZE, bold: bool = False, lines: int = 2) -> list[str]:
-    """s broken at spaces into at most `lines` lines of at most width_mm (the last line shortened with '..'). Only for fictional reference sheets: drawings never cut text."""
+    """s broken at spaces into at most `lines` lines of at most width_mm (the last line shortened with '..'). Only for fictional reference sheets: drawings never cut text."""  # noqa: E501
     out: list[str] = []
     cur = ""
     for w in s.split():

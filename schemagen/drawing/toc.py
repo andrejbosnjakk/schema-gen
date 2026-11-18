@@ -1,4 +1,4 @@
-"""The table of contents of the combined book (docs/drawing-model.md, Book): one line per drawing, sorted by display name: the name, the id in small grey type when it
+"""The table of contents of the combined book (docs/drawing-model.md): one line per drawing, sorted by display name: the name, the id in small grey type when it
 differs from the name, how many sheets the drawing has and the book page it starts on. Names too long for their column go on to a second line; the contents go on to
 further pages as needed. `sheets(entries, ...)` returns the pages as sheets of a geometry (title block `Contents`)."""
 from __future__ import annotations
@@ -61,6 +61,6 @@ def sheets(entries: list[Entry], info: dict[str, str], first: int, size: str = "
             rules.append(dict(kind="line", stroke="thin", x1=ax, y1=y, x2=ax + COLS[3], y2=y))
         sh: dict[str, Any] = dict(n=n, of=len(pgs), size=size, w_mm=SHEETS[size][0], h_mm=SHEETS[size][1], grid_mm=5.0, symbols=[], wires=[], texts=texts, flags=[],
                                   rules=rules)
-        sh.update(S.furniture(dict(info, title="Contents", scope="book"), size, n, len(pgs), [], ["Every drawing of this book, by name, with the page it starts on."]))
+        sh.update(S.furniture(dict(info, title="Contents", scope="book"), size, n, len(pgs), [], ["Every drawing of this book, by name, with the page it starts on."]))  # noqa: E501
         out.append(sh)
     return out

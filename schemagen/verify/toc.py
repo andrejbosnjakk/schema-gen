@@ -78,10 +78,10 @@ def check_toc(ex: X.Expected, ds: dict[str, Drawing], pages: list[Sheet]) -> lis
     for d in ds.values():
         comp = d.scope.removeprefix("component:")
         if not d.sheets or not d.scope.startswith("component:"): continue
-        e = seen.get(comp)
-        if e is None: out.append(dict(kind="toc", drawing=d.name, sheet=None, msg=f"{comp} is not in the contents")); continue
-        if e.sheets != len(d.sheets): out.append(dict(kind="toc", drawing=d.name, sheet=None, msg=f"contents say {e.sheets} sheets for {comp}, the drawing has {len(d.sheets)}"))
+        ent = seen.get(comp)
+        if ent is None: out.append(dict(kind="toc", drawing=d.name, sheet=None, msg=f"{comp} is not in the contents")); continue
+        if ent.sheets != len(d.sheets): out.append(dict(kind="toc", drawing=d.name, sheet=None, msg=f"contents say {ent.sheets} sheets for {comp}, the drawing has {len(d.sheets)}"))
         at = first.get(_sig(d.pages[0]))
         if at is None: continue            # not in the book: reported as a book finding
-        if e.page != at: out.append(dict(kind="toc", drawing=d.name, sheet=None, msg=f"contents say {comp} starts on page {e.page}, it starts on page {at}"))
+        if ent.page != at: out.append(dict(kind="toc", drawing=d.name, sheet=None, msg=f"contents say {comp} starts on page {ent.page}, it starts on page {at}"))
     return out

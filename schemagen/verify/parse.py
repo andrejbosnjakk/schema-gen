@@ -464,7 +464,8 @@ def _crossings(wires: list[Any]) -> int:
 def _lead_run(r: Run, free: list[Run], lead: Any) -> tuple[str | None, list[Run]]:
     """The component a text run names, and the further lines of its name. A name that goes on to a second or third line (a long box name) is read with its
     lines: the shortest run of stacked lines (same left edge or centre, the next just below) that is a whole name; else the run alone."""
-    s, last, more = r.s, r, []
+    s, last = r.s, r
+    more: list[Run] = []
     for _ in range(3):
         c, rest = lead(s)
         if c and not rest: return str(c), more

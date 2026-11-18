@@ -8,18 +8,21 @@ import re
 import subprocess
 import sys
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 
 from schemagen.app.server import State
+from schemagen.drawing import table as T
 from schemagen.drawing.engine import draw, meta, stem
 from schemagen.drawing.render_pdf import pdf
 from schemagen.verify import HARD, check_drawings, check_pdf, expect
 
 ROOT = Path(__file__).resolve().parent.parent
-PROJECTS = {"fixture": ROOT / "tests" / "data" / "drawing_fixture", "demo": ROOT / "examples" / "demo"}
-PER_KIND = int(os.environ.get("SCHEMAGEN_MUTANTS", "23"))     # 23 per kind x 10 kinds = 230 mutants; set lower for a quick run
-KINDS = ["swap_pins", "move_end", "delete_wire", "duplicate_label", "remove_dot", "add_dot_at_crossing", "change_gauge", "change_colour", "wrong_sheet", "drop_table_row"]
+PROJECTS = {"fixture": ROOT / "tests" / "data" / "drawing_fixture", "demo": ROOT / "examples" / "demo",
+            "wrapped": ROOT / "tests" / "data" / "drawing_fixture"}      # the fixture again with a narrow wire column: its table cells go on to second lines
+PER_KIND = int(os.environ.get("SCHEMAGEN_MUTANTS", "23"))     # 23 per kind x 11 kinds = 253 mutants; set lower for a quick run
+KINDS = ["swap_pins", "move_end", "delete_wire", "duplicate_label", "remove_dot", "add_dot_at_crossing", "change_gauge", "change_colour", "wrong_sheet", "drop_table_row", "drop_wrapped_line"]
 
 
 # ---------------------------------------------------------------- independence
@@ -52,14 +55,15 @@ def drawings(states, tmp_path_factory):
         folders[k] = d.parent
         for c in sorted(st.m.components, key=lambda c: c.id):
             if c.kind == "splice": continue
-            g = draw(st, f"component:{c.id}", "A3", meta(st.cfg))
+            with patch.object(T, "WIREW", 20.0 if k == "wrapped" else T.WIREW):
+                g = draw(st, f"component:{c.id}", "A3", meta(st.cfg))
             if not any(sh["wires"] or sh["flags"] for sh in g["sheets"]): continue
             out[(k, stem(g["drawing"]["scope"]))] = g
             pdf(g, d / f"{stem(g['drawing']['scope'])}.pdf")
     return out, folders
 
 
-@pytest.mark.parametrize("name", ["fixture", "demo"])
+@pytest.mark.parametrize("name", ["fixture", "demo", "wrapped"])
 def test_clean_output_has_no_differences(drawings, name):
     """Correct drawings: no difference to the wire list (connectivity, tables, completeness), the title block hash is the source's, and flags that lead
     nowhere are none. What the engine does not yet say (flags naming no drawing, a revision) is reported as findings of its own."""
@@ -198,7 +202,18 @@ def targets(kind, g):
             drawn = {w["label"] for w in sh["wires"]}
             for t in sh["texts"]:
                 if t["model"] == "" and t["role"] == "pin" and t["s"] in drawn and t["y"] > 150: out.append((f"sheet {si + 1}: table row {t['s']} dropped", lambda h, si=si, t=t: _drop(h["sheets"][si], t)))
+        elif kind == "drop_wrapped_line":     # the second line of a table cell that goes on over two lines
+            tx = [t for t in sh["texts"] if t["model"] == "" and t["role"] == "pin" and t["y"] > 100]
+            lx = min((t["x"] for t in tx), default=0)
+            rows = {round(t["y"], 2) for t in tx if t["x"] == lx}              # the lines that start a row: they have a label
+            for t in tx:
+                if t["x"] > lx and round(t["y"], 2) not in rows and any(abs(t["y"] - 4.5 - y) < 0.02 for y in rows | {round(u["y"], 2) for u in tx}):
+                    out.append((f"sheet {si + 1}: second line '{t['s']}' of a table cell dropped", lambda h, si=si, t=t: _drop_line(h["sheets"][si], t)))
     return out
+
+
+def _drop_line(sh, t):
+    sh["texts"] = [x for x in sh["texts"] if not (x["model"] == "" and abs(x["y"] - t["y"]) < 0.01 and x["x"] == t["x"])]
 
 
 def _undot(sh, cx, cy):
@@ -301,3 +316,52 @@ def test_seeded_faults_are_all_caught(drawings, expected, tmp_path):
         total += len(picks)
     print("mutants per kind (made, caught):", per)
     assert total >= min(200, PER_KIND * len(KINDS)) and not missed, "\n".join(missed)
+
+
+# ---------------------------------------------------------------- the table of contents
+def _book(proj, gs, folder, out, mutate=None):
+    """The book of a project's drawings with the contents after the symbol sheet, optionally with a fault seeded in the contents page; returns the entries."""
+    import shutil
+
+    from schemagen.drawing import toc
+    from schemagen.drawing.render_pdf import Book
+    from schemagen.drawing.sheet import symbol_sheet
+    mine = sorted((g for (p, _), g in gs.items() if p == proj), key=lambda g: g["drawing"]["scope"])
+    order = toc.order([(g["drawing"]["title"], g["drawing"]["scope"].partition(":")[2], len(g["sheets"])) for g in mine])
+    pages = toc.sheets(order, mine[0]["drawing"], 3 + len(toc.split(order)) + 1)
+    if mutate: mutate(pages)
+    shutil.copytree(folder / "drawings", out / "drawings")
+    b = Book(out / "wiring-diagrams.pdf")
+    b.add(symbol_sheet())
+    b.add(dict(version=1, drawing=mine[0]["drawing"], sheets=pages))
+    by = {g["drawing"]["scope"].partition(":")[2]: g for g in mine}
+    for _, i, _ in order: b.add(by[i])
+    b.close()
+    return order
+
+
+@pytest.mark.parametrize("proj", ["fixture", "demo"])
+def test_the_contents_are_checked_against_the_book(drawings, proj, tmp_path):
+    """The contents of a correct book are clean; each seeded fault (a page number, a sheet count, a missing entry, a changed name) is a hard `toc` finding."""
+    gs, folders = drawings
+    order = _book(proj, gs, folders[proj], tmp_path / "ok")
+    assert [f for f in check_drawings(PROJECTS[proj], tmp_path / "ok")["findings"] if f["kind"] == "toc"] == []
+    n, caught = 0, 0
+    for k, (name, _, _) in enumerate(order):
+        for how in ("page", "sheets", "drop", "name"):
+            def mutate(pages, k=k, how=how, name=name):
+                tx = pages[0]["texts"]
+                y0 = min(t["y"] for t in tx) + 4.5 * (k + 1)
+                row = [t for t in tx if y0 - 0.5 < t["y"] < y0 + 4.0 and t["role"] in ("pin", "part")]
+                if how == "drop": tx[:] = [t for t in tx if t not in row]
+                elif how == "name": next(t for t in row if t["s"] == name)["s"] = name + "x"
+                else:
+                    nums = sorted((t for t in row if t["s"].isdigit()), key=lambda t: t["x"])
+                    t = nums[1 if how == "page" else 0]
+                    t["s"] = str(int(t["s"]) + 1)
+            d = tmp_path / f"{how}-{k}"
+            _book(proj, gs, folders[proj], d, mutate)
+            n += 1
+            caught += any(f["kind"] == "toc" for f in check_drawings(PROJECTS[proj], d)["findings"])
+    print("contents mutants (made, caught):", proj, n, caught)
+    assert n >= 20 and caught == n

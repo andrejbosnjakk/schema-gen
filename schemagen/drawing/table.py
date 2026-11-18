@@ -106,12 +106,12 @@ def draw(lines: list[tuple[str, Any]], size: str, y: float, cols: tuple[float, .
         if kind == "head":
             texts.append(S.text(v, ax + cols[1], y0 + ROW / 2, "left", "head", SIZE)); y0 += ROW
             rules.append(_rule(ax, y0, cols)); continue
-        cs, h = cells(v, cols), row_h(v, cols)
+        cs, rh = cells(v, cols), row_h(v, cols)
         rules.append(dict(kind="rect", stroke="thin", fill="none", x=ax + 1, y=y0 + ROW / 2 - 1.25, w=2.5, h=2.5))
         for i, c in enumerate(cs):
             for j, t in enumerate(c):
                 if t: texts.append(S.text(t, ax + cols[i + 1], y0 + ROW * (j + 0.5), "left", "pin", SIZE))
-        y0 += h
+        y0 += rh
         rules.append(_rule(ax, y0, cols))
     return rules, texts
 

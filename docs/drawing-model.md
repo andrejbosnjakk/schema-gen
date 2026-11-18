@@ -202,7 +202,7 @@ has no such data); the reference drawings are in `docs/screens/drawings/` (golde
 
 ## Wire table, wire text, flag text (readable drawings)
 
-- `sheet.table = {sheet, rows}`: one row per conductor the sheet shows (as a wire, as a flag, or under a summary flag): `{id, label, gauge, colour, a, b, frm, to}`,
+- `sheet.table = {sheet, rows}` (since the wrap round only the conductors first drawn on that sheet, see the last section): one row per conductor the sheet shows (as a wire, as a flag, or under a summary flag): `{id, label, gauge, colour, a, b, frm, to}`,
   `a`/`b` the pin refs of its two ends (a flagged conductor: the drawn end and the far end), `frm`/`to` those ends in words (`EFIS, J1, pin 2 (GND)`,
   `splice SP-1`, `ground bus GND-BUS`; a far end that continues on another sheet ends in `(sheet N)`). Rows are in the natural order of the label.
   `sheet` is the sheet the table is drawn on: the sheet itself when it fits under the drawing, else a table sheet after the last drawing sheet (no symbols,
@@ -229,16 +229,40 @@ end. The in-line symbols of two terminals (breaker, fuse, terminator, battery) a
   stands small underneath only when it differs from the name. Flags and table cells name a far end by display name: `Battery 14 V, + terminal`, `EFIS, J1, pin 2`.
 - **Flags say where the far end is.** An off-sheet flag reads `to <far end> (drawing VCU, sheet 3)`: the drawing (a component id; its PDF is `component-<id>.pdf`)
   that shows the far end and a sheet of it that shows the conductor. Past a splice the far end is the first terminal the run lands on (`... +2 more via <splice>`).
-  A continuation flag reads `continues on sheet 2: <far end> (drawing VCU)` (the drawing it is in); a summary flag `+ 59 more wires on GND-BUS (drawing GND-BUS, sheet 1-3)`.
+  A continuation flag reads `continues on sheet 2: <far end> (drawing VCU)` (the drawing it is in); a summary flag `+ 59 more wires on GND-BUS (drawing GND-BUS, sheet 1)`.
   A drawing does not know how the others are paginated, so `export_all` draws every drawing twice: the first pass writes `sheet 44` (two digits: the layout measures
   every flag as if it said so, so both passes lay out alike), `drawing.index.index_of` reads where each conductor went, the second pass writes the real sheets
   (`engine.draw(..., where=)`; without `where` a flag names the drawing only).
 - **Hubs are terminal strips** (`drawing/hub.py`). A bus, ground bus or splice in scope with at least 12 legs, mostly to different parts, is drawn as a bar with
   one stub per wire (wire text on the stub) ending in a flat one-line flag naming the far end. Nothing is routed. Splices and harness pins the runs go through, and a
   part's pin that carries other conductors too, are small bars of their own with a stub per conductor; a conductor between two bars is drawn at both ends and each flag
-  names the other end's sheet. Pages are filled in order (the sheet's wire table counted in) and evened out, so no sheet but the last is thin.
+  names the other end's sheet. Pages are filled to the foot of the sheet in order; a last page with fewer than 4 wires takes some from the one before.
 - **Packing** (`layout.paginate`): a drawing that is too tall is cut into as many sheets as its height needs, at connector boundaries nearest to equal shares, so
   several connectors of one component share a sheet and no sheet but the last is thin.
 - **Title block.** REV is `revision:` of schemagen.yml, else the first 8 hex digits of the sha256 of the source wire list (the same hash the SOURCE field carries).
   DATE is `date:` of schemagen.yml, else the modification date of the source file (the newest file of the wirelist folder); never the clock. The PDF's creation and
   modification date are that date. Geometry JSON and PDF bytes are identical for identical input.
+
+## Wrapping, the wire table, the book (round 1.2, wrap)
+
+- **Nothing is cut off.** A text that does not fit goes on to further lines: table cells (the row grows by a line of 4.5 mm per line), flags (the narrowest of
+  50..150 mm in steps of 5 that needs two lines, more lines only if the text needs them; a flag is 10 mm high for two lines, 20 for three or four, so the wire
+  still attaches on the grid), box names and pin names (`MAXW` = 60 mm), the headings of strip bars (at hyphens), notes and title-block cells (the title block is
+  35 mm high; a value or the title goes on to a second line). `style.wrap_all(text, width_mm, size, bold)` is the one wrapper (font metrics of the drawings;
+  a word wider than a line is broken inside, after a hyphen if there is one). The verifier reports any text ending in `..` as `text_truncated`.
+- **A flag names one sheet**: the sheet of the other drawing that draws the conductor at the terminal the flag leads to (`index.index_of` maps
+  (drawing, conductor, terminal) to sheets; `Where` takes the terminal as third argument), never a range. A summary flag names the first sheet.
+- **The wire table lists every conductor once per drawing**, under the first sheet that draws it (`sheet.table.rows` holds only those rows; `table.sheet` is
+  the sheet the table is drawn on). Chosen over one table per sheet because a conductor between two parts of one drawing, or through splices and harness
+  pins, was listed on every sheet that touched it, which cost about half the strip sheets their room; chosen over one table at the end of the drawing because
+  the rows keep their `Sheet n` heading, so a person on a sheet finds its wires and the verifier checks each row against the sheet it names. Drawings
+  that fit one sheet keep the table under the drawing. A strip drawing's table follows its strips: from the free room under the last strip sheet on, then
+  table sheets; strips are filled to the foot of the sheet. The columns are sized per drawing (`table.columns`): the label column as wide as the longest label.
+  The SEE column holds `(drawing X, sheet N)`. The verifier's rule: every drawn label has exactly one row in the drawing, under the first sheet that draws it
+  (or under a sheet whose summary flag covers it), and the row agrees with the lines of that sheet.
+- **Contents of the book** (`drawing/toc.py`): `wiring-diagrams.pdf` is the symbol sheets, then the contents pages (title block `Contents`), then every drawing,
+  in alphabetical order of display name, so the page numbers are real. A line: name (a long one goes on to a second line), the id in grey when it differs from
+  the name, the number of sheets, the book page the drawing starts on. `export_all` writes the contents from the first pass's sheet counts and, should a count
+  differ in the second pass, writes the book again with the real ones. Per-component PDFs have no contents. The verifier (`verify/toc.py`) reads the contents
+  pages and checks every entry against the book (name, id shown only when it differs, sheet count, the page of the drawing's first sheet), the order, and that
+  each drawing has exactly one entry.

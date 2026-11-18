@@ -235,7 +235,7 @@ def _bartaps(it: Item, B: _B) -> tuple[float, float]:
     labs = [t["text"] for t in B.taps if t.get("text")]
     title, code = _head(it) if k != "splice" else (it["code"], "")
     strip = any("pitch" in t for t in B.taps)      # on a terminal strip a long heading goes on to further lines rather than widen the bar
-    hd = [*((t, "name") for t in (wrap_all(title, 50.0, SIZE, True) if strip else [title])), *[(t, "part") for t in (code,) if t], *[(t, "pin") for t in (cls,) if t]]
+    hd = [*((t, "name") for t in (wrap_all(title, 50.0, SIZE, True) if strip else [title])), *[(t, "part") for t in (code,) if t], *[(t, "pin") for t in (cls,) if t]]  # noqa: E501
     half = ceil_to(max([5.0, *((_tw(t, r) + 2) / 2 for t, r in hd), *(_tw(t) + 3 for t in labs)]))
     W, hdr = 2 * half, 5 * len(hd)
     rows = max(1, len(sd["L"]), len(sd["R"]))
