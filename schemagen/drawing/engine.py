@@ -31,8 +31,10 @@ def draw(st: Any, scope: Any, size: str = "A3", meta: dict[str, str] | None = No
     placed: list[tuple[Any, Any, list[Any], bool]] = []     # (page, its layout, its table rows, whether the table fits under the drawing)
     for pg in pages:
         rs = T.rows(pg)
-        fits = L.place(pg, size)["h"] + T.height(len(rs)) <= ah
-        placed.append((pg, L.place(pg, size, None, 1, T.height(len(rs)) if fits else 0.0), rs, fits))
+        th = T.height(len(rs))
+        sh = L.place(pg, size, None, 1, th)      # the natural height `h` does not depend on the room kept for the table: one layout when the table fits
+        fits = sh["h"] + th <= ah
+        placed.append((pg, sh if fits else L.place(pg, size, None, 1, 0.0), rs, fits))
     tabs = T.pages([(n, rs) for n, (_, _, rs, fits) in enumerate(placed, 1) if not fits and rs], size)
     of = len(pages) + len(tabs)
     on = {n: len(pages) + 1 + next(k for k, t in enumerate(tabs) if n in t[2]) for n, (_, _, rs, fits) in enumerate(placed, 1) if not fits and rs}

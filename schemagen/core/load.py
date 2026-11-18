@@ -97,17 +97,23 @@ def load(cfg: Config | str | Path, apply_changes: bool = True) -> Loaded:
     return Loaded(cfg, m, naming, display, prot_raw, warnings + w, t.rows, inp)
 
 
+_DIGESTS: dict[Any, tuple[str, str]] = {}  # source_digest results by file stats: every drawing's title block asks, the file does not change meanwhile
+
+
 def source_digest(cfg: Config) -> tuple[str, str]:
     """(name, sha256) of what the wire list is read from: the source spreadsheet or file, else the wirelist folder's files (name and bytes, in path order)."""
     import hashlib
     src = cfg.source
-    if src and src.get("path"):
-        f = cfg.root / str(src["path"])
-        return f.name, hashlib.sha256(f.read_bytes()).hexdigest()
-    h = hashlib.sha256()
-    for p in sorted(p for p in cfg.wirelist.rglob("*") if p.is_file() and p.suffix in (".py", ".json", ".yml", ".csv", ".xlsx")):
-        h.update(p.name.encode()); h.update(p.read_bytes())
-    return cfg.wirelist.name, h.hexdigest()
+    one = bool(src and src.get("path"))
+    files = [cfg.root / str(src["path"])] if one else sorted(p for p in cfg.wirelist.rglob("*") if p.is_file() and p.suffix in (".py", ".json", ".yml", ".csv", ".xlsx"))  # noqa: E501
+    key = tuple((str(p), p.stat().st_mtime_ns, p.stat().st_size) for p in files)
+    if key not in _DIGESTS:
+        h = hashlib.sha256()
+        for p in files:
+            if not one: h.update(p.name.encode())
+            h.update(p.read_bytes())
+        _DIGESTS[key] = files[0].name if one else cfg.wirelist.name, h.hexdigest()
+    return _DIGESTS[key]
 
 
 def measured_lengths(cfg: Config) -> dict[str, float]:
