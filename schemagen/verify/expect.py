@@ -34,6 +34,7 @@ class Expected:
     conns: dict[str, set[str]]                # component id -> connector names its conductors use
     ctx: Any
     source: dict[str, str] = field(default_factory=dict)   # name, sha256 of the source file(s)
+    display: dict[str, str] = field(default_factory=dict)         # component id -> the name a drawing is known by (the Name column, else the id)
     names: list[tuple[str, str]] = field(default_factory=list)   # (lower-case printed form, component id), longest first: id, display name, both, raw device string
 
     def lead(self, text: str) -> tuple[str | None, str]:
@@ -125,4 +126,5 @@ def read(project: str | Path) -> Expected:
     for m in L.model.components:
         for k in (m.id, m.name, f"{m.id} {m.name}", m.raw, re.sub(r"\s*\([^)]*\)", "", m.name)): names.setdefault(" ".join(k.lower().split()), m.id)   # the last: a name without its bracket
     names.pop("", None)
-    return Expected(conds, {c.id: c.kind for c in L.model.components}, conns, ctx, source_digest(cfg), sorted(names.items(), key=lambda kv: -len(kv[0])))
+    return Expected(conds, {c.id: c.kind for c in L.model.components}, conns, ctx, source_digest(cfg),
+                    {c.id: c.name or c.id for c in L.model.components}, sorted(names.items(), key=lambda kv: -len(kv[0])))

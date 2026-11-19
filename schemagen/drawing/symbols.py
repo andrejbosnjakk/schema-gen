@@ -12,16 +12,19 @@ Anchor rules by symbol (sides maps an anchor id to "L" or "R"; "T" for a ground)
 - dcdc: input pins L, output pins R (read from the pin names), else first half L, second half R."""
 from __future__ import annotations
 
+import math
+from functools import lru_cache
 import re
 from typing import Any
 
 from .geometry import Anchor, Flag, Prim, Symbol, Text
 from .style import (BOLD_ROLES, DETAIL_STROKE, FRAME_STROKE, GREY_ROLES, SIZE, SIZE_TITLE, SYMBOL_STROKE, areas, baseline_dy, ceil_to, em,  # noqa: F401
-                    fit, text_h, text_w, wrap)
+                    fit, text_h, text_w, wrap, wrap_all, wrap_words)
 
 Item = dict[str, Any]
 N, T_, K = SYMBOL_STROKE, DETAIL_STROKE, FRAME_STROKE
 _OPP = {"L": "R", "R": "L"}
+MAXW = 60.0      # widest line of a box title or pin name (mm): longer text goes on to further lines
 
 
 def _r(v: float) -> float:
@@ -127,8 +130,9 @@ def _block(it: Item, B: _B, sides: dict[str, str]) -> tuple[float, float]:
     dflt = "L" if far else "R"
     title, code = _head(it)
     part, loc = it["part"], it["location"]
-    n = 1 + bool(code) + bool(part)
-    need = max(2.5 + _tw(title, "name") + (4 + _tw(loc) if loc else 0) + 2.5, *(5 + _tw(t) for t in (code, part)))
+    tl = wrap_all(title, MAXW - (4 + _tw(loc) if loc else 0), SIZE, True) or [""]       # a long name goes on to further lines
+    n = len(tl) + bool(code) + bool(part)
+    need = max(2.5 + max(_tw(t, "name") for t in tl) + (4 + _tw(loc) if loc else 0) + 2.5, *(5 + _tw(t) for t in (code, part)))
     plan = []
     for b in it["blocks"]:
         m = int(bool(b["id"] or b["part"])) + bool(b["mate"])
@@ -136,13 +140,13 @@ def _block(it: Item, B: _B, sides: dict[str, str]) -> tuple[float, float]:
         for p in b["pins"]:
             nm = p["name"]
             lab = f"{nm} (spare)" if p["spare"] and nm else "spare" if p["spare"] else nm
-            pins.append((p, fit(lab, SIZE, 90)))
+            pins.append((p, wrap_all(lab, MAXW - 20, SIZE) or [""]))         # a pin name too long for the box goes on to further rows
         nw = max((_tw(p["n"]) for p, _ in pins), default=0.0)
         need = max(need, 8 + _tw(b["id"], "name") + (3 + _tw(b["part"]) if b["part"] else 0), 8 + _tw("mates " + b["mate"]) if b["mate"] else 0,
-                   *(8 + nw + (2 + _tw(lab) if lab else 0) for _, lab in pins))
+                   *(8 + nw + (2 + _tw(t) if t else 0) for _, lab in pins for t in lab))
         if m or pins: plan.append((b, m, pins, nw))
     W = max(30.0, ceil_to(need))
-    H = 5 * n + 5 + sum(5 * (m + len(pins)) for _, m, pins, _ in plan) + 5 * max(0, len(plan) - 1) if plan else 5 * n + 5
+    H = 5 * n + 5 + sum(5 * (m + sum(len(lab) for _, lab in pins)) for _, m, pins, _ in plan) + 5 * max(0, len(plan) - 1) if plan else 5 * n + 5
     live = [p["anchor"] for _, _, pins, _ in plan for p, _ in pins if not p["spare"]]
     fs = _OPP[sides.get(live[0], dflt)] if live else _OPP[dflt]   # the far (broken) edge: opposite the pins
     if it["partial"]:
@@ -150,13 +154,13 @@ def _block(it: Item, B: _B, sides: dict[str, str]) -> tuple[float, float]:
         pts = [(xn, 0.0), (xf, 0.0)] + [(xf + (d * 1.25 if i % 2 else 0), 2.5 * i) for i in range(1, int(H / 2.5))] + [(xf, H), (xn, H)]
         B.poly(pts, True, N, "white")
     else: B.rect(0, 0, W, H, N, "white")
-    B.text(title, 2.5, 3.75, "left", "name")
+    for i, t in enumerate(tl): B.text(t, 2.5, 3.75 + 5 * i, "left", "name")
     B.text(loc, W - 2.5, 3.75, "right", "pin")
-    B.text(code, 2.5, 8.75, "left", "part")
-    B.text(part, 2.5, 8.75 + 5 * bool(code), "left", "part")
+    B.text(code, 2.5, 3.75 + 5 * len(tl), "left", "part")
+    B.text(part, 2.5, 3.75 + 5 * len(tl) + 5 * bool(code), "left", "part")
     top = 5 * n + 2.5
     for b, m, pins, nw in plan:
-        h = 5 * (m + len(pins))
+        h = 5 * (m + sum(len(lab) for _, lab in pins))
         B.rect(2.5, top, W - 5, h, N, "white")
         r = 0
         if b["id"] or b["part"]:
@@ -164,19 +168,22 @@ def _block(it: Item, B: _B, sides: dict[str, str]) -> tuple[float, float]:
             B.text(b["part"], W - 4, top + 2.5, "right", "part"); r = 1
         if b["mate"]: B.text("mates " + b["mate"], 4, top + 2.5 + 5 * r, "left", "part")
         if m and pins: B.line(2.5, top + 5 * m, W - 2.5, top + 5 * m, T_)
-        for i, (p, lab) in enumerate(pins):
-            y = top + 5 * m + 2.5 + 5 * i
+        y = top + 5 * m + 2.5
+        for p, lines in pins:
             s = sides.get(p["anchor"], dflt)
             sp = "spare" if p["spare"] else "pin"
-            if s == "R":
-                B.text(p["n"], W - 4, y, "right", sp, model=B.model if p["spare"] else p["anchor"])
-                B.text(lab, W - 4 - nw - (2 if nw else 0), y, "right", sp, model=B.model if p["spare"] else p["anchor"])
-            else:
-                B.text(p["n"], 4, y, "left", sp, model=B.model if p["spare"] else p["anchor"])
-                B.text(lab, 4 + nw + (2 if nw else 0), y, "left", sp, model=B.model if p["spare"] else p["anchor"])
+            md = B.model if p["spare"] else p["anchor"]
+            for j, lab in enumerate(lines):
+                if s == "R":
+                    if not j: B.text(p["n"], W - 4, y, "right", sp, model=md)
+                    B.text(lab, W - 4 - nw - (2 if nw else 0), y + 5 * j, "right", sp, model=md)
+                else:
+                    if not j: B.text(p["n"], 4, y, "left", sp, model=md)
+                    B.text(lab, 4 + nw + (2 if nw else 0), y + 5 * j, "left", sp, model=md)
             if not p["spare"]:
                 B.line(*((W - 2.5, y, W, y) if s == "R" else (0, y, 2.5, y)))
                 B.anchor(p["anchor"], W if s == "R" else 0, y, s)
+            y += 5 * len(lines)
         top += h + 5
     return W, H
 
@@ -227,7 +234,8 @@ def _bartaps(it: Item, B: _B) -> tuple[float, float]:
     sd = {s: [t for t in B.taps if t["side"] == s] for s in "LR"}
     labs = [t["text"] for t in B.taps if t.get("text")]
     title, code = _head(it) if k != "splice" else (it["code"], "")
-    hd = [(title, "name"), *[(t, "part") for t in (code,) if t], *[(t, "pin") for t in (cls,) if t]]
+    strip = any("pitch" in t for t in B.taps)      # on a terminal strip a long heading goes on to further lines rather than widen the bar
+    hd = [*((t, "name") for t in (wrap_all(title, 50.0, SIZE, True) if strip else [title])), *[(t, "part") for t in (code,) if t], *[(t, "pin") for t in (cls,) if t]]  # noqa: E501
     half = ceil_to(max([5.0, *((_tw(t, r) + 2) / 2 for t, r in hd), *(_tw(t) + 3 for t in labs)]))
     W, hdr = 2 * half, 5 * len(hd)
     rows = max(1, len(sd["L"]), len(sd["R"]))
@@ -483,9 +491,9 @@ def size(item: Item, sides: dict[str, str] | None = None) -> tuple[float, float]
 FLAG_H = 10.0
 FLAG_TIP = 3.0     # the pointed ends of an off-sheet flag
 FLAG_TAB = 7.5     # the sheet-number cell of a continuation flag
-FLAG_CHARS = 52.0   # mm of text per line the flag starts with (two lines at most); it is widened up to twice that for a long text
 _SUFFIX = re.compile(r"\s*(\(drawing [^)]*\))\s*$")
-_SHEET_NO = re.compile(r"(sheet )\d+(-\d+)?")
+_SHEET_NO = re.compile(r"(sheet )\d+(?:-\d+)?")
+TIERS = tuple(float(w) for w in range(50, 151, 5))     # widths the lines of a flag are tried at, narrowest first
 
 
 def _plain(text: str) -> str:
@@ -495,9 +503,21 @@ def _plain(text: str) -> str:
     return head if sep and t.endswith(")") and (len(t) > 34 or head.split()[0] in par) else t
 
 
-def _flag_lines(kind: str, text: str, sheet: int | None = None, drawing: str = "", flat: bool = False) -> list[str]:
-    """The flag's text on two lines: where it leads (`to Battery 14 V, + terminal`, `continues on sheet 2: ...`; a summary flag `+ 8 more wires on X`), then
-    the drawing and sheet it can be found on (`(drawing VCU, sheet 3)`), which a continuation takes from `drawing` (the drawing it is in)."""
+@lru_cache(maxsize=1 << 14)
+def _cut(meas: str) -> tuple[int, ...]:
+    """How many words go on each line of a flag: the narrowest of TIERS that needs the fewest lines (two, then more)."""
+    words = meas.split()
+    for k in range(2, len(words) + 1):
+        for w in TIERS:
+            if len(c := wrap_words(words, w)) <= k: return tuple(c)
+    return (1,) * len(words)
+
+
+def _flag_lines(kind: str, text: str, sheet: int | None = None, drawing: str = "", flat: bool = False, real: bool = True) -> list[str]:
+    """The flag's text in lines: where it leads (`to Battery 14 V, + terminal`, `continues on sheet 2: ...`; a summary flag `+ 8 more wires on X`) and the drawing
+    and sheet it can be found on (`(drawing VCU, sheet 3)`; a continuation takes the drawing from `drawing`). A flat flag is one line. Otherwise the lines are
+    as narrow as two lines allow (more only when the text needs them: nothing is ever cut off). The breaks are made as if the sheet were `sheet 44`, so the
+    layout of the first pass of an export is the one of the second (`real`: the lines with the real digits)."""
     t = " ".join(text.removeprefix("→ ").split())
     m = _SUFFIX.search(t)
     suf, main = (m.group(1), t[:m.start()]) if m else ("", t)
@@ -506,19 +526,28 @@ def _flag_lines(kind: str, text: str, sheet: int | None = None, drawing: str = "
         main = (f"continues on sheet {sheet or 9}: " if kind == "continuation" else "to ") + main
         if kind == "continuation" and drawing: suf = f"(drawing {drawing})"
     body = main + (" " + suf if suf else "")
-    for w in (52.0, 70.0, 90.0, 110.0, 130.0)[:5 if flat else 4]:      # a flat flag may be wider: it stands alone on its row
-        lines = wrap(body, w, SIZE, False, 2)
-        if not lines[-1].endswith(".."): break
-    return lines
+    if flat: return [body]
+    words = body.split()
+    meas = _SHEET_NO.sub(r"\g<1>44", body)
+    out, i = [], 0
+    for n in _cut(meas):
+        out.append(" ".join((words if real else meas.split())[i:i + n])); i += n
+    return out
 
 
-def flag(id: str, model: str, kind: str, text: str, target: str, sheet: int | None = None, x: float = 0.0, y: float = 0.0, side: str = "L", drawing: str = "", h: float = FLAG_H) -> Flag:  # noqa: E501
+def flag_h(kind: str, text: str, sheet: int | None = None, drawing: str = "") -> float:
+    """The height a flag needs: 10 mm for two lines, 20 for three or four, and so on (the wire attaches in the middle, on the grid)."""
+    return 10.0 * math.ceil(max(2, len(_flag_lines(kind, text, sheet, drawing, False, False))) / 2)
+
+
+def flag(id: str, model: str, kind: str, text: str, target: str, sheet: int | None = None, x: float = 0.0, y: float = 0.0, side: str = "L", drawing: str = "", h: float = 0.0) -> Flag:  # noqa: E501
     """A flag at (x, y) on the grid, sized to its text. The wire attaches at the middle of its left or right edge (a grid point,
-    (x, y + 5) or (x + w, y + 5)). off_sheet: a pennant with pointed ends (text = where it leads); continuation: a box with a cell
+    (x, y + h/2) or (x + w, y + h/2)). off_sheet: a pennant with pointed ends (text = where it leads); continuation: a box with a cell
     for the sheet number (text = the pin it continues to). `sheet` is the continuation's sheet number. `side` is the edge the wire enters.
-    The width is measured with the sheet in `(drawing X, sheet N)` as two digits, so the same layout results before and after the numbers are known."""
-    lines = [_SHEET_NO.sub(r"\g<1>44-44", t) for t in _flag_lines(kind, text, sheet, drawing, h <= FLAG_H / 2)]
-    if h <= FLAG_H / 2: lines = [" ".join(lines)]      # a flat flag (a terminal strip's) says it all on one line
+    h: FLAT (5) for one line, else the height of the lines (default: what the text needs, 10 at least). The width is measured as if the sheet in
+    `(drawing X, sheet N)` were two digits, so the same layout results before and after the numbers are known."""
+    h = h or flag_h(kind, text, sheet, drawing)
+    lines = _flag_lines(kind, text, sheet, drawing, h <= FLAG_H / 2, False)
     pad = 2 * FLAG_TIP + 1 if kind == "off_sheet" else FLAG_TAB + 3
     w = ceil_to(max([_tw(t) for t in lines] or [0.0]) + pad)
     f = Flag(id=id, model=model, x=x, y=y, w=max(w, 15.0), h=h, text=text, target=target, sheet=sheet, kind=kind, side=side)  # type: ignore[typeddict-item]
@@ -531,7 +560,6 @@ def flag_shapes(f: Flag) -> tuple[list[Prim], list[Text]]:
     B = _B({"model": f["model"]}, f["x"], f["y"])
     w, h = f["w"], f["h"]
     lines = _flag_lines(f["kind"], f["text"], f.get("sheet"), f.get("drawing", ""), h <= FLAG_H / 2)
-    if h <= FLAG_H / 2: lines = [" ".join(lines)]
     if f["kind"] == "off_sheet":
         k = FLAG_TIP
         B.poly([(0, h / 2), (k, 0), (w - k, 0), (w, h / 2), (w - k, h), (k, h)], True, N, "white")
@@ -583,40 +611,54 @@ def legend(kinds_used: list[str], size: str = "A3") -> list[dict[str, Any]]:
     return out
 
 
+NOTE_LINES = 6      # lines of text the notes box holds
+
+
 def notes(lines: list[str], size: str = "A3") -> tuple[list[Prim], list[Text]]:
-    """The notes box of the strip (A3 only) and its lines as texts; lines that do not fit are dropped."""
+    """The notes box of the strip (A3 only) and its lines as texts. A note too long for the box goes on to further lines; notes that no longer fit are left out
+    whole (the first ones matter most)."""
     x, y, w, h = areas(size)["notes"]
     if not w: return [], []
     B = _B({"model": ""}, 0, 0)
     B.rect(x, y, w, h, N)
     B.text("NOTES", x + 1.5, y + 2.5, "left", "caption")
-    for i, t in enumerate(lines[:5]): B.text(fit(t, SIZE, w - 3), x + 1.5, y + 7.5 + 4.5 * i, "left", "note")
+    rows: list[str] = []
+    for t in lines:
+        ls = wrap_all(t, w - 3, SIZE)
+        if len(rows) + len(ls) > NOTE_LINES: break
+        rows += ls
+    for i, t in enumerate(rows): B.text(t, x + 1.5, y + 7.5 + 4.5 * i, "left", "note")
     return B.prims, B.texts
 
 
 def title_block(meta: dict[str, str], sheet: dict[str, Any]) -> tuple[list[Prim], list[Text]]:
     """The sheet frame and the title block (project, drawing title, scope, sheet n of m, revision, date, drawn by, source file).
-    meta: title, scope, project, revision, date, drawn_by, source (missing keys are left blank); sheet: n, of, size."""
+    meta: title, scope, project, revision, date, drawn_by, source (missing keys are left blank); sheet: n, of, size. A value or the title that does not fit
+    its cell goes on to a second line; nothing is cut off."""
     a = areas(sheet["size"])
     B = _B({"model": ""}, 0, 0)
     fx, fy, fw, fh = a["frame"]
     B.rect(fx, fy, fw, fh, K)
     x, y, w, h = a["title"]
     B.rect(x, y, w, h, N)
-    B.line(x, y + 10, x + w, y + 10, T_); B.line(x, y + 20, x + w, y + 20, T_); B.line(x + 100, y, x + 100, y + 10, T_); B.line(x + 55, y + 10, x + 55, y + 20, T_)
-    for cx in (24, 48, 72): B.line(x + cx, y + 20, x + cx, y + h, T_)
+    r2, r3 = 10 + (h - 10) / 2, h                 # the rows: 0..10 title, then two of equal height
+    B.line(x, y + 10, x + w, y + 10, T_); B.line(x, y + r2, x + w, y + r2, T_); B.line(x + 100, y, x + 100, y + 10, T_); B.line(x + 55, y + 10, x + 55, y + r2, T_)
+    for cx in (24, 48, 72): B.line(x + cx, y + r2, x + cx, y + r3, T_)
 
     def cell(cx: float, cy: float, cw: float, label: str, value: str) -> None:
         B.text(label, x + cx + 1.5, y + cy + 2.5, "left", "caption")
-        B.text(fit(value, SIZE, cw - 3, False), x + cx + 1.5, y + cy + 7.0, "left", "pin")
-    B.text(fit(meta.get("title", ""), SIZE_TITLE, 97, True), x + 1.5, y + 5, "left", "title", SIZE_TITLE)
+        for i, t in enumerate(wrap_all(value, cw - 3, SIZE)): B.text(t, x + cx + 1.5, y + cy + 6.6 + 4.0 * i, "left", "pin")
+    title = meta.get("title", "")
+    if text_w(title, SIZE_TITLE, True) <= 97: B.text(title, x + 1.5, y + 5, "left", "title", SIZE_TITLE)
+    else:
+        for i, t in enumerate(wrap_all(title, 97, SIZE, True)): B.text(t, x + 1.5, y + 3.0 + 4.0 * i, "left", "title", SIZE)
     cell(100, 0, 40, "SHEET", f"{sheet['n']} of {sheet['of']}")
     cell(0, 10, 55, "PROJECT", meta.get("project", ""))
     cell(55, 10, 85, "SCOPE", meta.get("scope", ""))
-    cell(0, 20, 24, "REV", meta.get("revision", ""))
-    cell(24, 20, 24, "DATE", meta.get("date", ""))
-    cell(48, 20, 24, "DRAWN BY", meta.get("drawn_by", ""))
-    cell(72, 20, 68, "SOURCE", meta.get("source", ""))
+    cell(0, r2, 24, "REV", meta.get("revision", ""))
+    cell(24, r2, 24, "DATE", meta.get("date", ""))
+    cell(48, r2, 24, "DRAWN BY", meta.get("drawn_by", ""))
+    cell(72, r2, 68, "SOURCE", meta.get("source", ""))
     return B.prims, B.texts
 
 
