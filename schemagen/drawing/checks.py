@@ -202,6 +202,51 @@ def crossings(g: Geometry) -> int:
     return sum(crossings_by_sheet(g).values())
 
 
+def crossing_clearance(g: Geometry, clear: float = 3.0) -> list[Finding]:
+    """Crossings of two wires closer than `clear` mm to a junction dot, a wire end, a bend or a wire label (not in CHECKS: the overview asks for it)."""
+    out: list[Finding] = []
+    for sh in g["sheets"]:
+        segs = _segs(sh)
+        hs = [s for s in segs if _horizontal(s)]
+        grid = _Grid()
+        for k, s in enumerate(hs): grid.add(k, *s[2:])
+        marks: list[tuple[float, float]] = []
+        for w in sh.get("wires", []): marks += [(p[0], p[1]) for p in w.get("points") or []]
+        for sy in sh.get("symbols", []):
+            marks += [(q["cx"], q["cy"]) for q in sy.get("prims", []) if q.get("kind") == "circle" and q.get("fill") == "black"]
+        labels = [t for t in sh.get("texts", []) if t.get("role") == "wire"]
+        mg = _Grid(10.0)
+        for k, (x, y) in enumerate(marks): mg.add(k, x, y, x, y)
+        for v in (s for s in segs if not _horizontal(s)):
+            for k in grid.near(*v[2:]):
+                h = hs[k]
+                if h[0]["id"] == v[0]["id"] or not (h[2] + EPS < v[2] < h[4] - EPS and v[3] + EPS < h[3] < v[5] - EPS): continue
+                x, y = v[2], h[3]
+                near = any(abs(marks[j][0] - x) < clear and abs(marks[j][1] - y) < clear for j in mg.near(x - clear, y - clear, x + clear, y + clear))
+                near = near or any(t["x"] - clear < x < t["x"] + t["w"] + clear and t["y"] - clear < y < t["y"] + t["h"] + clear for t in labels)
+                if near: out.append(_f("crossing_clearance", sh, [h[0]["id"], v[0]["id"]], f"wires {h[0]['id']} and {v[0]['id']} cross within {clear:g} mm of a dot, end, bend or label"))  # noqa: E501
+    return out
+
+
+def dot_touch(g: Geometry, tol: float = 1.2) -> list[Finding]:
+    """A wire that runs within `tol` mm of a junction dot (a filled circle) without ending on the symbol that carries it (not in CHECKS: the overview asks for it)."""  # noqa: E501
+    out: list[Finding] = []
+    for sh in g["sheets"]:
+        segs = _segs(sh)
+        grid = _Grid(10.0)
+        for k, s in enumerate(segs): grid.add(k, *s[2:])
+        for sy in sh.get("symbols", []):
+            own = {a["id"] for a in sy.get("anchors", [])}
+            for q in sy.get("prims", []):
+                if q.get("kind") != "circle" or q.get("fill") != "black": continue
+                x, y = q["cx"], q["cy"]
+                for k in grid.near(x - tol, y - tol, x + tol, y + tol):
+                    w, _, x0, y0, x1, y1 = segs[k]
+                    if x0 - tol < x < x1 + tol and y0 - tol < y < y1 + tol and (w["a"] not in own and w["b"] not in own):
+                        out.append(_f("dot_touch", sh, [w["id"], sy["id"]], f"wire {w['id']} touches a junction dot of {sy['id']}"))
+    return out
+
+
 def out_of_sheet(g: Geometry) -> list[Finding]:
     """Wire points, symbols, flags and texts outside the sheet's w_mm x h_mm."""
     out: list[Finding] = []
