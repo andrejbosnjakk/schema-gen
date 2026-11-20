@@ -264,9 +264,9 @@ export function App() {
 function Start({ session, onExample, onRecent, onRemove, onPick }: { session: Session; onExample: () => void; onRecent: (p: string) => void; onRemove: (p: string) => void; onPick: () => void }) {
   return <div className="start">
     <div className="start-col">
-      <Logo size={40} />
-      <h1>schemagen</h1>
-      <p className="lede">Drop your wire sheet to see the whole system as one diagram, and what is wrong with it.</p>
+      <Motif />
+      <h1><Logo size={26} />schemagen</h1>
+      <p className="lede">Wire list in. Wiring diagrams, checks and a map of the whole system out.</p>
       <button className="btn btn-primary btn-lg" onClick={onExample}>Open the example project</button>
       <div className="or" aria-hidden="true"><span>or</span></div>
       <div className="dropzone" onClick={onPick} role="button" tabIndex={0} aria-label="Import your wire sheet (.xlsx or .csv)"
@@ -283,6 +283,20 @@ function Start({ session, onExample, onRecent, onRemove, onPick }: { session: Se
       </section>}
     </div>
   </div>;
+}
+
+/** The start screen's picture, in the app's own symbols: wires joining at a splice, a breaker, and the loads they feed. */
+function Motif() {
+  return <svg className="motif" viewBox="0 0 440 96" role="presentation" aria-hidden="true" focusable="false">
+    <g className="m-wire"><path d="M8 16H84Q96 16 96 28V36Q96 48 108 48" /><path d="M8 80H84Q96 80 96 68V60Q96 48 108 48" /><path d="M8 48H108" /></g>
+    <path className="m-main" d="M112 48H196M240 48H300" />
+    <g className="m-wire"><path d="M300 48H332Q344 48 344 36V28Q344 16 356 16H426" /><path d="M300 48H332Q344 48 344 60V68Q344 80 356 80H426" /><path d="M300 48H426" /></g>
+    <path className="m-main" d="M300 48H340" />
+    <circle className="m-splice" cx="110" cy="48" r="5" />
+    <circle className="m-term" cx="199" cy="48" r="3.5" /><circle className="m-term" cx="237" cy="48" r="3.5" /><path className="m-blade" d="M201 46L230 31" />
+    <circle className="m-splice" cx="300" cy="48" r="5" />
+    {[16, 48, 80].map((y) => <g key={y}><circle className="m-term" cx="430" cy={y} r="3.5" /><circle className="m-term" cx="4" cy={y} r="3.5" /></g>)}
+  </svg>;
 }
 
 function ImportBar({ name, p }: { name: string; p: number }) {
