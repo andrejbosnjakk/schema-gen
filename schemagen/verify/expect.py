@@ -25,6 +25,15 @@ class Cond:
     colour: str
     a: Term
     b: Term
+    cls: str = ""                             # the function class the model gives it: 14 V, 24 V, 5 V, GND, signal, CAN
+
+
+PAGES = {"Power distribution": "power", "CAN network": "can", "All wires": "all"}   # the overview's pages by the title of their title block
+
+
+def on_page(cls: str, page: str) -> bool:
+    """A conductor of function class `cls` belongs on the overview page `page`: CAN on `can`, signal on neither of the first two, the rest (voltages, ground) on `power`."""
+    return page == "all" or (cls.startswith("CAN") if page == "can" else not cls.startswith("CAN") and cls != "signal")
 
 
 @dataclass
@@ -34,6 +43,7 @@ class Expected:
     conns: dict[str, set[str]]                # component id -> connector names its conductors use
     ctx: Any
     source: dict[str, str] = field(default_factory=dict)   # name, sha256 of the source file(s)
+    ground: set[str] = field(default_factory=set)                # component ids of ground buses
     display: dict[str, str] = field(default_factory=dict)         # component id -> the name a drawing is known by (the Name column, else the id)
     names: list[tuple[str, str]] = field(default_factory=list)   # (lower-case printed form, component id), longest first: id, display name, both, raw device string
 
@@ -57,6 +67,7 @@ class Expected:
     def scope(self, text: str) -> set[int] | None:
         """Indices of the conductors a drawing of `text` must show (a wire or an off-sheet flag); None for a scope kind the verifier does not know."""
         kind, _, rest = text.partition(":")
+        if kind == "overview" and rest in ("power", "can", "all"): return {c.i for c in self.conds if on_page(c.cls, rest)}
         ids = [x for x in rest.replace("+", ",").split(",") if x]
         ctx, net, conds = self.ctx, self.ctx.net, self.ctx.m.conductors
         if text == "system": comps = list(ctx.m.components)
@@ -118,7 +129,7 @@ def read(project: str | Path) -> Expected:
     L = load(cfg)
     ctx = Ctx(L.model, cfg)
     cid = lambda t: (ctx.comp[t.device].id if t.device in ctx.comp else t.device, t.connector, t.pin)  # noqa: E731
-    conds = [Cond(i, c.id, c.label, gauge(c.gauge), c.colour_code or c.colour, cid(c.from_), cid(c.to)) for i, c in enumerate(L.model.conductors)]
+    conds = [Cond(i, c.id, c.label, gauge(c.gauge), c.colour_code or c.colour, cid(c.from_), cid(c.to), c.can or c.kind) for i, c in enumerate(L.model.conductors)]
     conns: dict[str, set[str]] = {}
     for c in conds:
         for t in (c.a, c.b): conns.setdefault(t[0], set()).add(t[1])
@@ -126,5 +137,6 @@ def read(project: str | Path) -> Expected:
     for m in L.model.components:
         for k in (m.id, m.name, f"{m.id} {m.name}", m.raw, re.sub(r"\s*\([^)]*\)", "", m.name)): names.setdefault(" ".join(k.lower().split()), m.id)   # the last: a name without its bracket
     names.pop("", None)
-    return Expected(conds, {c.id: c.kind for c in L.model.components}, conns, ctx, source_digest(cfg),
+    gnd = {c.id for c in L.model.components if any(b.raw == c.raw and b.function_class == "GND" for b in L.model.buses)}
+    return Expected(conds, {c.id: c.kind for c in L.model.components}, conns, ctx, source_digest(cfg), gnd,
                     {c.id: c.name or c.id for c in L.model.components}, sorted(names.items(), key=lambda kv: -len(kv[0])))

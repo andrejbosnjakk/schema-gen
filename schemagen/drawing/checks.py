@@ -247,6 +247,52 @@ def dot_touch(g: Geometry, tol: float = 1.2) -> list[Finding]:
     return out
 
 
+def label_present(g: Geometry) -> list[Finding]:
+    """A wire that has no label text (a text of role `wire` with the wire's model) on its sheet (not in CHECKS: the overview asks for it)."""
+    out: list[Finding] = []
+    for sh in g["sheets"]:
+        have = {t.get("model") for t in sh.get("texts", []) if t.get("role") == "wire"}
+        out += [_f("label_present", sh, [w["id"]], f"wire {w['id']} has no label") for w in sh.get("wires", []) if w.get("model") not in have]
+    return out
+
+
+def _labels(sh: Any) -> list[Any]:
+    """The wire labels of a sheet as boxes: the lines of a label stacked on two lines are one label."""
+    out: list[Any] = []
+    for t in sorted((t for t in sh.get("texts", []) if t.get("role") == "wire"), key=lambda t: (t.get("model", ""), t["y"], t["x"])):
+        for u in out:
+            if u["model"] == t.get("model") and 0 <= t["y"] - (u["y"] + u["h"]) < 2.0 and t["x"] < u["x"] + u["w"] and u["x"] < t["x"] + t["w"]:
+                x0, x1 = min(u["x"], t["x"]), max(u["x"] + u["w"], t["x"] + t["w"])
+                u.update(x=x0, w=x1 - x0, h=t["y"] + t["h"] - u["y"], s=u["s"] + " " + t["s"])
+                break
+        else: out.append(dict(t))
+    return out
+
+
+def label_adjacent(g: Geometry, near: float = 2.0, apart: float = 30.0) -> list[Finding]:
+    """A wire label must sit next to its own wire and to no other: within `near` mm of its box there is a segment of its own wire and none of another wire;
+    and two labels of one wire are at least `apart` mm apart (not the same label twice side by side). Not in CHECKS: the overview asks for it."""
+    out: list[Finding] = []
+    for sh in g["sheets"]:
+        segs = _segs(sh)
+        grid = _Grid(10.0)
+        for k, sg in enumerate(segs): grid.add(k, *sg[2:])
+        mine: dict[str, list[Any]] = defaultdict(list)
+        for t in _labels(sh):
+            x0, y0, x1, y1 = _box(t)
+            hit = {segs[k][0]["id"]: segs[k][0] for k in grid.near(x0 - near, y0 - near, x1 + near, y1 + near)
+                   if segs[k][2] < x1 + near and x0 - near < segs[k][4] and segs[k][3] < y1 + near and y0 - near < segs[k][5]}
+            own = [i for i, w in hit.items() if w["model"] == t.get("model")]
+            foreign = sorted(i for i, w in hit.items() if w["model"] != t.get("model"))
+            if foreign: out.append(_f("label_adjacent", sh, [t.get("s", ""), *foreign], f"label {t.get('s')!r} is next to another wire ({', '.join(foreign)})"))
+            if not own: out.append(_f("label_adjacent", sh, [t.get("s", "")], f"label {t.get('s')!r} is not next to its own wire"))
+            for u in mine[t.get("model", "")]:
+                if abs((u["x"] + u["w"] / 2) - (t["x"] + t["w"] / 2)) < apart and abs(u["y"] - t["y"]) < apart:
+                    out.append(_f("label_adjacent", sh, [t.get("s", "")], f"label {t.get('s')!r} is printed twice side by side"))
+            mine[t.get("model", "")].append(t)
+    return out
+
+
 def out_of_sheet(g: Geometry) -> list[Finding]:
     """Wire points, symbols, flags and texts outside the sheet's w_mm x h_mm."""
     out: list[Finding] = []

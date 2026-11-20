@@ -34,7 +34,9 @@ def layers(sh: dict[str, Any]) -> Iterator[Layer]:
         pr, tx = flag_shapes(f)
         yield "prims", f["model"], pr
         for t in tx: yield "text", f["model"], t
-    for t in [*sh.get("texts", []), *sh.get("notes", [])]: yield "text", t["model"], t
+    for t in [*sh.get("texts", []), *sh.get("notes", [])]:
+        if t.get("inline"): yield "prims", t["model"], [dict(kind="line", stroke="normal", white=True, width=t["h"] + 0.8, x1=t["x"] - 0.5, y1=t["y"] + t["h"] / 2, x2=t["x"] + t["w"] + 0.5, y2=t["y"] + t["h"] / 2)]  # noqa: E501
+        yield "text", t["model"], t
 
 
 def casing(w: dict[str, Any], colour: bool = True) -> float:
@@ -62,6 +64,7 @@ def _style(p: dict[str, Any]) -> str:
 
 def _prim(p: dict[str, Any]) -> str:
     k = p["kind"]
+    if p.get("white"): return f'<line x1="{num(p["x1"])}" y1="{num(p["y1"])}" x2="{num(p["x2"])}" y2="{num(p["y2"])}" stroke="#fff" stroke-width="{num(p["width"])}"/>'
     if k == "line": return f'<line x1="{num(p["x1"])}" y1="{num(p["y1"])}" x2="{num(p["x2"])}" y2="{num(p["y2"])}"{_style(p)}/>'
     if k == "rect": return f'<rect x="{num(p["x"])}" y="{num(p["y"])}" width="{num(p["w"])}" height="{num(p["h"])}"{_style(p)}/>'
     if k == "circle": return f'<circle cx="{num(p["cx"])}" cy="{num(p["cy"])}" r="{num(p["r"])}"{_style(p)}/>'

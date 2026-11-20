@@ -28,13 +28,13 @@ def _hit_seg(b: tuple[float, float, float, float], a: tuple[float, float], z: tu
     return False
 
 
-def findings(ob: SheetObs) -> list[dict[str, Any]]:
-    """Legibility findings of one sheet: dicts with `kind` and a short `msg`."""
+def findings(ob: SheetObs, actual: bool = False) -> list[dict[str, Any]]:
+    """Legibility findings of one sheet: dicts with `kind` and a short `msg`. `actual`: the letter size is judged on the sheet as it is (a sheet of any size), not scaled to A3."""
     out: list[dict[str, Any]] = []
     pg = ob.page
     fx0, fy0, fx1, fy1 = ob.frame
     sy0 = ob.strip[1]
-    scale = A3_W / max(pg.w, pg.h * 420 / 297) if pg.w else 1.0
+    scale = 1.0 if actual or not pg.w else A3_W / max(pg.w, pg.h * 420 / 297)
     tb = ob.table
     owned = {id(r): j for j, w in enumerate(ob.wires) for r in w.label_runs}
     runs = pg.runs

@@ -116,6 +116,7 @@ def _classify(sh: Sheet, paths: list[dict[str, Any]]) -> None:
     """Wires are pairs of identical open paths, a black one 0.4 mm wider than the coloured one; closed paths are dots (small, black),
     outlines (white fill) or boxes (no fill); the rest are plain segments."""
     groups: dict[Any, list[dict[str, Any]]] = {}
+    paths = [q for q in paths if not (q["stroke"] == (1.0, 1.0, 1.0) and q["fill"] is None)]    # white ink is not seen (the backing of a label on its wire)
     for q in paths:
         closed = len(q["pts"]) > 2 and q["pts"][0] == q["pts"][-1]
         q["closed"] = closed

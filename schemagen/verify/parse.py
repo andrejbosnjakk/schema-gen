@@ -243,6 +243,24 @@ def _wire_under(r: Run, wires: list[Any]) -> int | None:
             ov = min(max(a[0], b[0]), r.x1) - max(min(a[0], b[0]), r.x0)
             d = a[1] - r.bot
             if ov > 0.4 * (r.x1 - r.x0) and -0.8 <= d <= 1.8 and abs(d) < bd: best, bd = j, abs(d)
+    return best if best is not None else _wire_beside(r, wires)
+
+
+def _wire_beside(r: Run, wires: list[Any]) -> int | None:
+    """A label that is not above a wire is just below a horizontal stretch or just beside a vertical one (the overview puts it there where wires run close)."""
+    best, bd = None, 1e9
+    for j, w in enumerate(wires):
+        for a, b in zip(w.pts, w.pts[1:]):
+            if abs(a[1] - b[1]) <= TOL:
+                ov = min(max(a[0], b[0]), r.x1) - max(min(a[0], b[0]), r.x0)
+                d = r.top - a[1]
+                if ov > 0.4 * (r.x1 - r.x0) and -0.8 <= d <= 1.8 and abs(d) < bd: best, bd = j, abs(d)
+                d = abs(a[1] - r.cy)                                   # the label sits on its own wire (on a white backing)
+                if ov >= 0.95 * (r.x1 - r.x0) and d <= 0.8 and d < bd: best, bd = j, d
+            elif abs(a[0] - b[0]) <= TOL:
+                ov = min(max(a[1], b[1]), r.bot) - max(min(a[1], b[1]), r.top)
+                d = max(r.x0 - a[0], a[0] - r.x1)
+                if ov > 0.5 * (r.bot - r.top) and 0.2 <= d <= 2.6 and d < bd: best, bd = j, d
     return best
 
 

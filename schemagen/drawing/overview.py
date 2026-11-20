@@ -33,9 +33,11 @@ INLINE = ("breaker", "fuse", "switch", "relay", "battery", "terminator", "coil")
 Elem = dict[str, Any]
 Edge = tuple[Elem, str, str, str, str]       # (wire, node u, key at u, node v, key at v)
 LONG, EVERY = 150.0, 300.0                   # a wire longer than LONG carries its label at both ends and every ~EVERY mm
-BEND, CROSS = 2, 3                           # prices of a bend and of a crossing in cells of wire
+BEND, CROSS, ADJ = 2, 3, 0                   # prices of a bend, of a crossing and of a cell next to a parallel wire (room for labels between wires) in cells of wire
 BUDGET = 40000000                            # cells the search may look at in all (about 10 s); after that wires are routed without regard to each other
 HW = 1.0                                     # weight of the heuristic in the search: a little longer wires, far fewer cells looked at
+PITCH = 10.0                                 # distance between the taps of a harness connector: room for a label between two wires that leave it side by side
+POCKET = 40                                  # a pin whose free neighbourhood is smaller than this many cells cannot be reached
 MARK = 5.0                                   # length of the ground mark (lead excluded)
 
 
@@ -117,16 +119,16 @@ def _bar(it: Elem, x: float, y: float, taps: list[Elem]) -> tuple[Elem, list[Any
         rs = [t for t in taps if t["pin"] == pin and t["side"] == "R"]
         rows += [(ls[i] if i < len(ls) else None, rs[i] if i < len(rs) else None) for i in range(max(len(ls), len(rs)))]
     for i, (t, r) in enumerate(hd): B.text(t, half, 3.75 + 5 * i, "centre", r)
-    if rows: B.line(half, y0 - 2.5, half, y0 + 5 * (len(rows) - 1) + 2.5)
+    if rows: B.line(half, y0 - 2.5, half, y0 + PITCH * (len(rows) - 1) + 2.5)
     for i, row in enumerate(rows):
-        yy = y0 + 5 * i
+        yy = y0 + PITCH * i
         for tp in row:
             if tp is None: continue
             L = tp["side"] == "L"
             B.line(half, yy, 0 if L else 2 * half, yy)
             B.text(tp["text"], half - 1.5 if L else half + 1.5, yy - 2.5, "right" if L else "left", "pin", model=tp["model"])
             B.anchor(tp["id"], 0 if L else 2 * half, yy, tp["side"], tp["model"])
-    return dict(id=it["id"], kind="harness", model=it["model"], x=x, y=y, w=2 * half, h=ceil_to(y0 + 5 * max(0, len(rows) - 1) + 2.5), anchors=B.anchors, prims=B.prims), B.texts  # noqa: E501
+    return dict(id=it["id"], kind="harness", model=it["model"], x=x, y=y, w=2 * half, h=ceil_to(y0 + PITCH * max(0, len(rows) - 1) + 2.5), anchors=B.anchors, prims=B.prims), B.texts  # noqa: E501
 
 
 class Env:
@@ -274,11 +276,23 @@ class Grid:
         for iy in range(round((y0 - s.y0) / GRID) + 1, round((y1 - s.y0) / GRID) + 2):
             for ix in range(round((x0 - s.x0) / GRID) + 1, round((x1 - s.x0) / GRID) + 2): s.blk[iy * s.W + ix] = 1
 
+    def sealed(s, c: int, me: int, res: list[int]) -> bool:
+        """The cell lies in a pocket of fewer than POCKET free cells (symbols and the pin reservations of other wires close it): no wire gets out of it."""
+        blk, W = s.blk, s.W
+        seen = {c}
+        todo = [c]
+        while todo and len(seen) < POCKET:
+            u = todo.pop()
+            for v in (u + 1, u - 1, u + W, u - W):
+                if v not in seen and not blk[v] and res[v] in (0, me): seen.add(v); todo.append(v)
+        return len(seen) < POCKET
+
     def route(s, wid: str, start: int, d0: int, goal: int, dg: int, margin: int, strict: bool = True, cap: int = 1500000) -> list[tuple[int, int]] | None:
         """Cells (with the direction of travel) from `start` (leaving in d0) to `goal` (arriving in dg); None when there is no way inside the window."""
         W, blk, occ, res, delta = s.W, s.blk, s.occ, s.res if strict else s.res1, s.delta
         res2 = s.res2 if strict else s.nores
         me = s.ids.setdefault(wid, len(s.ids) + 1)
+        if s.sealed(start, me, res) or s.sealed(goal, me, res): return None          # a search would only look at the whole window to find that out
         sx, sy, gx, gy = start % W, start // W, goal % W, goal // W
         lo_x, hi_x, lo_y, hi_y = min(sx, gx) - margin, max(sx, gx) + margin, min(sy, gy) - margin, max(sy, gy) + margin
         g0 = {start * 4 + d0: 0}
@@ -302,9 +316,9 @@ class Grid:
             c2 = c + delta[d]
             if not blk[c2] and res[c2] in (0, me) and (d > 1 or res2[c2] in (0, me)) and lo_x <= c2 % W <= hi_x and lo_y <= c2 // W <= hi_y:
                 b = occ[c2]
-                if d < 2: ok, cross = not (b & 5), b & 2
-                else: ok, cross = not (b & 6), b & 1
-                if ok: nxt.append((c2 * 4 + d, 1 + (CROSS if cross else 0)))
+                if d < 2: ok, cross, adj = not (b & 5), b & 2, (occ[c2 + W] | occ[c2 - W]) & 1
+                else: ok, cross, adj = not (b & 6), b & 1, (occ[c2 + 1] | occ[c2 - 1]) & 2
+                if ok: nxt.append((c2 * 4 + d, 1 + (CROSS if cross else 0) + (ADJ if adj else 0)))
             if not occ[c] and res[c] in (0, me) and res2[c] in (0, me):     # turn here: a free cell only
                 for nd in ((2, 3) if d < 2 else (0, 1)): nxt.append((c * 4 + nd, BEND))
             for st2, cost in nxt:
@@ -368,6 +382,11 @@ class Grid:
                 if n == 0: break
         return (best[0], make(best[1])) if best else None
 
+    def adjacent(s, path: list[tuple[int, int]]) -> int:
+        """Cells of the path next to a wire that runs parallel to it (5 mm apart): there is no room between the two for a label."""
+        occ, W = s.occ, s.W
+        return sum(bool((occ[c + W] | occ[c - W]) & 1 if d < 2 else (occ[c + 1] | occ[c - 1]) & 2) for c, d in path)
+
     def take(s, wid: str, path: list[tuple[int, int]]) -> None:
         s.paths[wid] = [c for c, _ in path]
         for k, (c, d) in enumerate(path):
@@ -422,9 +441,9 @@ def _page(sc: Any, kind: str, title: str, meta: dict[str, str], pn: int, of: int
     owner = {p["anchor"]: iid for iid, i in its.items() for b in i["blocks"] for p in b["pins"]} | {p["anchor"]: g["id"] for g in sc["items"] if g["id"] in gnd for b in g["blocks"] for p in b["pins"]}  # noqa: E501
     wires = [dict(w, dash=w["cls"].startswith("CAN")) for w in sel if not (owner[w["a"]] in gnd and owner[w["b"]] in gnd)]
     if not wires:
-        empty: dict[str, Any] = dict(n=pn, of=of, size="330x85", w_mm=330.0, h_mm=85.0, grid_mm=5.0, symbols=[], wires=[], texts=[], flags=[], rules=[],
+        empty: dict[str, Any] = dict(n=pn, of=of, size="330x200", w_mm=330.0, h_mm=200.0, grid_mm=5.0, symbols=[], wires=[], texts=[], flags=[], rules=[],
                                      table=dict(sheet=pn, rows=[]))
-        empty.update(S.furniture(info, "330x85", pn, of, [], ["The wire list has no conductors of this kind."]))
+        empty.update(S.furniture(info, "330x200", pn, of, [], ["The wire list has no conductors of this kind."]))
         return dict(empty, late=0, unlabeled=0), info
     cnt: dict[str, int] = defaultdict(int)
     for w in wires:
@@ -577,7 +596,7 @@ def _page(sc: Any, kind: str, title: str, meta: dict[str, str], pn: int, of: int
             cb = grid.cell(bx + (GRID if sb == "R" else -GRID), by)
             da, db = d_out[sa], d_out[sb] ^ 1               # leave a in its side's direction; arrive at b moving towards its anchor
             path, pr = None, grid.probe(w["id"], ca, da, cb, db)
-            if pr and pr[0] <= 8: path = pr[1]
+            if pr and pr[0] <= 8 and grid.adjacent(pr[1]) <= 4: path = pr[1]
             for strict, margin, cap in (() if path or grid.spent > BUDGET else ((True, 10, 100), (True, 30, 150), (True, 80, 200), (False, 80, 200), (False, 10000, 200))):  # noqa: E501
                 path = grid.route(w["id"], ca, da, cb, db, margin, strict, cap * (1 + 6 * tries[w["id"]]) * (abs(ca % grid.W - cb % grid.W) + abs(ca // grid.W - cb // grid.W) + 30))  # noqa: E501
                 if path: break
@@ -641,9 +660,9 @@ def _page(sc: Any, kind: str, title: str, meta: dict[str, str], pn: int, of: int
             if "points" in q: q["points"] = [[px + dx, py + dy] for px, py in q["points"]]
     for t in texts: t["x"] += dx; t["y"] += dy
     for w in out: w["points"] = [[p[0] + dx, p[1] + dy] for p in w["points"]]
-    unlabeled = _labels(syms, out, texts)
     W = max(330.0, ceil_to(max(xs) - min(xs) + 2 * (MARGIN + PAD)))
     H = ceil_to(max(ys) - min(ys) + 2 * (MARGIN + PAD) + STRIP_H)
+    unlabeled = _labels(syms, out, texts, (MARGIN + 1, MARGIN + 1, W - MARGIN - 1, H - STRIP_H - 1))
     size = f"{W:g}x{H:g}"
     notes = [f"{len(out)} wires, each drawn once with label, gauge (AWG) and colour code; dashed wires are CAN.",
              "A ground mark at the end of a short stub is that wire's end on the ground bus. Parts wired together are placed next to each other."]
@@ -676,9 +695,14 @@ def _ground_mark(x: float, y: float, wid: str, ref: str, side: str) -> Elem:
     return dict(id=f"ground:{wid}", kind="ground", model=ref, x=bx, y=y - 2.5, w=MARK, h=5.0, anchors=[dict(id=f"{ref}#{wid}", model=ref, x=x, y=y, side="L" if side == "R" else "R")], prims=pr)  # noqa: E501
 
 
-def _labels(syms: list[Any], wires: list[Any], texts: list[Any]) -> int:
-    """Puts every wire's label (`L01 22 AWG RD`) above a free stretch of the wire, at both ends of a long wire and about every EVERY mm in between; a label
-    that finds no stretch is stacked on two lines, or put below. Appends the texts; returns the number of wires that got none."""
+NEAR = 2.3                                   # a label keeps this far from every wire that is not its own, so it reads as belonging to one wire only
+APART = 40.0                                 # two labels of one wire are at least this far apart
+
+
+def _labels(syms: list[Any], wires: list[Any], texts: list[Any], bounds: tuple[float, float, float, float]) -> int:
+    """Puts every wire's label (`L01 22 AWG RD`) next to its own wire: above (or below) a free horizontal stretch, else beside a vertical one; at both ends of a
+    long wire and about every EVERY mm in between. A label that finds no place is stacked on two lines first. Never within NEAR mm of another wire.
+    Appends the texts; returns the number of wires that got none."""
     segs: list[tuple[int, float, float, float, float]] = []      # (wire index, x0, y0, x1, y1) normalised
     for k, w in enumerate(wires):
         p = w["points"]
@@ -699,32 +723,36 @@ def _labels(syms: list[Any], wires: list[Any], texts: list[Any]) -> int:
     for t in texts: put("box", (t["x"], t["y"], t["x"] + t["w"], t["y"] + t["h"]), t["x"], t["y"], t["x"] + t["w"], t["y"] + t["h"])
     for c in cross: put("cross", c, c[0], c[1], c[0], c[1])
 
-    def free(k: int, bx0: float, by0: float, bx1: float, by1: float) -> bool:
+    def free(k: int, bx0: float, by0: float, bx1: float, by1: float, inline: bool = False) -> bool:
         seen: set[int] = set()
-        for i in range(int((bx0 - 3) // cell), int((bx1 + 3) // cell) + 1):
-            for j in range(int((by0 - 3) // cell), int((by1 + 3) // cell) + 1):
+        m = 3.1
+        for i in range(int((bx0 - m) // cell), int((bx1 + m) // cell) + 1):
+            for j in range(int((by0 - m) // cell), int((by1 + m) // cell) + 1):
                 for kind, it in buckets.get((i, j), ()):
                     if id(it) in seen: continue
                     seen.add(id(it))
                     if kind == "box":
                         if it[0] < bx1 + 0.3 and bx0 < it[2] + 0.3 and it[1] < by1 + 0.3 and by0 < it[3] + 0.3: return False
                     elif kind == "seg":
-                        if it[0] == k and False: continue
-                        if it[1] < bx1 + 0.3 and bx0 < it[3] + 0.3 and it[2] < by1 + 0.3 and by0 < it[4] + 0.3 and not (it[0] == k and it[2] == it[4] and it[2] >= by1 - 0.3 and it[2] <= by1 + 0.6): return False  # noqa: E501
+                        if it[0] == k:      # its own wire: not through the label (the wire it sits on, under it, is fine)
+                            if it[1] < bx1 + 0.3 and bx0 < it[3] + 0.3 and it[2] < by1 + 0.3 and by0 < it[4] + 0.3 and not (it[2] == it[4] and (by1 - 0.3 <= it[2] <= by1 + 2.0 or by0 - 2.0 <= it[2] <= by0 + 0.3 or inline and by0 < it[2] < by1)): return False  # noqa: E501
+                        elif it[1] < bx1 + NEAR and bx0 - NEAR < it[3] and it[2] < by1 + NEAR and by0 - NEAR < it[4]: return False
                     elif bx0 - 3 < it[0] < bx1 + 3 and by0 - 3 < it[1] < by1 + 3: return False
         return True
     unlabeled = 0
     new: list[Any] = []
+    at: dict[int, list[tuple[float, float]]] = defaultdict(list)      # wire index -> centres of its labels so far
 
-    def add(k: int, lines: list[str], x: float, y: float, below: bool) -> bool:
-        """The lines stacked above (or below) the horizontal stretch at y, the first line at x."""
-        ts = []
-        for r, ln in enumerate(lines):
-            cy = y - 2.5 - 4.5 * (len(lines) - 1 - r) if not below else y + 2.5 + 4.5 * r
-            ts.append(S.text(ln, x, cy, "left", "wire", model=wires[k]["model"]))
+    def add(k: int, ts: list[Any], inline: bool = False) -> bool:
         bx0, by0 = min(t["x"] for t in ts), min(t["y"] for t in ts)
         bx1, by1 = max(t["x"] + t["w"] for t in ts), max(t["y"] + t["h"] for t in ts)
-        if not free(k, bx0, by0, bx1, by1): return False
+        cx, cy = (bx0 + bx1) / 2, (by0 + by1) / 2
+        if bx0 < bounds[0] or by0 < bounds[1] or bx1 > bounds[2] or by1 > bounds[3]: return False
+        if any(abs(cx - x) < APART and abs(cy - y) < APART for x, y in at[k]): return False
+        if not free(k, bx0, by0, bx1, by1, inline): return False
+        at[k].append((cx, cy))
+        if inline:
+            for t in ts: t["inline"] = True   # type: ignore[typeddict-unknown-key]
         for t in ts:
             new.append(t); put("box", (t["x"], t["y"], t["x"] + t["w"], t["y"] + t["h"]), t["x"], t["y"], t["x"] + t["w"], t["y"] + t["h"])
         return True
@@ -732,29 +760,48 @@ def _labels(syms: list[Any], wires: list[Any], texts: list[Any]) -> int:
         lab = R.label_text(w)
         words = lab.split(" ", 1)
         two = [words[0], words[1]] if len(words) == 2 else [lab]
+        three = [words[0], *words[1].rsplit(" ", 1)] if len(words) == 2 and " " in words[1] else two
         pts = w["points"]
         length = sum(abs(a[0] - b[0]) + abs(a[1] - b[1]) for a, b in zip(pts, pts[1:]))
         n_lab = 1 if length <= LONG else max(2, round(length / EVERY) + 1)
         targets = [length * i / (n_lab - 1) if n_lab > 1 else 0.0 for i in range(n_lab)]
-        runs, run0 = [], 0.0                                # horizontal stretches: (arc start, x0, x1, y, increasing)
+        runs, vruns, run0 = [], [], 0.0                     # horizontal stretches: (arc start, x0, x1, y, increasing); vertical: (arc start, y0, y1, x, increasing)
         for a, b in zip(pts, pts[1:]):
             if a[1] == b[1] and a[0] != b[0]: runs.append((run0, min(a[0], b[0]), max(a[0], b[0]), a[1], b[0] > a[0]))
+            if a[0] == b[0] and a[1] != b[1]: vruns.append((run0, min(a[1], b[1]), max(a[1], b[1]), a[0], b[1] > a[1]))
             run0 += abs(a[0] - b[0]) + abs(a[1] - b[1])
         got = 0
         for ti, t in enumerate(targets):
             done = False
-            for lines, below in (([lab], False), (two, False), ([lab], True), (two, True)):
+            for lines, below, vert in (([lab], False, False), (two, False, False), ([lab], True, False), (two, True, False), ([lab], False, True), (two, False, True), (three, False, True),
+                                      (three, False, False), (three, True, False), ([lab], False, None)):
                 tw = max(text_w(ln, SIZE) for ln in lines)
-                cand = []
-                for arc0, x0, x1, y, inc in runs:
-                    if x1 - x0 < 10: continue
-                    need = min(0.5 * tw, x1 - x0)                # the label overlaps its stretch by this much, the rest may overhang the end
-                    xx = x0 - tw + need
-                    while xx <= x1 - need + 1e-6:
-                        mid = (xx + tw / 2 - x0) if inc else (x1 - xx - tw / 2)
-                        cand.append((abs(arc0 + mid - t) + (0.0 if x0 <= xx and xx + tw <= x1 else 30.0), xx, y)); xx += 2.5
-                for _, xx, y in sorted(cand):
-                    if add(k, lines, xx, y, below): done = True; break
+                cand: list[tuple[float, str, float, float]] = []
+                if vert is not True:
+                    for arc0, x0, x1, y, inc in runs:
+                        if x1 - x0 < (10 if vert is False else tw + 2): continue
+                        need = min(0.5 * tw, x1 - x0)                # the label overlaps its stretch by this much, the rest may overhang the end
+                        xx = x0 - tw + need if vert is False else x0 + 1.0
+                        while xx <= (x1 - need if vert is False else x1 - tw - 1.0) + 1e-6:
+                            mid = (xx + tw / 2 - x0) if inc else (x1 - xx - tw / 2)
+                            cand.append((abs(arc0 + mid - t) + (0.0 if x0 <= xx and xx + tw <= x1 else 30.0), "h" if vert is False else "i", xx, y)); xx += 2.5
+                else:
+                    for arc0, y0, y1, x, inc in vruns:
+                        if y1 - y0 < 5: continue
+                        yy = y0 + 2.5
+                        while yy <= y1 - 2.5 + 1e-6:
+                            mid = (yy - y0) if inc else (y1 - yy)
+                            for side in ("R", "L"):
+                                cand.append((abs(arc0 + mid - t) + 10.0, side, x, yy))
+                            yy += 2.5
+                for _, kd, ax, ay in sorted(cand, key=lambda c: c[0]):
+                    if kd == "i": ts = [S.text(lab, ax, ay, "left", "wire", model=w["model"])]
+                    elif kd == "h":
+                        ts = [S.text(ln, ax, ay - 2.5 - 4.5 * (len(lines) - 1 - r) if not below else ay + 2.5 + 4.5 * r, "left", "wire", model=w["model"]) for r, ln in enumerate(lines)]
+                    else:
+                        ts = [S.text(ln, ax + 1.8 if kd == "R" else ax - 1.8, ay + 4.5 * (r - (len(lines) - 1) / 2), "left" if kd == "R" else "right", "wire", model=w["model"])
+                              for r, ln in enumerate(lines)]
+                    if add(k, ts, kd == "i"): done = True; break
                 if done: break
             got += done
             if not done and ti == 0: break

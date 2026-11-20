@@ -51,6 +51,10 @@ def _page(c: Canvas, sh: dict[str, Any], fonts: tuple[str, str]) -> None:
     def prim(p: dict[str, Any]) -> None:
         k, st, fill = p["kind"], p.get("stroke", "normal"), FILL.get(p.get("fill", "none"))
         sk = None if st == "none" else "k"
+        if p.get("white"):    # the backing of a label that sits on its own wire
+            c.setStrokeColorRGB(1, 1, 1)
+            path([(p["x1"], p["y1"]), (p["x2"], p["y2"])], False, None, "k", p["width"])
+            return
         c.setStrokeColorRGB(0, 0, 0)
         w = LINE.get(st, 0.35)
         if k == "line": path([(p["x1"], p["y1"]), (p["x2"], p["y2"])], False, None, sk, w, p.get("dash", False))
