@@ -4,6 +4,11 @@
 
 Reliable drawings. A preview for trying the app; the drawings are a review draft, not a wiring set.
 
+- The overview is one PDF of three pages made by one engine: power distribution, CAN network, all wires (Export > Overview,
+  `overview.pdf`; Wiring diagrams writes it too). Every wire carries its label next to its own wire and no other; a breaker
+  terminal that has no wire says `LINE: not in wire list` instead of drawing a stub. `check-drawings` reads `overview.pdf` page by
+  page against the wire list. Known: in dense bundles a few wires (the fixture's jumper; 30 of 800 on the real project) find
+  no room for their label.
 - Export runs as a background job: progress bar, Cancel, the folder opens when done. One drawing that fails is listed
   and the rest complete; drawings stream to disk instead of being held in memory.
 - `schemagen check-drawings <project> <pdf folder>`: an independent verifier that reads the PDFs back (no drawing-engine

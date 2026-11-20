@@ -107,7 +107,7 @@ def test_failed_drawings_are_listed_and_the_rest_is_written(client, monkeypatch)
     monkeypatch.setattr(diagrams, "draw", draw)
     j = run_export(c, kind="drawings").json()
     assert "EC4" not in j["failed"] and "EC3" in j["failed"] and len(j["failed"]) >= 150
-    assert "wiring-diagrams.pdf" in j["files"] and "drawings/component-EC4.pdf" in j["files"] and len(j["files"]) == 2
+    assert "wiring-diagrams.pdf" in j["files"] and "drawings/component-EC4.pdf" in j["files"] and "overview.pdf" in j["files"] and len(j["files"]) == 3
 
 
 def test_overview_export_writes_three_pages(tmp_path):

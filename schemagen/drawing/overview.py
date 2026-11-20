@@ -35,6 +35,7 @@ Edge = tuple[Elem, str, str, str, str]       # (wire, node u, key at u, node v, 
 LONG, EVERY = 150.0, 300.0                   # a wire longer than LONG carries its label at both ends and every ~EVERY mm
 BEND, CROSS, ADJ = 2, 3, 0                   # prices of a bend, of a crossing and of a cell next to a parallel wire (room for labels between wires) in cells of wire
 BUDGET = 40000000                            # cells the search may look at in all (about 10 s); after that wires are routed without regard to each other
+G = (1 << 24) - 1                            # the heap key holds g as G - g
 HW = 1.0                                     # weight of the heuristic in the search: a little longer wires, far fewer cells looked at
 PITCH = 10.0                                 # distance between the taps of a harness connector: room for a label between two wires that leave it side by side
 RETRY = 150                                  # a page of at most this many wires gets a retry with more room between the parts when a wire found no room for its label  # noqa: E501
@@ -266,6 +267,8 @@ class Grid:
         for ix in range(s.W): s.blk[ix] = s.blk[(s.H - 1) * s.W + ix] = 1
         for iy in range(s.H): s.blk[iy * s.W] = s.blk[iy * s.W + s.W - 1] = 1
         s.delta = (1, -1, s.W, -s.W)                # E W S N
+        s.cx = [c % s.W for c in range(s.W * s.H)]  # column and row of every cell
+        s.cy = [c // s.W for c in range(s.W * s.H)]
 
     def cell(s, x: float, y: float) -> int:
         return (round((y - s.y0) / GRID) + 1) * s.W + round((x - s.x0) / GRID) + 1
@@ -296,15 +299,21 @@ class Grid:
         if s.sealed(start, me, res) or s.sealed(goal, me, res): return None          # a search would only look at the whole window to find that out
         sx, sy, gx, gy = start % W, start // W, goal % W, goal // W
         lo_x, hi_x, lo_y, hi_y = min(sx, gx) - margin, max(sx, gx) + margin, min(sy, gy) - margin, max(sy, gy) + margin
+        if not hasattr(s, "cx"): s.cx, s.cy = [c % W for c in range(W * s.H)], [c // W for c in range(W * s.H)]
+        cx, cy = s.cx, s.cy
+        hx = [abs(x - gx) for x in range(W)]                # the distance to the goal by column and by row: no division in the loop
+        hy = [abs(y - gy) for y in range(s.H)]
         g0 = {start * 4 + d0: 0}
-        heap = [(HW * (abs(sx - gx) + abs(sy - gy)), 0, start * 4 + d0)]
+        heap = [((hx[sx] + hy[sy]) << 48 | G << 24 | start * 4 + d0)]       # f, then deeper first (larger g), then the state: one integer, the order of the tuples before  # noqa: E501
         came: dict[int, int] = {}
         goal_state = goal * 4 + dg
         n = 0
+        pop, push, get = heapq.heappop, heapq.heappush, g0.get
         while heap:
-            f, ng, st = heapq.heappop(heap)
-            g = -ng
-            if g > g0.get(st, 1 << 30): continue
+            key = pop(heap)
+            st = key & 0xFFFFFF
+            g = G - (key >> 24 & 0xFFFFFF)
+            if g > get(st, 1 << 30): continue
             if st == goal_state:
                 path = [st]
                 while path[-1] in came: path.append(came[path[-1]])
@@ -313,21 +322,23 @@ class Grid:
             n += 1
             if n > cap: s.spent += n; return None
             c, d = st >> 2, st & 3
-            nxt = []
             c2 = c + delta[d]
-            if not blk[c2] and res[c2] in (0, me) and (d > 1 or res2[c2] in (0, me)) and lo_x <= c2 % W <= hi_x and lo_y <= c2 // W <= hi_y:
+            if not blk[c2] and res[c2] in (0, me) and (d > 1 or res2[c2] in (0, me)) and lo_x <= cx[c2] <= hi_x and lo_y <= cy[c2] <= hi_y:
                 b = occ[c2]
-                if d < 2: ok, cross, adj = not (b & 5), b & 2, (occ[c2 + W] | occ[c2 - W]) & 1
-                else: ok, cross, adj = not (b & 6), b & 1, (occ[c2 + 1] | occ[c2 - 1]) & 2
-                if ok: nxt.append((c2 * 4 + d, 1 + (CROSS if cross else 0) + (ADJ if adj else 0)))
+                if d < 2: ok, cost = not (b & 5), 1 + (CROSS if b & 2 else 0) + (ADJ if (occ[c2 + W] | occ[c2 - W]) & 1 else 0)
+                else: ok, cost = not (b & 6), 1 + (CROSS if b & 1 else 0) + (ADJ if (occ[c2 + 1] | occ[c2 - 1]) & 2 else 0)
+                if ok:
+                    st2, g2 = c2 * 4 + d, g + cost
+                    if g2 < get(st2, 1 << 30):
+                        g0[st2] = g2; came[st2] = st
+                        push(heap, (g2 + hx[cx[c2]] + hy[cy[c2]]) << 48 | (G - g2) << 24 | st2)
             if not occ[c] and res[c] in (0, me) and res2[c] in (0, me):     # turn here: a free cell only
-                for nd in ((2, 3) if d < 2 else (0, 1)): nxt.append((c * 4 + nd, BEND))
-            for st2, cost in nxt:
-                g2 = g + cost
-                if g2 < g0.get(st2, 1 << 30):
-                    g0[st2] = g2; came[st2] = st
-                    q = st2 >> 2
-                    heapq.heappush(heap, (g2 + HW * (abs(q % W - gx) + abs(q // W - gy)), -g2, st2))
+                g2, f = g + BEND, g + BEND + hx[cx[c]] + hy[cy[c]]
+                for nd in ((2, 3) if d < 2 else (0, 1)):
+                    st2 = c * 4 + nd
+                    if g2 < get(st2, 1 << 30):
+                        g0[st2] = g2; came[st2] = st
+                        push(heap, f << 48 | (G - g2) << 24 | st2)
         s.spent += n
         return None
 
@@ -598,7 +609,7 @@ def _page(sc: Any, kind: str, title: str, meta: dict[str, str], pn: int, of: int
             da, db = d_out[sa], d_out[sb] ^ 1               # leave a in its side's direction; arrive at b moving towards its anchor
             path, pr = None, grid.probe(w["id"], ca, da, cb, db)
             if pr and pr[0] <= 8 and grid.adjacent(pr[1]) <= 4: path = pr[1]
-            for strict, margin, cap in (() if path or grid.spent > BUDGET else ((True, 10, 100), (True, 30, 150), (True, 80, 200), (False, 80, 200), (False, 10000, 200))):  # noqa: E501
+            for strict, margin, cap in (() if path or grid.spent > BUDGET else ((True, 10, 100), (True, 80, 120), (False, 80, 200), (False, 10000, 200))):  # noqa: E501
                 path = grid.route(w["id"], ca, da, cb, db, margin, strict, cap * (1 + 6 * tries[w["id"]]) * (abs(ca % grid.W - cb % grid.W) + abs(ca // grid.W - cb // grid.W) + 30))  # noqa: E501
                 if path: break
             if path is None and pr: path = pr[1]
