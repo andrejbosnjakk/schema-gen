@@ -223,6 +223,14 @@ def _spread(ns: list[Node], pads: list[float], P: np.ndarray, gap: float, rounds
         if snap: P[:] = np.round(P / GRID) * GRID
 
 
+def _overlap(ns: list[Node]) -> bool:
+    """Two boxes (with their ground stubs) overlap."""
+    L = np.array([_box(n, 0)[0] for n in ns]); T = np.array([_box(n, 0)[1] for n in ns]); R = np.array([_box(n, 0)[2] for n in ns]); Bt = np.array([_box(n, 0)[3] for n in ns])  # noqa: E501
+    hit = (L[:, None] < R[None, :] - 0.01) & (L[None, :] < R[:, None] - 0.01) & (T[:, None] < Bt[None, :] - 0.01) & (T[None, :] < Bt[:, None] - 0.01)
+    np.fill_diagonal(hit, False)
+    return bool(hit.any())
+
+
 def _place(ns: list[Node], edges: list[tuple[int, int, float]], x0: np.ndarray) -> np.ndarray:
     """Centres of the boxes: springs along the wires (weighted), a pull from the left for the sources, overlap pushed apart; fixed iteration count."""
     n = len(ns)
@@ -563,6 +571,9 @@ def _page(sc: Any, kind: str, title: str, meta: dict[str, str], pn: int, of: int
         Q[:] = np.round(Q / GRID) * GRID
         _spread(ns, [6.0 + 2.5 * min(len(ends_of[n.id]), 40) for n in ns], Q, 0.0, 300, True)
         for k, n in enumerate(ns): n.x, n.y = float(Q[k, 0] - n.w / 2) // GRID * GRID, float(Q[k, 1] - n.h / 2) // GRID * GRID
+        if _overlap(ns):                       # the boxes did not come apart in the rounds given (a crowded column): more room and again
+            scale *= 1.25
+            continue
         x_lo = min(_box(n, 0)[0] for n in ns) - 150; y_lo = min(_box(n, 0)[1] for n in ns) - 150
         x_hi = max(_box(n, 0)[2] for n in ns) + 150; y_hi = max(_box(n, 0)[3] for n in ns) + 150
         x_lo, y_lo = math.floor(x_lo / GRID) * GRID, math.floor(y_lo / GRID) * GRID
