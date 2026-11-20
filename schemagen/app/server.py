@@ -545,8 +545,8 @@ def create_app(project: str | Path | None = None, background: bool = False) -> F
         st = cur()
         b = _keys(body, {"kind", "scope"})
         kind, out = b.get("kind"), st.cfg.out
-        if kind not in ("diagram", "drawings", "pinout", "faults", "wirelist"):
-            raise AppError("bad-request", "kind must be diagram, drawings, pinout, faults or wirelist.")
+        if kind not in ("diagram", "drawings", "overview", "pinout", "faults", "wirelist"):
+            raise AppError("bad-request", "kind must be diagram, drawings, overview, pinout, faults or wirelist.")
         if kind == "diagram" and not isinstance(b.get("scope"), str): raise AppError("bad-request", "Give the scope of the diagram, such as component:ECU.")
         if any(j.state == "running" for j in jobs.values()): raise AppError("busy", "An export is already running. Wait for it or cancel it.")
         from . import diagrams as dg
@@ -699,9 +699,10 @@ def create_app(project: str | Path | None = None, background: bool = False) -> F
 
 def _export_work(st: State, kind: str, scope: str | None, out: Path, job: Any) -> tuple[list[str], list[str]]:
     """What an export job does (docs/api.md, Export): the files written (relative to `out`) and the components that could not be drawn."""
-    if kind in ("diagram", "drawings"):
+    if kind in ("diagram", "drawings", "overview"):
         from . import diagrams as dg
         if kind == "drawings": return dg.export_all(st, out, job.progress)
+        if kind == "overview": return dg.export_overview(st, out, job.progress), []
         job.progress(0, 1, str(scope))
         return dg.export_one(st, str(scope), out), []
     before = {p: p.stat().st_mtime for p in out.rglob("*") if p.is_file()} if out.exists() else {}

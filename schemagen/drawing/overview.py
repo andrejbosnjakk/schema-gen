@@ -37,7 +37,7 @@ BEND, CROSS, ADJ = 2, 3, 0                   # prices of a bend, of a crossing a
 BUDGET = 40000000                            # cells the search may look at in all (about 10 s); after that wires are routed without regard to each other
 HW = 1.0                                     # weight of the heuristic in the search: a little longer wires, far fewer cells looked at
 PITCH = 10.0                                 # distance between the taps of a harness connector: room for a label between two wires that leave it side by side
-RETRY = 150                                  # a page of at most this many wires gets a retry with more room between the parts when a wire found no room for its label
+RETRY = 150                                  # a page of at most this many wires gets a retry with more room between the parts when a wire found no room for its label  # noqa: E501
 POCKET = 40                                  # a pin whose free neighbourhood is smaller than this many cells cannot be reached
 MARK = 5.0                                   # length of the ground mark (lead excluded)
 
@@ -778,7 +778,7 @@ def _labels(syms: list[Any], wires: list[Any], texts: list[Any], bounds: tuple[f
         got = 0
         for ti, t in enumerate(targets):
             done = False
-            for lines, below, vert in (([lab], False, False), (two, False, False), ([lab], True, False), (two, True, False), ([lab], False, True), (two, False, True), (three, False, True),
+            for lines, below, vert in (([lab], False, False), (two, False, False), ([lab], True, False), (two, True, False), ([lab], False, True), (two, False, True), (three, False, True),  # noqa: E501
                                       (three, False, False), (three, True, False), ([lab], False, None)):
                 tw = max(text_w(ln, SIZE) for ln in lines)
                 cand: list[tuple[float, str, float, float]] = []
@@ -802,9 +802,9 @@ def _labels(syms: list[Any], wires: list[Any], texts: list[Any], bounds: tuple[f
                 for _, kd, ax, ay in sorted(cand, key=lambda c: c[0]):
                     if kd == "i": ts = [S.text(lab, ax, ay, "left", "wire", model=w["model"])]
                     elif kd == "h":
-                        ts = [S.text(ln, ax, ay - 2.5 - 4.5 * (len(lines) - 1 - r) if not below else ay + 2.5 + 4.5 * r, "left", "wire", model=w["model"]) for r, ln in enumerate(lines)]
+                        ts = [S.text(ln, ax, ay - 2.5 - 4.5 * (len(lines) - 1 - r) if not below else ay + 2.5 + 4.5 * r, "left", "wire", model=w["model"]) for r, ln in enumerate(lines)]  # noqa: E501
                     else:
-                        ts = [S.text(ln, ax + 1.8 if kd == "R" else ax - 1.8, ay + 4.5 * (r - (len(lines) - 1) / 2), "left" if kd == "R" else "right", "wire", model=w["model"])
+                        ts = [S.text(ln, ax + 1.8 if kd == "R" else ax - 1.8, ay + 4.5 * (r - (len(lines) - 1) / 2), "left" if kd == "R" else "right", "wire", model=w["model"])  # noqa: E501
                               for r, ln in enumerate(lines)]
                     if add(k, ts, kd == "i"): done = True; break
                 if done: break

@@ -167,7 +167,7 @@ the project folder and survives reloads) and used by `/api/simulate`. It appears
 
 | method | path | body | returns |
 |---|---|---|---|
-| POST | `/api/export` | `{kind: "diagram", scope}`, or `{kind: "drawings"\|"pinout"\|"faults"\|"wirelist"}` | 202 `ExportStatus` of the new job (a bad request is refused at once; `busy` 409 while another export runs) |
+| POST | `/api/export` | `{kind: "diagram", scope}`, or `{kind: "drawings"\|"overview"\|"pinout"\|"faults"\|"wirelist"}` (`overview` writes `overview.pdf`, three pages; `drawings` writes it too) | 202 `ExportStatus` of the new job (a bad request is refused at once; `busy` 409 while another export runs) |
 | GET | `/api/export/{job}` | | `ExportStatus` |
 | POST | `/api/export/{job}/cancel` | | `ExportStatus`: the job stops within a moment and writes nothing |
 | POST | `/api/reveal` | `{path}` | `{ok}`: opens the folder in the file manager |

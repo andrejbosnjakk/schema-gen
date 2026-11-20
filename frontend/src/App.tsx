@@ -227,7 +227,8 @@ export function App() {
           { label: "Wire sheet", hint: "XLSX, your sheet written back", run: () => exportAs("wirelist", "Wire sheet") },
           { label: "Wiring checklist", hint: "printable, per component", run: () => exportAs("pinout", "Wiring checklist") },
           { label: "Fault sweep", hint: "HTML report", run: () => exportAs("faults", "Fault sweep") },
-          { label: "Wiring diagrams", hint: "PDF, every component", run: () => exportAs("drawings", "Wiring diagrams") }]} />
+          { label: "Wiring diagrams", hint: "PDF, every component", run: () => exportAs("drawings", "Wiring diagrams") },
+          { label: "Overview", hint: "PDF, 3 pages", run: () => exportAs("overview", "Overview") }]} />
         <button className="btn btn-primary" data-tour="simulate" onClick={simulate} disabled={!ws || simulating} aria-busy={simulating}>
           <Glyph name="play" />{simulating ? "Simulating…" : "Simulate"}</button>
         {sim && <SimSummary o={sim.o} stale={sim.stale} open={simOpen} onOpen={setSimOpen} onGroup={pickGroup} onClear={clearSim} />}

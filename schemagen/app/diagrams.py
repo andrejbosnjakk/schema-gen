@@ -47,6 +47,19 @@ def export_one(st: Any, scope: str, out: Path) -> list[str]:
     return [f"drawings/{stem(g['drawing']['scope'])}.pdf"]
 
 
+def export_overview(st: Any, out: Path, progress: Callable[[int, int, str], None] = lambda n, N, cur: None) -> list[str]:
+    """Writes `<out>/overview.pdf`: three pages (power distribution, CAN network, all wires) drawn by the overview engine; returns the file's name."""
+    from ..drawing.overview import draw as overview
+    progress(0, 1, "overview")
+    stage = Path(tempfile.mkdtemp(prefix="schemagen-overview-"))
+    try:
+        export(overview(st, meta(st.cfg)), stage / "overview.pdf")
+        out.mkdir(parents=True, exist_ok=True)
+        shutil.move(str(stage / "overview.pdf"), str(out / "overview.pdf"))
+    finally: shutil.rmtree(stage, ignore_errors=True)
+    return ["overview.pdf"]
+
+
 class Cancelled(BaseException):
     """Raised inside an export job's thread to stop it (not an Exception: a drawing's `except Exception` must not swallow it)."""
 
@@ -100,7 +113,10 @@ def export_all(st: Any, out: Path, progress: Callable[[int, int, str], None] = l
                     failed.append(cid)
             if actual == count or attempt: break
             count = actual
-        progress(2 * len(cs), 2 * len(cs), "")
+        progress(2 * len(cs), 2 * len(cs), "overview")
+        if done:
+            from ..drawing.overview import draw as overview
+            export(overview(st, meta(st.cfg)), stage / "overview.pdf")
         if not done: raise AppError("bad-request", "No component has wires to draw." if not failed else f"None of the {len(failed)} wiring diagrams could be drawn.")
         book.close()
         files = sorted(str(p.relative_to(stage)).replace("\\", "/") for p in stage.rglob("*") if p.is_file())

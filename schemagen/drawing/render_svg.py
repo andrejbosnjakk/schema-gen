@@ -64,7 +64,7 @@ def _style(p: dict[str, Any]) -> str:
 
 def _prim(p: dict[str, Any]) -> str:
     k = p["kind"]
-    if p.get("white"): return f'<line x1="{num(p["x1"])}" y1="{num(p["y1"])}" x2="{num(p["x2"])}" y2="{num(p["y2"])}" stroke="#fff" stroke-width="{num(p["width"])}"/>'
+    if p.get("white"): return f'<line x1="{num(p["x1"])}" y1="{num(p["y1"])}" x2="{num(p["x2"])}" y2="{num(p["y2"])}" stroke="#fff" stroke-width="{num(p["width"])}"/>'  # noqa: E501
     if k == "line": return f'<line x1="{num(p["x1"])}" y1="{num(p["y1"])}" x2="{num(p["x2"])}" y2="{num(p["y2"])}"{_style(p)}/>'
     if k == "rect": return f'<rect x="{num(p["x"])}" y="{num(p["y"])}" width="{num(p["w"])}" height="{num(p["h"])}"{_style(p)}/>'
     if k == "circle": return f'<circle cx="{num(p["cx"])}" cy="{num(p["cy"])}" r="{num(p["r"])}"{_style(p)}/>'

@@ -53,7 +53,7 @@ def test_overview_draws_every_conductor_once(name, tmp_path):
 
 @pytest.mark.parametrize("name,most", [("demo", 0), ("fixture", 1)])
 def test_every_conductor_has_a_label(name, most):
-    """Every conductor is labelled on its page; the fixture's one jumper between two pins 10 mm apart has no stretch of wire long enough (known, listed in the changelog)."""
+    """Every conductor is labelled on its page; the fixture's one jumper between two pins 10 mm apart has no stretch of wire long enough (known, listed in the changelog)."""  # noqa: E501
     g = draw(State(PROJECTS[name]))
     assert sum(len(checks.label_present(dict(g, sheets=[sh]))) for sh in g["sheets"]) <= most
 

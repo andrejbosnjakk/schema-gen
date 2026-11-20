@@ -68,7 +68,7 @@ def mutate(g, kind, rng, cls):
         if kind == "dot":
             if not circles: return False
             s, p = rng.choice(circles)
-            if sum(q["kind"] == "circle" and (q["cx"], q["cy"]) == (p["cx"], p["cy"]) for q in s["prims"]) > 1: return False     # two dots on one spot: no visible change
+            if sum(q["kind"] == "circle" and (q["cx"], q["cy"]) == (p["cx"], p["cy"]) for q in s["prims"]) > 1: return False     # two dots on one spot: no visible change  # noqa: E501
             s["prims"].remove(p)
         else:
             hs = [(w, a, b) for w in ws for a, b in zip(w["points"], w["points"][1:]) if a[1] == b[1]]

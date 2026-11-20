@@ -108,3 +108,16 @@ def test_failed_drawings_are_listed_and_the_rest_is_written(client, monkeypatch)
     j = run_export(c, kind="drawings").json()
     assert "EC4" not in j["failed"] and "EC3" in j["failed"] and len(j["failed"]) >= 150
     assert "wiring-diagrams.pdf" in j["files"] and "drawings/component-EC4.pdf" in j["files"] and len(j["files"]) == 2
+
+
+def test_overview_export_writes_three_pages(tmp_path):
+    """Export > Overview is one background job writing overview.pdf, a PDF of three pages (power distribution, CAN network, all wires)."""
+    import shutil as sh
+
+    from schemagen.verify.pdfread import read
+    d = tmp_path / "demo"
+    sh.copytree(ROOT / "examples" / "demo", d)
+    c = TestClient(create_app(str(d)))
+    r = run_export(c, kind="overview")
+    assert r.status_code == 200 and r.json()["files"] == ["overview.pdf"]
+    assert len(read(Path(r.json()["folder"]) / "overview.pdf")) == 3
