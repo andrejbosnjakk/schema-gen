@@ -15,6 +15,7 @@ from typing import Any
 
 from . import expect as X
 from .check import Drawing, check_drawing, summary  # noqa: F401
+from .overview import check_overview
 from .toc import check_toc
 from .pdfread import read
 
@@ -22,13 +23,14 @@ HARD = ("missing", "extra", "ends", "gauge", "colour", "label", "net", "table", 
 SOFT_FLAG = ("flag_no_target", "flag_no_drawing", "flag_no_sheet")
 LEGIBILITY = ("text_truncated", "text_overlaps_text", "text_on_line", "text_outside_frame", "text_too_small", "graphics_in_furniture", "graphics_outside_frame")
 FILES = "*.pdf"
+OVERVIEW = "overview.pdf"       # the three-page overview (power distribution, CAN network, all wires): checked by verify/overview.py
 
 
 def pdfs(pdf_dir: Path) -> tuple[list[Path], Path | None]:
     """The per-drawing PDFs of a folder (`<dir>/drawings/*.pdf`, else `<dir>/*.pdf`) and the book (`wiring-diagrams.pdf`) if there is one."""
     d = pdf_dir / "drawings" if (pdf_dir / "drawings").is_dir() else pdf_dir
     book = next((p for p in (pdf_dir / "wiring-diagrams.pdf", d / "wiring-diagrams.pdf") if p.exists()), None)
-    return sorted(p for p in d.glob(FILES) if p != book and "wiring-diagrams" not in p.name), book
+    return sorted(p for p in d.glob(FILES) if p != book and "wiring-diagrams" not in p.name and p.name != OVERVIEW), book
 
 
 def check_pdf(path: str | Path, project: Any, source: dict[str, str] | None = None) -> Drawing:
@@ -64,8 +66,13 @@ def check_drawings(project: str | Path, pdf_dir: str | Path, source: str | Path 
     for d in ds.values():
         if d.sheets: check_drawing(d, src, ds)
     findings = [f for d in ds.values() for f in d.findings]
-    findings += _book(ex, ds, bookpdf if book else None)
+    ov = next((p for p in (Path(pdf_dir) / OVERVIEW, Path(pdf_dir) / "drawings" / OVERVIEW) if p.exists()), None)
+    if ds or ov is None: findings += _book(ex, ds, bookpdf if book else None)      # a folder with only the overview has no drawings to complete
     if book and bookpdf is not None and ds: findings += check_toc(ex, ds, read(bookpdf))
+    if ov is not None and not only:
+        pages, more = check_overview(ex, ov, src)
+        ds.update({d.name: d for d in pages})
+        findings += more
     return _report(project, pdf_dir, ex, src, ds, findings)
 
 

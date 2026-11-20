@@ -119,7 +119,8 @@ def _wires(d: Drawing) -> None:
     def matches(w: WireObs, e: End, t: X.Term) -> bool:
         i = 0 if e.p == w.pts[0] else -1
         if t[0] in ex.ground: return _ground(d.pages[0], e.p, w.pts[1 if i == 0 else -2])
-        if ex.kind.get(t[0]) in ("splice", "bus"): return e.kind == "node" and e.comp in ("?", t[0]) and net[e.net] == node(t[0])
+        if ex.kind.get(t[0]) in ("splice", "bus"):      # the wires of a splice or bus meet at dots, one at each end
+            return e.kind == "node" and e.comp in ("?", t[0]) and net[e.net] == node(t[0]) and (ex.kind[t[0]] == "bus" or any(abs(x - e.p[0]) < 5.6 and abs(y - e.p[1]) < 0.3 for x, y in d.pages[0].dots))
         return end_matches(e, t, ex)
     for lab, cs in by_label.items():
         if lab not in d.recs:

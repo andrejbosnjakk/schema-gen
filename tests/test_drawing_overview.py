@@ -34,7 +34,7 @@ def pg(sh):
 def gates(g):
     """Findings of the hard gates: through-symbol, text on text or on a foreign wire, collinear wires, a crossing near a dot, end, bend or label, a dot touched."""
     found = [f for f in checks.report(g)["findings"] if f["check"] in GATES]
-    return found + checks.crossing_clearance(g) + checks.dot_touch(g)
+    return found + checks.crossing_clearance(g) + checks.dot_touch(g) + checks.label_adjacent(g)
 
 
 @pytest.mark.parametrize("name", PROJECTS)
@@ -49,6 +49,13 @@ def test_overview_draws_every_conductor_once(name, tmp_path):
     assert validate(g) == []                                                                       # the custom sheet size is a valid size
     assert to_json(draw(st)) == to_json(g)                                                         # deterministic
     assert export(g, tmp_path / "overview.pdf")[0].stat().st_size > 1000
+
+
+@pytest.mark.parametrize("name,most", [("demo", 0), ("fixture", 1)])
+def test_every_conductor_has_a_label(name, most):
+    """Every conductor is labelled on its page; the fixture's one jumper between two pins 10 mm apart has no stretch of wire long enough (known, listed in the changelog)."""
+    g = draw(State(PROJECTS[name]))
+    assert sum(len(checks.label_present(dict(g, sheets=[sh]))) for sh in g["sheets"]) <= most
 
 
 @pytest.mark.parametrize("name", PROJECTS)

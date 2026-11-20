@@ -37,6 +37,7 @@ BEND, CROSS, ADJ = 2, 3, 0                   # prices of a bend, of a crossing a
 BUDGET = 40000000                            # cells the search may look at in all (about 10 s); after that wires are routed without regard to each other
 HW = 1.0                                     # weight of the heuristic in the search: a little longer wires, far fewer cells looked at
 PITCH = 10.0                                 # distance between the taps of a harness connector: room for a label between two wires that leave it side by side
+RETRY = 150                                  # a page of at most this many wires gets a retry with more room between the parts when a wire found no room for its label
 POCKET = 40                                  # a pin whose free neighbourhood is smaller than this many cells cannot be reached
 MARK = 5.0                                   # length of the ground mark (lead excluded)
 
@@ -425,7 +426,7 @@ def page_of(w: Elem) -> str:
     return "can" if c.startswith("CAN") else "signal" if c == "signal" else "power"
 
 
-def _page(sc: Any, kind: str, title: str, meta: dict[str, str], pn: int, of: int) -> tuple[dict[str, Any], dict[str, str]]:
+def _page(sc: Any, kind: str, title: str, meta: dict[str, str], pn: int, of: int, scale0: float = 1.0) -> tuple[dict[str, Any], dict[str, str]]:
     """One page of the overview: the conductors of `kind` (power, can, all) as a sheet of the size the content needs, and its title block data."""
     sel = [w for w in sc["wires"] if kind == "all" or page_of(w) == kind]
     info = dict(title=title, scope="overview", project=sc["project"], revision=meta.get("revision", ""), date=meta.get("date", ""),
@@ -538,7 +539,7 @@ def _page(sc: Any, kind: str, title: str, meta: dict[str, str], pn: int, of: int
         if u != v: wmap[tuple(sorted((idx[u], idx[v])))] += 1.0       # type: ignore[index]
     el = [(i, j, wt) for (i, j), wt in sorted(wmap.items())]
     P = _place(ns, el, np.array([[n.x + n.w / 2, n.y + n.h / 2] for n in ns], dtype=float))
-    scale = 1.0
+    scale = scale0
     sheet: dict[str, Any] = {}
     for attempt in range(4):
         Pa = (P - P.mean(0)) * scale + P.mean(0)
@@ -682,6 +683,10 @@ def draw(st: Any, meta: dict[str, str] | None = None, pages: tuple[str, ...] = (
     info: dict[str, str] = {}
     for k, kind in enumerate(pages, 1):
         sh, info = _page(sc, kind, titles[kind], meta, k, len(pages))
+        for scale in (1.3, 1.7, 2.2, 3.0):         # a wire with no room for its label: the same page with the parts farther apart (only where that is quick)
+            if not sh["unlabeled"] or len(sh["wires"]) > RETRY: break
+            sh2, info2 = _page(sc, kind, titles[kind], meta, k, len(pages), scale)
+            if sh2["unlabeled"] < sh["unlabeled"]: sh, info = sh2, info2
         sheets.append(sh)
     return dict(version=1, drawing=dict(info, title=sc["title"] + " overview"), sheets=sheets)  # type: ignore[typeddict-item,return-value,list-item]
 
