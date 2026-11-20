@@ -2,7 +2,7 @@
 
 ## 1.2.0-dev (pre-release, branch dev/1.2)
 
-Reliable drawings. A preview for trying the app; the drawings are a review draft, not a wiring set.
+Reliable drawings. A preview for trying the app; the drawings are a review draft, not a wiring set. Contains all of 1.1.
 
 - Export runs as a background job: progress bar, Cancel, the folder opens when done. One drawing that fails is listed
   and the rest complete; drawings stream to disk instead of being held in memory.
@@ -12,14 +12,19 @@ Reliable drawings. A preview for trying the app; the drawings are a review draft
   sheet. Boxes and flags show the Name column; flags name the far drawing and sheet.
 - Title block: source file name and content hash, `revision:` and `date:` from schemagen.yml. Output is deterministic.
 - Faster drawing (text-width cache, routing memo, one layout per page).
-- Known open: some wire-table cells and flags still truncate long names; sheet counts are above target.
+- Text is wrapped instead of cut (the verifier reports any text ending in `..`); a flag that names several far sheets gets
+  one sheet per flag; the wire table is printed once per drawing, its rows under the first sheet that draws each wire.
+- The book starts with a contents page (name, id, sheets, start page) that the verifier checks against the book.
+- The verifier has mutation tests for wrapped cells and the contents page.
+- The installer workflow builds `dev/1.2*` branches and `v*` tags; a `v*` tag publishes the installer as a GitHub release
+  (pre-release when the tag has a "-"). The start screen shows a small wire-and-breaker picture and a one-line statement.
+- Known open: sheet counts are above target.
 
-## 1.1.0 (in progress, branch dev/1.1)
+## 1.1.0 (merged into 1.2; branch dev/1.1, never released separately)
 
-Real wiring drawings, made by schemagen itself (decision D106). Planned, not done: the drawing engine in
-`schemagen/drawing/` (geometry JSON, SVG in the app, SVG and PDF export, A3 / A4 sheets with a title block, a netlist
-round trip as the accuracy check). WireViz is now an optional extra (done, D107). On the branch so far
-(commit 0113927):
+Real wiring drawings, made by schemagen itself (decision D106): the drawing engine in `schemagen/drawing/` (geometry JSON,
+SVG in the app, SVG and PDF export, A3 / A4 sheets with a title block, a netlist round trip as the accuracy check).
+WireViz is an optional extra (D107). Merged into `dev/1.2` (merge 92444f9). What the branch added:
 
 - The map labels a line with its wire count ("6 wires"); a single wire shows its own label. Hovering a card lights its
   power circuit. The per-wire menu on edges is gone.
@@ -31,7 +36,6 @@ round trip as the accuracy check). WireViz is now an optional extra (done, D107)
   (a selection bar), open a viewer (zoom, pan, sheets) with "Save as PDF" (`GET /api/diagram`). Export "Wiring diagrams"
   writes a PDF per component and one book with the symbol sheet; it no longer needs Graphviz or WireViz (D113). The
   print sheet of the cards is gone.
-- Not yet verified: the Playwright suite and printing in the desktop window.
 
 ## 1.0.0
 

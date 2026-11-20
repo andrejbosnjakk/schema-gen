@@ -7,11 +7,9 @@ diagram, finds mistakes, and answers "does it work with the power on?" without a
 
 ## Status
 
-- **1.0** is built, has had its product review and is merged into `main`. The fixes made after that review are on
-  `dev/1.1` and not in `main` yet.
-- **1.1** is in progress on branch `dev/1.1`. It is about real wiring drawings (see "What 1.1 is about"). The drawing
-  engine is not built yet.
-- The Python distribution is `schema-gen`; the import package and the command are `schemagen`. `pyproject.toml` says 1.0.0.
+- **1.2** (pre-release `1.2.0-dev`, branch `dev/1.2`) is the current line. It contains everything of 1.0 and 1.1: the
+  app, and wiring drawings made by schemagen's own drawing engine. The drawings are a review draft, not a wiring set.
+- The Python distribution is `schema-gen`; the import package and the command are `schemagen`.
 
 ## What the app does today
 
@@ -31,8 +29,11 @@ sends nothing anywhere, and bundles its assets.
   wire, and a bus with loads but no source are called out.
 - **+ Source**: click a bus and add a battery to it to try a fix. This is a change set; the sheet is not touched.
 - **Wires**: a drawer with every row of the sheet; click a row to see the wire on the map.
+- **Wiring diagrams**: "Wiring diagram" on a component or connection card, or shift-click a selection on the map, opens
+  a viewer (zoom, pan, sheets) with "Save as PDF". See "The drawings" below.
 - **Export**: the project as a workbook or JSON, a printable wiring checklist (one table per component with tick
-  boxes), and harness drawings (needs Graphviz and the optional `wireviz` extra, see below).
+  boxes), and the wiring diagrams: one PDF per component and one book. Exports run as a background job with progress
+  and Cancel. The optional WireViz harness drawings are still there if the extra is installed.
 - **Quickstart tour**: eight steps on the fictional example (`examples/aircraft`, the Kestrel E2, 121 wires, three
   deliberate mistakes). Skippable and replayable from the Help menu. See [docs/tour.md](docs/tour.md).
 - **Edits are change sets** (`changes/*.json`): applied on every load, undoable, never silent rewrites of your input files.
@@ -41,47 +42,39 @@ sends nothing anywhere, and bundles its assets.
 
 ![Simulate on the example project](docs/screens/5-simulate/1920-light.png)
 
-These screenshots show 1.0. In 1.1 the component card shows a drawing instead of the pin table, and the map labels lines
-with wire counts.
+## The drawings
 
-## What 1.1 is about
+Real wiring diagrams on A3 or A4 sheets with a title block (source file and hash, `revision:` and `date:` from
+`schemagen.yml`), made by the engine in `schemagen/drawing/` (decision D106; no WireViz or Graphviz needed). A drawing
+covers a scope: a component, a connection, a harness connector, a selection, a subsystem or the system. Each wire shows
+pins, gauge, colour and label; a wire that leaves the sheet gets a flag naming the far drawing and sheet. A component
+that does not fit one sheet becomes terminal strips. Long text is wrapped, never cut; every drawing has a wire table, and
+the book has a contents page. Output is deterministic. See [docs/drawing-model.md](docs/drawing-model.md).
 
-This is a plan, not something that is done. Decision D106 in [docs/decisions.md](docs/decisions.md) sets the direction.
-
-- **The map** stays one picture of the system. Exact wiring moves into drawings inside the card of a component, of a
-  connection (a line on the map) and later of a harness connector or a selection.
-- **A wiring-diagram engine of our own** in `schemagen/drawing/`: real aircraft-style wiring diagrams on A3 and A4 sheets
-  with a title block. One Python engine produces a geometry JSON; the app renders it as SVG and exports SVG and PDF.
-  The drawings must be good enough to rewire from, so the scope (component, connection, harness, selection) is an
-  input of the engine from the start.
-- **WireViz is an optional extra** (`pip install "schema-gen[wireviz]"`; done). `schemagen draw` and the harness-drawings
-  export use it; the default install and the installer contain no GPL code. The cut list and continuity list move into the checklist export first.
-- **Accuracy** is checked by a netlist round trip: the netlist read back from the geometry must equal the project's.
-- **Order**: a symbol sheet and six reference drawings first, then a review stop, then integration into the app.
-
-Already on `dev/1.1` (commit `0113927`): the map counts wires per line ("6 wires"), hovering a card lights its power
-circuit, the component card shows a first drawing of each pin's run (`GET /api/drawing/{id}`, in
-`schemagen/app/drawing.py`; not the engine above), a connection card opens for a line with several wires, and
-"Save as PDF" prints a title-block sheet. The Playwright suite and the print path in the desktop window are not yet
-verified for these changes.
+**The verifier** (`schemagen check-drawings <project> <pdf folder>`) reads the PDFs back, with no drawing-engine code,
+and compares every wire, pin, gauge, colour, junction, wire-table row and off-sheet flag with the wire list; it proves
+the drawings match the wire list, not that the wire list matches the real harness.
 
 ## Install and run
 
+**Windows (recommended):** download `schemagen-setup-<version>.exe` from the
+[GitHub Releases](https://github.com/andrejbosnjakk/schema-gen/releases) page and run it. It installs per user (no admin
+rights), is not code-signed (SmartScreen shows "unknown publisher": More info, Run anyway), and contains neither WireViz
+nor Graphviz. User data goes to `%LOCALAPPDATA%\schemagen`.
+
+From a checkout (any OS):
+
 ```bash
-pip install -e ".[dev]"              # from a checkout; the command is `schemagen`
+pip install -e ".[dev]"              # the command is `schemagen`
 schemagen app                        # the start screen; or: schemagen app examples/aircraft
 schemagen app examples/demo --no-browser   # serve only, open http://127.0.0.1:8765 yourself
 pytest
 ```
 
-- Harness drawings (`schemagen draw`, and the Export menu's drawings) need Graphviz's `dot` on the PATH
-  (`sudo apt-get install graphviz`, or the Windows installer from graphviz.org) and the optional WireViz extra
-  (`pip install "schema-gen[wireviz]"`). Everything else works without them.
-- **Windows installer**: `packaging/build.ps1` builds `packaging/dist/schemagen-setup-<version>.exe`
-  (pywebview window, PyInstaller, per-user Inno Setup installer, no admin rights). CI builds it for pushes to
-  `dev/1.0*` and for `v*` tags ([.github/workflows/installer.yml](.github/workflows/installer.yml)). It is not
-  code-signed, so SmartScreen shows "unknown publisher". The installer ships neither WireViz nor Graphviz (D72).
-  User data goes to `%LOCALAPPDATA%\schemagen`.
+- Optional **WireViz harness drawings** (`schemagen draw <project>` without `--scope`, and the older harness export):
+  `pip install "schema-gen[wireviz]"` and Graphviz's `dot` on the PATH. Everything else works without them.
+- Building the installer: `packaging/build.ps1` (PyInstaller, Inno Setup). CI builds it for pushes to `dev/1.2*` and for
+  `v*` tags and publishes it as a release for a tag ([.github/workflows/installer.yml](.github/workflows/installer.yml)).
 - Frontend development: `cd frontend && npm ci && npm run dev` (proxies `/api` to a running `schemagen app`);
   `npm run build` writes `schemagen/app/static/`; `npx playwright test` runs the end-to-end tests.
 
@@ -91,12 +84,13 @@ Start with the [tutorial](docs/tutorial.md) for the CLI. See also [CHANGELOG.md]
 
 ## Command line
 
-The CLI predates the app and still works on its own. `schemagen draw examples/demo` writes `examples/demo/out/`.
+The CLI predates the app and still works on its own. `schemagen draw examples/demo --scope system -o demo.pdf` draws the demo with the built-in engine.
 
 | command | does |
 |---|---|
-| `schemagen draw <project> [X-BH ...] [--all] [--split none\|side\|function\|auto] [--no-render] [--no-interfaces]` | harness drawings (WireViz), interface drawings for every conductor no harness drawing reaches, coverage report, cut list, continuity / insulation test sheet, `index.html`; `--no-render` skips WireViz |
 | `schemagen draw <project> --scope component:VCU [--sheet A3\|A4] -o vcu.pdf\|.svg` | one drawing of a scope (component, connection, harness, selection, subsystem, system) with the built-in engine; no WireViz or Graphviz needed |
+| `schemagen check-drawings <project> <pdf folder> [--source FILE] [-o report.json]` | the verifier: reads the drawing PDFs back and compares them with the wire list; JSON report and a summary; exits 1 on a hard finding |
+| `schemagen draw <project> [X-BH ...] [--all] [--split none\|side\|function\|auto] [--no-render] [--no-interfaces]` | the optional WireViz route: harness drawings, interface drawings for every conductor no harness drawing reaches, coverage report, cut list, continuity / insulation test sheet, `index.html`; needs the `wireviz` extra, `--no-render` skips it |
 | `schemagen check <project> [--format text\|json\|sarif] [-o FILE] [--rule ID]` | the rules (severity, objects, fix hint); exits 1 on an error |
 | `schemagen fix direction\|names <project> [--apply]` | a reviewable change set (JSON + diff); `direction` makes every wire follow the direction convention; `--apply` stores it in `changes/` |
 | `schemagen pinout <project> [--page-breaks]` | pinout and reintegration checklist per component and harness connector (XLSX + HTML), spares included |
@@ -112,7 +106,7 @@ The CLI predates the app and still works on its own. `schemagen draw examples/de
 | `schemagen synth --wires N --seed S -o DIR [--readable] [--clean]` | a synthetic (fictional) project for tests and benchmarks |
 | `schemagen palette <project> [--json]` | function class → colour code and hex, for spreadsheets and schematic tools |
 
-`<project>` is a `schemagen.yml` or the folder that holds it. The `draw` command produces:
+`<project>` is a `schemagen.yml` or the folder that holds it. The WireViz route of `draw` produces:
 
 - **Harness drawings** per harness connector, one bundle per far item, each wire labelled with its gauge
   (`RD:L05 · 22`), CAN pairs twisted and shielded. Wide harnesses are split by side or by function.
@@ -271,7 +265,8 @@ served for tests and power users; the 1.0 frontend does not call them.
 | `core/changes.py`, `core/diff.py`, `core/ledger.py` | change sets, project diff (folders or git revisions), label ledger |
 | `core/tables.py`, `core/data/` | cited reference tables (protection, copper, CAN, simulation defaults) |
 | `renderers/` | interface drawings, the WireViz command runner (parallel batches) |
-| `app/server.py`, `app/workspace.py`, `app/drawing.py`, `app/userdata.py`, `desktop.py`, `frontend/` | the local app: FastAPI server, the main screen and cards in one call, the card drawing (1.1, first version), per-user settings, the desktop window, and the React + TypeScript frontend (built into `app/static/`) |
+| `drawing/`, `verify/` | the wiring-diagram engine (layout, routing, geometry JSON, SVG / PDF) and the independent drawing verifier |
+| `app/server.py`, `app/workspace.py`, `app/drawing.py` (the older per-pin run drawing), `app/userdata.py`, `desktop.py`, `frontend/` | the local app: FastAPI server, the main screen and cards in one call, per-user settings, the desktop window, and the React + TypeScript frontend (built into `app/static/`) |
 | `packaging/` | Windows installer: PyInstaller spec, Inno Setup script, `build.ps1`, smoke test, third-party notices |
 | `sim/overlay.py`, `core/fit.py` | the app's Simulate overlay (one status and reason per object); the one sentence for a wire that does not fit its protective device |
 | `sim/engine.py`, `sim/build.py`, `sim/api.py`, `sim/report.py` | MNA solver (Newton, relays, current limits), model → circuit with provenance, operating point / expectations / fault sweep, report and CLI |
@@ -285,7 +280,7 @@ served for tests and power users; the 1.0 frontend does not call them.
 
 ## Why WireViz 0.4.1 (and not Filare)
 
-This is about the current `draw` command; WireViz is an optional extra, and 1.1 plans its own drawing engine (see above).
+This is about the optional WireViz route of `draw`; the default drawings come from the built-in engine (see above).
 Short version: WireViz renders everything this needs; Filare 1.6.0 (its fork) drops notes on simple nodes and
 wires without a length from the BOM, and does not install cleanly. Details in [docs/wireviz-evaluation.md](docs/wireviz-evaluation.md).
 The generator emits plain WireViz YAML, so the renderer stays replaceable.

@@ -47,7 +47,7 @@ simulation), with checks built in and every value traceable to its source.
   per component, connection, harness connector and selection; one geometry JSON, SVG in the app, SVG and PDF export;
   accuracy checked by a netlist round trip from the geometry
 - Order: a symbol sheet and six reference drawings, then a **review stop**, then integration into the app
-- Then: WireViz becomes an optional extra (it is a hard dependency today), so the default install and the installer
+- Then: WireViz becomes an optional extra (done in 1.1), so the default install and the installer
   have no GPL code; the cut list and continuity list move into the checklist export first
 - In the app (2026-11-16): the viewer for a component, a connection or a shift-click selection; export of every component as PDFs and one book
 - Not in 1.1: "this circuit / this subsystem" presets, folding breakers into one card
