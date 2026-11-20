@@ -26,6 +26,11 @@ def large(tmp_path_factory):
     return d
 
 
+def pg(sh):
+    """The title of a sheet's title block."""
+    return sh["title_block"]["title"]
+
+
 def gates(g):
     """Findings of the hard gates: through-symbol, text on text or on a foreign wire, collinear wires, a crossing near a dot, end, bend or label, a dot touched."""
     found = [f for f in checks.report(g)["findings"] if f["check"] in GATES]
@@ -36,8 +41,9 @@ def gates(g):
 def test_overview_draws_every_conductor_once(name, tmp_path):
     st = State(PROJECTS[name])
     g = draw(st)
-    assert len(g["sheets"]) == 1
-    sh = g["sheets"][0]
+    assert [sh["of"] for sh in g["sheets"]] == [3, 3, 3]
+    assert [pg(sh) for sh in g["sheets"]] == ["Power distribution", "CAN network", "All wires"]
+    sh = g["sheets"][2]
     ids = [w["id"] for w in sh["wires"]]
     assert sorted(ids) == sorted(c.id for c in st.m.conductors) and len(set(ids)) == len(ids)   # every conductor exactly once
     assert validate(g) == []                                                                       # the custom sheet size is a valid size
@@ -53,5 +59,5 @@ def test_overview_hard_gates(name):
 def test_overview_hard_gates_on_the_large_fixture(large):
     st = State(large)
     g = draw(st)
-    assert sorted(w["id"] for w in g["sheets"][0]["wires"]) == sorted(c.id for c in st.m.conductors)
+    assert sorted(w["id"] for w in g["sheets"][2]["wires"]) == sorted(c.id for c in st.m.conductors)
     assert gates(g) == []

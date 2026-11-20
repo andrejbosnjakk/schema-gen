@@ -120,7 +120,9 @@ def _inline_w(rows: list[tuple[str, str]], base: float = 20.0) -> float:
 
 def _leads(B: _B, w: float, y: float, xa: float, xb: float, two: list[Any]) -> None:
     """Terminal leads of an in-line part: edge to xa on the left, xb to the edge on the right, and the anchors."""
-    B.line(0, y, xa, y); B.line(xb, y, w, y)
+    sides = {s for _, _, s in two}
+    if "L" in sides or not two: B.line(0, y, xa, y)          # a terminal that is not wired has no lead: it would look like a wire that goes nowhere
+    if "R" in sides or not two: B.line(xb, y, w, y)
     for _, p, s in two: B.anchor(p["anchor"], 0 if s == "L" else w, y, s)
 
 
@@ -306,7 +308,8 @@ def _bus(it: Item, B: _B, sides: dict[str, str]) -> tuple[float, float]:
 def _breaker(it: Item, B: _B, sides: dict[str, str]) -> tuple[float, float]:
     fuse = it["symbol"] == "fuse"
     title, code = _head(it)
-    rows = [(title, "name"), *[(t, "part") for t in (code,) if t], *[(t, "pin") for t in (_rating(it), it["attrs"].get("panel") or "") if t]]
+    extra = (_rating(it), it["attrs"].get("panel") or "", *(it["attrs"].get("open") or []))
+    rows = [(title, "name"), *[(t, "part") for t in (code,) if t], *[(t, "pin") for t in extra if t]]
     W = _inline_w(rows)
     c = W / 2
     two = _two(it, sides)

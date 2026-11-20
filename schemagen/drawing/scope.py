@@ -220,7 +220,9 @@ def _attrs(st: Any, c: Component, sym: str) -> dict[str, Any]:
     ref = lambda s: ctx.ref(Terminal(device=c.raw, connector=s.partition(".")[0], pin=s.partition(".")[2]))  # noqa: E731  ("CONNECTOR.PIN")
     if sym in ("breaker", "fuse"):
         pd = next((p for p in st.m.protective_devices if p.id == c.id), None)
-        return dict(rating_a=pd.rating_a if pd else None, panel=pd.panel if pd else "")
+        pins = {(t.connector, t.pin): ctx.pin_type(t) or "" for t in (st.m.conductors[i].end(e) for i, e in ctx.net.by_dev[c.raw])}
+        gap = "LINE" if "power_out" in pins.values() else "LOAD" if "power_in" in pins.values() else "other side"
+        return dict(rating_a=pd.rating_a if pd else None, panel=pd.panel if pd else "", open=[f"{gap}: not in wire list"] if len(pins) == 1 else [])
     if sym in ("switch", "relay"):
         rec = next((x for x in [*st.m.switches, *st.m.relays] if x.id == c.id), None)
         contacts: list[Contact] = (rec.contacts if rec else []) or (part.contacts if part else [])

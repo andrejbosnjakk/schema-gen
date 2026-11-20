@@ -67,12 +67,13 @@ class Node:
         return s.y + s.h / 2
 
 
-def _trim(it: Elem) -> Elem:
-    """The item with the used pins only and no part numbers; a harness connector keeps both halves for every pin number in use; a splice has no label."""
+def _trim(it: Elem, touched: set[str]) -> Elem:
+    """The item with the pins `touched` by the page's wires only and no part numbers; a harness keeps both halves of every pin in use; a splice has no label."""
+    live = lambda p: p["anchor"] in touched and not p["spare"]  # noqa: E731
     if it["symbol"] == "harness":
-        used = {p["n"] for b in it["blocks"] for p in b["pins"] if not p["spare"]}
-        bl = [dict(b, part="", mate="", pins=[p for p in b["pins"] if p["n"] in used and not p["spare"]]) for b in it["blocks"]]
-    else: bl = [b for b in (dict(b, part="", mate="", pins=[p for p in b["pins"] if not p["spare"]]) for b in it["blocks"]) if b["pins"]]
+        used = {p["n"] for b in it["blocks"] for p in b["pins"] if live(p)}
+        bl = [dict(b, part="", mate="", pins=[p for p in b["pins"] if p["n"] in used and live(p)]) for b in it["blocks"]]
+    else: bl = [b for b in (dict(b, part="", mate="", pins=[p for p in b["pins"] if live(p)]) for b in it["blocks"]) if b["pins"]]
     return dict(it, part="", location="", blocks=bl, **({"code": ""} if it["symbol"] == "splice" else {}))
 
 
@@ -396,17 +397,35 @@ def _label_lines(w: Elem) -> list[str]:
     return [R.label_text(w)]
 
 
-def draw(st: Any, meta: dict[str, str] | None = None) -> Geometry:
-    """The overview of the whole project as one sheet of the size the content needs. meta: revision, date, drawn_by, source (as engine.draw)."""
-    sc: Any = scene(st, "system")
-    meta = dict(meta or {})
+PAGES = (("power", "Power distribution"), ("can", "CAN network"), ("all", "All wires"))
+
+
+def page_of(w: Elem) -> str:
+    """The class of a conductor for the overview's pages: `can`, `signal`, else `power` (every voltage class and ground)."""
+    c = w["cls"]
+    return "can" if c.startswith("CAN") else "signal" if c == "signal" else "power"
+
+
+def _page(sc: Any, kind: str, title: str, meta: dict[str, str], pn: int, of: int) -> tuple[dict[str, Any], dict[str, str]]:
+    """One page of the overview: the conductors of `kind` (power, can, all) as a sheet of the size the content needs, and its title block data."""
+    sel = [w for w in sc["wires"] if kind == "all" or page_of(w) == kind]
+    info = dict(title=title, scope="overview", project=sc["project"], revision=meta.get("revision", ""), date=meta.get("date", ""),
+                drawn_by=meta.get("drawn_by", ""), source=meta.get("source", ""))
+    touched = {w[e] for w in sel for e in "ab"}
     its: dict[str, Elem] = {}
     for i in sc["items"]:
         if i["symbol"] != "ground":
-            for part in _split_relay(_trim(i)): its[part["id"]] = part
+            t = _trim(i, touched)
+            if t["blocks"]:
+                for part in _split_relay(t): its[part["id"]] = part
     gnd = {i["id"] for i in sc["items"] if i["symbol"] == "ground"}
     owner = {p["anchor"]: iid for iid, i in its.items() for b in i["blocks"] for p in b["pins"]} | {p["anchor"]: g["id"] for g in sc["items"] if g["id"] in gnd for b in g["blocks"] for p in b["pins"]}  # noqa: E501
-    wires = [dict(w, dash=w["cls"].startswith("CAN")) for w in sc["wires"] if not (owner[w["a"]] in gnd and owner[w["b"]] in gnd)]
+    wires = [dict(w, dash=w["cls"].startswith("CAN")) for w in sel if not (owner[w["a"]] in gnd and owner[w["b"]] in gnd)]
+    if not wires:
+        empty: dict[str, Any] = dict(n=pn, of=of, size="330x85", w_mm=330.0, h_mm=85.0, grid_mm=5.0, symbols=[], wires=[], texts=[], flags=[], rules=[],
+                                     table=dict(sheet=pn, rows=[]))
+        empty.update(S.furniture(info, "330x85", pn, of, [], ["The wire list has no conductors of this kind."]))
+        return dict(empty, late=0, unlabeled=0), info
     cnt: dict[str, int] = defaultdict(int)
     for w in wires:
         for e in "ab": cnt[w[e]] += 1
@@ -626,16 +645,26 @@ def draw(st: Any, meta: dict[str, str] | None = None) -> Geometry:
     W = max(330.0, ceil_to(max(xs) - min(xs) + 2 * (MARGIN + PAD)))
     H = ceil_to(max(ys) - min(ys) + 2 * (MARGIN + PAD) + STRIP_H)
     size = f"{W:g}x{H:g}"
-    info = dict(title=f"{sc['title']} overview", scope="overview", project=sc["project"], revision=meta.get("revision", ""), date=meta.get("date", ""),
-                drawn_by=meta.get("drawn_by", ""), source=meta.get("source", ""))
     notes = [f"{len(out)} wires, each drawn once with label, gauge (AWG) and colour code; dashed wires are CAN.",
              "A ground mark at the end of a short stub is that wire's end on the ground bus. Parts wired together are placed next to each other."]
-    sheet = dict(n=1, of=1, size=size, w_mm=W, h_mm=H, grid_mm=5.0, symbols=syms, wires=out, texts=texts, flags=[], rules=[], table=dict(sheet=1, rows=[]))
-    sheet.update(S.furniture(info, size, 1, 1, list(dict.fromkeys(s["kind"] for s in syms)), notes))
+    sheet = dict(n=pn, of=of, size=size, w_mm=W, h_mm=H, grid_mm=5.0, symbols=syms, wires=out, texts=texts, flags=[], rules=[], table=dict(sheet=pn, rows=[]))
+    sheet.update(S.furniture(info, size, pn, of, list(dict.fromkeys(s["kind"] for s in syms)), notes))
     sheet["late"] = late                                  # wires routed after the budget ran out
     sheet["unlabeled"] = unlabeled                         # prototype counters
-    sheet["late"] = late
-    return dict(version=1, drawing=info, sheets=[sheet])  # type: ignore[typeddict-item,return-value,list-item]
+    return sheet, info
+
+
+def draw(st: Any, meta: dict[str, str] | None = None, pages: tuple[str, ...] = ("power", "can", "all")) -> Geometry:
+    """The overview: one sheet per page (power distribution, CAN network, all wires), each of the size its content needs. meta: revision, date, drawn_by, source."""
+    sc: Any = scene(st, "system")
+    meta = dict(meta or {})
+    titles = dict(PAGES)
+    sheets: list[Any] = []
+    info: dict[str, str] = {}
+    for k, kind in enumerate(pages, 1):
+        sh, info = _page(sc, kind, titles[kind], meta, k, len(pages))
+        sheets.append(sh)
+    return dict(version=1, drawing=dict(info, title=sc["title"] + " overview"), sheets=sheets)  # type: ignore[typeddict-item,return-value,list-item]
 
 
 def _ground_mark(x: float, y: float, wid: str, ref: str, side: str) -> Elem:
