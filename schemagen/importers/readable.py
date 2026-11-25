@@ -21,8 +21,9 @@ HEAD = ["Label", "Name", "From", "From connector / pin", "To", "To connector / p
         "Length (m)", "Weight (g)"]
 FIELD = ["label", "name", "p1", "p1t", "p2", "p2t", "bus", "amps", "awg", "length", "weight_g"]
 # device kind from its name: first matching pattern wins (override: readable.kinds in schemagen.yml, or the Components tab)
-KINDS: dict[str, str] = {"splice": r"\bsplice\b|\bT-?piece\b|\btee\b","bus": r"\bbus\b|\bbus ?bar\b", "breaker": r"^breaker\b|\bcircuit breaker\b",
-                         "fuse": r"^fuse\b", "harness": r"\bconnector\b", "relay": r"\brelay\b|\bcontactor\b", "switch": r"\bswitch\b"}
+# (matched on the name without trailing "(notes)": "Inline fuse 5 A (contactor coil feed)" is a fuse; a fuse block's common is a bus)
+KINDS: dict[str, str] = {"splice": r"\bsplice\b|\bT-?piece\b|\btee\b", "bus": r"\bbus\b|\bbus ?bar\b|\bfuse block$", "breaker": r"\bbreaker\b",
+                         "fuse": r"\bfuse\b", "harness": r"\bconnector\b", "relay": r"\brelay\b|\bcontactor\b", "switch": r"\bswitch\b"}
 # CAN conductors by name (override: readable.can); a conductor touching a splice whose name matches is CAN too
 CAN = r"^(CAN\d|GCAN)|CAN_[HL]\b"
 CAN_L = r"(CAN\d*|GCAN)[ _-]?L\b"
@@ -100,8 +101,10 @@ def _slug(name: str, kind: str) -> str:
 
 
 def classify(name: str, kinds: dict[str, str]) -> str:
-    for k, pat in kinds.items():
-        if re.search(pat, name, re.I): return k
+    """The kind of a device from its name; trailing "(notes)" only decide when the rest names no kind."""
+    for s in (re.sub(r"(\s*\([^()]*\))+$", "", name), name):
+        for k, pat in kinds.items():
+            if re.search(pat, s, re.I): return k
     return "device"
 
 

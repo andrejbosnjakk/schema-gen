@@ -253,3 +253,12 @@ def test_direction_regressions_from_the_real_sheet(fixtures):
     idx = {i for i, c in enumerate(L.model.conductors) if c.name in names}
     assert len(idx) >= 12
     assert not idx & {f.index for f in direction.analyse(ctx)}
+
+
+@pytest.mark.parametrize("name, kind", [
+    ("Breaker 'AUX' 5 A, left panel", "breaker"), ("Main battery breaker 35 A (at battery)", "breaker"),
+    ("Converter output breaker 50 A (at main bus bar)", "breaker"), ("Inline fuse 5 A (contactor coil feed)", "fuse"),
+    ("Pump fuse block", "bus"), ("Pump fuse block, fuse F1 10 A", "fuse"), ("Bus strip, left breakers", "bus"),
+    ("Main contactor", "relay"), ("Pressure sensor (by the bus bar)", "bus")])
+def test_classify_reads_the_name_before_its_notes(name, kind):
+    assert rd.classify(name, rd.KINDS) == kind
