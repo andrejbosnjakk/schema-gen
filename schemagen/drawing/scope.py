@@ -39,7 +39,7 @@ def _seg(st: Any, i: int, e: int, wsev: dict[str, str]) -> dict[str, Any]:
     o = c.end(3 - e)
     oc = ctx.comp.get(o.device)
     sim = (st.overlay or {}).get("items", {}).get(f"conductor:{c.id}")
-    return dict(wire=c.id, label=c.label, name=c.name, gauge=gauge(c.gauge), colour=c.colour_code or c.colour, hex=HEX.get((c.colour_code or "")[:2], "#888"),
+    return dict(wire=c.id, label=c.label, name=c.name, gauge=gauge(c.gauge), colour=c.colour_code or c.colour, hex=ink(c),
                 sev=wsev.get(c.id, ""), reason=sim["reason"] if sim and sim["status"] != "ok" else "",
                 at=where(ctx, o), comp=oc.id if oc else "", role=ctx.net.role(o.device))
 
@@ -99,6 +99,11 @@ def model_id(c: Component) -> str:
 def gauge(g: str) -> str:
     """A gauge as the drawings print it: the number, without a unit (a sheet may say `22 AWG`; the drawings add the unit once)."""
     return re.sub(r"\s*awg\s*", "", str(g or ""), flags=re.I).strip()
+
+
+def ink(c: Any) -> str:
+    """The colour a conductor is drawn in: its colour code's, black for a bus-strip link (a solid bar, no wire colour), grey when unknown."""
+    return "#000000" if c.link and not c.colour_code else HEX.get((c.colour_code or "")[:2], "#888")
 
 
 def weight(awg: int | None) -> str:
@@ -244,7 +249,7 @@ def _wire(st: Any, c: Any, wsev: dict[str, str], overlay: dict[str, Any]) -> Sce
     ctx = st.ctx
     sim = overlay.get(f"conductor:{c.id}")
     return SceneWire(id=c.id, model=f"conductor:{c.id}", label=c.label, name=c.name, gauge=gauge(c.gauge), colour=c.colour_code or c.colour,
-                     hex=HEX.get((c.colour_code or "")[:2], "#888"), cls=c.can or c.kind, weight=weight(c.awg), a=ctx.ref(c.from_), b=ctx.ref(c.to),
+                     hex=ink(c), cls=c.can or c.kind, weight=weight(c.awg), a=ctx.ref(c.from_), b=ctx.ref(c.to),
                      pair=str(c.extra.get("pair", "")), shield=str(c.extra.get("shield", "")), harness=c.harness, sev=wsev.get(c.id, ""),
                      fault=Fault(status=sim["status"], reason=sim.get("reason", "")) if sim and sim.get("status") != "ok" else None)
 
@@ -294,4 +299,4 @@ def _flag(st: Any, j: int, e: int) -> SceneFlag:
     words, dwg = far_end(st, j, e)
     return SceneFlag(id=f"flag:{c.id}", model=f"conductor:{c.id}", kind="off_sheet", at=ctx.ref(c.end(e)), target=ctx.ref(c.end(3 - e)),
                      target_item=model_id(o) if o else "", text="→ " + words, drawing=dwg, label=c.label, gauge=gauge(c.gauge),
-                     colour=c.colour_code or c.colour, hex=HEX.get((c.colour_code or "")[:2], "#888"), cls=c.can or c.kind, weight=weight(c.awg))
+                     colour=c.colour_code or c.colour, hex=ink(c), cls=c.can or c.kind, weight=weight(c.awg))

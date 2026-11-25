@@ -11,7 +11,7 @@ from typing import Any
 from .pdfread import Outline, Pt, Run, Sheet
 
 TOL = 0.25                      # mm: points closer than this are one point
-LABEL = re.compile(r"^(?P<label>\S+) (?P<gauge>\d+(?:\.\d+)?(?: ?AWG| ?mm\S*)?|[A-Za-z?]+)(?: (?P<colour>[A-Z]{2,8}))?$")
+LABEL = re.compile(r"^(?P<label>\S+) (?P<gauge>\d+(?:\.\d+)?(?: ?AWG| ?mm\S*)?|[A-Za-z?]+(?: [a-z]+)*)(?: (?P<colour>[A-Z]{2,8}))?$")
 FLAG_TO = re.compile(r"^(?:to|->|→)\s+(?P<far>.+)$")
 FLAG_CONT = re.compile(r"continues on sheet (?P<sheet>\d+)")
 FLAG_MORE = re.compile(r"^\+\s*(?P<n>\d+) more wires")
@@ -302,7 +302,7 @@ def _flags(ob: SheetObs, runs: list[Run]) -> list[FlagObs]:
     """Flags: outlines (hexagon or box) whose text says where a wire goes on."""
     out: list[FlagObs] = []
     for o in ob.page.outlines:
-        if o.x1 - o.x0 < 6 or o.y1 - o.y0 > 14: continue
+        if o.x1 - o.x0 < 6 or o.y1 - o.y0 > 41: continue    # a flag is at most 8 lines (a narrow one: 40 mm)
         inside = sorted((r for r in runs if o.x0 - .2 <= r.x0 and r.x1 <= o.x1 + .2 and o.y0 - .2 <= r.top and r.bot <= o.y1 + .2), key=lambda r: (round(r.top), r.x0))
         inside = [r for r in inside if not (r.s.isdigit() and r.x1 - o.x0 < 8 and len(inside) > 1)]   # the sheet number in a continuation flag's own cell
         text = " ".join(r.s for r in inside)

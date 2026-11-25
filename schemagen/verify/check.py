@@ -11,6 +11,7 @@ from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any
 
+from ..core.model import is_link
 from . import expect as X
 from . import legible
 from .parse import End, SheetObs, TableRow, WireObs, parse_sheet, same_colour
@@ -284,6 +285,7 @@ def _tables(d: Drawing) -> None:
             if r.wire:
                 cw = words(w.colour) if w.colour else ""
                 gtxt = r.wire[:-len(cw)] if cw and r.wire.endswith(cw) else r.wire
+                if is_link(w.gauge): gtxt = gtxt.removesuffix(", no wire")    # a bus strip is a link, not a wire
                 if cw and not r.wire.endswith(cw): d.add("table", f"table row {r.label}: '{r.wire}' but the wire is {w.colour} ({cw})", k)
                 if re.sub(r"\s*AWG", "", gtxt).strip() != w.gauge: d.add("table", f"table row {r.label}: gauge '{r.wire}' but the wire is {w.gauge}", k)
             _row_vs_wire(d, r, ws, k)
@@ -322,6 +324,7 @@ def _row_vs_model(d: Drawing, r: TableRow, c: X.Cond, k: int) -> None:
     else: d.add("table", f"table row {r.label}: '{r.frm}' -> '{r.to}' is not {_term(c.a)} -> {_term(c.b)}", k)
     cw = words(c.colour) if c.colour else ""
     gtxt = r.wire[:-len(cw)] if cw and r.wire.endswith(cw) else r.wire
+    if is_link(c.gauge): gtxt = gtxt.removesuffix(", no wire")
     if r.wire and re.sub(r"\s*AWG", "", gtxt).strip() != c.gauge: d.add("table", f"table row {r.label}: '{r.wire}' but the wire list says {c.gauge} {cw}", k)
     d.table_only += 1
 
