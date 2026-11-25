@@ -507,20 +507,20 @@ def _plain(text: str) -> str:
 
 
 @lru_cache(maxsize=1 << 14)
-def _cut(meas: str) -> tuple[int, ...]:
-    """How many words go on each line of a flag: the narrowest of TIERS that needs the fewest lines (two, then more)."""
+def _cut(meas: str, narrow: bool = False) -> tuple[int, ...]:
+    """How many words go on each line of a flag: the narrowest of TIERS that needs the fewest lines (two, then more); narrow: always the narrowest."""
     words = meas.split()
     for k in range(2, len(words) + 1):
-        for w in TIERS:
+        for w in TIERS[:1] if narrow else TIERS:
             if len(c := wrap_words(words, w)) <= k: return tuple(c)
     return (1,) * len(words)
 
 
-def _flag_lines(kind: str, text: str, sheet: int | None = None, drawing: str = "", flat: bool = False, real: bool = True) -> list[str]:
+def _flag_lines(kind: str, text: str, sheet: int | None = None, drawing: str = "", flat: bool = False, real: bool = True, narrow: bool = False) -> list[str]:
     """The flag's text in lines: where it leads (`to Battery 14 V, + terminal`, `continues on sheet 2: ...`; a summary flag `+ 8 more wires on X`) and the drawing
     and sheet it can be found on (`(drawing VCU, sheet 3)`; a continuation takes the drawing from `drawing`). A flat flag is one line. Otherwise the lines are
     as narrow as two lines allow (more only when the text needs them: nothing is ever cut off). The breaks are made as if the sheet were `sheet 44`, so the
-    layout of the first pass of an export is the one of the second (`real`: the lines with the real digits)."""
+    layout of the first pass of an export is the one of the second (`real`: the lines with the real digits). narrow: as many lines as the narrowest width needs."""
     t = " ".join(text.removeprefix("→ ").split())
     m = _SUFFIX.search(t)
     suf, main = (m.group(1), t[:m.start()]) if m else ("", t)
@@ -533,28 +533,30 @@ def _flag_lines(kind: str, text: str, sheet: int | None = None, drawing: str = "
     words = body.split()
     meas = _SHEET_NO.sub(r"\g<1>44", body)
     out, i = [], 0
-    for n in _cut(meas):
+    for n in _cut(meas, narrow):
         out.append(" ".join((words if real else meas.split())[i:i + n])); i += n
     return out
 
 
-def flag_h(kind: str, text: str, sheet: int | None = None, drawing: str = "") -> float:
+def flag_h(kind: str, text: str, sheet: int | None = None, drawing: str = "", narrow: bool = False) -> float:
     """The height a flag needs: 10 mm for two lines, 20 for three or four, and so on (the wire attaches in the middle, on the grid)."""
-    return 10.0 * math.ceil(max(2, len(_flag_lines(kind, text, sheet, drawing, False, False))) / 2)
+    return 10.0 * math.ceil(max(2, len(_flag_lines(kind, text, sheet, drawing, False, False, narrow))) / 2)
 
 
-def flag(id: str, model: str, kind: str, text: str, target: str, sheet: int | None = None, x: float = 0.0, y: float = 0.0, side: str = "L", drawing: str = "", h: float = 0.0) -> Flag:  # noqa: E501
+def flag(id: str, model: str, kind: str, text: str, target: str, sheet: int | None = None, x: float = 0.0, y: float = 0.0, side: str = "L", drawing: str = "", h: float = 0.0, narrow: bool = False) -> Flag:  # noqa: E501
     """A flag at (x, y) on the grid, sized to its text. The wire attaches at the middle of its left or right edge (a grid point,
     (x, y + h/2) or (x + w, y + h/2)). off_sheet: a pennant with pointed ends (text = where it leads); continuation: a box with a cell
     for the sheet number (text = the pin it continues to). `sheet` is the continuation's sheet number. `side` is the edge the wire enters.
     h: FLAT (5) for one line, else the height of the lines (default: what the text needs, 10 at least). The width is measured as if the sheet in
-    `(drawing X, sheet N)` were two digits, so the same layout results before and after the numbers are known."""
-    h = h or flag_h(kind, text, sheet, drawing)
-    lines = _flag_lines(kind, text, sheet, drawing, h <= FLAG_H / 2, False)
+    `(drawing X, sheet N)` were two digits, so the same layout results before and after the numbers are known. narrow: the text in more, narrower lines
+    (for a drawing that only fits the sheet so)."""
+    h = h or flag_h(kind, text, sheet, drawing, narrow)
+    lines = _flag_lines(kind, text, sheet, drawing, h <= FLAG_H / 2, False, narrow)
     pad = 2 * FLAG_TIP + 1 if kind == "off_sheet" else FLAG_TAB + 3
     w = ceil_to(max([_tw(t) for t in lines] or [0.0]) + pad)
     f = Flag(id=id, model=model, x=x, y=y, w=max(w, 15.0), h=h, text=text, target=target, sheet=sheet, kind=kind, side=side)  # type: ignore[typeddict-item]
     if drawing: f["drawing"] = drawing
+    if narrow: f["narrow"] = True
     return f
 
 
@@ -562,7 +564,7 @@ def flag_shapes(f: Flag) -> tuple[list[Prim], list[Text]]:
     """The prims and texts a renderer draws for a flag."""
     B = _B({"model": f["model"]}, f["x"], f["y"])
     w, h = f["w"], f["h"]
-    lines = _flag_lines(f["kind"], f["text"], f.get("sheet"), f.get("drawing", ""), h <= FLAG_H / 2)
+    lines = _flag_lines(f["kind"], f["text"], f.get("sheet"), f.get("drawing", ""), h <= FLAG_H / 2, narrow=f.get("narrow", False))
     if f["kind"] == "off_sheet":
         k = FLAG_TIP
         B.poly([(0, h / 2), (k, 0), (w - k, 0), (w, h / 2), (w - k, h), (k, h)], True, N, "white")

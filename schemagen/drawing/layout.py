@@ -192,7 +192,8 @@ def place(page: Elem, size: str = "A3", fside: dict[str, str] | None = None, spr
         fn = Node(f["id"], "flag", col[a] + (1 if sd == "R" else -1), 0, 0, flag=f)
         nodes[f["id"]] = fn
         ka = end(a, f["at"], fn.col, f)
-        fl = S.flag(f["id"], f["model"], f["kind"], f["text"], f["target"], f.get("sheet"), drawing=f.get("drawing", "") if f["kind"] == "continuation" else "")
+        fl = S.flag(f["id"], f["model"], f["kind"], f["text"], f["target"], f.get("sheet"), drawing=f.get("drawing", "") if f["kind"] == "continuation" else "",
+                    narrow=page.get("narrow", False))
         fn.w, fn.h = fl["w"], fl["h"]
         fn.off = {"f": (0.0 if sd == "R" else fl["w"], fl["h"] / 2)}
         paths.append((f, [nodes[a], fn] if sd == "R" else [fn, nodes[a]], ka if sd == "R" else "f", "f" if sd == "R" else ka, sd == "L"))
@@ -386,7 +387,7 @@ def place(page: Elem, size: str = "A3", fside: dict[str, str] | None = None, spr
         elif n.kind == "flag" and n.flag:
             f = n.flag
             flags.append(S.flag(f["id"], f["model"], f["kind"], f["text"], f["target"], f.get("sheet"), n.x, n.y, "L" if n.off["f"][0] == 0.0 else "R",
-                                f.get("drawing", "") if f["kind"] == "continuation" else ""))
+                                f.get("drawing", "") if f["kind"] == "continuation" else "", narrow=page.get("narrow", False)))
             if f.get("covers"): flags[-1]["covers"] = f["covers"]
     for el, ns, k0, k1, rev in paths:
         ka = hopkeys(ns, k0, k1, 0)[0]
@@ -501,11 +502,13 @@ def _page(sc: Elem, elems: list[tuple[str, Elem]], nums: dict[str, list[int]] | 
 
 
 def one_page(sc: Elem, size: str = "A3") -> list[Elem] | None:
-    """The scene as a single page when it fits the sheet as a net of wires, else None (hub.py draws it as a strip)."""
+    """The scene as a single page when it fits the sheet as a net of wires (with narrower flags if it must), else None (hub.py draws it as a strip)."""
     _, _, aw, ah = areas(size)["area"]
     pg = _page(sc, [("w", w) for w in sc["wires"]] + [("f", f) for f in sc["flags"]])
-    r = place(pg, size)
-    return [dict(pg, n=1)] if r["w"] <= aw and r["h"] <= ah else None
+    for p in (pg, dict(pg, narrow=True)):
+        r = place(p, size)
+        if r["w"] <= aw and r["h"] <= ah: return [dict(p, n=1)]
+    return None
 
 
 def paginate(sc: Elem, size: str = "A3") -> list[Elem]:

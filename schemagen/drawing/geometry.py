@@ -201,6 +201,7 @@ class Flag(_Flag, total=False):
     drawing: str                  # continuation: the drawing the sheet number belongs to (this one)
     side: Literal["L", "R"]       # the edge the wire enters (middle of the edge)
     covers: list[Cover]           # summary flag: the conductors it stands for
+    narrow: bool                  # the text broken at the narrowest width (a drawing that only fits the sheet so)
 
 
 class Sheet(TypedDict):

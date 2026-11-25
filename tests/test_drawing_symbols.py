@@ -183,3 +183,13 @@ def test_pdf_has_one_page_per_sheet(tmp_path: Any) -> None:
     q = tmp_path / "b.pdf"
     pdf(g, q)
     assert q.read_bytes() == data   # deterministic
+
+
+def test_narrow_flag_is_narrower_and_drawn_with_the_same_lines():
+    """A narrow flag breaks its text into more, shorter lines; the renderer draws exactly those lines (no text lost)."""
+    text = "+ 9 more wires on BB-BUS-STRIP-POWERTRAIN-PANEL (drawing BB-BUS-STRIP-POWERTRAIN-PANEL)"
+    wide, narrow = S.flag("f", "m", "off_sheet", text, ""), S.flag("f", "m", "off_sheet", text, "", narrow=True)
+    assert narrow["w"] < wide["w"] and narrow["h"] > wide["h"] and narrow.get("narrow") and "narrow" not in wide
+    _, texts = S.flag_shapes(narrow)
+    assert " ".join(t["s"] for t in texts).split() == text.split()
+    assert max(st.text_w(t["s"], st.SIZE) for t in texts) <= narrow["w"]
