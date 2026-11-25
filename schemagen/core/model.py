@@ -22,6 +22,12 @@ Side = Literal["near", "far", ""]
 Provenance = Literal["measured", "datasheet", "assumed", "estimated", "design", "default"]
 
 
+def is_link(gauge: str) -> bool:
+    """A gauge that names a bus strip or bar ("bus strip", "fuse block bus"): a solid link between terminals, not a wire to cut."""
+    import re
+    return bool(re.search(r"\b(bus|strip|bar)\b", gauge or "", re.I))
+
+
 class Base(BaseModel):
     model_config = ConfigDict(extra="forbid", populate_by_name=True, validate_assignment=False)
 
@@ -235,6 +241,10 @@ class Conductor(Base):
         import re
         m = re.match(r"\s*(\d+)", self.gauge)
         return int(m.group(1)) if m else None
+
+    @property
+    def link(self) -> bool:
+        return is_link(self.gauge)
 
 
 class Harness(Base):

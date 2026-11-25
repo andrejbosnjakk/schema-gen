@@ -587,3 +587,13 @@ def test_gauge_fit_framing_comes_from_the_sheet(tmp_path):
     assert gauge_fit(wire, pd, "Breaker 'LT' 10 A").too_small
     wire.current_a = None  # no listed current: the breaker is too big for the wire
     assert not gauge_fit(wire, pd).too_small and gauge_fit(wire, pd).title.startswith("The 10 A")
+
+
+def test_bus_strip_link_is_not_a_wire():
+    """A gauge naming a bus strip or bar is a solid link: no gauge warning, no colour, and the wire table says so."""
+    from schemagen.core.model import is_link
+    from schemagen.drawing.table import cells
+    assert is_link("bus strip") and is_link("fuse block bus") and is_link("Bus bar")
+    assert not any(is_link(g) for g in ("22 AWG", "TBD", "", "RG-400", "Coax", "Braid", "22 shielded", "busy"))
+    row = dict(label="S09", gauge="bus strip", colour="", frm="a", to="b", see="")
+    assert cells(row, (0, 5, 15, 65, 125, 185, 245))[1] == ["bus strip, no wire"]

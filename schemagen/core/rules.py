@@ -384,7 +384,7 @@ def r_pin_tbd(ctx: Ctx) -> Iterator[tuple[str, list[str], str]]:
 @rule("gauge-tbd", "warning", "Gauge to be decided")
 def r_gauge_tbd(ctx: Ctx) -> Iterator[tuple[str, list[str], str]]:
     for i, c in enumerate(ctx.m.conductors):
-        if c.awg is None: yield f"{c.label}: gauge '{c.gauge or 'empty'}'", [cref(ctx, i)], "set the gauge (AWG)"
+        if c.awg is None and not c.link: yield f"{c.label}: gauge '{c.gauge or 'empty'}'", [cref(ctx, i)], "set the gauge (AWG)"
 
 
 # ---------------------------------------------------------------- power feed

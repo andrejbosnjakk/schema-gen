@@ -12,7 +12,7 @@ from pydantic import ValidationError
 from ..importers.records import Problem, Record, clean_extra, listof, number, sources, text
 from .classes import classify, connector_size
 from .config import Config
-from .model import (KINDS, Bus, Component, Conductor, Connector, ConnectorHalf, Decision, Harness, LabelEntry, LabelLedger, Model,
+from .model import (KINDS, is_link, Bus, Component, Conductor, Connector, ConnectorHalf, Decision, Harness, LabelEntry, LabelLedger, Model,
                     OpenItem, Part, ProtectiveDevice, Relay, Splice, Switch, Terminal, Zone)
 
 CONDUCTOR_KEYS = {"id", "label", "name", "p1", "p1c", "p1p", "p1side", "p2", "p2c", "p2p", "p2side", "func", "bus", "cls", "awg",
@@ -109,7 +109,7 @@ class Builder:
             **{"from": ends[0]}, to=ends[1], func=func, bus=bus, cls=cls, gauge=text(d.get("awg")), colour=text(d.get("colour")),
             status=text(d.get("st")), subsystem=text(d.get("subsystem")), notes=text(d.get("notes")), zone=text(d.get("zone")),
             harness=text(d.get("harn")), protection=text(d.get("prot")), sources=sources(d.get("src")), extra=extra,
-            kind=kind, can=can, colour_code=text(d.get("colour")) or col, **nums))
+            kind=kind, can=can, colour_code=text(d.get("colour")) or ("" if is_link(text(d.get("awg"))) else col), **nums))
         for e in (1, 2):
             kinds.setdefault(c.end(e).device, "")
         return c

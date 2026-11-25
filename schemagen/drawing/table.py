@@ -9,6 +9,7 @@ import re
 from typing import Any
 
 from ..app.workspace import _natural
+from ..core.model import is_link
 from ..exporters.palette import words as colour_words
 from . import symbols as S
 from .route import unit
@@ -74,7 +75,7 @@ def columns(rs: list[Elem], size: str = "A3") -> tuple[float, ...]:
 
 def cells(r: Elem, cols: tuple[float, ...]) -> list[list[str]]:
     """The lines of each cell of a row (label, wire, from, to, see), each broken to its column."""
-    wire = " ".join(x for x in (unit(r["gauge"]), colour_words(r["colour"])) if x)
+    wire = f"{r['gauge']}, no wire" if is_link(r["gauge"]) else " ".join(x for x in (unit(r["gauge"]), colour_words(r["colour"])) if x)
     txt = [r["label"], wire, r["frm"], r["to"], r["see"]]
     return [wrap_all(t, cols[i + 2] - cols[i + 1] - 2, SIZE) or [""] for i, t in enumerate(txt)]
 
