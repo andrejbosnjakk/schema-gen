@@ -92,8 +92,8 @@ def diff(got: set[Entry], want: set[Entry]) -> list[str]:
 
 
 def table(g: Geometry) -> list[str]:
-    """Differences between the wire tables and the netlist of the drawing: every conductor has one row in all (same conductor, label, gauge, colour and both
-    ends), under a sheet that draws it."""
+    """Differences between the wire tables and the netlist of the drawing: every conductor drawn as a wire or a flag has one row in all (same conductor,
+    label, gauge, colour and both ends), under a sheet that draws it; the conductors only a summary flag stands for have none."""
     out: list[str] = []
     sheets: list[Any] = list(g["sheets"])
     if not any("table" in sh for sh in sheets): return out      # a geometry without tables (hand-made)
@@ -101,7 +101,11 @@ def table(g: Geometry) -> list[str]:
     ids = [r["id"] for _, r in rows]
     out += [f"table row {i} twice" for i in sorted({i for i in ids if ids.count(i) > 1})]
     got = {(r["id"], *sorted((r["a"], r["b"])), r["label"], r["gauge"], r["colour"]) for _, r in rows}
-    out += [f"table {d}" for d in diff(got, netlist(g))]  # type: ignore[arg-type]
+    shown = {f["model"].removeprefix("conductor:") for sh in sheets for f in sh["flags"] if not f.get("covers")}
+    summ = {f["id"] for sh in sheets for f in sh["flags"] if f.get("covers")}
+    shown |= {w["model"].removeprefix("conductor:") for sh in sheets for w in sh["wires"] if w["a"] not in summ and w["b"] not in summ}
+    behind = {c["id"] for sh in sheets for f in sh["flags"] for c in f.get("covers") or []} - shown   # only a summary flag speaks of them (D116)
+    out += [f"table {d}" for d in diff(got, {e for e in netlist(g) if e[0] not in behind})]  # type: ignore[arg-type]
     return out
 
 

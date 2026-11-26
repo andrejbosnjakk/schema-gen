@@ -29,166 +29,81 @@
 <text x="25" y="273.75" font-size="3.436" text-anchor="start" data-model="">Switch (open)</text>
 <g data-model=""><polygon points="57,252.5 59,250.5 64,250.5 66,252.5 64,254.5 59,254.5" fill="none" stroke="#000" stroke-width="0.35" stroke-linejoin="round"/></g>
 <text x="70" y="253.75" font-size="3.436" text-anchor="start" data-model="">Off-sheet</text>
-<g data-model=""><line x1="15" y1="146" x2="405" y2="146" fill="none" stroke="#000" stroke-width="0.18"/><rect x="16" y="147" width="2.5" height="2.5" fill="none" stroke="#000" stroke-width="0.18"/><line x1="15" y1="150.5" x2="405" y2="150.5" fill="none" stroke="#000" stroke-width="0.18"/><rect x="16" y="151.5" width="2.5" height="2.5" fill="none" stroke="#000" stroke-width="0.18"/><line x1="15" y1="155" x2="405" y2="155" fill="none" stroke="#000" stroke-width="0.18"/><rect x="16" y="156" width="2.5" height="2.5" fill="none" stroke="#000" stroke-width="0.18"/><line x1="15" y1="159.5" x2="405" y2="159.5" fill="none" stroke="#000" stroke-width="0.18"/><rect x="16" y="160.5" width="2.5" height="2.5" fill="none" stroke="#000" stroke-width="0.18"/><line x1="15" y1="164" x2="405" y2="164" fill="none" stroke="#000" stroke-width="0.18"/><rect x="16" y="165" width="2.5" height="2.5" fill="none" stroke="#000" stroke-width="0.18"/><line x1="15" y1="168.5" x2="405" y2="168.5" fill="none" stroke="#000" stroke-width="0.18"/><rect x="16" y="169.5" width="2.5" height="2.5" fill="none" stroke="#000" stroke-width="0.18"/><line x1="15" y1="173" x2="405" y2="173" fill="none" stroke="#000" stroke-width="0.18"/><rect x="16" y="174" width="2.5" height="2.5" fill="none" stroke="#000" stroke-width="0.18"/><line x1="15" y1="177.5" x2="405" y2="177.5" fill="none" stroke="#000" stroke-width="0.18"/><rect x="16" y="178.5" width="2.5" height="2.5" fill="none" stroke="#000" stroke-width="0.18"/><line x1="15" y1="182" x2="405" y2="182" fill="none" stroke="#000" stroke-width="0.18"/><rect x="16" y="183" width="2.5" height="2.5" fill="none" stroke="#000" stroke-width="0.18"/><line x1="15" y1="186.5" x2="405" y2="186.5" fill="none" stroke="#000" stroke-width="0.18"/><rect x="16" y="187.5" width="2.5" height="2.5" fill="none" stroke="#000" stroke-width="0.18"/><line x1="15" y1="191" x2="405" y2="191" fill="none" stroke="#000" stroke-width="0.18"/><rect x="16" y="192" width="2.5" height="2.5" fill="none" stroke="#000" stroke-width="0.18"/><line x1="15" y1="195.5" x2="405" y2="195.5" fill="none" stroke="#000" stroke-width="0.18"/><rect x="16" y="196.5" width="2.5" height="2.5" fill="none" stroke="#000" stroke-width="0.18"/><line x1="15" y1="200" x2="405" y2="200" fill="none" stroke="#000" stroke-width="0.18"/><rect x="16" y="201" width="2.5" height="2.5" fill="none" stroke="#000" stroke-width="0.18"/><line x1="15" y1="204.5" x2="405" y2="204.5" fill="none" stroke="#000" stroke-width="0.18"/><rect x="16" y="205.5" width="2.5" height="2.5" fill="none" stroke="#000" stroke-width="0.18"/><line x1="15" y1="209" x2="405" y2="209" fill="none" stroke="#000" stroke-width="0.18"/><rect x="16" y="210" width="2.5" height="2.5" fill="none" stroke="#000" stroke-width="0.18"/><line x1="15" y1="213.5" x2="405" y2="213.5" fill="none" stroke="#000" stroke-width="0.18"/><rect x="16" y="214.5" width="2.5" height="2.5" fill="none" stroke="#000" stroke-width="0.18"/><line x1="15" y1="218" x2="405" y2="218" fill="none" stroke="#000" stroke-width="0.18"/><rect x="16" y="219" width="2.5" height="2.5" fill="none" stroke="#000" stroke-width="0.18"/><line x1="15" y1="222.5" x2="405" y2="222.5" fill="none" stroke="#000" stroke-width="0.18"/><rect x="16" y="223.5" width="2.5" height="2.5" fill="none" stroke="#000" stroke-width="0.18"/><line x1="15" y1="227" x2="405" y2="227" fill="none" stroke="#000" stroke-width="0.18"/><rect x="16" y="228" width="2.5" height="2.5" fill="none" stroke="#000" stroke-width="0.18"/><line x1="15" y1="231.5" x2="405" y2="231.5" fill="none" stroke="#000" stroke-width="0.18"/><rect x="16" y="232.5" width="2.5" height="2.5" fill="none" stroke="#000" stroke-width="0.18"/><line x1="15" y1="236" x2="405" y2="236" fill="none" stroke="#000" stroke-width="0.18"/><rect x="16" y="237" width="2.5" height="2.5" fill="none" stroke="#000" stroke-width="0.18"/><line x1="15" y1="240.5" x2="405" y2="240.5" fill="none" stroke="#000" stroke-width="0.18"/><rect x="16" y="241.5" width="2.5" height="2.5" fill="none" stroke="#000" stroke-width="0.18"/><line x1="15" y1="245" x2="405" y2="245" fill="none" stroke="#000" stroke-width="0.18"/></g>
-<g data-model="component:BB-GROUND-BUS"><line x1="260" y1="87.5" x2="260" y2="92.5" fill="none" stroke="#000" stroke-width="0.35"/><line x1="260" y1="90" x2="240" y2="90" fill="none" stroke="#000" stroke-width="0.35"/><circle cx="260" cy="90" r="0.9" fill="#000" stroke="#000" stroke-width="0.35"/><line x1="260" y1="90" x2="280" y2="90" fill="none" stroke="#000" stroke-width="0.35"/><circle cx="260" cy="90" r="0.9" fill="#000" stroke="#000" stroke-width="0.35"/><line x1="260" y1="92.5" x2="260" y2="95" fill="none" stroke="#000" stroke-width="0.35"/><line x1="255" y1="95" x2="265" y2="95" fill="none" stroke="#000" stroke-width="0.35"/><line x1="257" y1="97.5" x2="263" y2="97.5" fill="none" stroke="#000" stroke-width="0.35"/><line x1="259" y1="100" x2="261" y2="100" fill="none" stroke="#000" stroke-width="0.35"/></g>
-<g data-model="component:CB-BATTERY"><line x1="240" y1="25" x2="257.5" y2="25" fill="none" stroke="#000" stroke-width="0.35"/><path d="M257.5 25A5 5 0 0 1 267.5 25" fill="none" stroke="#000" stroke-width="0.35"/><circle cx="257.5" cy="25" r="0.9" fill="#fff" stroke="#000" stroke-width="0.35"/><circle cx="267.5" cy="25" r="0.9" fill="#fff" stroke="#000" stroke-width="0.35"/><line x1="257.5" y1="25" x2="264.5" y2="21.5" fill="none" stroke="#000" stroke-width="0.35"/></g>
-<g data-model="component:K-BATTERY-CONTACTOR"><line x1="125" y1="40" x2="154" y2="40" fill="none" stroke="#000" stroke-width="0.35"/><line x1="166" y1="40" x2="195" y2="40" fill="none" stroke="#000" stroke-width="0.35"/><circle cx="154" cy="40" r="0.9" fill="#fff" stroke="#000" stroke-width="0.35"/><circle cx="166" cy="40" r="0.9" fill="#fff" stroke="#000" stroke-width="0.35"/><line x1="154" y1="40" x2="165" y2="36.5" fill="none" stroke="#000" stroke-width="0.35"/><line x1="125" y1="55" x2="154" y2="55" fill="none" stroke="#000" stroke-width="0.35"/><line x1="166" y1="55" x2="195" y2="55" fill="none" stroke="#000" stroke-width="0.35"/><rect x="154" y="52.5" width="12" height="5" fill="#fff" stroke="#000" stroke-width="0.35"/><line x1="160" y1="52.5" x2="160" y2="38.091" fill="none" stroke="#000" stroke-width="0.18" stroke-dasharray="1.5 1"/></g>
-<g data-model="component:MAIN-BATTERY"><line x1="20" y1="95" x2="31" y2="95" fill="none" stroke="#000" stroke-width="0.35"/><line x1="34" y1="95" x2="45" y2="95" fill="none" stroke="#000" stroke-width="0.35"/><line x1="34" y1="91.5" x2="34" y2="98.5" fill="none" stroke="#000" stroke-width="0.35"/><line x1="31" y1="93" x2="31" y2="97" fill="none" stroke="#000" stroke-width="0.5"/><line x1="45" y1="95" x2="45" y2="100" fill="none" stroke="#000" stroke-width="0.35"/><circle cx="45" cy="95" r="0.9" fill="#000" stroke="#000" stroke-width="0.35"/><circle cx="45" cy="100" r="0.9" fill="#000" stroke="#000" stroke-width="0.35"/></g>
-<g data-model="component:SW-MASTER"><line x1="20" y1="40" x2="41.5" y2="40" fill="none" stroke="#000" stroke-width="0.35"/><line x1="53.5" y1="40" x2="75" y2="40" fill="none" stroke="#000" stroke-width="0.35"/><circle cx="41.5" cy="40" r="0.9" fill="#fff" stroke="#000" stroke-width="0.35"/><circle cx="53.5" cy="40" r="0.9" fill="#fff" stroke="#000" stroke-width="0.35"/><line x1="41.5" y1="40" x2="52.5" y2="36.5" fill="none" stroke="#000" stroke-width="0.35"/></g>
-<polyline points="45,95 120,95 120,40 125,40" fill="none" stroke="#000" stroke-width="1.1" stroke-linejoin="round" data-model="conductor:W008"/>
-<polyline points="45,95 120,95 120,40 125,40" fill="none" stroke="#ff0000" stroke-width="0.7" stroke-linejoin="round"/>
-<polyline points="195,40 235,40 235,25 240,25" fill="none" stroke="#000" stroke-width="1.1" stroke-linejoin="round" data-model="conductor:W009"/>
-<polyline points="195,40 235,40 235,25 240,25" fill="none" stroke="#ff0000" stroke-width="0.7" stroke-linejoin="round"/>
-<polyline points="75,40 115,40 115,55 125,55" fill="none" stroke="#000" stroke-width="0.75" stroke-linejoin="round" data-model="conductor:W014"/>
-<polyline points="75,40 115,40 115,55 125,55" fill="none" stroke="#ff0000" stroke-width="0.35" stroke-linejoin="round"/>
-<polyline points="195,55 235,55 235,90 240,90" fill="none" stroke="#000" stroke-width="0.75" stroke-linejoin="round" data-model="conductor:W015"/>
-<polyline points="195,55 235,55 235,90 240,90" fill="none" stroke="#000000" stroke-width="0.35" stroke-linejoin="round"/>
-<polyline points="280,90 320,90 320,95 325,95" fill="none" stroke="#000" stroke-width="1.1" stroke-linejoin="round" data-model="conductor:W007"/>
-<polyline points="280,90 320,90 320,95 325,95" fill="none" stroke="#000000" stroke-width="0.7" stroke-linejoin="round"/>
-<polyline points="45,100 115,100 115,125 125,125" fill="none" stroke="#000" stroke-width="0.75" stroke-linejoin="round" data-model="conductor:W012"/>
-<polyline points="45,100 115,100 115,125 125,125" fill="none" stroke="#ff0000" stroke-width="0.35" stroke-linejoin="round"/>
-<g data-model="conductor:W007"><polygon points="325,95 328,90 397,90 400,95 397,100 328,100" fill="#fff" stroke="#000" stroke-width="0.35" stroke-linejoin="round"/></g>
-<text x="362.5" y="94" font-size="3.436" text-anchor="middle" data-model="conductor:W007">+ 17 more wires on BB-GROUND-BUS</text>
-<text x="362.5" y="98.5" font-size="3.436" text-anchor="middle" data-model="conductor:W007">(drawing BB-GROUND-BUS)</text>
-<g data-model="conductor:W012"><polygon points="125,125 128,120 182,120 185,125 182,130 128,130" fill="#fff" stroke="#000" stroke-width="0.35" stroke-linejoin="round"/></g>
-<text x="155" y="124" font-size="3.436" text-anchor="middle" data-model="conductor:W012">to Fuse &#x27;MASTER&#x27; 3 A, in,</text>
-<text x="155" y="128.5" font-size="3.436" text-anchor="middle" data-model="conductor:W012">terminal (drawing FU-MASTER)</text>
-<text x="260" y="80" font-size="3.436" text-anchor="middle" font-weight="600" data-model="component:BB-GROUND-BUS">Ground bus</text>
-<text x="260" y="85" font-size="3.436" text-anchor="middle" data-model="component:BB-GROUND-BUS">BB-GROUND-BUS</text>
-<text x="262.5" y="31.75" font-size="3.436" text-anchor="middle" font-weight="600" data-model="component:CB-BATTERY">Breaker &#x27;BATTERY&#x27; 30 A</text>
-<text x="262.5" y="36.25" font-size="3.436" text-anchor="middle" data-model="component:CB-BATTERY">CB-BATTERY</text>
-<text x="262.5" y="40.75" font-size="3.436" text-anchor="middle" data-model="component:CB-BATTERY">30 A</text>
-<text x="126.5" y="38.75" font-size="3.436" text-anchor="start" data-model="pin:K-BATTERY-CONTACTOR//30">30</text>
-<text x="193.5" y="38.75" font-size="3.436" text-anchor="end" data-model="pin:K-BATTERY-CONTACTOR//87">87</text>
-<text x="126.5" y="53.75" font-size="3.436" text-anchor="start" data-model="pin:K-BATTERY-CONTACTOR/coil/+">+</text>
-<text x="193.5" y="53.75" font-size="3.436" text-anchor="end" data-model="pin:K-BATTERY-CONTACTOR/coil/-">-</text>
-<text x="160" y="64.25" font-size="3.436" text-anchor="middle" font-weight="600" data-model="component:K-BATTERY-CONTACTOR">Battery contactor</text>
-<text x="160" y="68.75" font-size="3.436" text-anchor="middle" data-model="component:K-BATTERY-CONTACTOR">K-BATTERY-CONTACTOR</text>
-<text x="160" y="73.25" font-size="3.436" text-anchor="middle" data-model="component:K-BATTERY-CONTACTOR">14 V battery contactor, 100 A continuous</text>
-<text x="43.5" y="93.75" font-size="3.436" text-anchor="end" data-model="component:MAIN-BATTERY">+</text>
-<text x="32.5" y="102.75" font-size="3.436" text-anchor="middle" font-weight="600" data-model="component:MAIN-BATTERY">Main battery</text>
-<text x="32.5" y="107.25" font-size="3.436" text-anchor="middle" data-model="component:MAIN-BATTERY">13.6 V</text>
-<text x="21.5" y="38.75" font-size="3.436" text-anchor="start" data-model="component:SW-MASTER">1</text>
-<text x="73.5" y="38.75" font-size="3.436" text-anchor="end" data-model="pin:SW-MASTER//2">2</text>
-<text x="47.5" y="49.25" font-size="3.436" text-anchor="middle" font-weight="600" data-model="component:SW-MASTER">Switch &#x27;MASTER&#x27;</text>
-<text x="47.5" y="53.75" font-size="3.436" text-anchor="middle" data-model="component:SW-MASTER">SW-MASTER</text>
-<text x="47.5" y="58.25" font-size="3.436" text-anchor="middle" data-model="component:SW-MASTER">panel toggle switch, SPST 20 A</text>
-<text x="47.5" y="93.75" font-size="3.436" text-anchor="start" data-model="conductor:W008">W008 10 AWG RD</text>
-<text x="197.5" y="38.75" font-size="3.436" text-anchor="start" data-model="conductor:W009">W009 10 AWG RD</text>
-<text x="77.5" y="38.75" font-size="3.436" text-anchor="start" data-model="conductor:W014">W014 22 AWG RD</text>
-<text x="197.5" y="53.75" font-size="3.436" text-anchor="start" data-model="conductor:W015">W015 22 AWG BK</text>
-<text x="47.5" y="98.75" font-size="3.436" text-anchor="start" data-model="conductor:W012">W012 22 AWG RD</text>
-<text x="23" y="145" font-size="3.436" text-anchor="start" fill="#6b6b6b" data-model="">LABEL</text>
-<text x="41" y="145" font-size="3.436" text-anchor="start" fill="#6b6b6b" data-model="">WIRE</text>
-<text x="93" y="145" font-size="3.436" text-anchor="start" fill="#6b6b6b" data-model="">FROM</text>
-<text x="189.828" y="145" font-size="3.436" text-anchor="start" fill="#6b6b6b" data-model="">TO</text>
-<text x="297.414" y="145" font-size="3.436" text-anchor="start" fill="#6b6b6b" data-model="">SEE</text>
-<text x="23" y="149.5" font-size="3.436" text-anchor="start" data-model="">W007</text>
-<text x="41" y="149.5" font-size="3.436" text-anchor="start" data-model="">10 AWG black</text>
-<text x="93" y="149.5" font-size="3.436" text-anchor="start" data-model="">ground bus BB-GROUND-BUS</text>
-<text x="189.828" y="149.5" font-size="3.436" text-anchor="start" data-model="">Firewall connector X-FW, cockpit side, pin 2</text>
-<text x="297.414" y="149.5" font-size="3.436" text-anchor="start" data-model="">(drawing X-FW)</text>
-<text x="23" y="154" font-size="3.436" text-anchor="start" data-model="">W008</text>
-<text x="41" y="154" font-size="3.436" text-anchor="start" data-model="">10 AWG red</text>
-<text x="93" y="154" font-size="3.436" text-anchor="start" data-model="">Main battery, +</text>
-<text x="189.828" y="154" font-size="3.436" text-anchor="start" data-model="">Battery contactor, pin 30</text>
-<text x="23" y="158.5" font-size="3.436" text-anchor="start" data-model="">W009</text>
-<text x="41" y="158.5" font-size="3.436" text-anchor="start" data-model="">10 AWG red</text>
-<text x="93" y="158.5" font-size="3.436" text-anchor="start" data-model="">Battery contactor, pin 87</text>
-<text x="189.828" y="158.5" font-size="3.436" text-anchor="start" data-model="">Breaker &#x27;BATTERY&#x27; 30 A, LINE</text>
-<text x="23" y="163" font-size="3.436" text-anchor="start" data-model="">W011</text>
-<text x="41" y="163" font-size="3.436" text-anchor="start" data-model="">10 AWG black</text>
-<text x="93" y="163" font-size="3.436" text-anchor="start" data-model="">ground bus BB-GROUND-BUS</text>
-<text x="189.828" y="163" font-size="3.436" text-anchor="start" data-model="">Main battery, -, terminal</text>
-<text x="297.414" y="163" font-size="3.436" text-anchor="start" data-model="">(drawing MAIN-BATTERY)</text>
-<text x="23" y="167.5" font-size="3.436" text-anchor="start" data-model="">W012</text>
-<text x="41" y="167.5" font-size="3.436" text-anchor="start" data-model="">22 AWG red</text>
-<text x="93" y="167.5" font-size="3.436" text-anchor="start" data-model="">Main battery, +</text>
-<text x="189.828" y="167.5" font-size="3.436" text-anchor="start" data-model="">Fuse &#x27;MASTER&#x27; 3 A, in, terminal</text>
-<text x="297.414" y="167.5" font-size="3.436" text-anchor="start" data-model="">(drawing FU-MASTER)</text>
-<text x="23" y="172" font-size="3.436" text-anchor="start" data-model="">W014</text>
-<text x="41" y="172" font-size="3.436" text-anchor="start" data-model="">22 AWG red</text>
-<text x="93" y="172" font-size="3.436" text-anchor="start" data-model="">Switch &#x27;MASTER&#x27;, pin 2</text>
-<text x="189.828" y="172" font-size="3.436" text-anchor="start" data-model="">Battery contactor, coil, pin +</text>
-<text x="23" y="176.5" font-size="3.436" text-anchor="start" data-model="">W015</text>
-<text x="41" y="176.5" font-size="3.436" text-anchor="start" data-model="">22 AWG black</text>
-<text x="93" y="176.5" font-size="3.436" text-anchor="start" data-model="">Battery contactor, coil, pin -</text>
-<text x="189.828" y="176.5" font-size="3.436" text-anchor="start" data-model="">ground bus BB-GROUND-BUS</text>
-<text x="23" y="181" font-size="3.436" text-anchor="start" data-model="">W022</text>
-<text x="41" y="181" font-size="3.436" text-anchor="start" data-model="">16 AWG black</text>
-<text x="93" y="181" font-size="3.436" text-anchor="start" data-model="">ground bus BB-GROUND-BUS</text>
-<text x="189.828" y="181" font-size="3.436" text-anchor="start" data-model="">Backup battery, -, terminal</text>
-<text x="297.414" y="181" font-size="3.436" text-anchor="start" data-model="">(drawing BACKUP-BATTERY)</text>
-<text x="23" y="185.5" font-size="3.436" text-anchor="start" data-model="">W023</text>
-<text x="41" y="185.5" font-size="3.436" text-anchor="start" data-model="">10 AWG black</text>
-<text x="93" y="185.5" font-size="3.436" text-anchor="start" data-model="">ground bus BB-GROUND-BUS</text>
-<text x="189.828" y="185.5" font-size="3.436" text-anchor="start" data-model="">Airframe ground stud, Stud, terminal</text>
-<text x="297.414" y="185.5" font-size="3.436" text-anchor="start" data-model="">(drawing AIRFRAME-GROUND-STUD)</text>
-<text x="23" y="190" font-size="3.436" text-anchor="start" data-model="">W033</text>
-<text x="41" y="190" font-size="3.436" text-anchor="start" data-model="">22 AWG black</text>
-<text x="93" y="190" font-size="3.436" text-anchor="start" data-model="">ground bus BB-GROUND-BUS</text>
-<text x="189.828" y="190" font-size="3.436" text-anchor="start" data-model="">Wing root connector X-WR, cockpit side, pin 2</text>
-<text x="297.414" y="190" font-size="3.436" text-anchor="start" data-model="">(drawing X-WR)</text>
-<text x="23" y="194.5" font-size="3.436" text-anchor="start" data-model="">W043</text>
-<text x="41" y="194.5" font-size="3.436" text-anchor="start" data-model="">22 AWG black</text>
-<text x="93" y="194.5" font-size="3.436" text-anchor="start" data-model="">ground bus BB-GROUND-BUS</text>
-<text x="189.828" y="194.5" font-size="3.436" text-anchor="start" data-model="">Wing root connector X-WR, cockpit side, pin 4</text>
-<text x="297.414" y="194.5" font-size="3.436" text-anchor="start" data-model="">(drawing X-WR)</text>
-<text x="23" y="199" font-size="3.436" text-anchor="start" data-model="">W049</text>
-<text x="41" y="199" font-size="3.436" text-anchor="start" data-model="">18 AWG black</text>
-<text x="93" y="199" font-size="3.436" text-anchor="start" data-model="">ground bus BB-GROUND-BUS</text>
-<text x="189.828" y="199" font-size="3.436" text-anchor="start" data-model="">Wing root connector X-WR, cockpit side, pin 6</text>
-<text x="297.414" y="199" font-size="3.436" text-anchor="start" data-model="">(drawing X-WR)</text>
-<text x="23" y="203.5" font-size="3.436" text-anchor="start" data-model="">W052</text>
-<text x="41" y="203.5" font-size="3.436" text-anchor="start" data-model="">20 AWG black</text>
-<text x="93" y="203.5" font-size="3.436" text-anchor="start" data-model="">ground bus BB-GROUND-BUS</text>
-<text x="189.828" y="203.5" font-size="3.436" text-anchor="start" data-model="">EFIS, J1, pin 2</text>
-<text x="297.414" y="203.5" font-size="3.436" text-anchor="start" data-model="">(drawing EFIS)</text>
-<text x="23" y="208" font-size="3.436" text-anchor="start" data-model="">W055</text>
-<text x="41" y="208" font-size="3.436" text-anchor="start" data-model="">20 AWG black</text>
-<text x="93" y="208" font-size="3.436" text-anchor="start" data-model="">ground bus BB-GROUND-BUS</text>
-<text x="189.828" y="208" font-size="3.436" text-anchor="start" data-model="">Com radio, J1, pin 2</text>
-<text x="297.414" y="208" font-size="3.436" text-anchor="start" data-model="">(drawing COM-RADIO)</text>
-<text x="23" y="212.5" font-size="3.436" text-anchor="start" data-model="">W059</text>
-<text x="41" y="212.5" font-size="3.436" text-anchor="start" data-model="">20 AWG black</text>
-<text x="93" y="212.5" font-size="3.436" text-anchor="start" data-model="">ground bus BB-GROUND-BUS</text>
-<text x="189.828" y="212.5" font-size="3.436" text-anchor="start" data-model="">Transponder, J1, pin 2</text>
-<text x="297.414" y="212.5" font-size="3.436" text-anchor="start" data-model="">(drawing TRANSPONDER)</text>
-<text x="23" y="217" font-size="3.436" text-anchor="start" data-model="">W064</text>
-<text x="41" y="217" font-size="3.436" text-anchor="start" data-model="">22 AWG black</text>
-<text x="93" y="217" font-size="3.436" text-anchor="start" data-model="">ground bus BB-GROUND-BUS</text>
-<text x="189.828" y="217" font-size="3.436" text-anchor="start" data-model="">GPS receiver, J1, pin 2</text>
-<text x="297.414" y="217" font-size="3.436" text-anchor="start" data-model="">(drawing GPS-RECEIVER)</text>
-<text x="23" y="221.5" font-size="3.436" text-anchor="start" data-model="">W075</text>
-<text x="41" y="221.5" font-size="3.436" text-anchor="start" data-model="">20 AWG black</text>
-<text x="93" y="221.5" font-size="3.436" text-anchor="start" data-model="">ground bus BB-GROUND-BUS</text>
-<text x="189.828" y="221.5" font-size="3.436" text-anchor="start" data-model="">Firewall connector X-FW, cockpit side, pin 4</text>
-<text x="297.414" y="221.5" font-size="3.436" text-anchor="start" data-model="">(drawing X-FW)</text>
-<text x="23" y="226" font-size="3.436" text-anchor="start" data-model="">W091</text>
-<text x="41" y="226" font-size="3.436" text-anchor="start" data-model="">22 AWG black</text>
-<text x="93" y="226" font-size="3.436" text-anchor="start" data-model="">ground bus BB-GROUND-BUS</text>
-<text x="189.828" y="226" font-size="3.436" text-anchor="start" data-model="">Firewall connector X-FW, cockpit side, pin 10</text>
-<text x="297.414" y="226" font-size="3.436" text-anchor="start" data-model="">(drawing X-FW)</text>
-<text x="23" y="230.5" font-size="3.436" text-anchor="start" data-model="">W096</text>
-<text x="41" y="230.5" font-size="3.436" text-anchor="start" data-model="">20 AWG black</text>
-<text x="93" y="230.5" font-size="3.436" text-anchor="start" data-model="">ground bus BB-GROUND-BUS</text>
-<text x="189.828" y="230.5" font-size="3.436" text-anchor="start" data-model="">Firewall connector X-FW, cockpit side, pin 14</text>
-<text x="297.414" y="230.5" font-size="3.436" text-anchor="start" data-model="">(drawing X-FW)</text>
-<text x="23" y="235" font-size="3.436" text-anchor="start" data-model="">W115</text>
-<text x="41" y="235" font-size="3.436" text-anchor="start" data-model="">22 AWG black</text>
-<text x="93" y="235" font-size="3.436" text-anchor="start" data-model="">ground bus BB-GROUND-BUS</text>
-<text x="189.828" y="235" font-size="3.436" text-anchor="start" data-model="">Cabin light, pin 2</text>
-<text x="297.414" y="235" font-size="3.436" text-anchor="start" data-model="">(drawing CABIN-LIGHT)</text>
-<text x="23" y="239.5" font-size="3.436" text-anchor="start" data-model="">W118</text>
-<text x="41" y="239.5" font-size="3.436" text-anchor="start" data-model="">22 AWG black</text>
-<text x="93" y="239.5" font-size="3.436" text-anchor="start" data-model="">ground bus BB-GROUND-BUS</text>
-<text x="189.828" y="239.5" font-size="3.436" text-anchor="start" data-model="">USB charger, pin 2</text>
-<text x="297.414" y="239.5" font-size="3.436" text-anchor="start" data-model="">(drawing USB-CHARGER)</text>
-<text x="23" y="244" font-size="3.436" text-anchor="start" data-model="">W121</text>
+<g data-model=""><line x1="15" y1="222.5" x2="405" y2="222.5" fill="none" stroke="#000" stroke-width="0.18"/><rect x="16" y="223.5" width="2.5" height="2.5" fill="none" stroke="#000" stroke-width="0.18"/><line x1="15" y1="227" x2="405" y2="227" fill="none" stroke="#000" stroke-width="0.18"/><rect x="16" y="228" width="2.5" height="2.5" fill="none" stroke="#000" stroke-width="0.18"/><line x1="15" y1="231.5" x2="405" y2="231.5" fill="none" stroke="#000" stroke-width="0.18"/><rect x="16" y="232.5" width="2.5" height="2.5" fill="none" stroke="#000" stroke-width="0.18"/><line x1="15" y1="236" x2="405" y2="236" fill="none" stroke="#000" stroke-width="0.18"/><rect x="16" y="237" width="2.5" height="2.5" fill="none" stroke="#000" stroke-width="0.18"/><line x1="15" y1="240.5" x2="405" y2="240.5" fill="none" stroke="#000" stroke-width="0.18"/><rect x="16" y="241.5" width="2.5" height="2.5" fill="none" stroke="#000" stroke-width="0.18"/><line x1="15" y1="245" x2="405" y2="245" fill="none" stroke="#000" stroke-width="0.18"/></g>
+<g data-model="component:BB-GROUND-BUS"><line x1="260" y1="122.5" x2="260" y2="127.5" fill="none" stroke="#000" stroke-width="0.35"/><line x1="260" y1="125" x2="240" y2="125" fill="none" stroke="#000" stroke-width="0.35"/><circle cx="260" cy="125" r="0.9" fill="#000" stroke="#000" stroke-width="0.35"/><line x1="260" y1="125" x2="280" y2="125" fill="none" stroke="#000" stroke-width="0.35"/><circle cx="260" cy="125" r="0.9" fill="#000" stroke="#000" stroke-width="0.35"/><line x1="260" y1="127.5" x2="260" y2="130" fill="none" stroke="#000" stroke-width="0.35"/><line x1="255" y1="130" x2="265" y2="130" fill="none" stroke="#000" stroke-width="0.35"/><line x1="257" y1="132.5" x2="263" y2="132.5" fill="none" stroke="#000" stroke-width="0.35"/><line x1="259" y1="135" x2="261" y2="135" fill="none" stroke="#000" stroke-width="0.35"/></g>
+<g data-model="component:CB-BATTERY"><line x1="240" y1="55" x2="257.5" y2="55" fill="none" stroke="#000" stroke-width="0.35"/><path d="M257.5 55A5 5 0 0 1 267.5 55" fill="none" stroke="#000" stroke-width="0.35"/><circle cx="257.5" cy="55" r="0.9" fill="#fff" stroke="#000" stroke-width="0.35"/><circle cx="267.5" cy="55" r="0.9" fill="#fff" stroke="#000" stroke-width="0.35"/><line x1="257.5" y1="55" x2="264.5" y2="51.5" fill="none" stroke="#000" stroke-width="0.35"/></g>
+<g data-model="component:K-BATTERY-CONTACTOR"><line x1="125" y1="75" x2="154" y2="75" fill="none" stroke="#000" stroke-width="0.35"/><line x1="166" y1="75" x2="195" y2="75" fill="none" stroke="#000" stroke-width="0.35"/><circle cx="154" cy="75" r="0.9" fill="#fff" stroke="#000" stroke-width="0.35"/><circle cx="166" cy="75" r="0.9" fill="#fff" stroke="#000" stroke-width="0.35"/><line x1="154" y1="75" x2="165" y2="71.5" fill="none" stroke="#000" stroke-width="0.35"/><line x1="125" y1="90" x2="154" y2="90" fill="none" stroke="#000" stroke-width="0.35"/><line x1="166" y1="90" x2="195" y2="90" fill="none" stroke="#000" stroke-width="0.35"/><rect x="154" y="87.5" width="12" height="5" fill="#fff" stroke="#000" stroke-width="0.35"/><line x1="160" y1="87.5" x2="160" y2="73.091" fill="none" stroke="#000" stroke-width="0.18" stroke-dasharray="1.5 1"/></g>
+<g data-model="component:MAIN-BATTERY"><line x1="20" y1="135" x2="31" y2="135" fill="none" stroke="#000" stroke-width="0.35"/><line x1="34" y1="135" x2="45" y2="135" fill="none" stroke="#000" stroke-width="0.35"/><line x1="34" y1="131.5" x2="34" y2="138.5" fill="none" stroke="#000" stroke-width="0.35"/><line x1="31" y1="133" x2="31" y2="137" fill="none" stroke="#000" stroke-width="0.5"/><line x1="45" y1="135" x2="45" y2="140" fill="none" stroke="#000" stroke-width="0.35"/><circle cx="45" cy="135" r="0.9" fill="#000" stroke="#000" stroke-width="0.35"/><circle cx="45" cy="140" r="0.9" fill="#000" stroke="#000" stroke-width="0.35"/></g>
+<g data-model="component:SW-MASTER"><line x1="20" y1="75" x2="41.5" y2="75" fill="none" stroke="#000" stroke-width="0.35"/><line x1="53.5" y1="75" x2="75" y2="75" fill="none" stroke="#000" stroke-width="0.35"/><circle cx="41.5" cy="75" r="0.9" fill="#fff" stroke="#000" stroke-width="0.35"/><circle cx="53.5" cy="75" r="0.9" fill="#fff" stroke="#000" stroke-width="0.35"/><line x1="41.5" y1="75" x2="52.5" y2="71.5" fill="none" stroke="#000" stroke-width="0.35"/></g>
+<polyline points="45,135 120,135 120,75 125,75" fill="none" stroke="#000" stroke-width="1.1" stroke-linejoin="round" data-model="conductor:W008"/>
+<polyline points="45,135 120,135 120,75 125,75" fill="none" stroke="#ff0000" stroke-width="0.7" stroke-linejoin="round"/>
+<polyline points="195,75 235,75 235,55 240,55" fill="none" stroke="#000" stroke-width="1.1" stroke-linejoin="round" data-model="conductor:W009"/>
+<polyline points="195,75 235,75 235,55 240,55" fill="none" stroke="#ff0000" stroke-width="0.7" stroke-linejoin="round"/>
+<polyline points="75,75 115,75 115,90 125,90" fill="none" stroke="#000" stroke-width="0.75" stroke-linejoin="round" data-model="conductor:W014"/>
+<polyline points="75,75 115,75 115,90 125,90" fill="none" stroke="#ff0000" stroke-width="0.35" stroke-linejoin="round"/>
+<polyline points="195,90 235,90 235,125 240,125" fill="none" stroke="#000" stroke-width="0.75" stroke-linejoin="round" data-model="conductor:W015"/>
+<polyline points="195,90 235,90 235,125 240,125" fill="none" stroke="#000000" stroke-width="0.35" stroke-linejoin="round"/>
+<polyline points="280,125 320,125 320,135 325,135" fill="none" stroke="#000" stroke-width="1.1" stroke-linejoin="round" data-model="conductor:W007"/>
+<polyline points="280,125 320,125 320,135 325,135" fill="none" stroke="#000000" stroke-width="0.7" stroke-linejoin="round"/>
+<polyline points="45,140 115,140 115,165 125,165" fill="none" stroke="#000" stroke-width="0.75" stroke-linejoin="round" data-model="conductor:W012"/>
+<polyline points="45,140 115,140 115,165 125,165" fill="none" stroke="#ff0000" stroke-width="0.35" stroke-linejoin="round"/>
+<g data-model="conductor:W007"><polygon points="325,135 328,130 397,130 400,135 397,140 328,140" fill="#fff" stroke="#000" stroke-width="0.35" stroke-linejoin="round"/></g>
+<text x="362.5" y="134" font-size="3.436" text-anchor="middle" data-model="conductor:W007">+ 17 more wires on BB-GROUND-BUS</text>
+<text x="362.5" y="138.5" font-size="3.436" text-anchor="middle" data-model="conductor:W007">(drawing BB-GROUND-BUS)</text>
+<g data-model="conductor:W012"><polygon points="125,165 128,160 182,160 185,165 182,170 128,170" fill="#fff" stroke="#000" stroke-width="0.35" stroke-linejoin="round"/></g>
+<text x="155" y="164" font-size="3.436" text-anchor="middle" data-model="conductor:W012">to Fuse &#x27;MASTER&#x27; 3 A, in,</text>
+<text x="155" y="168.5" font-size="3.436" text-anchor="middle" data-model="conductor:W012">terminal (drawing FU-MASTER)</text>
+<text x="260" y="115" font-size="3.436" text-anchor="middle" font-weight="600" data-model="component:BB-GROUND-BUS">Ground bus</text>
+<text x="260" y="120" font-size="3.436" text-anchor="middle" data-model="component:BB-GROUND-BUS">BB-GROUND-BUS</text>
+<text x="262.5" y="61.75" font-size="3.436" text-anchor="middle" font-weight="600" data-model="component:CB-BATTERY">Breaker &#x27;BATTERY&#x27; 30 A</text>
+<text x="262.5" y="66.25" font-size="3.436" text-anchor="middle" data-model="component:CB-BATTERY">CB-BATTERY</text>
+<text x="262.5" y="70.75" font-size="3.436" text-anchor="middle" data-model="component:CB-BATTERY">30 A</text>
+<text x="126.5" y="73.75" font-size="3.436" text-anchor="start" data-model="pin:K-BATTERY-CONTACTOR//30">30</text>
+<text x="193.5" y="73.75" font-size="3.436" text-anchor="end" data-model="pin:K-BATTERY-CONTACTOR//87">87</text>
+<text x="126.5" y="88.75" font-size="3.436" text-anchor="start" data-model="pin:K-BATTERY-CONTACTOR/coil/+">+</text>
+<text x="193.5" y="88.75" font-size="3.436" text-anchor="end" data-model="pin:K-BATTERY-CONTACTOR/coil/-">-</text>
+<text x="160" y="99.25" font-size="3.436" text-anchor="middle" font-weight="600" data-model="component:K-BATTERY-CONTACTOR">Battery contactor</text>
+<text x="160" y="103.75" font-size="3.436" text-anchor="middle" data-model="component:K-BATTERY-CONTACTOR">K-BATTERY-CONTACTOR</text>
+<text x="160" y="108.25" font-size="3.436" text-anchor="middle" data-model="component:K-BATTERY-CONTACTOR">14 V battery contactor, 100 A continuous</text>
+<text x="43.5" y="133.75" font-size="3.436" text-anchor="end" data-model="component:MAIN-BATTERY">+</text>
+<text x="32.5" y="142.75" font-size="3.436" text-anchor="middle" font-weight="600" data-model="component:MAIN-BATTERY">Main battery</text>
+<text x="32.5" y="147.25" font-size="3.436" text-anchor="middle" data-model="component:MAIN-BATTERY">13.6 V</text>
+<text x="21.5" y="73.75" font-size="3.436" text-anchor="start" data-model="component:SW-MASTER">1</text>
+<text x="73.5" y="73.75" font-size="3.436" text-anchor="end" data-model="pin:SW-MASTER//2">2</text>
+<text x="47.5" y="84.25" font-size="3.436" text-anchor="middle" font-weight="600" data-model="component:SW-MASTER">Switch &#x27;MASTER&#x27;</text>
+<text x="47.5" y="88.75" font-size="3.436" text-anchor="middle" data-model="component:SW-MASTER">SW-MASTER</text>
+<text x="47.5" y="93.25" font-size="3.436" text-anchor="middle" data-model="component:SW-MASTER">panel toggle switch, SPST 20 A</text>
+<text x="47.5" y="133.75" font-size="3.436" text-anchor="start" data-model="conductor:W008">W008 10 AWG RD</text>
+<text x="197.5" y="73.75" font-size="3.436" text-anchor="start" data-model="conductor:W009">W009 10 AWG RD</text>
+<text x="77.5" y="73.75" font-size="3.436" text-anchor="start" data-model="conductor:W014">W014 22 AWG RD</text>
+<text x="197.5" y="88.75" font-size="3.436" text-anchor="start" data-model="conductor:W015">W015 22 AWG BK</text>
+<text x="47.5" y="138.75" font-size="3.436" text-anchor="start" data-model="conductor:W012">W012 22 AWG RD</text>
+<text x="23" y="221.5" font-size="3.436" text-anchor="start" fill="#6b6b6b" data-model="">LABEL</text>
+<text x="41" y="221.5" font-size="3.436" text-anchor="start" fill="#6b6b6b" data-model="">WIRE</text>
+<text x="93" y="221.5" font-size="3.436" text-anchor="start" fill="#6b6b6b" data-model="">FROM</text>
+<text x="189.828" y="221.5" font-size="3.436" text-anchor="start" fill="#6b6b6b" data-model="">TO</text>
+<text x="297.414" y="221.5" font-size="3.436" text-anchor="start" fill="#6b6b6b" data-model="">SEE</text>
+<text x="23" y="226" font-size="3.436" text-anchor="start" data-model="">W008</text>
+<text x="41" y="226" font-size="3.436" text-anchor="start" data-model="">10 AWG red</text>
+<text x="93" y="226" font-size="3.436" text-anchor="start" data-model="">Main battery, +</text>
+<text x="189.828" y="226" font-size="3.436" text-anchor="start" data-model="">Battery contactor, pin 30</text>
+<text x="23" y="230.5" font-size="3.436" text-anchor="start" data-model="">W009</text>
+<text x="41" y="230.5" font-size="3.436" text-anchor="start" data-model="">10 AWG red</text>
+<text x="93" y="230.5" font-size="3.436" text-anchor="start" data-model="">Battery contactor, pin 87</text>
+<text x="189.828" y="230.5" font-size="3.436" text-anchor="start" data-model="">Breaker &#x27;BATTERY&#x27; 30 A, LINE</text>
+<text x="23" y="235" font-size="3.436" text-anchor="start" data-model="">W012</text>
+<text x="41" y="235" font-size="3.436" text-anchor="start" data-model="">22 AWG red</text>
+<text x="93" y="235" font-size="3.436" text-anchor="start" data-model="">Main battery, +</text>
+<text x="189.828" y="235" font-size="3.436" text-anchor="start" data-model="">Fuse &#x27;MASTER&#x27; 3 A, in, terminal</text>
+<text x="297.414" y="235" font-size="3.436" text-anchor="start" data-model="">(drawing FU-MASTER)</text>
+<text x="23" y="239.5" font-size="3.436" text-anchor="start" data-model="">W014</text>
+<text x="41" y="239.5" font-size="3.436" text-anchor="start" data-model="">22 AWG red</text>
+<text x="93" y="239.5" font-size="3.436" text-anchor="start" data-model="">Switch &#x27;MASTER&#x27;, pin 2</text>
+<text x="189.828" y="239.5" font-size="3.436" text-anchor="start" data-model="">Battery contactor, coil, pin +</text>
+<text x="23" y="244" font-size="3.436" text-anchor="start" data-model="">W015</text>
 <text x="41" y="244" font-size="3.436" text-anchor="start" data-model="">22 AWG black</text>
-<text x="93" y="244" font-size="3.436" text-anchor="start" data-model="">ground bus BB-GROUND-BUS</text>
-<text x="189.828" y="244" font-size="3.436" text-anchor="start" data-model="">Cabin fan, pin 2</text>
-<text x="297.414" y="244" font-size="3.436" text-anchor="start" data-model="">(drawing CABIN-FAN)</text>
+<text x="93" y="244" font-size="3.436" text-anchor="start" data-model="">Battery contactor, coil, pin -</text>
+<text x="189.828" y="244" font-size="3.436" text-anchor="start" data-model="">ground bus BB-GROUND-BUS</text>
 <text x="146.5" y="253.75" font-size="3.436" text-anchor="start" fill="#6b6b6b" data-model="">NOTES</text>
 <text x="146.5" y="258.75" font-size="3.436" text-anchor="start" data-model="">Wire text W008 10 AWG RD = wire W008, 10 AWG, red.</text>
 <text x="146.5" y="263.25" font-size="3.436" text-anchor="start" data-model="">Colours: BK black, RD red.</text>

@@ -202,7 +202,7 @@ has no such data); the reference drawings are in `docs/screens/drawings/` (golde
 
 ## Wire table, wire text, flag text (readable drawings)
 
-- `sheet.table = {sheet, rows}` (since the wrap round only the conductors first drawn on that sheet, see the last section): one row per conductor the sheet shows (as a wire, as a flag, or under a summary flag): `{id, label, gauge, colour, a, b, frm, to}`,
+- `sheet.table = {sheet, rows}` (since the wrap round only the conductors first drawn on that sheet, see the last section): one row per conductor the sheet shows as a wire or a flag (none for the conductors behind a summary flag: the bus's own drawing lists them, D116): `{id, label, gauge, colour, a, b, frm, to}`,
   `a`/`b` the pin refs of its two ends (a flagged conductor: the drawn end and the far end), `frm`/`to` those ends in words (`EFIS, J1, pin 2 (GND)`,
   `splice SP-1`, `ground bus GND-BUS`; a far end that continues on another sheet ends in `(sheet N)`). Rows are in the natural order of the label.
   `sheet` is the sheet the table is drawn on: the sheet itself when it fits under the drawing, else a table sheet after the last drawing sheet (no symbols,
@@ -259,7 +259,8 @@ end. The in-line symbols of two terminals (breaker, fuse, terminator, battery) a
   that fit one sheet keep the table under the drawing. A strip drawing's table follows its strips: from the free room under the last strip sheet on, then
   table sheets; strips are filled to the foot of the sheet. The columns are sized per drawing (`table.columns`): the label column as wide as the longest label.
   The SEE column holds `(drawing X, sheet N)`. The verifier's rule: every drawn label has exactly one row in the drawing, under the first sheet that draws it
-  (or under a sheet whose summary flag covers it), and the row agrees with the lines of that sheet.
+  and the row agrees with the lines of that sheet; a wire of the scope that is neither drawn nor in a table is accepted only up to the count of the
+  summary flags (`+ N more wires`).
 - **Contents of the book** (`drawing/toc.py`): `wiring-diagrams.pdf` is the symbol sheets, then the contents pages (title block `Contents`), then every drawing,
   in alphabetical order of display name, so the page numbers are real. A line: name (a long one goes on to a second line), the id in grey when it differs from
   the name, the number of sheets, the book page the drawing starts on. `export_all` writes the contents from the first pass's sheet counts and, should a count

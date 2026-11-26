@@ -829,3 +829,10 @@ may show again next launch. Replay from the help menu works at any time and reco
 - Choice: the checks above became rules (D114's drawings met a real project: jumpers inside one connector ran through the block, `22 AWG` was printed twice, a battery
   with three terminals crashed the layout). `export_all` logs a drawing that raises, writes the rest and the book, and answers `failed: [component ids]`.
 - Why: a defect on one sheet must not cost the whole set, and every defect the owner finds should become a check that runs over every scope.
+
+## D116. No wire-table rows for the wires behind a summary flag
+- Choice: the wire table of a drawing lists only the conductors it draws as a wire or a flag. The conductors a summary flag stands for
+  (`+ 59 more wires on GND-BUS (drawing GND-BUS)`) get no row; the flag names the bus's drawing, which draws and lists every one of them. The verifier
+  accepts a scope wire that is neither drawn nor listed only up to the count the summary flags give. Replaces the row rule of D114 for covered wires.
+- Why: on the real LV list a contactor drawing carried two extra table sheets of ground-bus wires and every breaker drawing the other breakers on its
+  bus strip; the owner found them unnecessary, and a table that lists wires the sheet does not show is harder to work from.

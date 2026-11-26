@@ -166,6 +166,7 @@ def _wires(d: Drawing) -> None:
     for lab, cs in by_label.items():
         if lab not in d.recs:
             if lab in d.table_labels: d.table_only += 1; continue
+            if covered >= len(cs): covered -= len(cs); continue     # behind a summary flag: listed on the bus's own drawing (D116)
             for cc in cs: d.add("missing", f"wire {lab} is not in the drawing", conductor=cc.id)
             continue
         if len(cs) > 1: continue   # two conductors with one label: not decidable from the label

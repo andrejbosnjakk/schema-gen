@@ -4,7 +4,7 @@
 <g data-model=""><rect x="10" y="10" width="400" height="275" fill="none" stroke="#000" stroke-width="0.5"/><rect x="270" y="250" width="140" height="35" fill="none" stroke="#000" stroke-width="0.35"/><line x1="270" y1="260" x2="410" y2="260" fill="none" stroke="#000" stroke-width="0.18"/><line x1="270" y1="272.5" x2="410" y2="272.5" fill="none" stroke="#000" stroke-width="0.18"/><line x1="370" y1="250" x2="370" y2="260" fill="none" stroke="#000" stroke-width="0.18"/><line x1="325" y1="260" x2="325" y2="272.5" fill="none" stroke="#000" stroke-width="0.18"/><line x1="294" y1="272.5" x2="294" y2="285" fill="none" stroke="#000" stroke-width="0.18"/><line x1="318" y1="272.5" x2="318" y2="285" fill="none" stroke="#000" stroke-width="0.18"/><line x1="342" y1="272.5" x2="342" y2="285" fill="none" stroke="#000" stroke-width="0.18"/><rect x="10" y="250" width="135" height="35" fill="none" stroke="#000" stroke-width="0.35"/><rect x="145" y="250" width="125" height="35" fill="none" stroke="#000" stroke-width="0.35"/></g>
 <text x="271.5" y="256.75" font-size="4.811" text-anchor="start" font-weight="600" data-model="">EFIS</text>
 <text x="371.5" y="253.75" font-size="3.436" text-anchor="start" fill="#6b6b6b" data-model="">SHEET</text>
-<text x="371.5" y="257.85" font-size="3.436" text-anchor="start" data-model="">1 of 3</text>
+<text x="371.5" y="257.85" font-size="3.436" text-anchor="start" data-model="">1 of 2</text>
 <text x="271.5" y="263.75" font-size="3.436" text-anchor="start" fill="#6b6b6b" data-model="">PROJECT</text>
 <text x="271.5" y="267.85" font-size="3.436" text-anchor="start" data-model="">aircraft</text>
 <text x="326.5" y="263.75" font-size="3.436" text-anchor="start" fill="#6b6b6b" data-model="">SCOPE</text>

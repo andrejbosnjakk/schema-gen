@@ -43,7 +43,8 @@ def _cid(e: Elem) -> str:
 
 
 def rows(pg: Elem) -> list[Elem]:
-    """The table rows of a page: every conductor it draws as a wire, a flag or under a summary flag, in the natural order of its label."""
+    """The table rows of a page: every conductor it draws as a wire or a flag, in the natural order of its label. The conductors behind a summary flag
+    (`+ 59 more wires on GND-BUS`) get no row: they belong to that bus, whose own drawing lists them (D116)."""
     at = {p["anchor"]: _end(it, b, p) for it in pg["items"] for b in it["blocks"] for p in b["pins"]}
     out: dict[str, Elem] = {}
 
@@ -51,12 +52,12 @@ def rows(pg: Elem) -> list[Elem]:
         out.setdefault(cid, dict(id=cid, label=e["label"], gauge=e["gauge"], colour=e["colour"], a=a, b=b, frm=frm, to=to))
     for w in pg["wires"]: add(w["id"], w, w["a"], w["b"], at.get(w["a"], w["a"]), at.get(w["b"], w["b"]))
     for f in pg["flags"]:
-        for c in f.get("covers") or [None]:
-            e, a, b, text = (c, c["at"], c["target"], c.get("text", "")) if c else (f, f["at"], f["target"], f["text"].removeprefix("→ "))
-            sheet = f" (sheet {f['sheet']})" if f.get("sheet") and f["kind"] == "continuation" else ""
-            cid = c["id"] if c else _cid(f)
-            if cid in out and out[cid]["b"] == a and a in at: out[cid]["to"] = at[a]; continue      # both ends on bars of one sheet: the row says both
-            add(cid, e, a, b, at.get(a, a), (text or b.removeprefix("pin:")) + sheet)
+        if f.get("covers"): continue
+        a, b, text = f["at"], f["target"], f["text"].removeprefix("→ ")
+        sheet = f" (sheet {f['sheet']})" if f.get("sheet") and f["kind"] == "continuation" else ""
+        cid = _cid(f)
+        if cid in out and out[cid]["b"] == a and a in at: out[cid]["to"] = at[a]; continue      # both ends on bars of one sheet: the row says both
+        add(cid, f, a, b, at.get(a, a), (text or b.removeprefix("pin:")) + sheet)
     for r in out.values():          # where the far end is drawn goes in a column of its own
         m = SEE.search(r["to"])
         r["to"], r["see"] = (r["to"][:m.start()], m.group(1)) if m else (r["to"], "")
