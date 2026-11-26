@@ -15,7 +15,7 @@ type CardData = { n: Node; hl?: boolean; pulse?: boolean; sel?: boolean; hint?: 
 const FIT = { top: "28px", left: "12px", bottom: "4px", right: "64px" } as const;  // room for + Source (top right) and the zoom buttons (right)
 const NEAR = 0.9;  // below this zoom bundle labels are hidden (they would be unreadable)
 type ZoneData = { name: string; w: number; h: number };
-type EdgeData = { label: string; n: number; colour: string; ground: boolean; t: number | null; hl?: boolean; dim?: boolean; sim?: "warn" | "error"; pick?: (id: string, x: number, y: number) => void };
+type EdgeData = { label: string; n: number; colour: string; ground: boolean; t: number | null; hl?: boolean; sel?: boolean; dim?: boolean; sim?: "warn" | "error"; pick?: (id: string, x: number, y: number) => void };
 
 const Card = memo(({ data }: NodeProps<RFNode<CardData>>) => {
   const { n, sim } = data;
@@ -41,7 +41,7 @@ const Bundle = memo(({ id, sourceX, sourceY, targetX, targetY, data }: EdgeProps
   const w = 1.25 + Math.min(3, Math.log2(Math.max(1, d.n))) * 0.7;
   return <>
     <g className="bundle-g" style={{ "--c": d.colour, "--w": w } as React.CSSProperties}>
-      <path d={path} className={`bundle${d.ground ? " ground" : ""}${d.hl ? " hl" : ""}${d.dim ? " dim" : ""}${d.sim ? ` sim-${d.sim}` : ""}`} />
+      <path d={path} className={`bundle${d.ground ? " ground" : ""}${d.hl || d.sel ? " hl" : ""}${d.dim ? " dim" : ""}${d.sim ? ` sim-${d.sim}` : ""}`} />
       <path d={path} className="bundle-hit" onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)} onClick={(e) => d.pick?.(id, e.clientX, e.clientY)} />
     </g>
     {show && <EdgeLabelRenderer>
@@ -188,11 +188,12 @@ function Flow({ ws, focus, selWire, picked, onPick, onCard, onWire, onLink, onCl
 
   const edges = useMemo<RFEdge<EdgeData>[]>(() => ws.edges.filter((e) => comp.has(e.a) && comp.has(e.b)).map((e) => {
     const main = e.cls.find((c) => c !== "GND") ?? e.cls[0] ?? "";
-    const on = e.id === hlEdge || near.has(e.id), any = !!hlEdge || near.size > 0;
+    const first = picked[0], mine = !!first && (e.a === first || e.b === first);   // while picking: the first pick's own lines, the rest faded
+    const on = e.id === hlEdge || near.has(e.id), any = !!hlEdge || near.size > 0 || !!first;
     const st = e.wires.map((w) => sim.wires.get(w)), bad = st.includes("error") ? "error" : st.includes("warn") ? "warn" : undefined;
     return { id: e.id, source: e.a, target: e.b, type: "bundle", focusable: false, selectable: false,
-      data: { label: e.label, n: e.wires.length, colour: drawn(ws.palette[main] ?? "", "--canvas", theme), ground: main === "GND", t: labels.get(e.id) ?? null, hl: on, dim: any && !on, sim: bad, pick: pickEdge } };
-  }), [ws, comp, labels, hlEdge, near, theme, sim, pickEdge]);
+      data: { label: e.label, n: e.wires.length, colour: drawn(ws.palette[main] ?? "", "--canvas", theme), ground: main === "GND", t: labels.get(e.id) ?? null, hl: on, sel: mine && !on, dim: any && !on && !mine, sim: bad, pick: pickEdge } };
+  }), [ws, comp, labels, hlEdge, near, theme, sim, pickEdge, picked]);
 
   const onChange = useCallback((ch: NodeChange<RFNode<CardData>>[]) => onCardsChange(ch.filter((c) => !("id" in c) || !String(c.id).startsWith("zone:"))), [onCardsChange]);
   const moved = useRef(0);
