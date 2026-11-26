@@ -62,9 +62,9 @@ def from_block(b: dict[str, Any], card: str, warn: list[str]) -> dict[str, Any]:
     for c in b.get("connectors", []) or []:
         pins = [_pin(p, warn, where) for p in c.get("pins", []) or []]
         if not pins and c.get("type"): pins = [_pin({k: v for k, v in c.items() if k in PIN_KEYS - {"n"}} | {"n": ""}, warn, where)]
-        ck = {"id", "match", "part", "pins", "type", "i_max", "v_max", "awg", "required", "term", "r_contact"}
+        ck = {"id", "match", "part", "complete", "pins", "type", "i_max", "v_max", "awg", "required", "term", "r_contact"}
         conns.append(dict(id=str(c.get("id", "")), match=str(c.get("match", "") or ""), part=str(c.get("part", "") or ""),
-                          pins=pins, extra={k: v for k, v in c.items() if k not in ck}))
+                          complete=bool(c.get("complete", False)), pins=pins, extra={k: v for k, v in c.items() if k not in ck}))
     d: dict[str, Any] = dict(id=str(b.get("part") or b.get("id") or Path(card).stem), device=str(b.get("device", "") or ""),
                              card=card, connectors=conns)
     kind = str(b.get("kind", "device"))

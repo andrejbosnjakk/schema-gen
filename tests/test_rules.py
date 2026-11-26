@@ -597,3 +597,23 @@ def test_bus_strip_link_is_not_a_wire():
     assert not any(is_link(g) for g in ("22 AWG", "TBD", "", "RG-400", "Coax", "Braid", "22 shielded", "busy"))
     row = dict(label="S09", gauge="bus strip", colour="", frm="a", to="b", see="")
     assert cells(row, (0, 5, 15, 65, 125, 185, 245))[1] == ["bus strip, no wire"]
+
+
+def test_datasheet_rules_and_assurance(tmp_path):
+    """A card that lists J1 completely flags wires on other J1 pins; swapped CAN types on one net are a clash; the assurance report counts both."""
+    from schemagen.exporters.assurance import report, to_html
+    d = tmp_path / "demo"; shutil.copytree(DEMO, d, ignore=shutil.ignore_patterns("out"))
+    (d / "cards" / "ECU_card.md").write_text("```yaml schemagen\ndevice: '^ECU$'\npart: demo ECU\nconnectors:\n  - id: J1\n    match: '^J1$'\n"
+                                             "    complete: true\n    pins:\n      - {n: '3', type: can_l}\n      - {n: '4', type: can_h}\n```\n", encoding="utf-8")
+    L = load(d)
+    got = {(i.rule, i.objects[0]) for i in findings(L)}
+    assert any(r == "pin-type-clash" for r, _ in got)
+    unknown = [o for r, o in got if r == "pin-not-in-part"]
+    assert unknown and all(o.startswith("conductor:") for o in unknown)
+    assert not any(r == "pin-not-in-part" for r, _ in {(i.rule, i.objects[0]) for i in findings(load(DEMO))})
+    rep = report(L, simulate=False)
+    two = rep["layers"][1]
+    assert two["ok"] is False and {f[1] for f in two["findings"]} >= {"pin-type-clash", "pin-not-in-part"}
+    ecu = next(r for r in rep["coverage"] if r["id"] == "ECU")
+    assert ecu["card"] and 0 < ecu["checked"] < ecu["ends"] and "J1 3" not in ecu["missing"]
+    assert "Datasheet coverage" in to_html(rep)

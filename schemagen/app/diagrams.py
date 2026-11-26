@@ -117,6 +117,8 @@ def export_all(st: Any, out: Path, progress: Callable[[int, int, str], None] = l
         if done:
             from ..drawing.overview import draw as overview
             export(overview(st, meta(st.cfg)), stage / "overview.pdf")
+            from ..exporters.assurance import report, to_html
+            (stage / "assurance.html").write_text(to_html(report(st.L)), encoding="utf-8")     # is the wiring sound, layer by layer (D118)
         if not done: raise AppError("bad-request", "No component has wires to draw." if not failed else f"None of the {len(failed)} wiring diagrams could be drawn.")
         book.close()
         files = sorted(str(p.relative_to(stage)).replace("\\", "/") for p in stage.rglob("*") if p.is_file())

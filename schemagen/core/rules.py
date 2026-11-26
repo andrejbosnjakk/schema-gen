@@ -197,6 +197,30 @@ def r_pwr_gnd(ctx: Ctx) -> Iterator[tuple[str, list[str], str]]:
                    [nid] + pw + gd, "a power pin must not be wired to ground: check both ends")
 
 
+@rule("pin-not-in-part", "error", "Wire on a pin the datasheet does not list")
+def r_pin_unknown(ctx: Ctx) -> Iterator[tuple[str, list[str], str]]:
+    for i, c in enumerate(ctx.m.conductors):
+        for e in (1, 2):
+            t, p = c.end(e), ctx.part_of(c.end(e).device)
+            con = next((x for x in p.connectors if x.complete and (x.id == t.connector or (x.match and re.search(x.match, t.connector)))), None) if p else None
+            if con and p and not any(q.n == t.pin for q in con.pins):
+                comp = ctx.comp.get(t.device)
+                yield (f"{c.label} lands on {comp.id if comp else t.device} {t.connector} pin {t.pin or '(none)'}, which {con.id} in {p.card or p.id} does not have",
+                       [cref(ctx, i), ctx.ref(t)], "check the pin number against the datasheet (or the card)")
+
+
+@rule("pin-type-clash", "error", "CAN pins swapped or wired to power or ground")
+def r_can_clash(ctx: Ctx) -> Iterator[tuple[str, list[str], str]]:
+    for nid, pins, gnd_bus in _net_pins(ctx):
+        can = [r for t, r in pins if t in ("can_h", "can_l")]
+        if {t for t, _ in pins} >= {"can_h", "can_l"}:
+            yield f"CAN high and CAN low on one net: {', '.join(r[4:] for r in can)}", [nid] + can, "CAN H goes to CAN H, CAN L to CAN L: check both ends"
+        pw = [r for t, r in pins if t in ("power_in", "power_out", "ground")]
+        if can and (pw or gnd_bus):
+            yield (f"CAN pins {', '.join(r[4:] for r in can)} share a net with power or ground ({', '.join(r[4:] for r in pw) or 'ground bus'})",
+                   [nid] + can + pw, "a CAN line carries data only: check both ends")
+
+
 @rule("required-pin", "warning", "Required pin not connected")
 def r_required(ctx: Ctx) -> Iterator[tuple[str, list[str], str]]:
     used: dict[str, set[tuple[str, str]]] = defaultdict(set)

@@ -845,3 +845,13 @@ may show again next launch. Replay from the help menu works at any time and reco
   a connection and not checked, as before for connections.
 - Why: the owner found that selecting unrelated components gave disjointed sheets; the purpose is the full wiring of the clicked component, narrowed
   to the parts it actually connects to. Replaces the "every member in full" meaning of a selection (D113).
+
+## D118. The assurance report: is the wiring sound, layer by layer
+- Choice: the diagrams export writes `assurance.html` (exporters/assurance.py) with four layers: 1 the sheet agrees with itself (the rules),
+  2 every wire lands on a real pin of the right type (datasheet cards: `pin-not-in-part` for connectors a card marks `complete: true`,
+  `pin-type-clash` for swapped CAN lines or CAN on power or ground, plus the existing pin rules, and the share of wire ends a card describes),
+  3 it works electrically (the scenarios and a fault sweep, with every assumed value listed), 4 what is built matches the drawings (named, checked
+  by check-drawings and the continuity sheets). A layer passes only with no error and nothing resting on an assumption. `schemagen check` prints
+  the datasheet coverage line.
+- Why: the owner asked how he can know that the wiring will give a working aircraft. No tool proves that; the report says what is checked, what
+  fails and what is still assumed, so the gaps are visible instead of silent.

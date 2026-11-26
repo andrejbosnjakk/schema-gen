@@ -70,6 +70,7 @@ class ConnectorDef(Base):
     id: str
     match: str = ""
     part: str = ""
+    complete: bool = False  # every pin of the connector is listed (from the datasheet): a wire on any other pin is an error
     pins: list[PinDef] = Field(default_factory=list)
     extra: dict[str, Any] = Field(default_factory=dict)
 

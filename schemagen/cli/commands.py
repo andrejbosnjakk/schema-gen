@@ -58,7 +58,11 @@ def check(a):
     else:
         lines = [f"{i.severity:7} {i.rule:18} {i.message}" + (f"\n        fix: {i.fix}" if i.fix else "") for i in issues]
         n = {s: sum(1 for i in issues if i.severity == s) for s in ("error", "warning", "info")}
-        s = "\n".join(lines + [f"{n['error']} error(s), {n['warning']} warning(s), {n['info']} info"])
+        from ..exporters.assurance import coverage
+        cov = coverage(L.model, Ctx(L.model, L.cfg))
+        ends, chk = sum(r["ends"] for r in cov), sum(r["checked"] for r in cov)
+        s = "\n".join(lines + [f"{n['error']} error(s), {n['warning']} warning(s), {n['info']} info",
+                               f"datasheet check: {chk} of {ends} wire ends on pins a card describes ({sum(1 for r in cov if r['card'])} of {len(cov)} devices)"])
     if a.output: Path(a.output).write_text(s + "\n", encoding="utf-8")
     else: print(s)
     return 1 if any(i.severity == "error" for i in issues) else 0
