@@ -4,7 +4,7 @@ This walks a small team through one project end to end: a battery, a main breake
 behind a bulkhead connector, and the ground returns. Everything here is fictional. Every file below is written
 exactly as shown, and every command is run by `tests/test_tutorial.py`, so the tutorial stays true.
 
-You need Python 3.10 or newer. Drawings also need Graphviz (`sudo apt-get install graphviz`, `brew install graphviz`).
+You need Python 3.10 or newer. The drawings of 1.2 (`schemagen draw --scope ...`) need nothing more; the WireViz harness drawings in step 5 also need the `wireviz` extra and Graphviz (`pip install "schema-gen[wireviz]"`, `sudo apt-get install graphviz` or `brew install graphviz`).
 
 ```bash
 pip install schema-gen         # the command is `schemagen`; from a clone: pip install -e .
@@ -153,7 +153,7 @@ schemagen pinout .
 schemagen wirelist . -o out/wirelist.xlsx
 ```
 
-`draw` writes a WireViz drawing for the bulkhead connector and interface drawings for every wire no harness drawing
+`draw` (the optional WireViz route) writes a WireViz drawing for the bulkhead connector and interface drawings for every wire no harness drawing
 reaches, so every conductor is drawn (`out/coverage.txt`). It also writes a cut list and a continuity and insulation
 test sheet per harness connector. Without `--no-render` it renders SVG, PNG and HTML through the `wireviz` command and
 an `out/index.html` with search. `pinout` writes a pinout per component and connector (XLSX and HTML) with spare pins.

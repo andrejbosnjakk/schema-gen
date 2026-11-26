@@ -1,7 +1,7 @@
 name: installer
 on:
   push:
-    branches: ["dev/1.0*"]
+    branches: ["dev/1.2*"]
     tags: ["v*"]
   workflow_dispatch:
 jobs:
@@ -10,11 +10,11 @@ jobs:
     permissions:
       contents: write  # a v* tag publishes the installer as a GitHub release
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.14"
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: "22"
       - name: Inno Setup (preinstalled on windows-latest; install it if an image ever drops it)
@@ -26,7 +26,7 @@ jobs:
       - name: smoke test the built app (window opens, /api/health answers, closes cleanly)
         shell: pwsh
         run: ./packaging/smoke.ps1
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: schemagen-installer
           path: packaging/dist/schemagen-setup-*.exe
@@ -40,7 +40,7 @@ jobs:
           pre=(); [[ "$GITHUB_REF_NAME" == *-* ]] && pre=(--prerelease)
           gh release create "$GITHUB_REF_NAME" packaging/dist/schemagen-setup-*.exe "${pre[@]}" --title "schemagen $GITHUB_REF_NAME" \
             --notes "Windows installer for schemagen $GITHUB_REF_NAME. Unsigned: Windows SmartScreen asks once (More info, Run anyway). Changes: see CHANGELOG.md."
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: schemagen-desktop-log

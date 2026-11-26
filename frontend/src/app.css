@@ -33,7 +33,11 @@ body { overflow: hidden; }
 /* ---- start screen ---- */
 .start { height: 100%; overflow: auto; display: grid; place-items: center; padding: var(--s6) var(--s2); background: var(--bg); }
 .start-col { width: min(440px, 100%); display: flex; flex-direction: column; align-items: center; gap: var(--s2); }
-.start h1 { font-size: var(--fs-xl); font-weight: var(--fw-bold); letter-spacing: -0.01em; margin-top: var(--s1); }
+.start h1 { display: flex; align-items: center; gap: 10px; font-size: var(--fs-xl); font-weight: var(--fw-bold); letter-spacing: -0.01em; margin-top: var(--s1); }
+.motif { width: 100%; height: auto; max-height: 96px; margin-bottom: var(--s1); fill: none; stroke-linecap: round; }
+.motif .m-wire { stroke: var(--border-strong); stroke-width: 2; } .motif .m-main { stroke: var(--text-3); stroke-width: 2; }
+.motif .m-blade { stroke: var(--text-3); stroke-width: 2; } .motif .m-splice { fill: var(--accent); }
+.motif .m-term { fill: var(--bg); stroke: var(--text-3); stroke-width: 1.5; }
 .lede { color: var(--text-2); text-align: center; font-size: var(--fs-md); max-width: 380px; margin-bottom: var(--s2); }
 .or { width: 100%; display: flex; align-items: center; gap: var(--s2); color: var(--text-2); font-size: var(--fs-sm); }
 .or::before, .or::after { content: ""; flex: 1; height: 1px; background: var(--border); }

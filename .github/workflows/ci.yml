@@ -18,10 +18,10 @@ jobs:
       run:
         shell: bash
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python }}
       - if: runner.os == 'Linux'
@@ -42,7 +42,7 @@ jobs:
       - run: schemagen draw examples/demo
       # the demo has one finding on purpose (D97: no source on its 24 V bus), so check exits 1; any other exit code fails
       - run: (schemagen check examples/demo || test $? -eq 1) && schemagen sim examples/demo --faults all
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: demo-drawings-${{ matrix.os }}-${{ matrix.python }}
           path: examples/demo/out/
@@ -59,11 +59,11 @@ jobs:
       run:
         shell: bash
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python }}
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: "22"
       - if: runner.os == 'Linux'
@@ -86,7 +86,7 @@ jobs:
         working-directory: frontend
         env:
           PYTHON: python
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: e2e-results-${{ matrix.os }}-${{ matrix.python }}
@@ -105,11 +105,11 @@ jobs:
       run:
         shell: bash
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python }}
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: "22"
       - run: pip install build && python -m build --wheel
