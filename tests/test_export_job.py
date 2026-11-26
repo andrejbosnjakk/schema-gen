@@ -105,9 +105,12 @@ def test_failed_drawings_are_listed_and_the_rest_is_written(client, monkeypatch)
         if scope != "component:EC4": raise KeyError("pin")
         return real(st, scope, *a, **k)
     monkeypatch.setattr(diagrams, "draw", draw)
+    from schemagen.drawing import overview   # the overview of this fixture takes minutes; this test is about the drawings: a one-sheet stand-in
+    monkeypatch.setattr(overview, "draw", lambda st, meta: real(st, "component:EC4", "A3", meta))
     j = run_export(c, kind="drawings").json()
     assert "EC4" not in j["failed"] and "EC3" in j["failed"] and len(j["failed"]) >= 150
-    assert "wiring-diagrams.pdf" in j["files"] and "drawings/component-EC4.pdf" in j["files"] and "overview.pdf" in j["files"] and len(j["files"]) == 3
+    assert "wiring-diagrams.pdf" in j["files"] and "drawings/component-EC4.pdf" in j["files"] and "overview.pdf" in j["files"]
+    assert "assurance.html" in j["files"] and len(j["files"]) == 4
 
 
 def test_overview_export_writes_three_pages(tmp_path):

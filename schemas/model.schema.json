@@ -315,6 +315,11 @@
   "ConnectorDef": {
    "additionalProperties": false,
    "properties": {
+    "complete": {
+     "default": false,
+     "title": "Complete",
+     "type": "boolean"
+    },
     "extra": {
      "additionalProperties": true,
      "title": "Extra",
