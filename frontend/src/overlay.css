@@ -120,7 +120,10 @@ button.dw-at { cursor: pointer; } button.dw-at:hover { border-color: var(--accen
 .vw-msg { padding: var(--s2); }
 /* shift-click selection on the map */
 .node-card.sel { border-color: var(--accent); background: var(--accent-soft); box-shadow: 0 0 0 2px var(--accent); }
-.node-card.hint { border-color: var(--accent); border-style: dashed; }   /* wired to the first pick: shift-click adds it */
+.node-card.hint { border-color: var(--accent); outline: 2px dashed var(--accent); outline-offset: 3px; }   /* wired to the first pick: shift-click adds it */
+.node-card.hint .card-icon { color: var(--accent); }
+.node-card.hint::before { content: "+"; position: absolute; top: -9px; left: -9px; width: 16px; height: 16px; border-radius: 50%; background: var(--accent);
+                          color: var(--on-accent, #fff); font: 700 12px/16px var(--font, system-ui); text-align: center; box-shadow: 0 0 0 2px var(--canvas); }
 .node-card.dim { color: var(--text-3); border-color: var(--border); }   /* not wired to the first pick: faded, but opaque so no line shows through */
 .node-card.dim .card-icon { opacity: 0.45; }
 .sel-bar { position: absolute; bottom: var(--s2); left: 0; right: 0; margin-inline: auto; width: max-content; max-width: calc(100% - 140px); z-index: var(--z-panel); display: flex; align-items: center; gap: var(--s1);
