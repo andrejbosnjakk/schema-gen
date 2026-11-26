@@ -855,3 +855,10 @@ may show again next launch. Replay from the help menu works at any time and reco
   the datasheet coverage line.
 - Why: the owner asked how he can know that the wiring will give a working aircraft. No tool proves that; the report says what is checked, what
   fails and what is still assumed, so the gaps are visible instead of silent.
+
+## D119. The overview reroutes its worst wires once everything is placed
+- Choice: after every wire of an overview page is routed (parts and page size fixed), each wire with REROUTE_MIN (4) or more crossings is taken off
+  and searched again with a crossing priced REROUTE_X (12) cells, most crossings first, two rounds; the new route is kept only when it crosses fewer
+  wires. Deterministic. Real LV list: 1351 -> 1139, 112 -> 104 and 2582 -> 1955 crossings on the three pages, same page sizes, about 30 s as before.
+- Why: wires were routed one at a time, so an early wire took a lane without knowing the later ones; raising the crossing price for every wire
+  halved crossings but made the pages larger and the drawing 2.5x slower.

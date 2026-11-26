@@ -33,6 +33,9 @@ INLINE = ("breaker", "fuse", "switch", "relay", "battery", "terminator", "coil")
 Elem = dict[str, Any]
 Edge = tuple[Elem, str, str, str, str]       # (wire, node u, key at u, node v, key at v)
 LONG, EVERY = 150.0, 300.0                   # a wire longer than LONG carries its label at both ends and every ~EVERY mm
+REROUTE_X, REROUTE_PASSES = 12, 2            # the reroute pass: price of a crossing, rounds (a round that improves nothing ends it) ...
+REROUTE_MIN, REROUTE_CAP = 4, 400            # ... for the wires with at least this many crossings, searching at most this many cells per cell of distance
+PROBE_X = 8                                  # a straight-shaped wire with at most this many crossings is taken without a search
 BEND, CROSS, ADJ = 2, 3, 0                   # prices of a bend, of a crossing and of a cell next to a parallel wire (room for labels between wires) in cells of wire
 BUDGET = 40000000                            # cells the search may look at in all (about 10 s); after that wires are routed without regard to each other
 G = (1 << 24) - 1                            # the heap key holds g as G - g
@@ -266,6 +269,7 @@ class Grid:
         s.nores = [0] * (s.W * s.H)
         s.use: dict[int, dict[str, int]] = {}      # cell -> wire -> what it uses of it
         s.paths: dict[str, list[int]] = {}
+        s.full: dict[str, list[tuple[int, int]]] = {}  # wire id -> its cells with the direction of travel
         s.spent = 0                                # cells looked at by the search so far (a budget, so the drawing time stays bounded and deterministic)
         s.occ = bytearray(s.W * s.H)               # 1 a wire passes horizontally, 2 vertically, 4 a wire ends or turns here
         s.ids: dict[str, int] = {}                 # wire id -> a number (the reservations hold numbers)
@@ -299,8 +303,11 @@ class Grid:
                 if v not in seen and not blk[v] and res[v] in (0, me): seen.add(v); todo.append(v)
         return len(seen) < POCKET
 
-    def route(s, wid: str, start: int, d0: int, goal: int, dg: int, margin: int, strict: bool = True, cap: int = 1500000) -> list[tuple[int, int]] | None:
-        """Cells (with the direction of travel) from `start` (leaving in d0) to `goal` (arriving in dg); None when there is no way inside the window."""
+    def route(s, wid: str, start: int, d0: int, goal: int, dg: int, margin: int, strict: bool = True, cap: int = 1500000,
+              cross: int = 0) -> list[tuple[int, int]] | None:
+        """Cells (with the direction of travel) from `start` (leaving in d0) to `goal` (arriving in dg); None when there is no way inside the window.
+        cross: the price of a crossing (default CROSS)."""
+        xc = cross or CROSS
         W, blk, occ, res, delta = s.W, s.blk, s.occ, s.res if strict else s.res1, s.delta
         res2 = s.res2 if strict else s.nores
         me = s.ids.setdefault(wid, len(s.ids) + 1)
@@ -333,8 +340,8 @@ class Grid:
             c2 = c + delta[d]
             if not blk[c2] and res[c2] in (0, me) and (d > 1 or res2[c2] in (0, me)) and lo_x <= cx[c2] <= hi_x and lo_y <= cy[c2] <= hi_y:
                 b = occ[c2]
-                if d < 2: ok, cost = not (b & 5), 1 + (CROSS if b & 2 else 0) + (ADJ if (occ[c2 + W] | occ[c2 - W]) & 1 else 0)
-                else: ok, cost = not (b & 6), 1 + (CROSS if b & 1 else 0) + (ADJ if (occ[c2 + 1] | occ[c2 - 1]) & 2 else 0)
+                if d < 2: ok, cost = not (b & 5), 1 + (xc if b & 2 else 0) + (ADJ if (occ[c2 + W] | occ[c2 - W]) & 1 else 0)
+                else: ok, cost = not (b & 6), 1 + (xc if b & 1 else 0) + (ADJ if (occ[c2 + 1] | occ[c2 - 1]) & 2 else 0)
                 if ok:
                     st2, g2 = c2 * 4 + d, g + cost
                     if g2 < get(st2, 1 << 30):
@@ -409,14 +416,27 @@ class Grid:
 
     def take(s, wid: str, path: list[tuple[int, int]]) -> None:
         s.paths[wid] = [c for c, _ in path]
+        s.full[wid] = path
         for k, (c, d) in enumerate(path):
             end = k in (0, len(path) - 1) or path[k - 1][1] != d
             bits = 4 if end else (1 if d < 2 else 2)
             s.use.setdefault(c, {})[wid] = s.use.get(c, {}).get(wid, 0) | bits
             s.occ[c] |= bits
 
+    def crossings(s, wid: str) -> int:
+        """How many other wires this wire crosses."""
+        n = 0
+        for c in s.paths[wid]:
+            u = s.use[c]
+            mine, other = u[wid], 0
+            for k, b in u.items():
+                if k != wid: other |= b
+            n += (mine == 1 and other & 2 > 0) or (mine == 2 and other & 1 > 0)
+        return n
+
     def release(s, wid: str) -> None:
         """Takes a routed wire off the grid again (to route another one first)."""
+        s.full.pop(wid, None)
         for c in set(s.paths.pop(wid)):
             u = s.use[c]
             u.pop(wid)
@@ -430,6 +450,30 @@ class Grid:
             for dy in range(-r, r + 1):
                 for dx in range(-r, r + 1): out.update(s.use.get(c + dy * s.W + dx, ()))
         return sorted(out)
+
+
+def _reroute(grid: Grid, edges: list[Any], anchor_pt: dict[tuple[str, str], tuple[float, float, str]], d_out: dict[str, int], wp: dict[str, Any]) -> None:
+    """Rip up and reroute: the parts and the page stay as they are; each wire that crosses others is taken off and searched again, now knowing every
+    other wire and with a crossing priced high (REROUTE_X), most crossings first. A new route is kept only when it crosses fewer wires."""
+    for _ in range(REROUTE_PASSES):
+        better = 0
+        for w, u, ku, v, kv in sorted(edges, key=lambda e: (-grid.crossings(e[0]["id"]), _natural(e[0]["id"]))):
+            wid = w["id"]
+            n0 = grid.crossings(wid)
+            if n0 < REROUTE_MIN: continue
+            (ax, ay, sa), (bx, by, sb) = anchor_pt[u, ku], anchor_pt[v, kv]
+            ca, cb = grid.cell(ax + (GRID if sa == "R" else -GRID), ay), grid.cell(bx + (GRID if sb == "R" else -GRID), by)
+            old = grid.full[wid]
+            grid.release(wid)
+            span = abs(ca % grid.W - cb % grid.W) + abs(ca // grid.W - cb // grid.W)
+            new = grid.route(wid, ca, d_out[sa], cb, d_out[sb] ^ 1, 40, True, REROUTE_CAP * (span + 30), REROUTE_X)
+            if new:
+                grid.take(wid, new)
+                if grid.crossings(wid) < n0:
+                    wp[wid] = R.trace([(ax, ay)] + [grid.xy(c) for c, _ in new] + [(bx, by)]); better += 1; continue
+                grid.release(wid)
+            grid.take(wid, old)
+        if not better: break
 
 
 def _label_lines(w: Elem) -> list[str]:
@@ -619,7 +663,7 @@ def _page(sc: Any, kind: str, title: str, meta: dict[str, str], pn: int, of: int
             cb = grid.cell(bx + (GRID if sb == "R" else -GRID), by)
             da, db = d_out[sa], d_out[sb] ^ 1               # leave a in its side's direction; arrive at b moving towards its anchor
             path, pr = None, grid.probe(w["id"], ca, da, cb, db)
-            if pr and pr[0] <= 8 and grid.adjacent(pr[1]) <= 4: path = pr[1]
+            if pr and pr[0] <= PROBE_X and grid.adjacent(pr[1]) <= 4: path = pr[1]
             for strict, margin, cap in (() if path or grid.spent > BUDGET else ((True, 10, 100), (True, 80, 120), (False, 80, 200), (False, 10000, 200))):  # noqa: E501
                 path = grid.route(w["id"], ca, da, cb, db, margin, strict, cap * (1 + 6 * tries[w["id"]]) * (abs(ca % grid.W - cb % grid.W) + abs(ca // grid.W - cb // grid.W) + 30))  # noqa: E501
                 if path: break
@@ -639,7 +683,9 @@ def _page(sc: Any, kind: str, title: str, meta: dict[str, str], pn: int, of: int
                 continue
             grid.take(w["id"], path)
             wp[w["id"]] = R.trace([(ax, ay)] + [grid.xy(c) for c, _ in path] + [(bx, by)])
-        if ok: break
+        if ok:
+            _reroute(grid, edges, anchor_pt, d_out, wp)
+            break
         scale *= 1.25
     else:
         raise RuntimeError("overview: a wire has no route")
