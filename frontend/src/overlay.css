@@ -120,5 +120,7 @@ button.dw-at { cursor: pointer; } button.dw-at:hover { border-color: var(--accen
 .vw-msg { padding: var(--s2); }
 /* shift-click selection on the map */
 .node-card.sel { border-color: var(--accent); background: var(--accent-soft); box-shadow: 0 0 0 2px var(--accent); }
+.node-card.hint { border-color: var(--accent); border-style: dashed; }   /* wired to the first pick: shift-click adds it */
+.node-card.dim { opacity: 0.35; }                                       /* not wired to the first pick */
 .sel-bar { position: absolute; bottom: var(--s2); left: 0; right: 0; margin-inline: auto; width: max-content; max-width: calc(100% - 140px); z-index: var(--z-panel); display: flex; align-items: center; gap: var(--s1);
            padding: 6px 8px 6px 12px; background: var(--surface); border: var(--border-w) solid var(--accent); border-radius: var(--radius); }

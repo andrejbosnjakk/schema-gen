@@ -137,6 +137,7 @@ export function build(target: number, name: string, extraIssues: Issue[] = []): 
     const [a, b] = k.split("~"), cls = [...new Set(g.map((x) => x.cls))];
     return { id: k, a, b, wires: g.map((x) => x.id), cls, label: g.length > 1 ? `${g.length} wires` : g[0].label };
   });
+  for (const e of edges) { const a = comps.get(e.a)!, b = comps.get(e.b)!; a.peers = [...(a.peers ?? []), e.b]; b.peers = [...(b.peers ?? []), e.a]; }  // what shift-click may add
   const zones = [...new Set(zone.values())].map((z) => ({ id: z.toLowerCase().replace(/\s+/g, "-"), name: z, members: [...zone].filter(([, v]) => v === z).map(([k]) => k) }));
   return { project: { name, root: `C:\\Users\\you\\AppData\\Local\\schemagen\\projects\\${name}`, version: "1.0.0", warnings: [] },
     components: [...comps.values()], edges, conductors: wires, issues, zones, positions: {}, sources: [], palette: PALETTE };

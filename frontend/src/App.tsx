@@ -154,11 +154,16 @@ export function App() {
     if (pick) { setPick(false); setSrcAt(n); return; }
     setCard({ type: "component", id: n.id }); act("card-open");
   }, [pick]);
-  /** Shift-click: the component joins or leaves the selection (sources added in the app are not in the wire sheet, so they cannot be drawn). */
+  /** Shift-click: the first component is the one drawn; the next ones must be wired to it and narrow the drawing to its wires to them (D117).
+   *  Shift-clicking the first one again starts over. Sources added in the app are not in the wire sheet, so they cannot be drawn. */
   const togglePicked = useCallback((n: Node) => {
     if (pick || wsRef.current?.sources.some((s) => s.id === n.id)) return;
-    setPicked((l) => (l.includes(n.id) ? l.filter((x) => x !== n.id) : [...l, n.id]));
-  }, [pick]);
+    if (!picked.length || picked[0] === n.id) { setPicked(picked.length ? [] : [n.id]); return; }
+    if (picked.includes(n.id)) { setPicked(picked.filter((x) => x !== n.id)); return; }
+    const first = wsRef.current?.components.find((c) => c.id === picked[0]);
+    if (!first?.peers?.includes(n.id)) { toast({ tone: "info", text: `${n.name} is not wired to ${first?.name ?? picked[0]}.` }); return; }
+    setPicked([...picked, n.id]);
+  }, [pick, picked, toast]);
   const openDiagram = (scope: string) => { setCard(null); setDiagram(scope); };
   const closeCard = useCallback(() => { setCard(null); act("card-close"); }, []);
   const saved = useCallback((w: Workspace, what: string) => { edited(w); setCard(null); act("card-close"); toast({ tone: "ok", text: what.startsWith("Removed") ? `${what}.` : `Saved ${what}.` }); }, [edited, toast]);
@@ -247,7 +252,8 @@ export function App() {
         {ws && !busy && <div className="canvas-tools">
           <button className="btn" data-tour="add-source" aria-pressed={pick} onClick={() => setPick((p) => !p)}><Glyph name="plus" />Source</button></div>}
         {picked.length > 0 && !pick && !busy && <div className="sel-bar anim-pop" role="status">
-          <span>{picked.length} {picked.length === 1 ? "component" : "components"} selected</span>
+          <span>{(() => { const nm = ws?.components.find((c) => c.id === picked[0])?.name ?? picked[0];
+            return picked.length === 1 ? `${nm}: all wires · shift-click a highlighted component to narrow` : `${nm} to ${picked.length - 1} ${picked.length === 2 ? "component" : "components"}`; })()}</span>
           <button className="btn btn-primary btn-sm" onClick={() => openDiagram(picked.length === 1 ? `component:${picked[0]}` : `selection:${picked.join(",")}`)}>Wiring diagram</button>
           <button className="btn btn-sm" onClick={() => setPicked([])}>Clear</button></div>}
         {pick && <div className="pick-hint anim-pop" role="status"><Glyph name="plus" size={14} />Click a bus or component to attach the source<span className="kbd">Esc</span></div>}

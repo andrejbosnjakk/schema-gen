@@ -88,6 +88,20 @@ def ends(st: Any, rk: dict[str, int]) -> list[tuple[str, str]]:
     return out
 
 
+def peers(st: Any) -> dict[str, list[str]]:
+    """Per component, the components its wires land on, followed through splices and harness pins: what shift-click may add to it (D117)."""
+    from ..drawing.scope import walk
+    net, conds, comp = st.ctx.net, st.m.conductors, st.ctx.comp
+    out: dict[str, set[str]] = defaultdict(set)
+    for c in st.m.components:
+        if c.kind == "splice": continue
+        for i, e in net.by_dev[c.raw]:
+            for r in walk(net, i, e):
+                far = comp.get(conds[r[-1][0]].end(3 - r[-1][1]).device)
+                if far and far.id != c.id and far.kind != "splice": out[c.id].add(far.id)
+    return {k: sorted(v) for k, v in out.items()}
+
+
 def wire_cls(c: Any) -> str:
     return c.can or c.kind
 
@@ -108,8 +122,9 @@ def workspace(st: Any) -> dict[str, Any]:
         if cd.subsystem:
             for e in (1, 2): subs[st.cid(cd.end(e).device)][cd.subsystem] += 1
     sub_of = {k: v.most_common(1)[0][0] for k, v in subs.items()}
+    pr = peers(st)
     nodes = [dict(id=c.id, name=c.name or c.id, kind=kind_of(st, c), zone=c.zone, subsystem=sub_of.get(c.id, ""), pins=hpins.get(c.id) or pins[c.id],
-                  rank=rk[c.id], sev=csev.get(c.id, "")) for c in m.components if c.kind != "splice"]
+                  rank=rk[c.id], sev=csev.get(c.id, ""), peers=pr.get(c.id, [])) for c in m.components if c.kind != "splice"]
     ab = ends(st, rk)
     wires, bundles = [], defaultdict(list)
     for i, c in enumerate(m.conductors):

@@ -71,7 +71,9 @@ class Expected:
         ids = [x for x in rest.replace("+", ",").split(",") if x]
         ctx, net, conds = self.ctx, self.ctx.net, self.ctx.m.conductors
         if text == "system": comps = list(ctx.m.components)
-        elif kind in ("component", "harness", "selection") and ids and all(i in ctx.comp_by_id for i in ids): comps = [ctx.comp_by_id[i] for i in ids]
+        elif kind in ("component", "harness") or kind == "selection" and len(ids) == 1:    # a selection of several is filtered like a connection: not checked
+            if not ids or not all(i in ctx.comp_by_id for i in ids): return None
+            comps = [ctx.comp_by_id[i] for i in ids]
         else: return None
         start = {net.node(i, e) for c in comps for i, e in net.by_dev[c.raw]}
         nodes, todo = set(start), deque(start)

@@ -62,9 +62,9 @@ def scene_netlist(sc: Scene) -> set[Entry]:
 def expected(st: Any, sc: Scene) -> set[Entry]:
     """From the model: every conductor on a node the scope's drawing must show, with its two ends. The nodes are found
     independently of the scene builder (a breadth-first closure over core/net.py nodes from the scope's pins, through
-    splice and harness pins); for a connection, whose runs are filtered by where they lead, the scene's own nodes."""
+    splice and harness pins); for a connection or a selection of several, whose runs are filtered by where they lead, the scene's own nodes."""
     ctx, net, conds = st.ctx, st.ctx.net, st.m.conductors
-    if sc["scope"]["kind"] == "connection":
+    if members(st, sc["scope"])[1]:      # runs filtered by where they lead (a connection, a selection of several): the scene's own nodes
         node_of = {ctx.ref(conds[i].end(e)): net.node(i, e) for i in range(len(conds)) for e in (1, 2)}
         nodes = {node_of[p["anchor"]] for it in sc["items"] for b in it["blocks"] for p in b["pins"] if p["anchor"] in node_of}
     else:

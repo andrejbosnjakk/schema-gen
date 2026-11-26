@@ -6,21 +6,21 @@ import path from "node:path";
 const shot = async (p: Page, name: string) => { const d = process.env.SHOTS; if (d) { fs.mkdirSync(d, { recursive: true }); await p.screenshot({ path: path.join(d, `${name}.png`) }); } };
 const node = (p: Page, id: string) => p.locator(`.node-card[data-tour-node="${id}"]`);
 const open = async (p: Page) => { await p.goto("/?mock=1&open=1"); await expect(node(p, "CB-XPDR")).toBeVisible(); await p.waitForTimeout(900); };
-const pickTwo = async (p: Page) => { await node(p, "CB-XPDR").click({ modifiers: ["Shift"] }); await node(p, "CB-GPS").click({ modifiers: ["Shift"] }); };
+const pickTwo = async (p: Page) => { await node(p, "CB-XPDR").click({ modifiers: ["Shift"] }); await node(p, "TRANSPONDER").click({ modifiers: ["Shift"] }); };  // a breaker and its load
 const viewer = (p: Page) => p.getByRole("dialog");
 
-test("shift-click two components: selected look, the bar, the viewer opens with a sheet", async ({ page }) => {
+test("shift-click a component and one wired to it: selected look, the bar, the viewer opens with a sheet", async ({ page }) => {
   await open(page);
   await pickTwo(page);
   await expect(page.getByRole("dialog")).toHaveCount(0);                       // a shift-click opens no card
   await expect(node(page, "CB-XPDR")).toHaveClass(/\bsel\b/);
-  await expect(node(page, "CB-GPS")).toHaveClass(/\bsel\b/);
+  await expect(node(page, "TRANSPONDER")).toHaveClass(/\bsel\b/);
   const bar = page.locator(".sel-bar");
-  await expect(bar).toContainText("2 components selected");
+  await expect(bar).toContainText("to 1 component");
   await shot(page, "map-selection-bar");
-  await node(page, "CB-XPDR").click({ modifiers: ["Shift"] });                // toggles off
-  await expect(bar).toContainText("1 component selected");
-  await node(page, "CB-XPDR").click({ modifiers: ["Shift"] });
+  await node(page, "TRANSPONDER").click({ modifiers: ["Shift"] });                   // toggles off: back to all wires of the first
+  await expect(bar).toContainText("all wires");
+  await node(page, "TRANSPONDER").click({ modifiers: ["Shift"] });
   await bar.getByRole("button", { name: "Wiring diagram" }).click();
   await expect(viewer(page).locator(".vw-paper svg")).toBeVisible();
   await expect(viewer(page).getByRole("heading", { level: 2 })).toHaveText("Selection");
@@ -37,10 +37,23 @@ test("a plain click still opens the card, and Clear empties the selection", asyn
   await expect(viewer(page)).toBeVisible();
   await expect(viewer(page).locator(".kind-chip")).toContainText("breaker");
   await page.keyboard.press("Escape");
-  await expect(page.locator(".sel-bar")).toContainText("1 component selected");
+  await expect(page.locator(".sel-bar")).toContainText("all wires");
   await page.locator(".sel-bar").getByRole("button", { name: "Clear" }).click();
   await expect(page.locator(".sel-bar")).toHaveCount(0);
   await expect(node(page, "CB-GPS")).not.toHaveClass(/\bsel\b/);
+});
+
+test("after the first shift-click, components wired to it are highlighted and others cannot be added", async ({ page }) => {
+  await open(page);
+  await node(page, "CB-XPDR").click({ modifiers: ["Shift"] });
+  await expect(node(page, "TRANSPONDER")).toHaveClass(/\bhint\b/);                    // wired to the first pick: suggested
+  await expect(node(page, "CB-GPS")).toHaveClass(/\bdim\b/);                   // not wired to it
+  await node(page, "CB-GPS").click({ modifiers: ["Shift"] });
+  await expect(page.locator(".toast")).toContainText("is not wired to");
+  await expect(node(page, "CB-GPS")).not.toHaveClass(/\bsel\b/);
+  await node(page, "CB-XPDR").click({ modifiers: ["Shift"] });                // the first pick again: start over
+  await expect(page.locator(".sel-bar")).toHaveCount(0);
+  await expect(node(page, "CB-GPS")).not.toHaveClass(/\bdim\b/);
 });
 
 test("Escape clears the selection, so does a click on the empty map", async ({ page }) => {

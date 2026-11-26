@@ -5,7 +5,7 @@ export interface ProjectInfo { name: string; root: string; version: string; warn
 export interface Recent { name: string; path: string; opened: string }
 export interface Session { project: ProjectInfo | null; recent: Recent[]; tour_done: boolean; theme: "light" | "dark" }
 
-export interface Node { id: string; name: string; kind: string; zone: string; subsystem: string; pins: number; rank: number; sev: Sev }
+export interface Node { id: string; name: string; kind: string; zone: string; subsystem: string; pins: number; rank: number; sev: Sev; peers?: string[] }
 export interface Edge { id: string; a: string; b: string; wires: string[]; cls: string[]; label: string }
 export interface Wire {
   id: string; label: string; name: string; from: string; to: string; a: string; b: string;

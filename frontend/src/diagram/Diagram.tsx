@@ -11,7 +11,7 @@ import { at, CH, CW, layout, placeBeside, placeLabels, regions, rounded, route }
 import { drawn, useTheme } from "./colour";
 import { Glyph } from "../ui";
 
-type CardData = { n: Node; hl?: boolean; pulse?: boolean; sel?: boolean; first?: boolean; sim?: CardSim };
+type CardData = { n: Node; hl?: boolean; pulse?: boolean; sel?: boolean; hint?: boolean; dim?: boolean; first?: boolean; sim?: CardSim };
 const FIT = { top: "28px", left: "12px", bottom: "4px", right: "64px" } as const;  // room for + Source (top right) and the zoom buttons (right)
 const NEAR = 0.9;  // below this zoom bundle labels are hidden (they would be unreadable)
 type ZoneData = { name: string; w: number; h: number };
@@ -20,7 +20,7 @@ type EdgeData = { label: string; n: number; colour: string; ground: boolean; t: 
 const Card = memo(({ data }: NodeProps<RFNode<CardData>>) => {
   const { n, sim } = data;
   return (
-    <div className={`card node-card${data.hl ? " hl" : ""}${data.sel ? " sel" : ""}${data.pulse ? " anim-pulse" : ""}${sim?.status ? ` ring-${sim.status}` : ""}`} title={`${n.name} (${n.id}) · ${n.kind} · ${n.pins} ${n.pins === 1 ? "pin" : "pins"}`} style={{ width: CW, height: CH }} data-tour-node={n.id} data-tour={data.first ? "node" : undefined}>
+    <div className={`card node-card${data.hl ? " hl" : ""}${data.sel ? " sel" : ""}${data.hint ? " hint" : ""}${data.dim ? " dim" : ""}${data.pulse ? " anim-pulse" : ""}${sim?.status ? ` ring-${sim.status}` : ""}`} title={`${n.name} (${n.id}) · ${n.kind} · ${n.pins} ${n.pins === 1 ? "pin" : "pins"}`} style={{ width: CW, height: CH }} data-tour-node={n.id} data-tour={data.first ? "node" : undefined}>
       <Handle type="target" position={Position.Left} isConnectable={false} className="port" />
       <span className="card-icon"><KindIcon kind={n.kind} /></span>
       <span className="card-name">{n.name || n.id}</span>
@@ -171,11 +171,12 @@ function Flow({ ws, focus, selWire, picked, onPick, onCard, onWire, onLink, onCl
   const nodes = useMemo(() => {
     const zs: RFNode[] = zones.map((z) => ({ id: `zone:${z.id}`, type: "zone", position: { x: z.x, y: z.y }, data: { name: z.name, w: z.w, h: z.h },
       width: z.w, height: z.h, draggable: false, selectable: false, focusable: false, zIndex: -1, className: "zone-node" }));
+    const peers = new Set(picked.length ? ws.components.find((x) => x.id === picked[0])?.peers ?? [] : []);  // what shift-click may add to the first pick
     const cs = cards.map((c) => { const sm = sim.cards.get(c.id);
-      const sel = picked.includes(c.id);
-      return hlNodes.has(c.id) || pulse.has(c.id) || sel || sm ? { ...c, data: { ...c.data, hl: hlNodes.has(c.id), pulse: pulse.has(c.id), sel, sim: sm } } : c; });
+      const sel = picked.includes(c.id), hint = !sel && peers.has(c.id), dim = picked.length > 0 && !sel && !hint;
+      return hlNodes.has(c.id) || pulse.has(c.id) || sel || hint || dim || sm ? { ...c, data: { ...c.data, hl: hlNodes.has(c.id), pulse: pulse.has(c.id), sel, hint, dim, sim: sm } } : c; });
     return [...zs, ...cs] as RFNode[];
-  }, [zones, cards, hlNodes, pulse, picked, sim]);
+  }, [zones, cards, hlNodes, pulse, picked, sim, ws.components]);
 
   // clicking a line opens the card of that connection (a single wire: the wire's card)
   const edgeOf = useRef(new Map<string, { a: string; b: string; wires: string[] }>());

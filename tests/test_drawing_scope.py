@@ -191,3 +191,15 @@ def test_geometry_contract():
     for want in ("off the grid", "not orthogonal", "2.0 mm", "'nowhere'", "not A3 or A4", "end of 2 wires"):
         assert want in msg, (want, msg)
     with pytest.raises(ValueError): from_json(json.dumps({"version": 9, "sheets": []}))
+
+
+def test_selection_is_the_first_components_wiring_to_the_others(states):
+    """D117: `selection:A,B` draws A's runs that reach B (A alone: all of A); shift-click may only add what A's wires land on (peers)."""
+    from schemagen.app.workspace import peers
+    st = states["aircraft"]
+    pr = peers(st)
+    assert set(pr["CB-XPDR"]) == {"BB-ESSENTIAL-BUS", "TRANSPONDER"} and "CB-XPDR" in pr["TRANSPONDER"]
+    one, both = scene(st, "selection:TRANSPONDER"), scene(st, "selection:TRANSPONDER,CB-XPDR")
+    assert {w["id"] for w in one["wires"]} == {w["id"] for w in scene(st, "component:TRANSPONDER")["wires"]}
+    assert both["title"].endswith(" to " + next(c.name for c in st.m.components if c.id == "CB-XPDR"))
+    assert 0 < len(both["wires"]) < len(one["wires"]) and not any(f["at"].startswith("pin:BB-GROUND-BUS/") for f in both["flags"])

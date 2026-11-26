@@ -293,10 +293,11 @@ test("G: the Export menu order and wording; Wiring diagrams is always there and 
   await open(page);
   await page.getByRole("button", { name: "Export" }).click();
   const items = page.getByRole("menuitem");
-  expect(await items.allInnerTexts()).toEqual(["Wire sheet\nXLSX, your sheet written back", "Wiring checklist\nprintable, per component", "Fault sweep\nHTML report", "Wiring diagrams\nPDF, every component"]);
-  await expect(items.last()).not.toHaveAttribute("aria-disabled", "true");
+  expect(await items.allInnerTexts()).toEqual(["Wire sheet\nXLSX, your sheet written back", "Wiring checklist\nprintable, per component", "Fault sweep\nHTML report", "Wiring diagrams\nPDF, every component", "Overview\nPDF, 3 pages"]);
+  const diagrams = page.getByRole("menuitem", { name: /Wiring diagrams/ });
+  await expect(diagrams).not.toHaveAttribute("aria-disabled", "true");
   await shot(page, "export-menu");
-  await items.last().click();
+  await diagrams.click();
   await expect(page.locator(".toast.ok")).toContainText("Wiring diagrams: 3 files saved.");
 });
 

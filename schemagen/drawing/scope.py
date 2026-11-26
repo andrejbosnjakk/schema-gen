@@ -62,16 +62,17 @@ def parse(text: str) -> Scope:
     return Scope(kind=kind, ids=ids, text=kind if kind == "system" else f"{kind}:{(sep or '').join(ids)}")  # type: ignore[typeddict-item]
 
 
-def members(st: Any, sc: Scope) -> tuple[list[Component], Component | None]:
-    """The scope's components (drawn in full) and, for a connection, the component its runs must reach."""
+def members(st: Any, sc: Scope) -> tuple[list[Component], list[Component]]:
+    """The scope's components (drawn in full) and the components its runs must reach: for a connection the other end, for a selection of
+    several components the ones after the first (the drawing is the first one's wiring to them, D117); else none."""
     ctx, k, ids = st.ctx, sc["kind"], sc["ids"]
 
     def comp(i: str) -> Component:
         c = ctx.comp_by_id.get(i)
         if c is None: raise ValueError(f"unknown component {i!r}")
         return c
-    if k == "system": return list(st.m.components), None
-    if k == "connection": return [comp(ids[0])], comp(ids[1])
+    if k == "system": return list(st.m.components), []
+    if k in ("connection", "selection") and len(ids) > 1: return [comp(ids[0])], [comp(i) for i in ids[1:]]
     if k == "subsystem":  # a component belongs to the subsystem most of its conductors belong to (ties: the first name)
         subs: dict[str, Counter[str]] = defaultdict(Counter)
         for cd in st.m.conductors:
@@ -80,10 +81,10 @@ def members(st: Any, sc: Scope) -> tuple[list[Component], Component | None]:
         out = [c for c in st.m.components if c.kind not in ("splice", "harness") and c.raw in subs
                and max(sorted(subs[c.raw]), key=lambda s: subs[c.raw][s]) == ids[0]]
         if not out: raise ValueError(f"no component in subsystem {ids[0]!r}")
-        return out, None
+        return out, []
     out = [comp(i) for i in ids]
     if k == "harness" and out[0].kind != "harness": raise ValueError(f"{ids[0]} is not a harness connector")
-    return out, None
+    return out, []
 
 
 def symbol(st: Any, c: Component) -> str:
@@ -119,12 +120,13 @@ def scene(st: Any, scope: str | Scope) -> Scene:
     S, to = members(st, sc)
     ctx, net, conds = st.ctx, st.ctx.net, st.m.conductors
     full = set() if to else {c.raw for c in S}
+    tos = {c.raw for c in to}
     drawn: set[int] = set()
     nodes: set[NodeKey] = set()
     for c in S:
         for i, e in net.by_dev[c.raw]:
             for r in walk(net, i, e):
-                if to and not any(conds[j].end(3 - k).device == to.raw for j, k in r): continue  # a connection: runs that reach `to`
+                if to and not any(conds[j].end(3 - k).device in tos for j, k in r): continue  # a connection or selection: runs that reach `to`
                 nodes.add(net.node(i, e)); drawn.update(j for j, _ in r); nodes.update(net.node(j, 3 - k) for j, k in r)
     flags: dict[int, int] = {}  # conductor -> its end on a drawn node
     for j in range(len(conds)):
@@ -175,11 +177,11 @@ def _collapse(st: Any, ends: dict[int, int], fl: list[SceneFlag], node: dict[int
     return [f for f in fl if f["model"] not in drop] + out
 
 
-def _title(st: Any, sc: Scope, S: list[Component], to: Component | None) -> str:
+def _title(st: Any, sc: Scope, S: list[Component], to: list[Component]) -> str:
     nm = lambda c: c.name or c.id  # noqa: E731
     if sc["kind"] == "system": return str(st.cfg.root.name)
     if sc["kind"] == "subsystem": return f"Subsystem {sc['ids'][0]}"
-    if to: return f"{nm(S[0])} to {nm(to)}"
+    if to: return f"{nm(S[0])} to {', '.join(nm(c) for c in to)}"
     return ", ".join(nm(c) for c in S)
 
 

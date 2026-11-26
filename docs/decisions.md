@@ -836,3 +836,12 @@ may show again next launch. Replay from the help menu works at any time and reco
   accepts a scope wire that is neither drawn nor listed only up to the count the summary flags give. Replaces the row rule of D114 for covered wires.
 - Why: on the real LV list a contactor drawing carried two extra table sheets of ground-bus wires and every breaker drawing the other breakers on its
   bus strip; the owner found them unnecessary, and a table that lists wires the sheet does not show is harder to work from.
+
+## D117. Shift-click draws one component's wiring; only what it is wired to can be added
+- Choice: the first shift-click picks the component the drawing is about. The components its wires land on (followed through splices and harness
+  pins: `peers` on each map node) are outlined as suggestions, every other card is dimmed, and shift-clicking one of those only says it is not wired
+  to the first. `selection:A` is all of A's wiring (as `component:A`); `selection:A,B,C` is A's runs that reach B or C, like `connection:` with several
+  ends, titled `A to B, C`. Shift-clicking the first pick again starts over. The verifier checks one-component selections; several are filtered like
+  a connection and not checked, as before for connections.
+- Why: the owner found that selecting unrelated components gave disjointed sheets; the purpose is the full wiring of the clicked component, narrowed
+  to the parts it actually connects to. Replaces the "every member in full" meaning of a selection (D113).
