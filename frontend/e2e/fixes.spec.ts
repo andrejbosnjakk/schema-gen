@@ -98,7 +98,7 @@ test("B: Esc, a click on empty canvas and the same issue again clear the selecti
   await expect(page.locator(".node-card.hl")).toHaveCount(2);
   expect(await page.locator(".bundle.dim").count()).toBeGreaterThan(0);
   await page.keyboard.press("Escape");
-  expect(await dimmed()).toBe(0);
+  await expect.poll(dimmed).toBe(0);
   await page.locator("[role=row][data-id]").nth(3).click();
   await expect(page.locator(".node-card.hl")).toHaveCount(2);
   const blank = await page.evaluate(() => {
@@ -109,7 +109,7 @@ test("B: Esc, a click on empty canvas and the same issue again clear the selecti
   });
   expect(blank).not.toBeNull();
   await page.mouse.click(blank!.x, blank!.y);
-  expect(await dimmed()).toBe(0);
+  await expect.poll(dimmed).toBe(0);
   await issue.click(); await expect(issue).toHaveClass(/sel/);
   await issue.click(); await expect(issue).not.toHaveClass(/sel/);    // the same issue again
   await page.locator("[role=row][data-id]").nth(3).click();
@@ -117,7 +117,7 @@ test("B: Esc, a click on empty canvas and the same issue again clear the selecti
   await page.getByRole("button", { name: "Back to the start screen" }).click();
   await page.getByRole("button", { name: "Open the example project" }).click();
   await expect(page.locator(".node-card").first()).toBeVisible();
-  expect(await dimmed()).toBe(0);
+  await expect.poll(dimmed).toBe(0);
   await expect(page.locator(".issue.sel")).toHaveCount(0);
 });
 

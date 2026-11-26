@@ -1,5 +1,5 @@
 // Popup cards, simulate overlay and + Source against a real `schemagen app` of its own (the edits and the added source stay in its home folder).
-import { test } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 import { cardTests } from "./cards.shared";
 import { startServer, type Server } from "./server";
 
@@ -10,5 +10,6 @@ test.afterAll(() => srv?.stop());
 cardTests(async (page) => {
   await page.goto(srv.url);
   const ex = page.getByRole("button", { name: "Open the example project" });
-  if (await ex.isVisible({ timeout: 3000 }).catch(() => false)) await ex.click();
+  await expect(ex.or(page.locator(".node-card").first())).toBeVisible({ timeout: 20_000 });   // the start screen or the map, once loaded (isVisible does not wait)
+  if (await ex.isVisible()) await ex.click();
 }, "real");
