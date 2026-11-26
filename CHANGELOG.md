@@ -1,5 +1,25 @@
 # Changelog
 
+## 1.2.0-rc1 (pre-release, branch dev/1.2-overview)
+
+Release candidate for 1.2: everything below 1.2.0-dev, plus:
+
+- Shift-click draws one component's wiring (D117): the first shift-click picks the component, the components its wires
+  land on are outlined and every other card is faded; a shift-click on an unwired one says so instead of adding it. One
+  pick draws all its wiring; more picks narrow it to its wires to those (`selection:A,B` = A's runs to B).
+- Wire tables list only what the sheet draws as a wire or a flag; the wires behind a `+ N more wires on <bus>` flag are
+  listed on the bus's own drawing (D116).
+- Assurance report (D118): the diagrams export writes `assurance.html`, layer by layer: the sheet's own rules, datasheet
+  coverage (wire ends on pins a card describes), the scenarios and fault sweep with every assumed value, the build check.
+  New rules `pin-not-in-part` (connectors a card marks `complete: true`) and `pin-type-clash` (swapped CAN lines, CAN on
+  power or ground). `schemagen check` prints the datasheet coverage line.
+- Overview: the wires that cross most are routed again once everything is placed (D119), 15 to 25 % fewer crossings on a
+  real project at the same page size.
+- Readable sheets: a part's kind comes from its name before any trailing `(notes)`; `breaker` and `fuse` count anywhere in
+  the name; a gauge naming a bus, strip or bar (`bus strip`) is a link, not a wire. Narrower flags keep more drawings as a
+  connected net instead of terminal strips.
+- Start screen in two columns, without the tagline.
+
 ## 1.2.0-dev (pre-release, branch dev/1.2)
 
 Reliable drawings. A preview for trying the app; the drawings are a review draft, not a wiring set. Contains all of 1.1.
