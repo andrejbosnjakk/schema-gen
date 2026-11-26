@@ -19,6 +19,8 @@ Release candidate for 1.2: everything below 1.2.0-dev, plus:
   the name; a gauge naming a bus, strip or bar (`bus strip`) is a link, not a wire. Narrower flags keep more drawings as a
   connected net instead of terminal strips.
 - Start screen in two columns, without the tagline.
+- The desktop app no longer flashes a console window on start (Graphviz check) or when a project opens (git history).
+- CI green again: JSON schemas regenerated, two end-to-end races and a slow export test fixed.
 
 ## 1.2.0-dev (pre-release, branch dev/1.2)
 
