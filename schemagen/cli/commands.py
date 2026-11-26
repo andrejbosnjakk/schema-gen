@@ -61,8 +61,8 @@ def check(a):
         from ..exporters.assurance import coverage
         cov = coverage(L.model, Ctx(L.model, L.cfg))
         ends, chk = sum(r["ends"] for r in cov), sum(r["checked"] for r in cov)
-        s = "\n".join(lines + [f"{n['error']} error(s), {n['warning']} warning(s), {n['info']} info",
-                               f"datasheet check: {chk} of {ends} wire ends on pins a card describes ({sum(1 for r in cov if r['card'])} of {len(cov)} devices)"])
+        s = "\n".join(lines + [f"datasheet check: {chk} of {ends} wire ends on pins a card describes ({sum(1 for r in cov if r['card'])} of {len(cov)} devices)",
+                               f"{n['error']} error(s), {n['warning']} warning(s), {n['info']} info"])     # the counts stay the last line
     if a.output: Path(a.output).write_text(s + "\n", encoding="utf-8")
     else: print(s)
     return 1 if any(i.severity == "error" for i in issues) else 0
