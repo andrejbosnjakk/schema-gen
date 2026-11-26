@@ -270,10 +270,12 @@ export function App() {
 
 function Start({ session, onExample, onRecent, onRemove, onPick }: { session: Session; onExample: () => void; onRecent: (p: string) => void; onRemove: (p: string) => void; onPick: () => void }) {
   return <div className="start">
-    <div className="start-col">
+    <div className="start-grid">
+    <div className="start-brand">
       <Motif />
       <h1><Logo size={26} />schemagen</h1>
-      <p className="lede">Wire list in. Wiring diagrams, checks and a map of the whole system out.</p>
+    </div>
+    <div className="start-col">
       <button className="btn btn-primary btn-lg" onClick={onExample}>Open the example project</button>
       <div className="or" aria-hidden="true"><span>or</span></div>
       <div className="dropzone" onClick={onPick} role="button" tabIndex={0} aria-label="Import your wire sheet (.xlsx or .csv)"
@@ -288,6 +290,7 @@ function Start({ session, onExample, onRecent, onRemove, onPick }: { session: Se
           <Glyph name="file" /><span className="r-name">{r.name}</span><span className="r-date">{ago(r.opened)}</span>
         </button><button className="btn btn-ghost btn-icon btn-sm r-remove" onClick={() => onRemove(r.path)} aria-label={`Remove ${r.name} from the list`} title="Remove from the list"><Glyph name="x" size={14} /></button></li>)}</ul>
       </section>}
+    </div>
     </div>
   </div>;
 }
